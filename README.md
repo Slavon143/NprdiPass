@@ -1,13 +1,13 @@
 # NordiPass
 
-NordiPass is a Laravel application. This repository currently contains the R0 Foundation Stage 1 bootstrap: Blade authentication, the frontend toolchain, and development quality checks. Product and tenant modules are intentionally not part of this stage.
+NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap and Stage 2 core database: Blade authentication, development tooling, companies, memberships, and invitation persistence. Tenant context and authorization are intentionally deferred to later stages.
 
 ## Requirements
 
-- PHP 8.4 or newer with `fileinfo` and `pdo_sqlite`
+- PHP 8.4 or newer with `fileinfo`, `pdo_mysql`, and `pdo_sqlite` for the test suite
 - Composer 2
 - Node.js 22 or newer with npm
-- SQLite
+- MySQL 8 or a modern MariaDB release
 
 ## Local setup
 
@@ -17,24 +17,20 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Create the SQLite database file:
+Create the local MySQL database:
 
-```bash
-touch database/database.sqlite
+```sql
+CREATE DATABASE nordipass CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-On Windows PowerShell, use:
-
-```powershell
-New-Item database/database.sqlite -ItemType File -Force
-```
+Set the local MySQL username and password in `.env`. Never commit that file.
 
 Install frontend dependencies, build the assets, and initialize the database:
 
 ```bash
 npm install
 npm run build
-php artisan migrate
+php artisan migrate --seed
 ```
 
 Start the application and the Vite development server in separate terminals:
@@ -44,7 +40,7 @@ php artisan serve
 npm run dev
 ```
 
-The application is available at `http://localhost:8000`. Register a local user or sign in through the Laravel Breeze authentication routes.
+The application is available at `http://localhost:8000`. Register a local user or sign in through the Laravel Breeze authentication routes. Local seed users use the password `password`.
 
 ## Quality checks
 
