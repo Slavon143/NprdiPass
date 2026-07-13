@@ -43,6 +43,37 @@ php artisan queue:work
 
 The application is available at `http://localhost:8000`. Public registration is disabled; new accounts are created only through a valid company invitation. Local seed users use the password `password`.
 
+## Environment Configuration
+
+NordiPass supports four environments: `local`, `testing`, `staging`, and `production`. See [`docs/infrastructure/ENVIRONMENTS.md`](docs/infrastructure/ENVIRONMENTS.md) for the full environment table.
+
+### Local
+
+The local environment uses `mysql` with `database` cache, queue, and session drivers. No external services (Redis, SMTP) are required. Copy `.env.example` to `.env`, set database credentials, and run:
+
+```bash
+php artisan key:generate
+php artisan migrate --seed
+```
+
+Mail defaults to `log`. For Mailpit, set `MAIL_MAILER=smtp` with `MAIL_HOST=127.0.0.1` and `MAIL_PORT=1025`.
+
+### Testing
+
+The default test suite uses SQLite `:memory:` (`phpunit.xml`). MySQL integration tests use a dedicated `nordipass_testing` database (`phpunit.mysql.xml`).
+
+### Staging and Production
+
+Production must use Redis for cache, queue, and sessions. Set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, and configure trusted SMTP. See `docs/infrastructure/ENVIRONMENTS.md`.
+
+### APP_KEY
+
+`APP_KEY` is generated **once** per environment with `php artisan key:generate`. Never regenerate it on each deployment — doing so invalidates sessions, encrypted cookies, and encrypted data.
+
+### Secrets
+
+`.env` must never be committed. On Linux production, restrict permissions to `chmod 600` and ensure the document root points to `public/`.
+
 ## Tenancy architecture
 
 NordiPass uses a shared database and shared schema. `Company` is the tenant, and company roles belong to the `company_user` membership rather than the user record.
