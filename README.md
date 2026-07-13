@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, and the Stage 4 authorization foundation. Member-management UI and later product modules remain intentionally deferred.
+NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, and the Stage 5 company-facing UI. Invitations and later product modules remain intentionally deferred.
 
 ## Requirements
 
@@ -116,6 +116,37 @@ php vendor/bin/pest --configuration=phpunit.mysql.xml
 ```
 
 The MySQL test configuration reuses local connection credentials but overrides the database name. The test base class refuses any MySQL database whose name does not end in `_testing`.
+
+## Company UI
+
+Authenticated tenant pages use the Stage 3 middleware chain and Stage 4 Policies and Actions:
+
+| Page | Route | Access |
+| --- | --- | --- |
+| Dashboard | `GET /dashboard` | All active company members |
+| Company settings | `GET /settings/company` | All company viewers; editor/viewer receive a read-only view |
+| Update company | `PATCH /settings/company` | Owner and admin |
+| Members | `GET /settings/members` | Owner, admin, and editor |
+| Update member role | `PATCH /settings/members/{membership}/role` | Owner/admin subject to owner-safety rules |
+| Remove member | `DELETE /settings/members/{membership}` | Owner/admin subject to owner-safety rules |
+
+The dashboard shows only real foundation data: company identity and status, the current membership role, member count, and company creation date. It does not display placeholder product, document, billing, scan, or usage metrics.
+
+Company settings allow only `name`, `legal_name`, `organization_number`, `country_code`, and `billing_email`. The request normalizes country code to uppercase and billing email to lowercase. Status, UUID, settings JSON, ownership, and internal identifiers are not editable.
+
+The members page is tenant-scoped, eager loads users, sorts by the explicit owner/admin/editor/viewer priority, and paginates at 25 memberships. Role changes and removals first resolve the membership through `CurrentCompany`, so a foreign membership identifier returns 404 before authorization. Controllers call the Stage 4 transactional actions; they never update or delete memberships directly.
+
+At least one owner is required. The UI hides the sole-owner downgrade control and generic self-removal, while the database transaction and row locks remain the authoritative protection against stale pages and concurrent requests. Invitation sending, acceptance, and email are not implemented in Stage 5, so no invitation button is shown.
+
+Local test users all use the password `password`:
+
+- `owner@nordipass.local`
+- `admin@nordipass.local`
+- `editor@nordipass.local`
+- `viewer@nordipass.local`
+- `multi@nordipass.local`
+
+The multi-company user opens the company switcher and can switch between the two seeded active companies. `superadmin@nordipass.local` remains a platform user without an implicit company membership.
 
 ## Quality checks
 

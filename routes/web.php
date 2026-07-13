@@ -1,10 +1,15 @@
 <?php
 
+use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CompanySwitchController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoCompanyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RemoveCompanyMemberController;
 use App\Http\Controllers\SuspendedCompanyController;
+use App\Http\Controllers\UpdateCompanyMemberRoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,12 +31,19 @@ Route::middleware([
     'company.member',
     'company.active',
 ])->group(function (): void {
-    Route::get('/dashboard', function () {
-        return view('dashboard', [
-            'currentCompany' => request()->attributes->get('currentCompany'),
-            'currentMembership' => request()->attributes->get('currentMembership'),
-        ]);
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::prefix('settings')->name('settings.')->group(function (): void {
+        Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');
+        Route::patch('/company', [CompanySettingsController::class, 'update'])->name('company.update');
+        Route::get('/members', CompanyMembersController::class)->name('members.index');
+        Route::patch('/members/{membership}/role', UpdateCompanyMemberRoleController::class)
+            ->whereNumber('membership')
+            ->name('members.role.update');
+        Route::delete('/members/{membership}', RemoveCompanyMemberController::class)
+            ->whereNumber('membership')
+            ->name('members.destroy');
+    });
 });
 
 Route::middleware('auth')->group(function () {
