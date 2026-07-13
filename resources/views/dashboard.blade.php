@@ -9,7 +9,10 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    {{ __("You're logged in!") }}
+                    <div class="font-semibold">{{ $currentCompany->name }}</div>
+                    <div class="mt-1 text-sm text-gray-600">
+                        {{ __('Current role: :role', ['role' => $currentMembership->role->value]) }}
+                    </div>
                 </div>
             </div>
         </div>

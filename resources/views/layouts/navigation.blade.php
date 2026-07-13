@@ -20,6 +20,17 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <a href="{{ route('companies.select') }}" class="me-4 text-sm text-gray-600 hover:text-gray-900">
+                    @if ($currentCompany)
+                        <span class="font-medium">{{ $currentCompany->name }}</span>
+                        @if ($currentMembership)
+                            <span class="text-gray-400">({{ $currentMembership->role->value }})</span>
+                        @endif
+                    @else
+                        {{ __('Select company') }}
+                    @endif
+                </a>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -77,6 +88,9 @@
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <a href="{{ route('companies.select') }}" class="mt-2 block text-sm text-gray-600 hover:text-gray-900">
+                    {{ $currentCompany?->name ?? __('Select company') }}
+                </a>
             </div>
 
             <div class="mt-3 space-y-1">

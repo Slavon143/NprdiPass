@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property CompanyStatus $status
+ * @property array<string, mixed>|null $settings
+ */
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -34,6 +38,14 @@ class Company extends Model
         ];
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    /**
+     * @return BelongsToMany<User, $this, CompanyMembership, 'pivot'>
+     */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
@@ -42,11 +54,17 @@ class Company extends Model
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<CompanyMembership, $this>
+     */
     public function memberships(): HasMany
     {
         return $this->hasMany(CompanyMembership::class);
     }
 
+    /**
+     * @return HasMany<CompanyInvitation, $this>
+     */
     public function invitations(): HasMany
     {
         return $this->hasMany(CompanyInvitation::class);

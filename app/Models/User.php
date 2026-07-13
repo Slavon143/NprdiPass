@@ -46,6 +46,9 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /**
+     * @return BelongsToMany<Company, $this, CompanyMembership, 'pivot'>
+     */
     public function companies(): BelongsToMany
     {
         return $this->belongsToMany(Company::class)
@@ -54,11 +57,17 @@ class User extends Authenticatable implements MustVerifyEmail
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<CompanyMembership, $this>
+     */
     public function memberships(): HasMany
     {
         return $this->hasMany(CompanyMembership::class);
     }
 
+    /**
+     * @return HasMany<CompanyInvitation, $this>
+     */
     public function invitationsSent(): HasMany
     {
         return $this->hasMany(CompanyInvitation::class, 'invited_by');
