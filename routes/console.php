@@ -27,6 +27,16 @@ Schedule::command('nordipass:scheduler-heartbeat')
     ->everyMinute()
     ->withoutOverlapping(5);
 
+Schedule::command('nordipass:backup')
+    ->dailyAt('02:00')
+    ->withoutOverlapping(180)
+    ->appendOutputTo(storage_path('logs/scheduler-backup.log'));
+
+Schedule::command('nordipass:backup-prune')
+    ->dailyAt('04:00')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/scheduler-backup-prune.log'));
+
 Schedule::command('queue:prune-failed --hours=168')
     ->daily()
     ->withoutOverlapping(60)
