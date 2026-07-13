@@ -246,6 +246,26 @@ Sanctum updates `last_used_at` after each successful bearer authentication, whic
 
 The daily scheduler runs `php artisan nordipass:prune-api-tokens`; use `--dry-run` and `--days=`. See [`docs/API.md`](docs/API.md) and [`docs/openapi.yaml`](docs/openapi.yaml).
 
+## Health, Logging and Security
+
+NordiPass provides a liveness endpoint (`GET /up`), a readiness endpoint (`GET /ready`), structured JSON logging for production, X-Request-ID correlation, security headers, and configurable HSTS, trusted proxies, and trusted hosts.
+
+See [`docs/infrastructure/HEALTH_LOGGING_SECURITY.md`](docs/infrastructure/HEALTH_LOGGING_SECURITY.md) for full documentation.
+
+## Queues and Scheduler
+
+NordiPass uses three queues: `mail` (invitation notifications), `maintenance` (pruning and cleanup), and `default` (other background jobs). The local environment uses the database driver; production uses Redis.
+
+```bash
+# Local worker
+php artisan queue:work --queue=mail,maintenance,default --sleep=1 --tries=3 --timeout=300
+
+# Local scheduler
+php artisan schedule:work
+```
+
+See [`docs/infrastructure/QUEUES_AND_SCHEDULER.md`](docs/infrastructure/QUEUES_AND_SCHEDULER.md) for full worker configuration, Supervisor, cron, and Redis readiness.
+
 ## Quality checks
 
 ```bash

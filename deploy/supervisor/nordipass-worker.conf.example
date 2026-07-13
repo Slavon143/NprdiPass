@@ -1,0 +1,26 @@
+; NordiPass queue worker — Supervisor configuration example
+;
+; Copy this file to /etc/supervisor/conf.d/nordipass-worker.conf
+; and adapt the paths, user, and numprocs to your environment.
+;
+; Required changes before use:
+;   - Replace /usr/bin/php with the actual PHP binary path
+;   - Replace /var/www/nordipass with the actual project root
+;   - Replace www-data with the actual system user
+;   - Replace /var/log/supervisor/ with an existing log directory
+;   - For production, change queue:work database to queue:work redis
+
+[program:nordipass-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=/usr/bin/php /var/www/nordipass/artisan queue:work redis --queue=mail,maintenance,default --sleep=3 --tries=3 --timeout=300 --max-time=3600
+directory=/var/www/nordipass
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/nordipass-worker.log
+stderr_logfile=/var/log/supervisor/nordipass-worker.log
+stopwaitsecs=360

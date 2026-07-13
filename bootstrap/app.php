@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\ApiSecurityHeaders;
 use App\Http\Middleware\ApiTokenSecretHeaders;
 use App\Http\Middleware\EnsureApiCompanyIsActive;
@@ -31,11 +32,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(EnsureRequestId::class);
+        $middleware->prepend(AddSecurityHeaders::class);
+
         $middleware->api(append: [ApiSecurityHeaders::class]);
+
         $middleware->prependToPriorityList(ThrottleRequests::class, EnsureApiTokenIsValid::class);
         $middleware->prependToPriorityList(ThrottleRequests::class, ResolveApiCompany::class);
         $middleware->prependToPriorityList(ThrottleRequests::class, EnsureApiCompanyMembership::class);
         $middleware->prependToPriorityList(ThrottleRequests::class, EnsureApiCompanyIsActive::class);
+
+        $proxies = (string) env('TRUSTED_PROXIES', '');
+        if ($proxies !== '') {
+            $middleware->trustProxies(at: $proxies === '*' ? ['*'] : $proxies);
+        }
+
+        $hosts = (string) env('TRUSTED_HOSTS', 'localhost,127.0.0.1');
+        if ($hosts !== '') {
+            $middleware->trustHosts(at: array_map('trim', explode(',', $hosts)));
+        }
 
         $middleware->alias([
             'company.resolve' => ResolveCurrentCompany::class,
@@ -76,5 +90,13 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return app(ApiExceptionRenderer::class)->render($exception, $request);
+        });
+
+        $exceptions->context(function (Throwable $e, array $context): array {
+            $request = request();
+
+            return [
+                'request_id' => $request?->attributes?->get('nordipass_request_id'),
+            ];
         });
     })->create();

@@ -11,6 +11,10 @@ class CompanyInvitationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public int $timeout = 60;
+
     public function __construct(
         private readonly string $companyName,
         private readonly string $inviterName,
@@ -19,6 +23,15 @@ class CompanyInvitationNotification extends Notification implements ShouldQueue
         private readonly string $acceptUrl,
     ) {
         $this->afterCommit();
+        $this->onQueue('mail');
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function backoff(): array
+    {
+        return [60, 300, 900];
     }
 
     /**

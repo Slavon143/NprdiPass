@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Audit\AuditContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +23,8 @@ class EnsureRequestId
             : (string) Str::uuid();
 
         $request->attributes->set(AuditContext::REQUEST_ID_ATTRIBUTE, $requestId);
+
+        Context::add('request_id', $requestId);
         Log::withContext(['request_id' => $requestId]);
 
         try {

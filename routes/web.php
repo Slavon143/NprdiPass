@@ -12,6 +12,7 @@ use App\Http\Controllers\CompanySwitchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoCompanyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RemoveCompanyMemberController;
 use App\Http\Controllers\ResendCompanyInvitationController;
 use App\Http\Controllers\ShowCompanyInvitationController;
@@ -95,5 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::get('/ready', ReadinessController::class)
+    ->name('ready');
 
 require __DIR__.'/auth.php';
