@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('nordipass:prune-invitations')->daily();
 Schedule::command('nordipass:prune-audit-logs')->daily();
+Schedule::command('nordipass:prune-api-tokens')->daily();

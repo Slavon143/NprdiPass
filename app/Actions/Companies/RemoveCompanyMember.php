@@ -13,6 +13,7 @@ use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
 use App\Models\Company;
 use App\Models\CompanyMembership;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Tenancy\CurrentMembership;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -73,6 +74,32 @@ class RemoveCompanyMember
 
             if ($lockedMembership->getAttribute('user_id') === $actor->getKey()) {
                 throw new CannotRemoveOwnCompanyMembership;
+            }
+
+            $tokens = PersonalAccessToken::query()
+                ->where('company_id', $company->getKey())
+                ->where('tokenable_type', User::class)
+                ->where('tokenable_id', $targetUser->getKey())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($tokens as $token) {
+                $properties = [
+                    'token_name' => $token->name,
+                    'abilities' => array_values($token->abilities),
+                    'expires_at' => $token->expires_at?->toAtomString(),
+                    'created_by' => $targetUser->uuid,
+                    'reason' => 'membership_removed',
+                ];
+                $token->delete();
+                $this->auditLogger->logTenant(
+                    $company,
+                    AuditEvent::ApiTokenRevoked,
+                    $actor,
+                    'API token: '.$token->name,
+                    $properties,
+                );
             }
 
             $lockedMembership->delete();

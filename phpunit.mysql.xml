@@ -10,6 +10,7 @@
             <directory>tests/Feature/CompanyUi</directory>
             <directory>tests/Feature/Invitations</directory>
             <directory>tests/Feature/Audit</directory>
+            <directory>tests/Feature/Api</directory>
             <directory>tests/MySql</directory>
             <directory>tests/Concurrency</directory>
         </testsuite>

@@ -20,6 +20,8 @@ enum AuditEvent: string
     case PlatformRoleAssigned = 'platform.role_assigned';
     case PlatformRoleRemoved = 'platform.role_removed';
     case PlatformAction = 'platform.action';
+    case ApiTokenCreated = 'api_token.created';
+    case ApiTokenRevoked = 'api_token.revoked';
 
     public function label(): string
     {
@@ -40,6 +42,8 @@ enum AuditEvent: string
             self::PlatformRoleAssigned => 'Platform role assigned',
             self::PlatformRoleRemoved => 'Platform role removed',
             self::PlatformAction => 'Platform action',
+            self::ApiTokenCreated => 'API token created',
+            self::ApiTokenRevoked => 'API token revoked',
         };
     }
 }

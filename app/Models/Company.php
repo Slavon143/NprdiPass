@@ -69,4 +69,12 @@ class Company extends Model
     {
         return $this->hasMany(CompanyInvitation::class);
     }
+
+    /**
+     * @return HasMany<PersonalAccessToken, $this>
+     */
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany(PersonalAccessToken::class);
+    }
 }

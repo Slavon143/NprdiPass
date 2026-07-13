@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\Company;
+use App\Models\PersonalAccessToken;
+use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\NewAccessToken;
 use Tests\TestCase;
 
 /*
@@ -54,4 +59,24 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/** @param list<string> $abilities */
+function issueCompanyApiToken(
+    User $user,
+    Company $company,
+    array $abilities,
+    ?CarbonInterface $expiresAt = null,
+    string $name = 'Test token',
+): NewAccessToken {
+    $newToken = $user->createToken($name, $abilities, $expiresAt ?? now()->addDays(90));
+    $token = $newToken->accessToken;
+
+    if (! $token instanceof PersonalAccessToken) {
+        throw new RuntimeException('The custom Sanctum token model is not active.');
+    }
+
+    $token->forceFill(['company_id' => $company->getKey()])->save();
+
+    return $newToken;
 }

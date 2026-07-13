@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcceptCompanyInvitationController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CancelCompanyInvitationController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
@@ -60,6 +61,15 @@ Route::middleware([
         Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');
         Route::patch('/company', [CompanySettingsController::class, 'update'])->name('company.update');
         Route::get('/members', CompanyMembersController::class)->name('members.index');
+        Route::get('/api-tokens', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/api-tokens', [ApiTokenController::class, 'store'])
+            ->middleware(['throttle:api-token-management', 'api-token.secret'])
+            ->name('api-tokens.store');
+        Route::delete('/api-tokens/{token}', [ApiTokenController::class, 'destroy'])
+            ->whereNumber('token')
+            ->middleware('throttle:api-token-management')
+            ->name('api-tokens.destroy');
         Route::post('/members/invitations', StoreCompanyInvitationController::class)
             ->middleware('throttle:invitations.manage')
             ->name('members.invitations.store');

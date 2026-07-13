@@ -20,6 +20,10 @@
                         @can('viewAny', [\App\Models\AuditLog::class, $currentCompany])
                             <x-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">{{ __('Audit') }}</x-nav-link>
                         @endcan
+
+                        @can(\App\Enums\CompanyPermission::ApiTokensView->value, $currentCompany)
+                            <x-nav-link :href="route('settings.api-tokens.index')" :active="request()->routeIs('settings.api-tokens.*')">{{ __('API tokens') }}</x-nav-link>
+                        @endcan
                     @endif
                 </div>
             </div>
@@ -107,6 +111,9 @@
                 @endcan
                 @can('viewAny', [\App\Models\AuditLog::class, $currentCompany])
                     <x-responsive-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">{{ __('Audit') }}</x-responsive-nav-link>
+                @endcan
+                @can(\App\Enums\CompanyPermission::ApiTokensView->value, $currentCompany)
+                    <x-responsive-nav-link :href="route('settings.api-tokens.index')" :active="request()->routeIs('settings.api-tokens.*')">{{ __('API tokens') }}</x-responsive-nav-link>
                 @endcan
             @endif
         </div>

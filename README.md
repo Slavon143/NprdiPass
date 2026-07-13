@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, Stage 5 company-facing UI, Stage 6 company invitation lifecycle, and the Stage 7 tenant-aware audit subsystem. API tokens and later product modules remain intentionally deferred.
+NordiPass is a Laravel application. The repository currently contains R0 Foundation Stages 1–8: bootstrap, core database, tenancy, authorization, company UI, invitations, tenant-aware audit, and the REST API foundation. Infrastructure hardening and later product modules remain intentionally deferred.
 
 ## Requirements
 
@@ -200,6 +200,20 @@ php artisan nordipass:prune-audit-logs
 ```
 
 Use `--dry-run`, `--days=`, and `--company=<company-uuid>` for controlled operations. Company-scoped pruning never touches another company. Unscoped pruning targets only rows historically marked `log_name=tenant`, including orphaned tenant history after a physical company deletion; platform rows are preserved for a separate future platform retention policy.
+
+## API Foundation
+
+Stage 8 adds `/api/v1` with Laravel Sanctum. Foundation routes are public `GET /health`, `GET /me` and `GET /company` with `company.read`, and paginated `GET /company/members` with `members.read`. Product, Document, QR, DPP, integrations, billing, and other business APIs are absent.
+
+Every normal token belongs to one User + Company pair. Its `company_id` is the only tenant source for bearer requests; the web session and request `company_id`/`company_uuid` cannot override it. Middleware checks the token, active user, active company, fresh membership, and endpoint ability. Null-company, expired, revoked, inactive, and membership-less tokens fail immediately. No global tenant scope is used.
+
+Owners and admins manage tokens at `/settings/api-tokens`; editors and viewers cannot. Only `company.read` and `members.read` are issuable, with no wildcard. The raw secret appears once in a no-store/no-referrer response and only its Sanctum SHA-256 hash is stored. Create/revoke writes secret-free audit events. Membership removal revokes only that user's tokens for that company inside the existing transaction; a role downgrade keeps ability-limited tokens while membership remains.
+
+Expiration defaults to 90 days, has a 365-day maximum, and disables non-expiring tokens by default. API responses share `data` / `meta` / `error`, stable codes, request IDs, UUID-only resources, no-store/nosniff headers, and pagination capped at 100. Limits are 60/min per IP for health, 120/min per token, 10/min per user/company for creation, and 30/min for revoke. CORS uses explicit `API_ALLOWED_ORIGINS` without credentials.
+
+Sanctum updates `last_used_at` after each successful bearer authentication, which means one database write per accepted API request. This is intentional for R0 visibility and should be revisited if future business APIs reach high request volume.
+
+The daily scheduler runs `php artisan nordipass:prune-api-tokens`; use `--dry-run` and `--days=`. See [`docs/API.md`](docs/API.md) and [`docs/openapi.yaml`](docs/openapi.yaml).
 
 ## Quality checks
 

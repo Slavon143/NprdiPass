@@ -7,10 +7,12 @@ use Database\Factories\CompanyMembershipFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Carbon;
 
 /**
  * @property CompanyRole $role
  * @property bool $is_owner
+ * @property Carbon|null $joined_at
  */
 class CompanyMembership extends Pivot
 {
