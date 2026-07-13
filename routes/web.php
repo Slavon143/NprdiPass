@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcceptCompanyInvitationController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CancelCompanyInvitationController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
@@ -53,6 +54,7 @@ Route::middleware([
     'company.active',
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
 
     Route::prefix('settings')->name('settings.')->group(function (): void {
         Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');

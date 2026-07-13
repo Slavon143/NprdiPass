@@ -2,8 +2,11 @@
 
 namespace App\Actions\Companies;
 
+use App\Audit\AuditLogger;
+use App\Audit\AuditSnapshot;
 use App\Authorization\CompanyAuthorizer;
 use App\Domain\Companies\Exceptions\LastCompanyOwnerCannotBeRemoved;
+use App\Enums\AuditEvent;
 use App\Enums\CompanyPermission;
 use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
@@ -20,6 +23,8 @@ class ChangeCompanyMemberRole
     public function __construct(
         private readonly CompanyAuthorizer $authorizer,
         private readonly CurrentMembership $currentMembership,
+        private readonly AuditLogger $auditLogger,
+        private readonly AuditSnapshot $auditSnapshot,
     ) {}
 
     public function execute(User $actor, CompanyMembership $membership, CompanyRole $newRole): void
@@ -45,6 +50,9 @@ class ChangeCompanyMemberRole
                 ?? throw new AuthorizationException;
             $actorRole = $this->roleOf($actorMembership);
             $targetRole = $this->roleOf($lockedMembership);
+            $targetUser = User::withTrashed()
+                ->whereKey($lockedMembership->getAttribute('user_id'))
+                ->firstOrFail();
 
             if ($actorRole === CompanyRole::Admin && (
                 $targetRole === CompanyRole::Owner || $newRole === CompanyRole::Owner
@@ -74,6 +82,19 @@ class ChangeCompanyMemberRole
 
             $lockedMembership->role = $newRole;
             $lockedMembership->save();
+
+            if ($targetRole !== $newRole) {
+                $this->auditLogger->logTenant(
+                    $company,
+                    AuditEvent::MemberRoleChanged,
+                    $actor,
+                    $lockedMembership,
+                    array_merge($this->auditSnapshot->member($targetUser), [
+                        'old_role' => $targetRole->value,
+                        'new_role' => $newRole->value,
+                    ]),
+                );
+            }
         });
 
         $membership->refresh();

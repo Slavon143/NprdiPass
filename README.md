@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, Stage 5 company-facing UI, and the Stage 6 company invitation lifecycle. Audit logging, API tokens, and later product modules remain intentionally deferred.
+NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, Stage 5 company-facing UI, Stage 6 company invitation lifecycle, and the Stage 7 tenant-aware audit subsystem. API tokens and later product modules remain intentionally deferred.
 
 ## Requirements
 
@@ -100,7 +100,7 @@ Company permissions are fixed in `CompanyPermission` and evaluated centrally by 
 | editor | `company.view`, `members.view` |
 | viewer | `company.view` |
 
-Named Gates delegate to `CompanyAuthorizer`, which verifies an active user, the exact `CurrentCompany`, and a freshly queried membership. Policies cover companies, company memberships, and company invitations. Audit and company API-token models do not exist yet, so their abilities are available as Gates without fake models or policies.
+Named Gates delegate to `CompanyAuthorizer`, which verifies an active user, the exact `CurrentCompany`, and a freshly queried membership. Policies cover companies, company memberships, company invitations, and tenant audit history. Company API-token models do not exist yet, so their abilities remain available as Gates without fake models or policies.
 
 Member role changes and removals go through dedicated actions. Both actions run inside a database transaction, lock the company row to serialize competing ownership changes, and lock owner membership rows in a stable order. An active company cannot lose its last owner. Admins cannot assign, change, downgrade, or remove an owner, and generic member removal cannot be used as a self-leave flow.
 
@@ -171,6 +171,36 @@ Local test users all use the password `password`:
 
 The multi-company user opens the company switcher and can switch between the two seeded active companies. `superadmin@nordipass.local` remains a platform user without an implicit company membership.
 
+## Audit architecture
+
+NordiPass uses `spatie/laravel-activitylog` with the custom immutable `AuditLog` model and explicit security events. It does not auto-log every model change. Tenant rows use `log_name=tenant` and a validated `company_id`; platform rows use `log_name=platform` and `company_id=null`. The tenant page always queries both the current internal company ID and the tenant log name, so another company's rows and platform activity cannot appear through filters or pagination. A physically deleted company sets its audit foreign key to `null` while safe company UUID/name snapshots preserve historical context.
+
+The current application flows record:
+
+- successful login, failed login, and logout;
+- company settings changes and company switches;
+- member role changes and removals;
+- invitation creation, resend, cancellation, and acceptance;
+- denied company-switch attempts as platform security events.
+
+The event enum also defines `company.created` and platform role/action codes for future explicit application flows. There is no user-facing company creation or platform-role management flow in Stage 7, so seeders and factories do not create misleading audit events.
+
+Company settings, membership, and invitation actions write the audit row inside the same local database transaction after the successful state change and before commit. If the audit insert fails, the business mutation rolls back. Invitation email remains an `afterCommit` external side effect. Login/logout events are synchronous Laravel authentication listeners because those operations do not share a business database transaction.
+
+Every HTTP request receives a validated or generated `X-Request-ID`. Accepted IDs are 1–100 letters, digits, dots, underscores, or hyphens. The ID is returned in the response, added to Laravel log context for the request, and stored on audit rows. IP addresses come from Laravel's trusted-proxy-aware `Request::ip()` and can be disabled with `AUDIT_STORE_IP=false`. User agents have control characters removed and are capped at `AUDIT_USER_AGENT_MAX_LENGTH` (and the 500-character database limit). Configure trusted proxies for the deployment; the application never parses `X-Forwarded-For` itself.
+
+Audit properties are allowlisted at each action boundary and recursively sanitized. Passwords, raw or hashed tokens, authorization/cookie/session values, secret URLs, whole request payloads, settings JSON, notification payloads, and message/document/payment contents are not stored. Properties contain only small snapshots and action-specific diffs. The UI renders human labels and safe summaries rather than raw JSON or PHP model class names.
+
+Only current active-company owners and admins have `audit.view`; editors, viewers, and platform super administrators without a membership do not. `GET /audit` supports tenant-scoped event, actor, and date filters, limits ranges to 366 days, and paginates 50 events per page. Individual editing, deletion, detail routes, and export are intentionally absent.
+
+Tenant audit retention defaults to 365 days. The scheduler runs the chunked command daily:
+
+```bash
+php artisan nordipass:prune-audit-logs
+```
+
+Use `--dry-run`, `--days=`, and `--company=<company-uuid>` for controlled operations. Company-scoped pruning never touches another company. Unscoped pruning targets only rows historically marked `log_name=tenant`, including orphaned tenant history after a physical company deletion; platform rows are preserved for a separate future platform retention policy.
+
 ## Quality checks
 
 ```bash
@@ -195,6 +225,7 @@ On Windows, Composer scripts are the portable way to run tools from `vendor/bin`
 - Laravel 13 with Blade
 - Laravel Breeze authentication
 - Laravel Sanctum
+- Spatie Laravel Activitylog
 - Tailwind CSS and Alpine.js
 - Vite
 - Pest

@@ -2,8 +2,11 @@
 
 namespace App\Actions\Companies;
 
+use App\Audit\AuditLogger;
+use App\Audit\AuditSnapshot;
 use App\Authorization\CompanyInvitationAuthorizer;
 use App\Domain\Invitations\Exceptions\InvitationCannotBeCancelled;
+use App\Enums\AuditEvent;
 use App\Enums\CompanyStatus;
 use App\Models\Company;
 use App\Models\CompanyInvitation;
@@ -15,6 +18,8 @@ class CancelCompanyInvitation
 {
     public function __construct(
         private readonly CompanyInvitationAuthorizer $authorizer,
+        private readonly AuditLogger $auditLogger,
+        private readonly AuditSnapshot $auditSnapshot,
     ) {}
 
     public function execute(User $actor, CompanyInvitation $invitation): void
@@ -43,6 +48,14 @@ class CancelCompanyInvitation
 
             $lockedInvitation->setAttribute('cancelled_at', now());
             $lockedInvitation->save();
+
+            $this->auditLogger->logTenant(
+                $company,
+                AuditEvent::MemberInvitationCancelled,
+                $actor,
+                $lockedInvitation,
+                $this->auditSnapshot->invitation($lockedInvitation),
+            );
         });
 
         $invitation->refresh();

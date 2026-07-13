@@ -16,6 +16,10 @@
                         @can('viewAny', [\App\Models\CompanyMembership::class, $currentCompany])
                             <x-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')">{{ __('Members') }}</x-nav-link>
                         @endcan
+
+                        @can('viewAny', [\App\Models\AuditLog::class, $currentCompany])
+                            <x-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">{{ __('Audit') }}</x-nav-link>
+                        @endcan
                     @endif
                 </div>
             </div>
@@ -100,6 +104,9 @@
                 <x-responsive-nav-link :href="route('settings.company.edit')" :active="request()->routeIs('settings.company.*')">{{ __('Company settings') }}</x-responsive-nav-link>
                 @can('viewAny', [\App\Models\CompanyMembership::class, $currentCompany])
                     <x-responsive-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')">{{ __('Members') }}</x-responsive-nav-link>
+                @endcan
+                @can('viewAny', [\App\Models\AuditLog::class, $currentCompany])
+                    <x-responsive-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">{{ __('Audit') }}</x-responsive-nav-link>
                 @endcan
             @endif
         </div>

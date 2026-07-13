@@ -33,7 +33,7 @@ class ResendCompanyInvitation
             throw new InvitationCannotBeResent;
         }
 
-        return $this->inviteCompanyMember->execute(
+        return $this->inviteCompanyMember->resend(
             $actor,
             $company,
             (string) $freshInvitation->getAttribute('email'),

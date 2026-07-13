@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('nordipass:prune-invitations')->daily();
+Schedule::command('nordipass:prune-audit-logs')->daily();

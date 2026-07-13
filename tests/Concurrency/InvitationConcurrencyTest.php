@@ -3,7 +3,9 @@
 use App\Actions\Companies\AcceptCompanyInvitation;
 use App\Actions\Companies\InviteCompanyMember;
 use App\Domain\Invitations\Exceptions\InvitationCannotBeAccepted;
+use App\Enums\AuditEvent;
 use App\Enums\CompanyRole;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CompanyInvitation;
 use App\Models\CompanyMembership;
@@ -139,6 +141,15 @@ test('mysql serializes invitation races and enforces acceptance invariants', fun
             ->exists())->toBeFalse()
         ->and($rollbackInvitation->fresh()->accepted_at)->toBeNull()
         ->and($membership->role)->toBe(CompanyRole::Editor);
+
+    expect(AuditLog::query()
+        ->where('company_id', $company->getKey())
+        ->where('event', AuditEvent::MemberInvited->value)
+        ->count())->toBe(2)
+        ->and(AuditLog::query()
+            ->where('company_id', $company->getKey())
+            ->where('event', AuditEvent::MemberInvitationAccepted->value)
+            ->count())->toBe(1);
 
     DB::disconnect('mysql_invitation_competitor');
 });

@@ -6,9 +6,11 @@ use App\Authorization\CompanyAuthorizer;
 use App\Authorization\CompanyPermissionGate;
 use App\Authorization\CompanyPermissionMatrix;
 use App\Enums\CompanyPermission;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CompanyInvitation;
 use App\Models\CompanyMembership;
+use App\Policies\AuditLogPolicy;
 use App\Policies\CompanyInvitationPolicy;
 use App\Policies\CompanyMemberPolicy;
 use App\Policies\CompanyPolicy;
@@ -25,6 +27,7 @@ class AuthorizationServiceProvider extends ServiceProvider
 
     public function boot(Gate $gate): void
     {
+        $gate->policy(AuditLog::class, AuditLogPolicy::class);
         $gate->policy(Company::class, CompanyPolicy::class);
         $gate->policy(CompanyMembership::class, CompanyMemberPolicy::class);
         $gate->policy(CompanyInvitation::class, CompanyInvitationPolicy::class);

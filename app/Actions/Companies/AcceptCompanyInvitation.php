@@ -2,7 +2,10 @@
 
 namespace App\Actions\Companies;
 
+use App\Audit\AuditLogger;
+use App\Audit\AuditSnapshot;
 use App\Domain\Invitations\Exceptions\InvitationCannotBeAccepted;
+use App\Enums\AuditEvent;
 use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
 use App\Enums\UserStatus;
@@ -20,6 +23,8 @@ class AcceptCompanyInvitation
     public function __construct(
         private readonly InvitationTokenVerifier $tokenVerifier,
         private readonly EmailNormalizer $emailNormalizer,
+        private readonly AuditLogger $auditLogger,
+        private readonly AuditSnapshot $auditSnapshot,
     ) {}
 
     public function execute(
@@ -114,6 +119,14 @@ class AcceptCompanyInvitation
 
                 $lockedInvitation->setAttribute('accepted_at', now());
                 $lockedInvitation->save();
+
+                $this->auditLogger->logTenant(
+                    $company,
+                    AuditEvent::MemberInvitationAccepted,
+                    $lockedUser,
+                    $lockedInvitation,
+                    $this->auditSnapshot->invitation($lockedInvitation),
+                );
 
                 return $membership;
             });

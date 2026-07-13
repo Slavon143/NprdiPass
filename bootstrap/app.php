@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureCompanyIsActive;
 use App\Http\Middleware\EnsureCompanySelected;
+use App\Http\Middleware\EnsureRequestId;
 use App\Http\Middleware\EnsureUserBelongsToCurrentCompany;
 use App\Http\Middleware\InvitationSecurityHeaders;
 use App\Http\Middleware\ResolveCurrentCompany;
@@ -19,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(EnsureRequestId::class);
+
         $middleware->alias([
             'company.resolve' => ResolveCurrentCompany::class,
             'company.selected' => EnsureCompanySelected::class,

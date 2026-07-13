@@ -2,9 +2,12 @@
 
 namespace App\Actions\Companies;
 
+use App\Audit\AuditLogger;
+use App\Audit\AuditSnapshot;
 use App\Authorization\CompanyInvitationAuthorizer;
 use App\Domain\Invitations\Exceptions\CompanyMemberAlreadyExists;
 use App\Domain\Invitations\PendingInvitation;
+use App\Enums\AuditEvent;
 use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
 use App\Models\Company;
@@ -21,6 +24,8 @@ class InviteCompanyMember
         private readonly CompanyInvitationAuthorizer $authorizer,
         private readonly EmailNormalizer $emailNormalizer,
         private readonly InvitationTokenGenerator $tokenGenerator,
+        private readonly AuditLogger $auditLogger,
+        private readonly AuditSnapshot $auditSnapshot,
     ) {}
 
     public function execute(
@@ -29,9 +34,40 @@ class InviteCompanyMember
         string $email,
         CompanyRole $role,
     ): PendingInvitation {
+        return $this->create($actor, $company, $email, $role, AuditEvent::MemberInvited);
+    }
+
+    public function resend(
+        User $actor,
+        Company $company,
+        string $email,
+        CompanyRole $role,
+    ): PendingInvitation {
+        return $this->create(
+            $actor,
+            $company,
+            $email,
+            $role,
+            AuditEvent::MemberInvitationResent,
+        );
+    }
+
+    private function create(
+        User $actor,
+        Company $company,
+        string $email,
+        CompanyRole $role,
+        AuditEvent $auditEvent,
+    ): PendingInvitation {
         $normalizedEmail = $this->emailNormalizer->normalize($email);
 
-        return DB::transaction(function () use ($actor, $company, $normalizedEmail, $role): PendingInvitation {
+        return DB::transaction(function () use (
+            $actor,
+            $company,
+            $normalizedEmail,
+            $role,
+            $auditEvent,
+        ): PendingInvitation {
             $lockedCompany = Company::query()
                 ->whereKey($company->getKey())
                 ->lockForUpdate()
@@ -81,6 +117,14 @@ class InviteCompanyMember
             $invitation->setAttribute('token_hash', $token->hash());
             $invitation->setAttribute('invited_by', $actor->getKey());
             $invitation->save();
+
+            $this->auditLogger->logTenant(
+                $lockedCompany,
+                $auditEvent,
+                $actor,
+                $invitation,
+                $this->auditSnapshot->invitation($invitation),
+            );
 
             return new PendingInvitation($invitation, $token->plainText());
         });
