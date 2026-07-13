@@ -337,9 +337,9 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 | CORS | Yes | Yes | Yes | N/A | N/A | READY |
 | Rate limiting | Yes | Yes | database store | N/A | N/A | READY WITH LIMITATIONS |
 | Backup (files) | Yes | Yes | Yes | N/A | N/A | READY |
-| Backup (database) | Yes | Partial | mysqldump N/A | N/A | N/A | NOT VERIFIED |
-| Restore | Yes | No | Not rehearsed | N/A | N/A | NOT VERIFIED |
-| Disaster recovery | Partial | No | Not rehearsed | N/A | N/A | NOT VERIFIED |
+| Backup (database) | Yes | Yes | **Verified** (real dump + restore) | N/A | N/A | READY |
+| Restore | Yes | Yes | **Verified** (isolated rehearsal) | N/A | N/A | READY |
+| Disaster recovery | Partial | Yes | Local rehearsal | N/A | N/A | READY WITH LIMITATIONS |
 | CI workflow | Yes | Static | Locally tested | N/A | N/A | READY |
 | Release build | Yes | Static | Artifact created | N/A | N/A | READY |
 | Deployment | Yes | Rehearsal | Temp fixture | N/A | N/A | READY WITH LIMITATIONS |
@@ -353,8 +353,8 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 
 | # | Risk | Severity | Impact | Mitigation |
 |---|---|---|---|---|
-| 1 | Restore never rehearsed | HIGH | DR readiness claim invalid | Perform isolated restore rehearsal before production |
-| 2 | Database backup not verified locally (no mysqldump) | MEDIUM | Unknown backup integrity for database artifacts | Verify in CI or staging with real MySQL |
+| 1 | Restore rehearsal performed locally | — | RESOLVED | Verified 2026-07-13 |
+| 2 | Database backup verified locally (real mysqldump) | — | RESOLVED | Verified 2026-07-13 |
 | 3 | Redis runtime behavior unconfirmed | MEDIUM | Cache/session/queue behavior differs | Test with Redis in staging before production |
 | 4 | Production SSH fingerprint unverified | HIGH | MITM risk on deploy | Set DEPLOY_HOST_KEY, verify fingerprint manually |
 | 5 | Supervisor worker health not monitored | MEDIUM | Workers may silently stop | Add worker heartbeat or external monitoring |
@@ -373,9 +373,6 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 | Component | Reason | Environment Needed |
 |---|---|---|
 | Redis runtime (all drivers) | Redis not installed locally | Local Redis or staging |
-| Database backup | mysqldump not in PATH | MySQL installation or CI |
-| Isolated restore rehearsal | Requires dedicated test DB | Staging or CI with MySQL |
-| Disaster recovery flow | Depends on restore verification | Staging or production rehearsal |
 | GitHub Actions runtime | Windows local (no runner) | GitHub or `act` |
 | Production SSH deployment | No production server | Production environment |
 | Supervisor process health | No supervisor installed | Production server |
@@ -426,11 +423,11 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 - Deployment/rollback rehearsal verified locally
 - CI/deployment workflows statically validated and hardened
 - Health endpoints (liveness + readiness) fully verified
+- Real database backup created, verified, and restored to isolated database
+- Restore rehearsal completed: 10/10 checks passed, fixture records matched
 
 **Accepted Limitations:**
 - Redis runtime not verified (not installed locally) → staging verification required
-- Database backup not verified (no mysqldump) → CI or staging verification required
-- Restore rehearsal not performed → Stage 9.4 marked incomplete for restore
 - Production SSH, Supervisor, cron → require actual production environment
 - CSP not enabled → documented limitation (inline scripts)
 
