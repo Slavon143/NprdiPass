@@ -293,6 +293,10 @@ php artisan test
 
 On Windows, Composer scripts are the portable way to run tools from `vendor/bin`.
 
+## Infrastructure Verification
+
+See [`docs/infrastructure/INFRASTRUCTURE_VERIFICATION.md`](docs/infrastructure/INFRASTRUCTURE_VERIFICATION.md) for the complete Stage 9 infrastructure audit, production readiness matrix, and risk register.
+
 ## Stack
 
 - Laravel 13 with Blade

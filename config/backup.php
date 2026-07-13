@@ -10,6 +10,7 @@ return [
     'database' => [
         'enabled' => filter_var(env('BACKUP_DATABASE_ENABLED', true), FILTER_VALIDATE_BOOL),
         'binary' => env('BACKUP_DATABASE_BINARY', ''),
+        'restore_binary' => env('RESTORE_DATABASE_BINARY', ''),
     ],
 
     'files' => [

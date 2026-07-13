@@ -75,30 +75,37 @@ class RestoreCommand extends Command
         }
 
         $artifact = $manifest['artifacts']['database'];
-        $localDump = tempnam(sys_get_temp_dir(), 'restore_').'.sql.gz';
-        file_put_contents($localDump, $disk->get($backupPath.'/'.$artifact['path']));
+        $localDump = tempnam(sys_get_temp_dir(), 'restore_').'.sql';
+        $localGz = $localDump.'.gz';
+        file_put_contents($localGz, $disk->get($backupPath.'/'.$artifact['path']));
+
+        $decompressed = gzdecode(file_get_contents($localGz));
+        if ($decompressed === false) {
+            throw new \RuntimeException('Failed to decompress database artifact.');
+        }
+        file_put_contents($localDump, $decompressed);
 
         $mysqlBinary = $this->findMysqlBinary();
+
+        $this->line('Database dump size: '.round(strlen($decompressed) / 1024).' KB');
+        $this->line('Restoring database...');
 
         $credentialFile = sys_get_temp_dir().'/.restore_my.cnf';
         file_put_contents($credentialFile, $this->buildMyCnf($dbConfig));
         chmod($credentialFile, 0600);
 
         try {
-            $this->line('Restoring database...');
-
             $command = [
                 $mysqlBinary,
                 '--defaults-extra-file='.$credentialFile,
                 '--host='.$dbConfig['host'],
                 '--port='.$dbConfig['port'],
                 $dbConfig['database'],
-                '-e',
-                'source '.$localDump,
             ];
 
             $process = new Process($command);
             $process->setTimeout(600);
+            $process->setInput($decompressed);
             $process->run();
 
             if (! $process->isSuccessful()) {
@@ -109,6 +116,9 @@ class RestoreCommand extends Command
         } finally {
             if (file_exists($localDump)) {
                 unlink($localDump);
+            }
+            if (file_exists($localGz)) {
+                unlink($localGz);
             }
             if (file_exists($credentialFile)) {
                 unlink($credentialFile);

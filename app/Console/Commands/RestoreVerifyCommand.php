@@ -7,25 +7,28 @@ use Illuminate\Support\Facades\DB;
 
 class RestoreVerifyCommand extends Command
 {
-    protected $signature = 'nordipass:restore-verify';
+    protected $signature = 'nordipass:restore-verify
+        {--connection= : Database connection to verify (default: current connection)}';
 
     protected $description = 'Verify that the restored database is consistent';
 
     public function handle(): int
     {
-        $this->line('Running restore verification...');
+        $connection = $this->option('connection') ?? config('database.default');
+
+        $this->line('Running restore verification on connection: '.$connection.'...');
 
         $checks = [
-            'database_connection' => $this->checkDatabaseConnection(),
-            'migrations_table' => $this->checkMigrationsTable(),
-            'companies_table' => $this->checkTableExists('companies'),
-            'users_table' => $this->checkTableExists('users'),
-            'company_user_table' => $this->checkTableExists('company_user'),
-            'company_invitations_table' => $this->checkTableExists('company_invitations'),
-            'companies_have_records' => $this->checkTableHasRecords('companies'),
-            'users_have_records' => $this->checkTableHasRecords('users'),
-            'company_user_references' => $this->checkForeignKeyReferences('company_user', 'company_id', 'companies'),
-            'invitation_references' => $this->checkForeignKeyReferences('company_invitations', 'company_id', 'companies'),
+            'database_connection' => $this->checkDatabaseConnection($connection),
+            'migrations_table' => $this->checkMigrationsTable($connection),
+            'companies_table' => $this->checkTableExists('companies', $connection),
+            'users_table' => $this->checkTableExists('users', $connection),
+            'company_user_table' => $this->checkTableExists('company_user', $connection),
+            'company_invitations_table' => $this->checkTableExists('company_invitations', $connection),
+            'companies_have_records' => $this->checkTableHasRecords('companies', $connection),
+            'users_have_records' => $this->checkTableHasRecords('users', $connection),
+            'company_user_references' => $this->checkForeignKeyReferences('company_user', 'company_id', 'companies', $connection),
+            'invitation_references' => $this->checkForeignKeyReferences('company_invitations', 'company_id', 'companies', $connection),
         ];
 
         $allOk = true;
@@ -50,10 +53,10 @@ class RestoreVerifyCommand extends Command
         return 1;
     }
 
-    private function checkDatabaseConnection(): bool
+    private function checkDatabaseConnection(string $connection): bool
     {
         try {
-            DB::select('SELECT 1');
+            DB::connection($connection)->select('SELECT 1');
 
             return true;
         } catch (\Throwable) {
@@ -61,10 +64,10 @@ class RestoreVerifyCommand extends Command
         }
     }
 
-    private function checkMigrationsTable(): bool
+    private function checkMigrationsTable(string $connection): bool
     {
         try {
-            DB::select('SELECT 1 FROM migrations LIMIT 1');
+            DB::connection($connection)->select('SELECT 1 FROM migrations LIMIT 1');
 
             return true;
         } catch (\Throwable) {
@@ -72,10 +75,10 @@ class RestoreVerifyCommand extends Command
         }
     }
 
-    private function checkTableExists(string $table): bool
+    private function checkTableExists(string $table, string $connection): bool
     {
         try {
-            DB::select("SELECT 1 FROM {$table} LIMIT 1");
+            DB::connection($connection)->select("SELECT 1 FROM {$table} LIMIT 1");
 
             return true;
         } catch (\Throwable) {
@@ -83,19 +86,21 @@ class RestoreVerifyCommand extends Command
         }
     }
 
-    private function checkTableHasRecords(string $table): bool
+    private function checkTableHasRecords(string $table, string $connection): bool
     {
         try {
-            return DB::table($table)->count() > 0;
+            return DB::connection($connection)->table($table)->count() > 0;
         } catch (\Throwable) {
             return false;
         }
     }
 
-    private function checkForeignKeyReferences(string $childTable, string $foreignKey, string $parentTable): bool
+    private function checkForeignKeyReferences(string $childTable, string $foreignKey, string $parentTable, string $connection): bool
     {
         try {
-            $orphans = DB::table($childTable)
+            $db = DB::connection($connection);
+
+            $orphans = $db->table($childTable)
                 ->leftJoin($parentTable, "{$childTable}.{$foreignKey}", '=', "{$parentTable}.id")
                 ->whereNull("{$parentTable}.id")
                 ->count();
