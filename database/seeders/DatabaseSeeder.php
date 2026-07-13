@@ -10,6 +10,10 @@ class DatabaseSeeder extends Seeder
     {
         if (app()->environment(['local', 'testing'])) {
             $this->call(LocalDevelopmentSeeder::class);
+
+            return;
         }
+
+        $this->call(RolePermissionSeeder::class);
     }
 }

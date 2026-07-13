@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
+use App\Enums\PlatformRole;
 use App\Enums\UserStatus;
 use App\Models\Company;
 use App\Models\CompanyMembership;
@@ -18,6 +19,8 @@ class LocalDevelopmentSeeder extends Seeder
         if (! app()->environment(['local', 'testing'])) {
             return;
         }
+
+        $this->call(RolePermissionSeeder::class);
 
         $users = collect([
             'superadmin@nordipass.local' => 'Super Admin',
@@ -70,6 +73,8 @@ class LocalDevelopmentSeeder extends Seeder
         $this->syncMembership($demoCompany, $users['viewer@nordipass.local'], CompanyRole::Viewer);
         $this->syncMembership($demoCompany, $users['multi@nordipass.local'], CompanyRole::Viewer);
         $this->syncMembership($testCompany, $users['multi@nordipass.local'], CompanyRole::Owner);
+
+        $users['superadmin@nordipass.local']->syncRoles(PlatformRole::SuperAdmin->value);
     }
 
     private function syncMembership(Company $company, User $user, CompanyRole $role): void
@@ -79,7 +84,7 @@ class LocalDevelopmentSeeder extends Seeder
             'user_id' => $user->getKey(),
         ]);
 
-        $membership->role = $role->value;
+        $membership->role = $role;
         $membership->joined_at ??= now();
         $membership->save();
     }

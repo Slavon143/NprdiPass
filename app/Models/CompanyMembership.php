@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
+/**
+ * @property CompanyRole $role
+ * @property bool $is_owner
+ */
 class CompanyMembership extends Pivot
 {
     /** @use HasFactory<CompanyMembershipFactory> */
