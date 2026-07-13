@@ -23,6 +23,7 @@ class CompanyInvitationFactory extends Factory
             'token_hash' => hash('sha256', Str::random(64)),
             'expires_at' => now()->addDays(7),
             'accepted_at' => null,
+            'cancelled_at' => null,
             'invited_by' => User::factory(),
         ];
     }
@@ -32,6 +33,7 @@ class CompanyInvitationFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'expires_at' => now()->addDays(7),
             'accepted_at' => null,
+            'cancelled_at' => null,
         ]);
     }
 
@@ -40,6 +42,7 @@ class CompanyInvitationFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'expires_at' => now()->subMinute(),
             'accepted_at' => null,
+            'cancelled_at' => null,
         ]);
     }
 
@@ -48,6 +51,16 @@ class CompanyInvitationFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'expires_at' => now()->addDays(7),
             'accepted_at' => now(),
+            'cancelled_at' => null,
+        ]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'expires_at' => now()->addDays(7),
+            'accepted_at' => null,
+            'cancelled_at' => now(),
         ]);
     }
 }

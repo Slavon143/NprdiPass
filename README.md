@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, and the Stage 5 company-facing UI. Invitations and later product modules remain intentionally deferred.
+NordiPass is a Laravel application. The repository currently contains the R0 Foundation Stage 1 bootstrap, Stage 2 core database, Stage 3 tenancy context, Stage 4 authorization foundation, Stage 5 company-facing UI, and the Stage 6 company invitation lifecycle. Audit logging, API tokens, and later product modules remain intentionally deferred.
 
 ## Requirements
 
@@ -38,9 +38,10 @@ Start the application and the Vite development server in separate terminals:
 ```bash
 php artisan serve
 npm run dev
+php artisan queue:work
 ```
 
-The application is available at `http://localhost:8000`. Register a local user or sign in through the Laravel Breeze authentication routes. Local seed users use the password `password`.
+The application is available at `http://localhost:8000`. Public registration is disabled; new accounts are created only through a valid company invitation. Local seed users use the password `password`.
 
 ## Tenancy architecture
 
@@ -136,7 +137,29 @@ Company settings allow only `name`, `legal_name`, `organization_number`, `countr
 
 The members page is tenant-scoped, eager loads users, sorts by the explicit owner/admin/editor/viewer priority, and paginates at 25 memberships. Role changes and removals first resolve the membership through `CurrentCompany`, so a foreign membership identifier returns 404 before authorization. Controllers call the Stage 4 transactional actions; they never update or delete memberships directly.
 
-At least one owner is required. The UI hides the sole-owner downgrade control and generic self-removal, while the database transaction and row locks remain the authoritative protection against stale pages and concurrent requests. Invitation sending, acceptance, and email are not implemented in Stage 5, so no invitation button is shown.
+At least one owner is required. The UI hides the sole-owner downgrade control and generic self-removal, while the database transaction and row locks remain the authoritative protection against stale pages and concurrent requests.
+
+## Invitation flow
+
+Owner and admin memberships can manage invitations from `GET /settings/members`. Owners may invite `owner`, `admin`, `editor`, or `viewer`; admins may invite only `admin`, `editor`, or `viewer`. Editor and viewer memberships cannot create, resend, cancel, or list invitation history. All management lookups start from `CurrentCompany`, so an invitation UUID from another tenant returns 404.
+
+Creating an invitation normalizes the address with `trim` and `mb_strtolower`, verifies that it is not already a current company member, and locks the company plus matching pending invitation rows inside a transaction. A repeated invite or resend cancels the previous pending record and creates a new UUID, token, hash, and expiry. Only the SHA-256 token hash is stored in `company_invitations`; the URL-safe raw token is generated from 48 cryptographically secure random bytes and is returned only to the notification boundary. Cancellation sets `cancelled_at` and preserves history.
+
+Invitation links use `GET /invitations/{uuid}?token=...`. UUID identifies the record but is never accepted as proof of access. Token verification hashes the supplied value and uses `hash_equals`. Valid links show safe accepted, cancelled, expired, account-registration, account-login, or email-mismatch states. Invitation responses set `Cache-Control: no-store, private`, `Pragma: no-cache`, and `Referrer-Policy: no-referrer`; their dedicated Blade layout loads only same-origin Vite assets.
+
+Existing users sign in and accept with `POST /invitations/{uuid}/accept`. The action locks the company, invitation, and user rows, verifies the token and normalized email again, blocks suspended users and duplicate memberships, creates the membership with role-derived `is_owner`, records `joined_at` and `accepted_at`, and selects the accepted company in the session. An existing `invited` user becomes active after successful acceptance. Public Breeze registration is disabled. A guest without an account uses the invitation-only registration form; the email is fixed by the invitation, considered verified by possession of the emailed secret link, and the user, membership, and acceptance are committed atomically.
+
+`CompanyInvitationNotification` implements `ShouldQueue` and is marked `afterCommit`. Controllers dispatch it only after the invitation action transaction has returned. Queue workers receive explicit invitation data and never use the web `CurrentCompany` service. The queue payload necessarily contains the secret acceptance URL, so queue storage and `failed_jobs` are sensitive infrastructure: restrict access, use encryption-at-rest where available, and prune failed jobs according to operations policy. The invitation-specific mailer defaults to the in-memory `array` transport to prevent secret URLs entering application logs. Configure `INVITATION_MAILER=smtp` for a trusted SMTP service or a local Mailpit instance; do not use the `log` mailer for real invitation links.
+
+Invitation expiry defaults to 72 hours. History retention defaults to 180 days. The daily scheduler runs:
+
+```bash
+php artisan nordipass:prune-invitations
+```
+
+The command deletes only old accepted, cancelled, or expired records. It never removes a valid pending invitation, and `--dry-run` reports the count without changing data.
+
+Invitation rate limits are intentionally separate: create/resend management is limited to 10 requests per minute per user and company, token-page verification to 20 requests per minute per IP, and accept/registration to 10 requests per minute per IP. Invitation redirects are fixed internal routes; arbitrary return URLs are not accepted.
 
 Local test users all use the password `password`:
 

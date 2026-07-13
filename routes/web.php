@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\AcceptCompanyInvitationController;
+use App\Http\Controllers\CancelCompanyInvitationController;
+use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
 use App\Http\Controllers\CompanySettingsController;
@@ -8,6 +11,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoCompanyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RemoveCompanyMemberController;
+use App\Http\Controllers\ResendCompanyInvitationController;
+use App\Http\Controllers\ShowCompanyInvitationController;
+use App\Http\Controllers\StoreCompanyInvitationController;
 use App\Http\Controllers\SuspendedCompanyController;
 use App\Http\Controllers\UpdateCompanyMemberRoleController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +21,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::middleware(['invitation.secure', 'throttle:invitations.verify'])->group(function (): void {
+    Route::get('/invitations/{invitation:uuid}', ShowCompanyInvitationController::class)
+        ->name('invitations.show');
+});
+
+Route::middleware(['guest', 'invitation.secure', 'throttle:invitations.accept'])->group(function (): void {
+    Route::get('/invitations/{invitation:uuid}/register', [CompanyInvitationRegistrationController::class, 'create'])
+        ->name('invitations.register');
+    Route::post('/invitations/{invitation:uuid}/register', [CompanyInvitationRegistrationController::class, 'store']);
+});
+
+Route::post('/invitations/{invitation:uuid}/accept', AcceptCompanyInvitationController::class)
+    ->middleware(['auth', 'invitation.secure', 'throttle:invitations.accept'])
+    ->name('invitations.accept');
 
 Route::middleware(['auth', 'verified', 'company.resolve'])->group(function (): void {
     Route::get('/companies/select', CompanySelectionController::class)->name('companies.select');
@@ -37,6 +58,17 @@ Route::middleware([
         Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');
         Route::patch('/company', [CompanySettingsController::class, 'update'])->name('company.update');
         Route::get('/members', CompanyMembersController::class)->name('members.index');
+        Route::post('/members/invitations', StoreCompanyInvitationController::class)
+            ->middleware('throttle:invitations.manage')
+            ->name('members.invitations.store');
+        Route::post('/members/invitations/{invitation}/resend', ResendCompanyInvitationController::class)
+            ->whereUuid('invitation')
+            ->middleware('throttle:invitations.manage')
+            ->name('members.invitations.resend');
+        Route::delete('/members/invitations/{invitation}', CancelCompanyInvitationController::class)
+            ->whereUuid('invitation')
+            ->middleware('throttle:invitations.manage')
+            ->name('members.invitations.destroy');
         Route::patch('/members/{membership}/role', UpdateCompanyMemberRoleController::class)
             ->whereNumber('membership')
             ->name('members.role.update');

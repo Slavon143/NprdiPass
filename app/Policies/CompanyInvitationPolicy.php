@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Authorization\CompanyAuthorizer;
+use App\Authorization\CompanyInvitationAuthorizer;
 use App\Enums\CompanyPermission;
 use App\Models\Company;
 use App\Models\CompanyInvitation;
@@ -12,6 +13,7 @@ class CompanyInvitationPolicy
 {
     public function __construct(
         private readonly CompanyAuthorizer $authorizer,
+        private readonly CompanyInvitationAuthorizer $invitationAuthorizer,
     ) {}
 
     public function viewAny(User $user, Company $company): bool
@@ -26,15 +28,11 @@ class CompanyInvitationPolicy
 
     public function delete(User $user, CompanyInvitation $invitation): bool
     {
-        $freshInvitation = CompanyInvitation::query()->find($invitation->getKey());
+        return $this->invitationAuthorizer->allowsManage($user, $invitation);
+    }
 
-        if ($freshInvitation === null) {
-            return false;
-        }
-
-        $company = Company::query()->find($freshInvitation->getAttribute('company_id'));
-
-        return $company !== null
-            && $this->authorizer->allows($user, $company, CompanyPermission::MembersInvite);
+    public function resend(User $user, CompanyInvitation $invitation): bool
+    {
+        return $this->invitationAuthorizer->allowsManage($user, $invitation);
     }
 }

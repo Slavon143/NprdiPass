@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CompanyRole;
+use App\Models\CompanyInvitation;
 use App\Models\CompanyMembership;
 use App\Models\User;
 use App\Tenancy\Contracts\CurrentCompany;
@@ -36,6 +37,27 @@ class CompanyMembersController extends Controller
                 fn (CompanyRole $role): bool => $role !== CompanyRole::Owner,
             ));
 
+        $user = request()->user();
+        abort_unless($user instanceof User, 401);
+        $canManageInvitations = $user->can('viewAny', [CompanyInvitation::class, $company]);
+        $invitations = $canManageInvitations
+            ? $company->invitations()
+                ->with('inviter')
+                ->orderByRaw(
+                    'CASE WHEN accepted_at IS NULL AND cancelled_at IS NULL AND expires_at > ? THEN 0 ELSE 1 END',
+                    [now()],
+                )
+                ->orderByDesc('created_at')
+                ->paginate(15, ['*'], 'invitationsPage')
+                ->withQueryString()
+            : null;
+        $invitationRoleOptions = $currentMembership->role === CompanyRole::Owner
+            ? CompanyRole::cases()
+            : array_values(array_filter(
+                CompanyRole::cases(),
+                fn (CompanyRole $role): bool => $role !== CompanyRole::Owner,
+            ));
+
         return view()->make('settings.members.index', [
             'company' => $company,
             'currentMembership' => $currentMembership,
@@ -44,6 +66,9 @@ class CompanyMembersController extends Controller
                 ->where('role', CompanyRole::Owner->value)
                 ->count(),
             'roleOptions' => $roleOptions,
+            'canManageInvitations' => $canManageInvitations,
+            'invitations' => $invitations,
+            'invitationRoleOptions' => $invitationRoleOptions,
         ]);
     }
 }

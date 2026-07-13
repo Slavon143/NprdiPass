@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureCompanyIsActive;
 use App\Http\Middleware\EnsureCompanySelected;
 use App\Http\Middleware\EnsureUserBelongsToCurrentCompany;
+use App\Http\Middleware\InvitationSecurityHeaders;
 use App\Http\Middleware\ResolveCurrentCompany;
 use App\Tenancy\Exceptions\CurrentCompanyNotSet;
 use Illuminate\Foundation\Application;
@@ -16,12 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'company.resolve' => ResolveCurrentCompany::class,
             'company.selected' => EnsureCompanySelected::class,
             'company.member' => EnsureUserBelongsToCurrentCompany::class,
             'company.active' => EnsureCompanyIsActive::class,
+            'invitation.secure' => InvitationSecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

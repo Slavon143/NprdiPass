@@ -22,6 +22,9 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('MySql');
 
+pest()->extend(TestCase::class)
+    ->in('Concurrency');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

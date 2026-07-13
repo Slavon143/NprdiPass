@@ -10,6 +10,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property CompanyRole $role
+ * @property CarbonInterface $expires_at
+ * @property CarbonInterface|null $accepted_at
+ * @property CarbonInterface|null $cancelled_at
+ */
 class CompanyInvitation extends Model
 {
     /** @use HasFactory<CompanyInvitationFactory> */
@@ -31,7 +37,13 @@ class CompanyInvitation extends Model
             'role' => CompanyRole::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 
     public function company(): BelongsTo
@@ -56,8 +68,13 @@ class CompanyInvitation extends Model
         return $this->getAttribute('accepted_at') !== null;
     }
 
+    public function isCancelled(): bool
+    {
+        return $this->getAttribute('cancelled_at') !== null;
+    }
+
     public function isPending(): bool
     {
-        return ! $this->isAccepted() && ! $this->isExpired();
+        return ! $this->isAccepted() && ! $this->isCancelled() && ! $this->isExpired();
     }
 }

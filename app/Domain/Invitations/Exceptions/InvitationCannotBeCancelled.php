@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Domain\Invitations\Exceptions;
+
+use DomainException;
+
+class InvitationCannotBeCancelled extends DomainException
+{
+    public function __construct()
+    {
+        parent::__construct('Only a pending invitation can be cancelled.');
+    }
+}

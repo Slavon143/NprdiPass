@@ -8,6 +8,105 @@
     </x-slot>
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        @if ($canManageInvitations)
+            <section class="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="grid gap-6 border-b border-slate-200 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:px-6">
+                    <div>
+                        <p class="text-sm font-medium text-indigo-600">{{ __('Invitations') }}</p>
+                        <h2 class="mt-1 text-lg font-semibold text-slate-900">{{ __('Invite a company member') }}</h2>
+                        <p class="mt-1 max-w-2xl text-sm text-slate-500">{{ __('A secure, expiring link will be sent by email. Existing pending links for the same address are cancelled.') }}</p>
+                    </div>
+
+                    <form method="POST" action="{{ route('settings.members.invitations.store') }}" class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem_auto] sm:items-start">
+                        @csrf
+                        <div>
+                            <label for="invitation-email" class="sr-only">{{ __('Email') }}</label>
+                            <input id="invitation-email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email" placeholder="name@example.com" class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+                        <div>
+                            <label for="invitation-role" class="sr-only">{{ __('Role') }}</label>
+                            <select id="invitation-role" name="role" required class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @foreach ($invitationRoleOptions as $invitationRole)
+                                    <option value="{{ $invitationRole->value }}" @selected(old('role', \App\Enums\CompanyRole::Viewer->value) === $invitationRole->value)>{{ ucfirst($invitationRole->value) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                        </div>
+                        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Send invite') }}</button>
+                    </form>
+                </div>
+
+                @if ($invitations->isEmpty())
+                    <div class="px-6 py-10 text-center">
+                        <p class="font-semibold text-slate-900">{{ __('No invitations yet.') }}</p>
+                        <p class="mt-1 text-sm text-slate-500">{{ __('New invitations and their recent history will appear here.') }}</p>
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th scope="col" class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">{{ __('Email') }}</th>
+                                    <th scope="col" class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Role') }}</th>
+                                    <th scope="col" class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Invited by') }}</th>
+                                    <th scope="col" class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Expires') }}</th>
+                                    <th scope="col" class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Status') }}</th>
+                                    <th scope="col" class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">{{ __('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                @foreach ($invitations as $invitation)
+                                    @php
+                                        $invitationStatus = match (true) {
+                                            $invitation->isAccepted() => 'accepted',
+                                            $invitation->isCancelled() => 'cancelled',
+                                            $invitation->isExpired() => 'expired',
+                                            default => 'pending',
+                                        };
+                                    @endphp
+                                    <tr class="align-top">
+                                        <td class="max-w-xs break-all px-5 py-4 text-sm font-semibold text-slate-900 sm:px-6">{{ $invitation->email }}</td>
+                                        <td class="whitespace-nowrap px-5 py-4"><x-badge tone="slate">{{ $invitation->role->value }}</x-badge></td>
+                                        <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{{ $invitation->inviter?->name ?: __('Former member') }}</td>
+                                        <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{{ $invitation->expires_at->format('Y-m-d H:i') }}</td>
+                                        <td class="whitespace-nowrap px-5 py-4">
+                                            <x-badge :tone="match ($invitationStatus) { 'pending' => 'amber', 'accepted' => 'emerald', 'cancelled' => 'slate', default => 'red' }">{{ $invitationStatus }}</x-badge>
+                                        </td>
+                                        <td class="px-5 py-4 sm:px-6">
+                                            <div class="flex min-w-40 items-center justify-end gap-2">
+                                                @if ($invitation->isPending())
+                                                    @can('resend', $invitation)
+                                                        <form method="POST" action="{{ route('settings.members.invitations.resend', ['invitation' => $invitation->uuid]) }}">
+                                                            @csrf
+                                                            <button type="submit" class="rounded-lg px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Resend') }}</button>
+                                                        </form>
+                                                    @endcan
+                                                    @can('delete', $invitation)
+                                                        <form method="POST" action="{{ route('settings.members.invitations.destroy', ['invitation' => $invitation->uuid]) }}" x-data="{ message: @js(__('Cancel the invitation for :email?', ['email' => $invitation->email])) }" @submit.prevent="if (window.confirm(message)) $el.submit()">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">{{ __('Cancel') }}</button>
+                                                        </form>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-xs text-slate-400">{{ __('No actions available') }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if ($invitations->hasPages())
+                        <div class="border-t border-slate-200 px-5 py-4 sm:px-6">{{ $invitations->links() }}</div>
+                    @endif
+                @endif
+            </section>
+        @endif
+
         <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="flex flex-col gap-2 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div>
