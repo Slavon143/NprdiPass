@@ -1,6 +1,13 @@
 # NordiPass
 
-NordiPass is a Laravel application. The repository currently contains R0 Foundation Stages 1–8: bootstrap, core database, tenancy, authorization, company UI, invitations, tenant-aware audit, and the REST API foundation. Infrastructure hardening and later product modules remain intentionally deferred.
+NordiPass is a Laravel application. **R0 RELEASE READY WITH ACCEPTED LIMITATIONS.** R0 covers Foundation Stages 1–9: bootstrap, core database, tenancy, authorization, company UI, invitations, tenant-aware audit, REST API foundation, and infrastructure hardening. Later product modules remain intentionally deferred.
+
+## R0 Release Documents
+
+- [R0 Release Notes](docs/release/R0_RELEASE_NOTES.md)
+- [R0 Final Quality Review](docs/release/R0_FINAL_QUALITY_REVIEW.md)
+- [R0 Release Checklist](docs/release/R0_RELEASE_CHECKLIST.md)
+- [Infrastructure Verification](docs/infrastructure/INFRASTRUCTURE_VERIFICATION.md)
 
 ## Requirements
 

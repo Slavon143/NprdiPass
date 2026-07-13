@@ -28,14 +28,12 @@ test('database backup creates valid gzip artifact', function () {
     $dirs = Storage::disk(config('backup.disk'))->directories($backupPath);
     $latest = end($dirs);
 
-    if ($latest === false) {
-        return; // No backup to verify in test
-    }
+    expect($latest)->not->toBeFalse('No backup directory found');
 
     $manifest = json_decode(Storage::disk(config('backup.disk'))->get($latest.'/manifest.json'), true);
 
     if (! isset($manifest['artifacts']['database'])) {
-        return;
+        $this->markTestSkipped('No database artifact in backup');
     }
 
     $content = Storage::disk(config('backup.disk'))->get($latest.'/'.$manifest['artifacts']['database']['path']);

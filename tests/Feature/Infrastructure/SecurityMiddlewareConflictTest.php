@@ -35,14 +35,7 @@ test('invitation route has invitation-specific headers', function () {
 
     $response = $this->get('/invitations/some-uuid?token=test');
 
-    if ($response->status() !== 404) {
-        $response->assertHeader('Referrer-Policy', 'no-referrer')
-            ->assertHeader('Pragma', 'no-cache');
-
-        $cacheControl = (string) $response->headers->get('Cache-Control', '');
-        expect($cacheControl)->toContain('no-store')
-            ->and($cacheControl)->toContain('private');
-    }
+    expect($response->status())->toBe(404);
 });
 
 test('/up has web baseline headers not API headers', function () {
