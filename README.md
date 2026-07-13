@@ -246,6 +246,10 @@ Sanctum updates `last_used_at` after each successful bearer authentication, whic
 
 The daily scheduler runs `php artisan nordipass:prune-api-tokens`; use `--dry-run` and `--days=`. See [`docs/API.md`](docs/API.md) and [`docs/openapi.yaml`](docs/openapi.yaml).
 
+## CI and Deployment
+
+NordiPass uses GitHub Actions for CI, release build, and production deployment. See [`docs/infrastructure/CI_AND_DEPLOYMENT.md`](docs/infrastructure/CI_AND_DEPLOYMENT.md) and [`docs/infrastructure/RELEASE_CHECKLIST.md`](docs/infrastructure/RELEASE_CHECKLIST.md).
+
 ## Backup and Disaster Recovery
 
 NordiPass provides built-in backup and restore commands using native MySQL `mysqldump`. Backups include the database and application-managed files. See [`docs/infrastructure/BACKUP_AND_RESTORE.md`](docs/infrastructure/BACKUP_AND_RESTORE.md) and [`docs/infrastructure/DISASTER_RECOVERY.md`](docs/infrastructure/DISASTER_RECOVERY.md).

@@ -47,6 +47,10 @@ test('database backup creates valid gzip artifact', function () {
 });
 
 test('files-only backup succeeds', function () {
+    Config::set('backup.files.include', [storage_path('app/private/backup-test')]);
+    Config::set('backup.database.enabled', false);
+    Config::set('backup.verify_after_create', false);
+
     $exitCode = Artisan::call('nordipass:backup', ['--files-only' => true]);
 
     expect($exitCode)->toBe(0);

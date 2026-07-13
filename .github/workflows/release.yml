@@ -1,0 +1,105 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CI: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_mysql, fileinfo
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install production dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --classmap-authoritative
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Create release artifact
+        run: |
+          RELEASE_DIR="nordipass-release"
+          mkdir -p "$RELEASE_DIR"
+
+          rsync -a \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='storage/logs' \
+            --exclude='storage/framework/cache' \
+            --exclude='storage/framework/sessions' \
+            --exclude='storage/framework/views' \
+            --exclude='storage/app/private/nordipass' \
+            --exclude='deploy' \
+            --exclude='docs' \
+            . "$RELEASE_DIR/"
+
+          cat > "$RELEASE_DIR/RELEASE.json" <<-EOF
+          {
+            "application": "NordiPass",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref_name }}",
+            "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "php_version": "8.4",
+            "node_version": "22.x"
+          }
+          EOF
+
+          tar -czf nordipass-release.tar.gz "$RELEASE_DIR/"
+          sha256sum nordipass-release.tar.gz > nordipass-release.tar.gz.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordipass-release
+          path: |
+            nordipass-release.tar.gz
+            nordipass-release.tar.gz.sha256
+          retention-days: 7
+
+      - name: Verify artifact
+        run: |
+          sha256sum -c nordipass-release.tar.gz.sha256
+          tar -tzf nordipass-release.tar.gz | head -20

@@ -9,3 +9,9 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+deploy/ export-ignore
+docs/ export-ignore
+tests/ export-ignore
+.nvmrc export-ignore
+phpstan.neon export-ignore
+pint.json export-ignore
