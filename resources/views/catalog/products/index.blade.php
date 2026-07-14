@@ -62,7 +62,7 @@
                                     <td class="px-5 py-4 text-slate-700">{{ $product->primaryCategory?->name ?? __('Not assigned') }}</td>
                                     <td class="px-5 py-4"><p class="font-medium text-slate-800">{{ $product->defaultVariant?->name ?? __('Unavailable') }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->defaultVariant?->sku ?: __('No SKU') }}</p></td>
                                     <td class="px-5 py-4 text-slate-600"><time datetime="{{ $product->updated_at?->toAtomString() }}">{{ $product->updated_at?->format('Y-m-d H:i') }}</time></td>
-                                    <td class="px-5 py-4"><div class="flex justify-end gap-2"><a href="{{ route('catalog.products.show', $product->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('View') }}</a>@if ($canUpdate)<a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>@endif</div></td>
+                                    <td class="px-5 py-4"><div class="flex justify-end gap-2"><a href="{{ route('catalog.products.show', $product->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('View') }}</a>@if ($canUpdate && $product->status->value !== 'archived')<a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>@endif</div></td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -68,11 +68,18 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         'industrial-led-work-lamp',
     ]);
     $expectedVariantCounts = [3, 3, 1, 1, 2];
+    $expectedStatuses = [
+        ProductStatus::Active,
+        ProductStatus::Active,
+        ProductStatus::Draft,
+        ProductStatus::Archived,
+        ProductStatus::Draft,
+    ];
 
     foreach ($products as $index => $product) {
         expect($product->company_id)->toBe($demoCompany->id)
-            ->and($product->status)->toBe(ProductStatus::Draft)
-            ->and($product->published_at)->toBeNull()
+            ->and($product->status)->toBe($expectedStatuses[$index])
+            ->and($product->published_at === null)->toBe(! in_array($index, [0, 1], true))
             ->and($product->variants)->toHaveCount($expectedVariantCounts[$index])
             ->and($product->defaultVariant)->not->toBeNull()
             ->and($product->defaultVariant?->company_id)->toBe($demoCompany->id)
@@ -107,6 +114,12 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         ->and(ProductMedia::query()->whereNotNull('product_variant_id')->count())->toBe(4)
         ->and(Product::query()->forCompany($demoCompany)->whereNotNull('primary_media_id')->count())->toBe(3)
         ->and(ProductVariant::query()->forCompany($demoCompany)->whereNotNull('primary_media_id')->count())->toBe(4);
+
+    expect(ProductVariant::query()->forCompany($demoCompany)->where('status', 'archived')->pluck('sku')->all())
+        ->toBe(['DEMO-VEST-ORANGE-L'])
+        ->and(Product::query()->forCompany($demoCompany)->where('status', 'active')->count())->toBe(2)
+        ->and(Product::query()->forCompany($demoCompany)->where('status', 'draft')->count())->toBe(2)
+        ->and(Product::query()->forCompany($demoCompany)->where('status', 'archived')->count())->toBe(1);
 
     $this->seed(CatalogDemoSeeder::class);
 

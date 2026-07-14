@@ -7,6 +7,7 @@
                 <p class="mt-1 text-sm text-slate-500">{{ $product->name }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
+                <x-badge :tone="$variant->status->value === 'active' ? 'emerald' : ($variant->status->value === 'archived' ? 'amber' : 'slate')">{{ $variant->status->value }}</x-badge>
                 @if ($variant->isDefaultFor($product))<x-badge tone="indigo">{{ __('Default') }}</x-badge>@endif
                 @if ($canUpdate)<a href="{{ route('catalog.products.variants.edit', [$product->uuid, $variant->uuid]) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit variant') }}</a>@endif
             </div>
@@ -30,6 +31,15 @@
                     <x-primary-button>{{ __('Set as default') }}</x-primary-button>
                 </form>
             @endif
+            <div class="mt-6 border-t border-slate-200 pt-5">
+                @if($variant->status->value === 'archived' && $canRestore)<form method="POST" action="{{ route('catalog.products.variants.restore', [$product->uuid, $variant->uuid]) }}">@csrf<x-primary-button>{{ __('Restore variant') }}</x-primary-button></form>
+                @elseif($variant->status->value !== 'archived' && $canArchive)
+                    @if($variant->isDefaultFor($product))<p class="text-sm text-slate-500">{{ __('Select another default variant before archiving this variant.') }}</p>
+                    @elseif($availableVariantCount <= 1)<p class="text-sm text-slate-500">{{ __('The last available variant cannot be archived.') }}</p>
+                    @else<form method="POST" action="{{ route('catalog.products.variants.archive', [$product->uuid, $variant->uuid]) }}">@csrf<x-danger-button>{{ __('Archive variant') }}</x-danger-button></form>@endif
+                @endif
+                <x-input-error :messages="$errors->get('lifecycle')" class="mt-3" />
+            </div>
         </section>
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div class="flex items-center justify-between gap-3"><h2 class="text-lg font-semibold text-slate-900">{{ __('Variant Attributes') }}</h2>@if($canManageAttributes)<a href="{{ route('catalog.products.variants.attributes.edit', [$product->uuid, $variant->uuid]) }}" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Edit attributes') }}</a>@endif</div>

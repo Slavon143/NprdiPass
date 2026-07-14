@@ -39,6 +39,7 @@ class UpdateProductVariantAction extends VariantAction
                     ->whereKey($variant->getKey())
                     ->lockForUpdate()
                     ->firstOrFail();
+                $this->lifecycle->assertVariantEditable($lockedProduct, $lockedVariant);
                 $values = $this->normalizedData($data, $lockedVariant);
                 $lockedVariant->forceFill($values);
                 $changedFields = [];

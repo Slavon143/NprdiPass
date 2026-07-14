@@ -10,6 +10,7 @@ use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\Media\CatalogMediaStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,19 +18,23 @@ use Throwable;
 
 class DeleteVariantMediaAction extends MediaAction
 {
-    public function __construct(CompanyAuthorizer $authorizer, AuditLogger $auditLogger, private readonly CatalogMediaStorage $storage)
+    public function __construct(CompanyAuthorizer $authorizer, AuditLogger $auditLogger, CatalogLifecycleGuard $lifecycle, private readonly CatalogMediaStorage $storage)
     {
-        parent::__construct($authorizer, $auditLogger);
+        parent::__construct($authorizer, $auditLogger, $lifecycle);
     }
 
     public function execute(User $actor, Company $company, Product $product, ProductVariant $variant, ProductMedia $media): void
     {
         $company = $this->authorize($actor, $company);
+        $this->assertProduct($company, $product);
+        $this->assertVariant($company, $product, $variant);
         $this->assertVariantMedia($company, $product, $variant, $media);
         [$path, $uuid] = DB::transaction(function () use ($actor, $company, $product, $variant, $media): array {
             $this->authorize($actor, $company);
             $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $variant = ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+            $this->assertProduct($company, $product);
+            $this->assertVariant($company, $product, $variant);
             $media = ProductMedia::query()->forCompany($company)->whereKey($media->getKey())->lockForUpdate()->firstOrFail();
             $this->assertVariantMedia($company, $product, $variant, $media);
             $wasPrimary = (int) $variant->primary_media_id === (int) $media->getKey();

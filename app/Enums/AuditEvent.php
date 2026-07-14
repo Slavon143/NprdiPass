@@ -31,6 +31,7 @@ enum AuditEvent: string
     case CatalogProductCreated = 'catalog.product.created';
     case CatalogProductUpdated = 'catalog.product.updated';
     case CatalogProductActivated = 'catalog.product.activated';
+    case CatalogProductReturnedToDraft = 'catalog.product.returned_to_draft';
     case CatalogProductArchived = 'catalog.product.archived';
     case CatalogProductRestored = 'catalog.product.restored';
     case CatalogVariantCreated = 'catalog.variant.created';
@@ -85,6 +86,7 @@ enum AuditEvent: string
             self::CatalogProductCreated => 'Catalog product created',
             self::CatalogProductUpdated => 'Catalog product updated',
             self::CatalogProductActivated => 'Catalog product activated',
+            self::CatalogProductReturnedToDraft => 'Catalog product returned to draft',
             self::CatalogProductArchived => 'Catalog product archived',
             self::CatalogProductRestored => 'Catalog product restored',
             self::CatalogVariantCreated => 'Catalog variant created',

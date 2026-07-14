@@ -20,6 +20,7 @@ use App\Models\Catalog\ProductVariant;
 use App\Models\Catalog\VariantAttributeValue;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\ProductActivationReadinessService;
 use App\Services\Catalog\ProductCategoryService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Database\Seeder;
@@ -34,6 +35,7 @@ class CatalogDemoSeeder extends Seeder
         private readonly ProductAggregateCreator $aggregateCreator,
         private readonly ProductCategoryService $categoryService,
         private readonly CatalogIdentifierNormalizer $normalizer,
+        private readonly ProductActivationReadinessService $readiness,
     ) {}
 
     public function run(): void
@@ -85,14 +87,14 @@ class CatalogDemoSeeder extends Seeder
                         'description' => null,
                         'brand' => $specification['brand'],
                         'manufacturer' => $specification['brand'],
-                        'status' => ProductStatus::Draft,
-                        'published_at' => null,
-                        'primary_media_id' => null,
+                        'status' => $product->status,
+                        'published_at' => $product->published_at,
+                        'primary_media_id' => $product->primary_media_id,
                         'updated_by' => $owner->getKey(),
                     ])->save();
                     $variant = $product->defaultVariant()->lockForUpdate()->first();
 
-                    if ($variant === null) {
+                    if (! $variant instanceof ProductVariant) {
                         throw new RuntimeException("Demo product {$specification['slug']} has no default Variant.");
                     }
 
@@ -102,9 +104,9 @@ class CatalogDemoSeeder extends Seeder
                         'sku_normalized' => $this->normalizer->normalizeSku($specification['sku']),
                         'gtin' => null,
                         'mpn' => $specification['mpn'],
-                        'status' => ProductVariantStatus::Draft,
+                        'status' => $variant->status,
                         'sort_order' => 0,
-                        'primary_media_id' => null,
+                        'primary_media_id' => $variant->primary_media_id,
                         'updated_by' => $owner->getKey(),
                     ])->save();
                 }
@@ -125,6 +127,7 @@ class CatalogDemoSeeder extends Seeder
 
             $this->seedAttributes($company, $owner);
             $this->seedMedia($company, $owner);
+            $this->seedLifecycle($company, $owner);
         });
     }
 
@@ -321,6 +324,50 @@ class CatalogDemoSeeder extends Seeder
         return $option;
     }
 
+    private function seedLifecycle(Company $company, User $owner): void
+    {
+        $states = [
+            'progrip-work-gloves' => ProductStatus::Active,
+            'reflective-safety-vest' => ProductStatus::Active,
+            'fire-extinguisher-6kg' => ProductStatus::Draft,
+            'professional-ear-defenders' => ProductStatus::Archived,
+            'industrial-led-work-lamp' => ProductStatus::Draft,
+        ];
+
+        foreach ($states as $slug => $status) {
+            $product = Product::query()->forCompany($company)
+                ->where('slug_normalized', $slug)->lockForUpdate()->firstOrFail();
+
+            if ($status === ProductStatus::Active && $product->status !== ProductStatus::Active) {
+                $product->forceFill(['status' => ProductStatus::Draft])->save();
+                $result = $this->readiness->evaluate($company, $product);
+                if (! $result->ready) {
+                    throw new RuntimeException("Demo Product {$slug} failed readiness: ".implode(', ', $result->blockerCodes()));
+                }
+            }
+
+            $product->forceFill([
+                'status' => $status,
+                'published_at' => $status === ProductStatus::Active ? ($product->published_at ?? now()) : $product->published_at,
+                'updated_by' => $owner->getKey(),
+            ])->save();
+
+            $variantStatus = in_array($status, [ProductStatus::Active, ProductStatus::Archived], true)
+                ? ProductVariantStatus::Active
+                : ProductVariantStatus::Draft;
+            $variants = ProductVariant::query()->forCompany($company)
+                ->where('product_id', $product->getKey())->orderBy('id')->lockForUpdate()->get();
+            foreach ($variants as $variant) {
+                $targetStatus = $variant->sku_normalized === $this->normalizer->normalizeSku('DEMO-VEST-ORANGE-L')
+                    ? ProductVariantStatus::Archived
+                    : $variantStatus;
+                if ($variant->status !== $targetStatus) {
+                    $variant->forceFill(['status' => $targetStatus, 'updated_by' => $owner->getKey()])->save();
+                }
+            }
+        }
+    }
+
     /**
      * @param  list<array{name: string, sku: string, mpn: string, sort_order: int}>  $specifications
      */
@@ -344,6 +391,7 @@ class CatalogDemoSeeder extends Seeder
             }
 
             $variant ??= new ProductVariant;
+            $existing = $variant->exists;
             $variant->forceFill([
                 'company_id' => $company->getKey(),
                 'product_id' => $product->getKey(),
@@ -352,9 +400,9 @@ class CatalogDemoSeeder extends Seeder
                 'sku_normalized' => $skuNormalized,
                 'gtin' => null,
                 'mpn' => $this->normalizer->normalizeMpn($specification['mpn']),
-                'status' => ProductVariantStatus::Draft,
+                'status' => $existing ? $variant->status : ProductVariantStatus::Draft,
                 'sort_order' => $specification['sort_order'],
-                'primary_media_id' => null,
+                'primary_media_id' => $existing ? $variant->primary_media_id : null,
                 'created_by' => $variant->exists ? $variant->created_by : $owner->getKey(),
                 'updated_by' => $owner->getKey(),
             ])->save();

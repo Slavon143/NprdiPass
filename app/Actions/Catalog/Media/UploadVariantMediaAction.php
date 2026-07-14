@@ -11,6 +11,7 @@ use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\Media\CatalogMediaStorage;
 use App\Support\Catalog\Media\ImageUploadValidator;
 use Illuminate\Http\UploadedFile;
@@ -21,9 +22,9 @@ use Throwable;
 
 class UploadVariantMediaAction extends MediaAction
 {
-    public function __construct(CompanyAuthorizer $authorizer, AuditLogger $auditLogger, private readonly ImageUploadValidator $validator, private readonly CatalogMediaStorage $storage)
+    public function __construct(CompanyAuthorizer $authorizer, AuditLogger $auditLogger, CatalogLifecycleGuard $lifecycle, private readonly ImageUploadValidator $validator, private readonly CatalogMediaStorage $storage)
     {
-        parent::__construct($authorizer, $auditLogger);
+        parent::__construct($authorizer, $auditLogger, $lifecycle);
     }
 
     public function execute(User $actor, Company $company, Product $product, ProductVariant $variant, UploadedFile $file, ?string $altText = null, ?string $caption = null, bool $makePrimary = false, mixed $sortOrder = null): ProductMedia
@@ -41,6 +42,8 @@ class UploadVariantMediaAction extends MediaAction
                 $company = $this->authorize($actor, $company);
                 $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
                 $variant = ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+                $this->assertProduct($company, $product);
+                $this->assertVariant($company, $product, $variant);
                 if (ProductMedia::query()->forCompany($company)->where('product_id', $product->getKey())->count() >= (int) config('catalog.media.max_per_product')
                     || ProductMedia::query()->forCompany($company)->where('product_variant_id', $variant->getKey())->count() >= (int) config('catalog.media.max_per_variant')) {
                     throw MediaOperationException::invalid('image', 'The Variant image limit has been reached.', 'media_limit');

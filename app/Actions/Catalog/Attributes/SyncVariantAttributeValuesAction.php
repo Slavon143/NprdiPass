@@ -23,6 +23,7 @@ class SyncVariantAttributeValuesAction extends AttributeAction
     {
         $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
         $this->assertOwners($company, $product, $variant);
+        $this->assertProductEditable($product, $variant);
 
         return DB::transaction(function () use ($actor, $company, $product, $variant, $payload): ProductVariant {
             $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
@@ -32,6 +33,7 @@ class SyncVariantAttributeValuesAction extends AttributeAction
                 ->whereKey($variant->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+            $this->assertProductEditable($product, $variant);
             $definitions = AttributeDefinition::query()
                 ->forCompany($company)
                 ->where('status', AttributeDefinitionStatus::Active->value)

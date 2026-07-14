@@ -14,8 +14,10 @@ use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\Catalog\MediaContentController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
+use App\Http\Controllers\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductVariantController;
+use App\Http\Controllers\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
 use App\Http\Controllers\Catalog\VariantAttributeController;
 use App\Http\Controllers\Catalog\VariantMediaController;
@@ -113,6 +115,8 @@ Route::middleware([
             Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->whereUuid('variant')->name('edit');
             Route::patch('/{variant}', [ProductVariantController::class, 'update'])->whereUuid('variant')->name('update');
             Route::post('/{variant}/set-default', SetDefaultProductVariantController::class)->whereUuid('variant')->name('set-default');
+            Route::post('/{variant}/archive', [ProductVariantLifecycleController::class, 'archive'])->whereUuid('variant')->name('archive');
+            Route::post('/{variant}/restore', [ProductVariantLifecycleController::class, 'restore'])->whereUuid('variant')->name('restore');
         });
         Route::prefix('/{product}/media')->whereUuid('product')->name('media.')->group(function (): void {
             Route::get('/', [ProductMediaController::class, 'index'])->name('index');
@@ -124,6 +128,10 @@ Route::middleware([
         });
         Route::get('/{product}/attributes/edit', [ProductAttributeController::class, 'edit'])->whereUuid('product')->name('attributes.edit');
         Route::put('/{product}/attributes', [ProductAttributeController::class, 'update'])->whereUuid('product')->name('attributes.update');
+        Route::post('/{product}/activate', [ProductLifecycleController::class, 'activate'])->whereUuid('product')->name('activate');
+        Route::post('/{product}/return-to-draft', [ProductLifecycleController::class, 'returnToDraft'])->whereUuid('product')->name('return-to-draft');
+        Route::post('/{product}/archive', [ProductLifecycleController::class, 'archive'])->whereUuid('product')->name('archive');
+        Route::post('/{product}/restore', [ProductLifecycleController::class, 'restore'])->whereUuid('product')->name('restore');
         Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');

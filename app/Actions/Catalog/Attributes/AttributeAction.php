@@ -11,8 +11,11 @@ use App\Enums\CompanyStatus;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
+use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Support\Catalog\AttributeValueValidator;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -30,6 +33,7 @@ abstract class AttributeAction
         protected readonly CatalogIdentifierNormalizer $normalizer,
         protected readonly AuditLogger $auditLogger,
         protected readonly AttributeValueValidator $validator,
+        protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
     protected function authorize(User $actor, Company $company, CompanyPermission $permission = CompanyPermission::CatalogManageAttributes): Company
@@ -58,6 +62,17 @@ abstract class AttributeAction
             || (int) $option->attribute_definition_id !== (int) $definition->getKey()) {
             throw AttributeOperationException::optionMismatch();
         }
+    }
+
+    protected function assertProductEditable(Product $product, ?ProductVariant $variant = null): void
+    {
+        if ($variant === null) {
+            $this->lifecycle->assertProductEditable($product);
+
+            return;
+        }
+
+        $this->lifecycle->assertVariantEditable($product, $variant);
     }
 
     /**

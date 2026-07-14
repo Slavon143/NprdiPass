@@ -25,6 +25,8 @@ class ReorderVariantMediaAction extends MediaAction
             $this->authorize($actor, $company);
             $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $variant = ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+            $this->assertProduct($company, $product);
+            $this->assertVariant($company, $product, $variant);
             $media = ProductMedia::query()->forCompany($company)->where('product_id', $product->getKey())->where('product_variant_id', $variant->getKey())->orderBy('id')->lockForUpdate()->get();
             if ($media->pluck('uuid')->sort()->values()->all() !== collect($uuids)->sort()->values()->all()) {
                 throw MediaOperationException::invalid('media_uuids', 'The complete Variant image set is required.');

@@ -26,10 +26,12 @@ class SyncProductAttributeValuesAction extends AttributeAction
         if ((int) $product->company_id !== (int) $company->getKey()) {
             throw AttributeOperationException::tenantMismatch();
         }
+        $this->assertProductEditable($product);
 
         return DB::transaction(function () use ($actor, $company, $product, $payload): Product {
             $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
             $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            $this->assertProductEditable($product);
             $definitions = AttributeDefinition::query()
                 ->forCompany($company)
                 ->where('status', AttributeDefinitionStatus::Active->value)

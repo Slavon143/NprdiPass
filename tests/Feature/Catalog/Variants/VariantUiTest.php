@@ -294,7 +294,7 @@ test('product pages expose bounded variant summaries and management links', func
         ->assertSee('7 variants');
 });
 
-test('variant route names exist without delete archive restore or GET mutation routes', function () {
+test('variant lifecycle route names use POST and no delete or GET mutation route exists', function () {
     [$owner, $company] = r16UiVariantContext();
     $product = r16UiVariantProduct($company, $owner);
     $variant = r16UiDirectVariant($company, $product, $owner, 'Route variant');
@@ -304,9 +304,11 @@ test('variant route names exist without delete archive restore or GET mutation r
         ->and(route('catalog.products.variants.create', $product->uuid))->toEndWith('/variants/create')
         ->and(route('catalog.products.variants.show', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid)
         ->and(route('catalog.products.variants.edit', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid.'/edit')
-        ->and(route('catalog.products.variants.set-default', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid.'/set-default');
+        ->and(route('catalog.products.variants.set-default', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid.'/set-default')
+        ->and(route('catalog.products.variants.archive', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid.'/archive')
+        ->and(route('catalog.products.variants.restore', [$product->uuid, $variant->uuid]))->toEndWith('/variants/'.$variant->uuid.'/restore');
 
     $this->delete(route('catalog.products.variants.show', [$product->uuid, $variant->uuid]))->assertMethodNotAllowed();
-    $this->post('/catalog/products/'.$product->uuid.'/variants/'.$variant->uuid.'/archive')->assertNotFound();
-    $this->post('/catalog/products/'.$product->uuid.'/variants/'.$variant->uuid.'/restore')->assertNotFound();
+    $this->get(route('catalog.products.variants.archive', [$product->uuid, $variant->uuid]))->assertMethodNotAllowed();
+    $this->get(route('catalog.products.variants.restore', [$product->uuid, $variant->uuid]))->assertMethodNotAllowed();
 });

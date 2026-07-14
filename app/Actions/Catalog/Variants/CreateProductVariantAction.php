@@ -28,6 +28,7 @@ class CreateProductVariantAction extends VariantAction
                     ->whereKey($product->getKey())
                     ->lockForUpdate()
                     ->firstOrFail();
+                $this->lifecycle->assertProductEditable($lockedProduct);
                 $this->variants->assertCapacity($lockedProduct);
                 $values = $this->normalizedData($data);
                 $variant = new ProductVariant;

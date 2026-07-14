@@ -12,6 +12,7 @@ use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 
 abstract class MediaAction
@@ -19,6 +20,7 @@ abstract class MediaAction
     public function __construct(
         protected readonly CompanyAuthorizer $authorizer,
         protected readonly AuditLogger $auditLogger,
+        protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
     protected function authorize(User $actor, Company $company, CompanyPermission $permission = CompanyPermission::CatalogManageMedia): Company
@@ -39,6 +41,8 @@ abstract class MediaAction
         if ((int) $product->company_id !== (int) $company->getKey() || $product->trashed()) {
             throw MediaOperationException::unavailable();
         }
+
+        $this->lifecycle->assertProductEditable($product);
     }
 
     protected function assertVariant(Company $company, Product $product, ProductVariant $variant): void
@@ -47,10 +51,14 @@ abstract class MediaAction
             || (int) $variant->product_id !== (int) $product->getKey() || $variant->trashed()) {
             throw MediaOperationException::unavailable();
         }
+
+        $this->lifecycle->assertVariantEditable($product, $variant);
     }
 
     protected function assertProductMedia(Company $company, Product $product, ProductMedia $media): void
     {
+        $this->assertProduct($company, $product);
+
         if ((int) $media->company_id !== (int) $company->getKey()
             || (int) $media->product_id !== (int) $product->getKey()
             || $media->product_variant_id !== null || $media->trashed()) {
@@ -60,6 +68,9 @@ abstract class MediaAction
 
     protected function assertVariantMedia(Company $company, Product $product, ProductVariant $variant, ProductMedia $media): void
     {
+        $this->assertProduct($company, $product);
+        $this->assertVariant($company, $product, $variant);
+
         if ((int) $media->company_id !== (int) $company->getKey()
             || (int) $media->product_id !== (int) $product->getKey()
             || (int) $media->product_variant_id !== (int) $variant->getKey() || $media->trashed()) {

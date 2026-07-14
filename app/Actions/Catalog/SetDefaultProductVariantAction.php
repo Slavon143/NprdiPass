@@ -13,6 +13,7 @@ use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,7 @@ class SetDefaultProductVariantAction
     public function __construct(
         private readonly CompanyAuthorizer $authorizer,
         private readonly AuditLogger $auditLogger,
+        private readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
     public function execute(User $actor, Product $product, ProductVariant $variant): Product
@@ -55,6 +57,8 @@ class SetDefaultProductVariantAction
                 || $lockedVariant->getRawOriginal('status') === ProductVariantStatus::Archived->value) {
                 throw new InvalidDefaultVariant;
             }
+
+            $this->lifecycle->assertVariantEditable($lockedProduct, $lockedVariant);
 
             if ($lockedProduct->getAttribute('default_variant_id') === $lockedVariant->getKey()) {
                 return $lockedProduct->load('defaultVariant');

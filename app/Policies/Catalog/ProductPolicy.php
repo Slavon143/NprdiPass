@@ -2,6 +2,7 @@
 
 namespace App\Policies\Catalog;
 
+use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Models\Catalog\Product;
 use App\Models\Company;
@@ -26,10 +27,31 @@ class ProductPolicy extends CatalogPolicy
 
     public function update(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogUpdate);
+        return $this->isEditable($product)
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogUpdate);
     }
 
     public function archive(User $user, Product $product): bool
+    {
+        return $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
+    }
+
+    public function viewReadiness(User $user, Product $product): bool
+    {
+        return $this->allowsModel($user, $product, CompanyPermission::CatalogView);
+    }
+
+    public function activate(User $user, Product $product): bool
+    {
+        return $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
+    }
+
+    public function returnToDraft(User $user, Product $product): bool
+    {
+        return $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
+    }
+
+    public function restore(User $user, Product $product): bool
     {
         return $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
     }
@@ -41,11 +63,20 @@ class ProductPolicy extends CatalogPolicy
 
     public function manageMedia(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogManageMedia);
+        return $this->isEditable($product)
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogManageMedia);
     }
 
     public function manageAttributes(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogUpdate);
+        return $this->isEditable($product)
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogUpdate);
+    }
+
+    private function isEditable(Product $product): bool
+    {
+        $fresh = $this->freshModel($product);
+
+        return $fresh instanceof Product && $fresh->status !== ProductStatus::Archived;
     }
 }

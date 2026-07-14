@@ -23,6 +23,7 @@ class ReorderProductMediaAction extends MediaAction
         DB::transaction(function () use ($actor, $company, $product, $uuids): void {
             $this->authorize($actor, $company);
             $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            $this->assertProduct($company, $product);
             $media = ProductMedia::query()->forCompany($company)->where('product_id', $product->getKey())->productLevel()->orderBy('id')->lockForUpdate()->get();
             if ($media->pluck('uuid')->sort()->values()->all() !== collect($uuids)->sort()->values()->all()) {
                 throw MediaOperationException::invalid('media_uuids', 'The complete Product image set is required.');

@@ -114,6 +114,11 @@ class ProductVariant extends Model
         return $query->where($query->qualifyColumn('status'), ProductVariantStatus::Active->value);
     }
 
+    public function scopeAvailable(Builder $query): Builder
+    {
+        return $query->where($query->qualifyColumn('status'), '!=', ProductVariantStatus::Archived->value);
+    }
+
     public function scopeArchived(Builder $query): Builder
     {
         return $query->where($query->qualifyColumn('status'), ProductVariantStatus::Archived->value);

@@ -77,6 +77,9 @@ jobs:
 
       - name: Run Media MySQL tests
         run: php artisan test tests/Feature/Catalog/Media tests/Unit/Catalog/Media
+
+      - name: Run Lifecycle MySQL tests
+        run: php artisan test tests/Feature/Catalog/Lifecycle
         env:
           APP_ENV: testing
 

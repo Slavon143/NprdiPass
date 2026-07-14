@@ -11,6 +11,7 @@ use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\ProductVariantService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -24,6 +25,7 @@ abstract class VariantAction
         protected readonly CatalogIdentifierNormalizer $normalizer,
         protected readonly AuditLogger $auditLogger,
         protected readonly ProductVariantService $variants,
+        protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
     protected function authorize(User $actor, Company $company, CompanyPermission $permission): Company
@@ -44,6 +46,8 @@ abstract class VariantAction
         if ((int) $product->getAttribute('company_id') !== (int) $company->getKey()) {
             throw VariantOperationException::tenantMismatch();
         }
+
+        $this->lifecycle->assertProductEditable($product);
     }
 
     protected function assertVariantOwner(Company $company, Product $product, ProductVariant $variant): void
@@ -55,6 +59,8 @@ abstract class VariantAction
         if ((int) $variant->getAttribute('product_id') !== (int) $product->getKey()) {
             throw VariantOperationException::productMismatch();
         }
+
+        $this->lifecycle->assertVariantEditable($product, $variant);
     }
 
     /**

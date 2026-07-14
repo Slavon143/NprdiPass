@@ -43,6 +43,7 @@ class UpdateProductAction extends ProductAction
                     ->whereKey($product->getKey())
                     ->lockForUpdate()
                     ->firstOrFail();
+                $this->lifecycle->assertProductEditable($product);
                 $values = $this->normalizedData($data, $product);
 
                 $duplicateSlug = Product::query()

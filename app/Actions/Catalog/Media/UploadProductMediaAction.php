@@ -10,6 +10,7 @@ use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\Media\CatalogMediaStorage;
 use App\Support\Catalog\Media\ImageUploadValidator;
 use Illuminate\Http\UploadedFile;
@@ -23,10 +24,11 @@ class UploadProductMediaAction extends MediaAction
     public function __construct(
         CompanyAuthorizer $authorizer,
         AuditLogger $auditLogger,
+        CatalogLifecycleGuard $lifecycle,
         private readonly ImageUploadValidator $validator,
         private readonly CatalogMediaStorage $storage,
     ) {
-        parent::__construct($authorizer, $auditLogger);
+        parent::__construct($authorizer, $auditLogger, $lifecycle);
     }
 
     public function execute(User $actor, Company $company, Product $product, UploadedFile $file, ?string $altText = null, ?string $caption = null, bool $makePrimary = false, mixed $sortOrder = null): ProductMedia
@@ -42,6 +44,7 @@ class UploadProductMediaAction extends MediaAction
             return DB::transaction(function () use ($actor, $company, $product, $image, $uuid, $path, $altText, $caption, $makePrimary, $sortOrder): ProductMedia {
                 $company = $this->authorize($actor, $company);
                 $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+                $this->assertProduct($company, $product);
                 $count = ProductMedia::query()->forCompany($company)->where('product_id', $product->getKey())->count();
 
                 if ($count >= (int) config('catalog.media.max_per_product')) {

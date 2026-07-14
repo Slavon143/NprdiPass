@@ -10,6 +10,7 @@ use App\Exceptions\Catalog\ProductOperationException;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\ProductCategoryService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -23,6 +24,7 @@ abstract class ProductAction
         protected readonly AuditLogger $auditLogger,
         protected readonly ProductCategoryService $categories,
         protected readonly ProductAggregateCreator $aggregateCreator,
+        protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
     protected function authorize(User $actor, Company $company, CompanyPermission $permission): Company
@@ -43,6 +45,8 @@ abstract class ProductAction
         if ((int) $product->getAttribute('company_id') !== (int) $company->getKey()) {
             throw ProductOperationException::tenantMismatch();
         }
+
+        $this->lifecycle->assertProductEditable($product);
     }
 
     /**

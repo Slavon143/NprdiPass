@@ -32,9 +32,9 @@ class UpdateProductMediaAction extends MediaAction
 
         return DB::transaction(function () use ($actor, $company, $product, $variant, $media, $data): ProductMedia {
             $this->authorize($actor, $company);
-            Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             if ($variant !== null) {
-                ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+                $variant = ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
             }
             $media = ProductMedia::query()->forCompany($company)->whereKey($media->getKey())->lockForUpdate()->firstOrFail();
             $variant === null ? $this->assertProductMedia($company, $product, $media) : $this->assertVariantMedia($company, $product, $variant, $media);

@@ -7,6 +7,7 @@ use App\Actions\Catalog\Products\UpdateProductAction;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
+use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Products\StoreProductRequest;
@@ -19,6 +20,7 @@ use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CategoryHierarchyService;
+use App\Services\Catalog\ProductActivationReadinessService;
 use App\Support\Catalog\AttributeValueFormatter;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
@@ -91,8 +93,13 @@ class ProductController extends Controller
             ->with('success', 'Product created.');
     }
 
-    public function show(Request $request, CurrentCompany $currentCompany, AttributeValueFormatter $attributeFormatter, string $product): View
-    {
+    public function show(
+        Request $request,
+        CurrentCompany $currentCompany,
+        AttributeValueFormatter $attributeFormatter,
+        ProductActivationReadinessService $readinessService,
+        string $product,
+    ): View {
         $company = $currentCompany->require();
         $product = $this->resolveProduct($company, $product);
         $this->authorize('view', $product);
@@ -114,14 +121,21 @@ class ProductController extends Controller
             ->whereIn('scope', [AttributeScope::Product->value, AttributeScope::Both->value])
             ->ordered()
             ->get();
+        $readiness = $readinessService->evaluate($company, $product);
+        $isArchived = $product->status === ProductStatus::Archived;
 
         return view()->make('catalog.products.show', [
             'company' => $company,
             'product' => $product,
-            'canUpdate' => $request->user()?->can('update', $product) === true,
-            'canCreateVariant' => $request->user()?->can('create', [ProductVariant::class, $product]) === true,
-            'canManageAttributes' => $request->user()?->can('manageAttributes', $product) === true,
-            'canManageMedia' => $request->user()?->can('manageMedia', $product) === true,
+            'canUpdate' => ! $isArchived && $request->user()?->can('update', $product) === true,
+            'canCreateVariant' => ! $isArchived && $request->user()?->can('create', [ProductVariant::class, $product]) === true,
+            'canManageAttributes' => ! $isArchived && $request->user()?->can('manageAttributes', $product) === true,
+            'canManageMedia' => ! $isArchived && $request->user()?->can('manageMedia', $product) === true,
+            'canActivate' => $request->user()?->can('activate', $product) === true,
+            'canReturnToDraft' => $request->user()?->can('returnToDraft', $product) === true,
+            'canArchive' => $request->user()?->can('archive', $product) === true,
+            'canRestore' => $request->user()?->can('restore', $product) === true,
+            'readiness' => $readiness,
             'attributeDefinitions' => $attributeDefinitions,
             'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),
