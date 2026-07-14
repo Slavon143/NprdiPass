@@ -3,6 +3,12 @@
 namespace App\Models;
 
 use App\Enums\CompanyStatus;
+use App\Models\Catalog\AttributeDefinition;
+use App\Models\Catalog\AttributeOption;
+use App\Models\Catalog\Category;
+use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductMedia;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Concerns\HasUuid;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,5 +82,35 @@ class Company extends Model
     public function apiTokens(): HasMany
     {
         return $this->hasMany(PersonalAccessToken::class);
+    }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function attributeDefinitions(): HasMany
+    {
+        return $this->hasMany(AttributeDefinition::class);
+    }
+
+    public function attributeOptions(): HasMany
+    {
+        return $this->hasMany(AttributeOption::class);
+    }
+
+    public function productMedia(): HasMany
+    {
+        return $this->hasMany(ProductMedia::class);
     }
 }

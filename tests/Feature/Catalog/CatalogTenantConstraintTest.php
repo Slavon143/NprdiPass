@@ -6,12 +6,6 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    if (DB::getDriverName() !== 'mysql') {
-        $this->markTestSkipped('Catalog constraint tests require MySQL 8.');
-    }
-});
-
 test('category cannot have parent from another company', function () {
     $companyA = DB::table('companies')->insertGetId([
         'uuid' => 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01', 'name' => 'Company A', 'status' => 'active', 'created_at' => now(), 'updated_at' => now(),

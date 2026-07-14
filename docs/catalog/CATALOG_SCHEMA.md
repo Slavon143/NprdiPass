@@ -3,8 +3,7 @@
 **Stage:** R1.2
 **Date:** 2026-07-14
 **Status:** Implemented
-**Database:** MySQL 8 (production, local, CI, and integration tests)
-**SQLite:** Not supported for catalog schema verification
+**Database:** MySQL 8 (production, local, CI, and all database-backed tests)
 
 ---
 
@@ -17,7 +16,6 @@
 | CI | MySQL 8.0 service | GitHub Actions |
 | Integration tests | MySQL 8 | `nordipass_testing` database |
 | Unit tests | No database required | Pure PHP unit tests |
-| SQLite | Not used for catalog | Composite FK + CHECK constraints incompatible |
 
 ---
 
@@ -396,13 +394,12 @@ companies ──┬── categories ──┬── categories (self-ref parent
 | `CatalogMediaIntegrityTest.php` | Product/Variant ownership, size/dimension checks, and SHA-256 format |
 | `CatalogForeignKeyTest.php` | `information_schema` verification of composite FK column maps, supporting unique keys, critical indexes, CHECK constraints, and triggers |
 
-The default R0 suite remains SQLite-based. Catalog migrations create their table
-shape there, while MySQL-only `ALTER`, CHECK, composite-FK, and trigger statements
-are gated by the active driver. Catalog constraint tests explicitly skip on SQLite
-and run against MySQL with:
+The default suite and focused catalog suite both run against the dedicated MySQL
+database `nordipass_testing`. The test bootstrap rejects other drivers and rejects
+database names without the `_testing` suffix. Run the complete suite with:
 
 ```bash
-php vendor/bin/pest --configuration=phpunit.mysql.xml tests/Feature/Catalog
+php artisan test
 ```
 
 ---
@@ -413,5 +410,5 @@ php vendor/bin/pest --configuration=phpunit.mysql.xml tests/Feature/Catalog
 - **Architecture decisions:** [CATALOG_DECISIONS.md](CATALOG_DECISIONS.md)
 - **R1 scope:** [R1_CATALOG_SCOPE.md](R1_CATALOG_SCOPE.md)
 - **MySQL test configuration:** `phpunit.mysql.xml` (`nordipass_testing`)
-- **Default R0 test configuration:** `phpunit.xml` (SQLite; catalog constraint proof is MySQL-only)
+- **Default test configuration:** `phpunit.xml` (MySQL, `nordipass_testing`)
 - **Environment:** `.env.testing` (local credentials, git-ignored)

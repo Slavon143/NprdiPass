@@ -12,7 +12,7 @@ NordiPass supports four environments: local, testing, staging, and production. E
 | `APP_DEBUG` | `true` | `true` | `false` | `false` |
 | `APP_URL` | `http://localhost:8000` | — | `https://staging.example.com` | `https://your-domain.example` |
 | `APP_TIMEZONE` | `UTC` | `UTC` | `UTC` | `UTC` |
-| `DB_CONNECTION` | `mysql` | `sqlite` (default) / `mysql` (integration tests) | `mysql` | `mysql` |
+| `DB_CONNECTION` | `mysql` | `mysql` | `mysql` | `mysql` |
 | `CACHE_STORE` | `database` | `array` | `redis` | `redis` |
 | `QUEUE_CONNECTION` | `database` | `sync` | `redis` | `redis` |
 | `SESSION_DRIVER` | `database` | `array` | `redis` | `redis` |
@@ -42,14 +42,14 @@ MAIL_PORT=1025
 
 ## Testing
 
-The default test suite (`phpunit.xml`) uses SQLite `:memory:` with array cache, sync queue, and array session. MySQL integration tests (`phpunit.mysql.xml`) require a dedicated `nordipass_testing` database.
+The default test suite (`phpunit.xml`) uses the dedicated MySQL database `nordipass_testing` with array cache, sync queue, and array session. The test bootstrap rejects any non-MySQL connection or database name without the `_testing` suffix.
 
 ```sql
 CREATE DATABASE nordipass_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ```bash
-php vendor/bin/pest --configuration=phpunit.mysql.xml
+php artisan test
 ```
 
 ## Staging

@@ -14,8 +14,15 @@ class CompanyPermissionMatrix
             CompanyRole::Editor => in_array($permission, [
                 CompanyPermission::CompanyView,
                 CompanyPermission::MembersView,
+                CompanyPermission::CatalogView,
+                CompanyPermission::CatalogCreate,
+                CompanyPermission::CatalogUpdate,
+                CompanyPermission::CatalogManageMedia,
             ], true),
-            CompanyRole::Viewer => $permission === CompanyPermission::CompanyView,
+            CompanyRole::Viewer => in_array($permission, [
+                CompanyPermission::CompanyView,
+                CompanyPermission::CatalogView,
+            ], true),
         };
     }
 }

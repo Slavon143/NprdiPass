@@ -9,14 +9,14 @@ beforeEach(function () {
     Config::set('app.env', 'testing');
     Config::set('app.debug', true);
     Config::set('app.key', 'base64:'.base64_encode(random_bytes(32)));
-    Config::set('database.default', 'sqlite');
-    Config::set('database.connections.sqlite.database', ':memory:');
+    Config::set('database.default', 'mysql');
+    Config::set('database.connections.mysql.database', 'nordipass_testing');
 });
 
 afterEach(function () {
     Config::set('app.env', 'testing');
     Config::set('app.debug', true);
-    Config::set('database.default', 'sqlite');
+    Config::set('database.default', 'mysql');
 });
 
 test('deploy-check detects missing APP_KEY', function () {

@@ -6,12 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    if (DB::getDriverName() !== 'mysql') {
-        $this->markTestSkipped('Catalog constraint tests require MySQL 8.');
-    }
-});
-
 test('all catalog tables exist', function () {
     $tables = [
         'categories',

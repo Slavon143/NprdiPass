@@ -12,7 +12,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         if (config('database.default') !== 'mysql') {
-            return;
+            throw new RuntimeException('The test suite must use the MySQL connection.');
         }
 
         $database = (string) config('database.connections.mysql.database');

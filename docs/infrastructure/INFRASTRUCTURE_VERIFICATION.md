@@ -24,7 +24,7 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 |---|---|---|---|
 | PHP | 8.4.21 | 8.4 | 8.4 |
 | Node | 24.15.0 | 22 | 22 |
-| DB driver | mysql (SQLite for tests) | mysql (service) | mysql |
+| DB driver | mysql | mysql (service) | mysql |
 | Cache | database | (CI uses array from env) | redis |
 | Session | database | (CI uses array from env) | redis |
 | Queue | database | (CI uses sync from env) | redis |
@@ -48,8 +48,8 @@ Cross-stage verification of all NordiPass R0 infrastructure components:
 
 | Component | Implemented | Tested | Verified |
 |---|---|---|---|
-| MySQL production driver | Yes | MySQL integration suite | Via phpunit.mysql.xml |
-| SQLite in-memory tests | Yes | Full test suite | 541 tests pass |
+| MySQL application driver | Yes | Full standard and focused suites | Via phpunit.xml and phpunit.mysql.xml |
+| Dedicated test database | Yes | Full test suite | `nordipass_testing`; `_testing` suffix enforced |
 | mysql driver backup | Yes | `BackupDetailedTest` | Only files backup verified |
 | Connection configuration | Yes | DeployCheckCommand | migrates check, SELECT 1 |
 

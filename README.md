@@ -11,7 +11,7 @@ NordiPass is a Laravel application. **R0 RELEASE READY WITH ACCEPTED LIMITATIONS
 
 ## Requirements
 
-- PHP 8.4 or newer with `fileinfo`, `pdo_mysql`, and `pdo_sqlite` for the test suite
+- PHP 8.4 or newer with `fileinfo` and `pdo_mysql`
 - Composer 2
 - Node.js 22 or newer with npm
 - MySQL 8 or a modern MariaDB release
@@ -67,7 +67,7 @@ Mail defaults to `log`. For Mailpit, set `MAIL_MAILER=smtp` with `MAIL_HOST=127.
 
 ### Testing
 
-The default test suite uses SQLite `:memory:` (`phpunit.xml`). MySQL integration tests use a dedicated `nordipass_testing` database (`phpunit.mysql.xml`).
+The default test suite uses the dedicated MySQL database `nordipass_testing`. Both `phpunit.xml` and the focused `phpunit.mysql.xml` profile reject non-testing database names.
 
 ### Staging and Production
 
@@ -144,17 +144,17 @@ Member role changes and removals go through dedicated actions. Both actions run 
 
 Tenant resources must be loaded within `CurrentCompany` before policy authorization. Do not load a membership or future tenant entity globally by numeric ID and rely on a policy to hide its existence.
 
-Security-critical authorization tests can be run against the dedicated MySQL database `nordipass_testing`:
+The complete test suite runs against the dedicated MySQL database `nordipass_testing`:
 
 ```sql
 CREATE DATABASE nordipass_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ```bash
-php vendor/bin/pest --configuration=phpunit.mysql.xml
+php artisan test
 ```
 
-The MySQL test configuration reuses local connection credentials but overrides the database name. The test base class refuses any MySQL database whose name does not end in `_testing`.
+The test configuration reuses local connection credentials but forces the database name. The test base class refuses non-MySQL connections and any database whose name does not end in `_testing`.
 
 ## Company UI
 

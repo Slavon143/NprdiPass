@@ -13,8 +13,15 @@ foreach (CompanyRole::cases() as $role) {
             CompanyRole::Editor => in_array($permission, [
                 CompanyPermission::CompanyView,
                 CompanyPermission::MembersView,
+                CompanyPermission::CatalogView,
+                CompanyPermission::CatalogCreate,
+                CompanyPermission::CatalogUpdate,
+                CompanyPermission::CatalogManageMedia,
             ], true),
-            CompanyRole::Viewer => $permission === CompanyPermission::CompanyView,
+            CompanyRole::Viewer => in_array($permission, [
+                CompanyPermission::CompanyView,
+                CompanyPermission::CatalogView,
+            ], true),
         };
 
         $matrixCases["{$role->value} / {$permission->value}"] = [

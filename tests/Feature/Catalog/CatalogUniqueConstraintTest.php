@@ -7,12 +7,6 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    if (DB::getDriverName() !== 'mysql') {
-        $this->markTestSkipped('Catalog constraint tests require MySQL 8.');
-    }
-});
-
-beforeEach(function () {
     $this->companyA = DB::table('companies')->insertGetId([
         'uuid' => 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21', 'name' => 'Company A', 'status' => 'active', 'created_at' => now(), 'updated_at' => now(),
     ]);

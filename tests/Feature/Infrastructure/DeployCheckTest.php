@@ -4,6 +4,7 @@ namespace Tests\Feature\Infrastructure;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 test('deploy-check command exists', function () {
     $commands = Artisan::all();
@@ -47,12 +48,10 @@ test('deploy-check detects invalid bootstrap cache permissions', function () {
 test('deploy-check is read-only', function () {
     $configPath = config_path('app.php');
     $originalContent = file_get_contents($configPath);
-    $dbPath = database_path('database.sqlite');
-
-    $originalDbExists = file_exists($dbPath);
+    $migrationCount = DB::table('migrations')->count();
 
     Artisan::call('nordipass:deploy-check');
 
     expect(file_get_contents($configPath))->toBe($originalContent);
-    expect(file_exists($dbPath))->toBe($originalDbExists);
+    expect(DB::table('migrations')->count())->toBe($migrationCount);
 });

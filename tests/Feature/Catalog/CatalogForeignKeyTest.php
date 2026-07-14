@@ -5,12 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    if (DB::getDriverName() !== 'mysql') {
-        $this->markTestSkipped('Catalog constraint tests require MySQL 8.');
-    }
-});
-
 test('catalog constraints are enforced at database level', function () {
     $expected = [
         'products_primary_category_foreign' => [

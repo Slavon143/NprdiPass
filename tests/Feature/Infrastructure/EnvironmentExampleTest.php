@@ -32,7 +32,10 @@ test('.env.example has no real secrets', function () {
 
 test('config file defaults to mysql connection', function () {
     $config = file_get_contents(base_path('config/database.php'));
-    expect($config)->toContain("'default' => env('DB_CONNECTION', 'mysql')");
+
+    expect($config)->toContain("'default' => env('DB_CONNECTION', 'mysql')")
+        ->and(Config::get('database.default'))->toBe('mysql')
+        ->and((string) Config::get('database.connections.mysql.database'))->toEndWith('_testing');
 });
 
 test('default filesystem is local', function () {

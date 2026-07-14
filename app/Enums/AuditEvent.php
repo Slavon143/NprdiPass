@@ -22,6 +22,27 @@ enum AuditEvent: string
     case PlatformAction = 'platform.action';
     case ApiTokenCreated = 'api_token.created';
     case ApiTokenRevoked = 'api_token.revoked';
+    case CatalogCategoryCreated = 'catalog.category.created';
+    case CatalogCategoryUpdated = 'catalog.category.updated';
+    case CatalogCategoryMoved = 'catalog.category.moved';
+    case CatalogCategoryArchived = 'catalog.category.archived';
+    case CatalogCategoryRestored = 'catalog.category.restored';
+    case CatalogProductCreated = 'catalog.product.created';
+    case CatalogProductUpdated = 'catalog.product.updated';
+    case CatalogProductActivated = 'catalog.product.activated';
+    case CatalogProductArchived = 'catalog.product.archived';
+    case CatalogProductRestored = 'catalog.product.restored';
+    case CatalogVariantCreated = 'catalog.variant.created';
+    case CatalogVariantUpdated = 'catalog.variant.updated';
+    case CatalogVariantDefaultChanged = 'catalog.variant.default_changed';
+    case CatalogVariantArchived = 'catalog.variant.archived';
+    case CatalogVariantRestored = 'catalog.variant.restored';
+    case CatalogAttributeCreated = 'catalog.attribute.created';
+    case CatalogAttributeUpdated = 'catalog.attribute.updated';
+    case CatalogAttributeArchived = 'catalog.attribute.archived';
+    case CatalogMediaUploaded = 'catalog.media.uploaded';
+    case CatalogMediaUpdated = 'catalog.media.updated';
+    case CatalogMediaDeleted = 'catalog.media.deleted';
 
     public function label(): string
     {
@@ -44,6 +65,27 @@ enum AuditEvent: string
             self::PlatformAction => 'Platform action',
             self::ApiTokenCreated => 'API token created',
             self::ApiTokenRevoked => 'API token revoked',
+            self::CatalogCategoryCreated => 'Catalog category created',
+            self::CatalogCategoryUpdated => 'Catalog category updated',
+            self::CatalogCategoryMoved => 'Catalog category moved',
+            self::CatalogCategoryArchived => 'Catalog category archived',
+            self::CatalogCategoryRestored => 'Catalog category restored',
+            self::CatalogProductCreated => 'Catalog product created',
+            self::CatalogProductUpdated => 'Catalog product updated',
+            self::CatalogProductActivated => 'Catalog product activated',
+            self::CatalogProductArchived => 'Catalog product archived',
+            self::CatalogProductRestored => 'Catalog product restored',
+            self::CatalogVariantCreated => 'Catalog variant created',
+            self::CatalogVariantUpdated => 'Catalog variant updated',
+            self::CatalogVariantDefaultChanged => 'Catalog default variant changed',
+            self::CatalogVariantArchived => 'Catalog variant archived',
+            self::CatalogVariantRestored => 'Catalog variant restored',
+            self::CatalogAttributeCreated => 'Catalog attribute created',
+            self::CatalogAttributeUpdated => 'Catalog attribute updated',
+            self::CatalogAttributeArchived => 'Catalog attribute archived',
+            self::CatalogMediaUploaded => 'Catalog media uploaded',
+            self::CatalogMediaUpdated => 'Catalog media updated',
+            self::CatalogMediaDeleted => 'Catalog media deleted',
         };
     }
 }
