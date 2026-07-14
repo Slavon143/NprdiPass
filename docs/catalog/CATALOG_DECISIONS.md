@@ -654,3 +654,44 @@ Should API token ability alone grant access, or must the membership role also pe
 ### Rejected alternatives
 
 **Option A** — bypasses R0 authorization infrastructure entirely.
+
+---
+
+## R1.2 Architecture Addendum: Tenant-Safe Pointers and Category Self-Parent Protection
+
+### Original decision
+
+R1.1 stored `products.primary_category_id`, `products.default_variant_id`,
+`products.primary_media_id`, and `product_variants.primary_media_id` as nullable
+foreign-key pointers. Matching the pointer target to the owning Company/Product/Variant
+was originally described as Action-layer validation. R1.1 also expected a database
+CHECK to reject `categories.parent_id = categories.id`.
+
+### Technical conflict
+
+R1.2 requires the database to reject cross-tenant and wrong-owner pointer targets.
+Single-column foreign keys prove only that the target ID exists and therefore do not
+meet that requirement. MySQL 8 can express the owner checks with composite foreign
+keys and supporting unique keys.
+
+MySQL 8.0.46 rejects a CHECK that compares `parent_id` with the auto-increment `id`
+(`SQLSTATE 3818: Check constraint cannot refer to an auto-increment column`). This
+prevents the originally requested CHECK implementation even though the predicate is
+otherwise valid SQL.
+
+### Final MySQL-compatible decision
+
+- Primary Category uses `(company_id, primary_category_id) → categories(company_id, id)`.
+- Default Variant uses `(company_id, product.id, default_variant_id) → product_variants(company_id, product_id, id)`.
+- Product primary media uses `(company_id, product.id, primary_media_id) → product_media(company_id, product_id, id)`.
+- Variant primary media uses `(company_id, product_id, variant.id, primary_media_id) → product_media(company_id, product_id, product_variant_id, id)`.
+- Multiselect pivots include `attribute_definition_id` in both the value and Option composite foreign keys.
+- Two narrowly scoped MySQL triggers reject direct Category self-parenting on INSERT and UPDATE. They do not attempt arbitrary cycle detection.
+
+### Consequences
+
+- Cross-company and wrong-owner pointer assignments are rejected by MySQL without relying on Actions.
+- Pointer foreign keys use `RESTRICT`; Actions must clear or replace pointers before a referenced row is hard-deleted. Normal catalog removal remains soft-delete/status based.
+- A Product primary media pointer may still reference variant-level media of the same Product; requiring `product_variant_id IS NULL` remains an Action invariant because conditional foreign keys are unavailable.
+- Deep Category cycles still require transactional recursive validation in R1.4.
+- Trigger names are stable and rollback explicitly drops them before dropping `categories`.
