@@ -24,7 +24,7 @@
 
         <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="font-semibold text-slate-900">{{ __('Default variant') }}</h2>
-            <p class="mt-1 text-sm text-slate-500">{{ __('Variant management will be available separately.') }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ __('Identifiers and the default selection are managed on the variants screen.') }}</p>
             @if ($product->defaultVariant)
                 <dl class="mt-4 space-y-3 text-sm">
                     <div><dt class="text-slate-500">{{ __('Variant UUID') }}</dt><dd class="mt-1 break-all font-mono text-xs text-slate-800">{{ $product->defaultVariant->uuid }}</dd></div>
@@ -37,6 +37,7 @@
             @else
                 <p class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ __('Default variant is unavailable.') }}</p>
             @endif
+            <a href="{{ route('catalog.products.variants.index', $product->uuid) }}" class="mt-5 inline-flex rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Manage variants') }}</a>
         </aside>
     </div>
 </x-app-layout>

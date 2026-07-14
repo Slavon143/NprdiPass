@@ -37,7 +37,10 @@ class ProductVariantPolicy extends CatalogPolicy
             return false;
         }
 
-        $product = Product::query()->find($freshVariant->getAttribute('product_id'));
+        $product = Product::query()
+            ->whereKey($freshVariant->getAttribute('product_id'))
+            ->where('company_id', $freshVariant->getAttribute('company_id'))
+            ->first();
 
         return $product !== null
             && $product->getAttribute('company_id') === $freshVariant->getAttribute('company_id')

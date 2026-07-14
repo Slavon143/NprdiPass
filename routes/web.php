@@ -10,6 +10,8 @@ use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\Catalog\ProductController;
+use App\Http\Controllers\Catalog\ProductVariantController;
+use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
@@ -68,6 +70,15 @@ Route::middleware([
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::prefix('/{product}/variants')->whereUuid('product')->name('variants.')->group(function (): void {
+            Route::get('/', [ProductVariantController::class, 'index'])->name('index');
+            Route::get('/create', [ProductVariantController::class, 'create'])->name('create');
+            Route::post('/', [ProductVariantController::class, 'store'])->name('store');
+            Route::get('/{variant}', [ProductVariantController::class, 'show'])->whereUuid('variant')->name('show');
+            Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->whereUuid('variant')->name('edit');
+            Route::patch('/{variant}', [ProductVariantController::class, 'update'])->whereUuid('variant')->name('update');
+            Route::post('/{variant}/set-default', SetDefaultProductVariantController::class)->whereUuid('variant')->name('set-default');
+        });
         Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');

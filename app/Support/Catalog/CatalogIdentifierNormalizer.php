@@ -42,11 +42,7 @@ class CatalogIdentifierNormalizer
 
         $normalized = trim($value);
 
-        if (preg_match('/^[0-9]+$/D', $normalized) !== 1
-            || ! in_array(strlen($normalized), [8, 12, 13, 14], true)
-            || ! $this->hasValidGtinCheckDigit($normalized)) {
-            throw new InvalidArgumentException('GTIN must be a valid 8, 12, 13, or 14 digit identifier.');
-        }
+        (new GtinValidator)->assertValid($normalized);
 
         return $normalized;
     }
@@ -87,20 +83,5 @@ class CatalogIdentifierNormalizer
         }
 
         return $value;
-    }
-
-    private function hasValidGtinCheckDigit(string $gtin): bool
-    {
-        $checkDigit = (int) substr($gtin, -1);
-        $body = substr($gtin, 0, -1);
-        $sum = 0;
-        $weight = 3;
-
-        for ($index = strlen($body) - 1; $index >= 0; $index--) {
-            $sum += ((int) $body[$index]) * $weight;
-            $weight = $weight === 3 ? 1 : 3;
-        }
-
-        return (10 - ($sum % 10)) % 10 === $checkDigit;
     }
 }

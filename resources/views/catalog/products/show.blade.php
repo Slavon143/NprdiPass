@@ -26,6 +26,18 @@
                 <p class="mt-2 text-sm text-slate-600">{{ __('Primary:') }} <span class="font-semibold text-slate-900">{{ $product->primaryCategory?->name ?? __('Not assigned') }}</span></p>
                 <div class="mt-4 flex flex-wrap gap-2">@forelse ($product->categories as $category)<x-badge :tone="$product->primaryCategory?->is($category) ? 'indigo' : 'slate'">{{ $category->name }}</x-badge>@empty<span class="text-sm text-slate-500">{{ __('No categories assigned.') }}</span>@endforelse</div>
             </section>
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div><h2 class="text-lg font-semibold text-slate-900">{{ __('Variants') }}</h2><p class="mt-1 text-sm text-slate-500">{{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }}</p></div>
+                    <div class="flex gap-3"><a href="{{ route('catalog.products.variants.index', $product->uuid) }}" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Manage variants') }}</a>@if ($canCreateVariant)<a href="{{ route('catalog.products.variants.create', $product->uuid) }}" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Add variant') }}</a>@endif</div>
+                </div>
+                <div class="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    @foreach ($product->variants as $variant)
+                        <a href="{{ route('catalog.products.variants.show', [$product->uuid, $variant->uuid]) }}" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"><span><span class="font-semibold text-slate-900">{{ $variant->displayName() }}</span><span class="ml-2 text-sm text-slate-500">{{ $variant->sku ?: '—' }}</span></span>@if ($variant->isDefaultFor($product))<x-badge tone="indigo">{{ __('Default') }}</x-badge>@endif</a>
+                    @endforeach
+                </div>
+                @if ($product->variants_count > 5)<p class="mt-3 text-xs text-slate-500">{{ __('Showing the first 5 variants in catalog order.') }}</p>@endif
+            </section>
         </div>
 
         <aside class="space-y-6">

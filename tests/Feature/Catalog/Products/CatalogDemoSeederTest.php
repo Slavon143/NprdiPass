@@ -40,10 +40,11 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
     $categoryIds = Category::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all();
     $productIds = Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all();
     $variantIds = ProductVariant::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all();
+    $defaultPointers = Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('default_variant_id')->all();
 
     expect($categoryIds)->toHaveCount(8)
         ->and($productIds)->toHaveCount(5)
-        ->and($variantIds)->toHaveCount(5)
+        ->and($variantIds)->toHaveCount(10)
         ->and(Category::query()->forCompany($unrelatedCompany)->count())->toBe(0)
         ->and(Product::query()->forCompany($unrelatedCompany)->count())->toBe(0)
         ->and(ProductVariant::query()->forCompany($unrelatedCompany)->count())->toBe(0);
@@ -61,25 +62,32 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         'professional-ear-defenders',
         'industrial-led-work-lamp',
     ]);
+    $expectedVariantCounts = [3, 3, 1, 1, 2];
 
-    foreach ($products as $product) {
+    foreach ($products as $index => $product) {
         expect($product->company_id)->toBe($demoCompany->id)
             ->and($product->status)->toBe(ProductStatus::Draft)
             ->and($product->published_at)->toBeNull()
             ->and($product->primary_media_id)->toBeNull()
-            ->and($product->variants)->toHaveCount(1)
+            ->and($product->variants)->toHaveCount($expectedVariantCounts[$index])
             ->and($product->defaultVariant)->not->toBeNull()
             ->and($product->defaultVariant?->company_id)->toBe($demoCompany->id)
             ->and($product->defaultVariant?->product_id)->toBe($product->id)
             ->and($product->defaultVariant?->gtin)->toBeNull()
             ->and($product->defaultVariant?->primary_media_id)->toBeNull()
+            ->and($product->variants->every(fn (ProductVariant $variant): bool => $variant->company_id === $demoCompany->id
+                && $variant->product_id === $product->id
+                && $variant->gtin === null
+                && $variant->primary_media_id === null))->toBeTrue()
             ->and($product->categories->pluck('id')->all())->toContain($product->primary_category_id);
     }
 
-    expect($products->pluck('defaultVariant.sku')->unique()->count())->toBe(5)
-        ->and($products->pluck('defaultVariant.sku')->every(
+    $variants = $products->flatMap->variants;
+    expect($variants->pluck('sku')->unique()->count())->toBe(10)
+        ->and($variants->pluck('sku')->every(
             fn (?string $sku): bool => is_string($sku) && str_starts_with($sku, 'DEMO-'),
         ))->toBeTrue()
+        ->and($variants->pluck('mpn')->filter())->toHaveCount(10)
         ->and(ProductMedia::query()->count())->toBe(0)
         ->and(ProductAttributeValue::query()->count())->toBe(0)
         ->and(VariantAttributeValue::query()->count())->toBe(0)
@@ -90,6 +98,7 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
     expect(Category::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all())->toBe($categoryIds)
         ->and(Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all())->toBe($productIds)
         ->and(ProductVariant::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all())->toBe($variantIds)
+        ->and(Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('default_variant_id')->all())->toBe($defaultPointers)
         ->and(AuditLog::query()->count())->toBe(0);
 });
 

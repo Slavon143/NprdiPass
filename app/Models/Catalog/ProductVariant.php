@@ -7,6 +7,7 @@ use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,12 +19,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $uuid
  * @property int $company_id
  * @property int $product_id
- * @property string $name
+ * @property int|null $primary_media_id
+ * @property string|null $name
  * @property string|null $sku
  * @property string|null $gtin
  * @property string|null $mpn
  * @property ProductVariantStatus $status
  * @property int $sort_order
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Product $product
  */
 class ProductVariant extends Model
 {
@@ -79,6 +86,25 @@ class ProductVariant extends Model
     public function isDefaultFor(Product $product): bool
     {
         return $product->getAttribute('default_variant_id') === $this->getKey();
+    }
+
+    public function displayName(): string
+    {
+        $name = trim((string) $this->getAttribute('name'));
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        $sku = trim((string) $this->getAttribute('sku'));
+
+        if ($sku !== '') {
+            return $sku;
+        }
+
+        $uuid = (string) $this->getAttribute('uuid');
+
+        return $uuid === '' ? 'Variant' : substr($uuid, 0, 8);
     }
 
     public function scopeActive(Builder $query): Builder

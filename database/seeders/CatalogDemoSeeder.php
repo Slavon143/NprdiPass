@@ -8,6 +8,7 @@ use App\Enums\Catalog\ProductStatus;
 use App\Enums\Catalog\ProductVariantStatus;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\ProductCategoryService;
@@ -57,7 +58,7 @@ class CatalogDemoSeeder extends Seeder
                         'brand' => $specification['brand'],
                         'manufacturer' => $specification['brand'],
                     ], [
-                        'name' => 'Default',
+                        'name' => $specification['default_name'],
                         'sku' => $specification['sku'],
                         'sku_normalized' => $this->normalizer->normalizeSku($specification['sku']),
                         'gtin' => null,
@@ -85,7 +86,7 @@ class CatalogDemoSeeder extends Seeder
                     }
 
                     $variant->forceFill([
-                        'name' => 'Default',
+                        'name' => $specification['default_name'],
                         'sku' => $specification['sku'],
                         'sku_normalized' => $this->normalizer->normalizeSku($specification['sku']),
                         'gtin' => null,
@@ -103,8 +104,54 @@ class CatalogDemoSeeder extends Seeder
                     $specification['additional'],
                 );
                 $this->categoryService->sync($company, $product, $primary->uuid, $additionalUuids);
+                $this->seedAdditionalVariants(
+                    $company,
+                    $owner,
+                    $product,
+                    $specification['additional_variants'],
+                );
             }
         });
+    }
+
+    /**
+     * @param  list<array{name: string, sku: string, mpn: string, sort_order: int}>  $specifications
+     */
+    private function seedAdditionalVariants(
+        Company $company,
+        User $owner,
+        Product $product,
+        array $specifications,
+    ): void {
+        foreach ($specifications as $specification) {
+            $skuNormalized = $this->normalizer->normalizeSku($specification['sku']);
+            $variant = ProductVariant::query()
+                ->forCompany($company)
+                ->where('sku_normalized', $skuNormalized)
+                ->lockForUpdate()
+                ->first();
+
+            if ($variant instanceof ProductVariant
+                && (int) $variant->product_id !== (int) $product->getKey()) {
+                throw new RuntimeException("Demo SKU {$specification['sku']} belongs to another Product.");
+            }
+
+            $variant ??= new ProductVariant;
+            $variant->forceFill([
+                'company_id' => $company->getKey(),
+                'product_id' => $product->getKey(),
+                'name' => $specification['name'],
+                'sku' => $specification['sku'],
+                'sku_normalized' => $skuNormalized,
+                'gtin' => null,
+                'mpn' => $this->normalizer->normalizeMpn($specification['mpn']),
+                'status' => ProductVariantStatus::Draft,
+                'sort_order' => $specification['sort_order'],
+                'primary_media_id' => null,
+                'created_by' => $variant->exists ? $variant->created_by : $owner->getKey(),
+                'updated_by' => $owner->getKey(),
+            ])->save();
+        }
     }
 
     /** @return array<string, Category> */
@@ -155,18 +202,28 @@ class CatalogDemoSeeder extends Seeder
      *   short_description: string,
      *   primary: string,
      *   additional: list<string>,
+     *   default_name: string,
      *   sku: string,
-     *   mpn: string
+     *   mpn: string,
+     *   additional_variants: list<array{name: string, sku: string, mpn: string, sort_order: int}>
      * }>
      */
     private function products(): array
     {
         return [
-            ['name' => 'ProGrip Work Gloves', 'slug' => 'progrip-work-gloves', 'brand' => 'NordiSafe', 'short_description' => 'Durable demo work gloves for professional use.', 'primary' => 'arbetshandskar', 'additional' => ['arbetsklader'], 'sku' => 'DEMO-GLOVE-PRO-M', 'mpn' => 'NS-GLOVE-PRO'],
-            ['name' => 'Reflective Safety Vest', 'slug' => 'reflective-safety-vest', 'brand' => 'NordiSafe', 'short_description' => 'High-visibility demo safety vest.', 'primary' => 'skyddsklader', 'additional' => ['arbetsklader'], 'sku' => 'DEMO-VEST-YELLOW-L', 'mpn' => 'NS-VEST-RFL'],
-            ['name' => 'Fire Extinguisher 6 kg', 'slug' => 'fire-extinguisher-6kg', 'brand' => 'SafeGuard', 'short_description' => 'Six kilogram demo fire extinguisher.', 'primary' => 'brandskydd', 'additional' => ['sakerhetsutrustning'], 'sku' => 'DEMO-FIRE-6KG', 'mpn' => 'SG-FE-6KG'],
-            ['name' => 'Professional Ear Defenders', 'slug' => 'professional-ear-defenders', 'brand' => 'SoundShield', 'short_description' => 'Professional demo hearing protection.', 'primary' => 'horselskydd', 'additional' => ['sakerhetsutrustning'], 'sku' => 'DEMO-EAR-PRO', 'mpn' => 'SS-EAR-PRO'],
-            ['name' => 'Industrial LED Work Lamp', 'slug' => 'industrial-led-work-lamp', 'brand' => 'NordiLight', 'short_description' => 'Industrial demo LED work lamp.', 'primary' => 'arbetsbelysning', 'additional' => ['belysning'], 'sku' => 'DEMO-LAMP-40W', 'mpn' => 'NL-WORK-40'],
+            ['name' => 'ProGrip Work Gloves', 'slug' => 'progrip-work-gloves', 'brand' => 'NordiSafe', 'short_description' => 'Durable demo work gloves for professional use.', 'primary' => 'arbetshandskar', 'additional' => ['arbetsklader'], 'default_name' => 'Medium', 'sku' => 'DEMO-GLOVE-PRO-M', 'mpn' => 'NS-GLOVE-PRO-M', 'additional_variants' => [
+                ['name' => 'Large', 'sku' => 'DEMO-GLOVE-PRO-L', 'mpn' => 'NS-GLOVE-PRO-L', 'sort_order' => 10],
+                ['name' => 'Extra Large', 'sku' => 'DEMO-GLOVE-PRO-XL', 'mpn' => 'NS-GLOVE-PRO-XL', 'sort_order' => 20],
+            ]],
+            ['name' => 'Reflective Safety Vest', 'slug' => 'reflective-safety-vest', 'brand' => 'NordiSafe', 'short_description' => 'High-visibility demo safety vest.', 'primary' => 'skyddsklader', 'additional' => ['arbetsklader'], 'default_name' => 'Yellow / Large', 'sku' => 'DEMO-VEST-YELLOW-L', 'mpn' => 'NS-VEST-YL-L', 'additional_variants' => [
+                ['name' => 'Yellow / Medium', 'sku' => 'DEMO-VEST-YELLOW-M', 'mpn' => 'NS-VEST-YL-M', 'sort_order' => 10],
+                ['name' => 'Orange / Large', 'sku' => 'DEMO-VEST-ORANGE-L', 'mpn' => 'NS-VEST-OR-L', 'sort_order' => 20],
+            ]],
+            ['name' => 'Fire Extinguisher 6 kg', 'slug' => 'fire-extinguisher-6kg', 'brand' => 'SafeGuard', 'short_description' => 'Six kilogram demo fire extinguisher.', 'primary' => 'brandskydd', 'additional' => ['sakerhetsutrustning'], 'default_name' => '6 kg', 'sku' => 'DEMO-FIRE-6KG', 'mpn' => 'SG-FE-6KG', 'additional_variants' => []],
+            ['name' => 'Professional Ear Defenders', 'slug' => 'professional-ear-defenders', 'brand' => 'SoundShield', 'short_description' => 'Professional demo hearing protection.', 'primary' => 'horselskydd', 'additional' => ['sakerhetsutrustning'], 'default_name' => 'Professional', 'sku' => 'DEMO-EAR-PRO', 'mpn' => 'SS-EAR-PRO', 'additional_variants' => []],
+            ['name' => 'Industrial LED Work Lamp', 'slug' => 'industrial-led-work-lamp', 'brand' => 'NordiLight', 'short_description' => 'Industrial demo LED work lamp.', 'primary' => 'arbetsbelysning', 'additional' => ['belysning'], 'default_name' => '40 W', 'sku' => 'DEMO-LAMP-40W', 'mpn' => 'NL-WORK-40', 'additional_variants' => [
+                ['name' => '60 W', 'sku' => 'DEMO-LAMP-60W', 'mpn' => 'NL-WORK-60', 'sort_order' => 10],
+            ]],
         ];
     }
 }

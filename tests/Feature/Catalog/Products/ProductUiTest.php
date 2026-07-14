@@ -192,7 +192,8 @@ test('editor sees selected categories and can update managed product fields', fu
         ->assertSee('Editable product')
         ->assertSee('value="'.$oldPrimary->uuid.'" selected', false)
         ->assertSee('value="'.$additional->uuid.'"', false)
-        ->assertSee('Variant management will be available separately.');
+        ->assertSee('Identifiers and the default selection are managed on the variants screen.')
+        ->assertSee('Manage variants');
 
     $this->patch(route('catalog.products.update', $product->uuid), [
         'name' => 'Updated through UI',

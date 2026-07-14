@@ -11,6 +11,7 @@ use App\Http\Requests\Catalog\Products\StoreProductRequest;
 use App\Http\Requests\Catalog\Products\UpdateProductRequest;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CategoryHierarchyService;
@@ -32,7 +33,7 @@ class ProductController extends Controller
         $query = Product::query()
             ->forCompany($company)
             ->with(['primaryCategory:id,uuid,name', 'defaultVariant:id,uuid,product_id,name,sku,status'])
-            ->withCount('categories');
+            ->withCount(['categories', 'variants']);
         $status = $filters['status'] ?? 'all';
 
         if ($status !== 'all') {
@@ -94,14 +95,16 @@ class ProductController extends Controller
             'primaryCategory',
             'categories' => fn ($query) => $query->ordered(),
             'defaultVariant',
+            'variants' => fn ($query) => $query->ordered()->limit(5),
             'createdBy',
             'updatedBy',
-        ]);
+        ])->loadCount('variants');
 
         return view()->make('catalog.products.show', [
             'company' => $company,
             'product' => $product,
             'canUpdate' => $request->user()?->can('update', $product) === true,
+            'canCreateVariant' => $request->user()?->can('create', [ProductVariant::class, $product]) === true,
         ]);
     }
 

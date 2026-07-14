@@ -57,7 +57,7 @@
                             @foreach ($products as $product)
                                 @php($statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' })
                                 <tr>
-                                    <td class="px-5 py-4"><p class="font-semibold text-slate-900">{{ $product->name }}</p><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->brand ?: __('No brand') }} · {{ trans_choice(':count category|:count categories', $product->categories_count, ['count' => $product->categories_count]) }}</p></td>
+                                    <td class="px-5 py-4"><p class="font-semibold text-slate-900">{{ $product->name }}</p><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->brand ?: __('No brand') }} · {{ trans_choice(':count category|:count categories', $product->categories_count, ['count' => $product->categories_count]) }} · {{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }}</p></td>
                                     <td class="px-5 py-4"><x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge></td>
                                     <td class="px-5 py-4 text-slate-700">{{ $product->primaryCategory?->name ?? __('Not assigned') }}</td>
                                     <td class="px-5 py-4"><p class="font-medium text-slate-800">{{ $product->defaultVariant?->name ?? __('Unavailable') }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->defaultVariant?->sku ?: __('No SKU') }}</p></td>
