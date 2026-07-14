@@ -29,7 +29,7 @@ test('company member sees real current company data and role on dashboard', func
         ->assertSee('559999-0001')
         ->assertSee('editor')
         ->assertSee('Dashboard User')
-        ->assertDontSee('Products')
+        ->assertSee('Products')
         ->assertDontSee('Scans')
         ->assertDontSee('Revenue')
         ->assertDontSee('Storage usage');

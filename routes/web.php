@@ -9,6 +9,7 @@ use App\Http\Controllers\Catalog\CategoryController;
 use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
+use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
@@ -62,6 +63,15 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
+
+    Route::prefix('catalog/products')->name('catalog.products.')->group(function (): void {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/create', [ProductController::class, 'create'])->name('create');
+        Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
+        Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
+        Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
+    });
 
     Route::prefix('settings/catalog/categories')->name('catalog.categories.')->group(function (): void {
         Route::get('/', [CategoryController::class, 'index'])->name('index');

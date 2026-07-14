@@ -13,6 +13,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $company_id
+ * @property int $product_id
+ * @property string $name
+ * @property string|null $sku
+ * @property string|null $gtin
+ * @property string|null $mpn
+ * @property ProductVariantStatus $status
+ * @property int $sort_order
+ */
 class ProductVariant extends Model
 {
     use HasCompanyScope, HasUuid, SoftDeletes;

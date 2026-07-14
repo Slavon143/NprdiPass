@@ -13,6 +13,10 @@
                     @if ($currentCompany)
                         <x-nav-link :href="route('settings.company.edit')" :active="request()->routeIs('settings.company.*')">{{ __('Company settings') }}</x-nav-link>
 
+                        @can('viewAny', [\App\Models\Catalog\Product::class, $currentCompany])
+                            <x-nav-link :href="route('catalog.products.index')" :active="request()->routeIs('catalog.products.*')">{{ __('Products') }}</x-nav-link>
+                        @endcan
+
                         @can('viewAny', [\App\Models\Catalog\Category::class, $currentCompany])
                             <x-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')">{{ __('Categories') }}</x-nav-link>
                         @endcan
@@ -110,6 +114,9 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Dashboard') }}</x-responsive-nav-link>
             @if ($currentCompany)
                 <x-responsive-nav-link :href="route('settings.company.edit')" :active="request()->routeIs('settings.company.*')">{{ __('Company settings') }}</x-responsive-nav-link>
+                @can('viewAny', [\App\Models\Catalog\Product::class, $currentCompany])
+                    <x-responsive-nav-link :href="route('catalog.products.index')" :active="request()->routeIs('catalog.products.*')">{{ __('Products') }}</x-responsive-nav-link>
+                @endcan
                 @can('viewAny', [\App\Models\Catalog\Category::class, $currentCompany])
                     <x-responsive-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')">{{ __('Categories') }}</x-responsive-nav-link>
                 @endcan

@@ -7,13 +7,39 @@ use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $company_id
+ * @property int|null $primary_category_id
+ * @property int $default_variant_id
+ * @property int|null $primary_media_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $short_description
+ * @property string|null $description
+ * @property string|null $brand
+ * @property string|null $manufacturer
+ * @property ProductStatus $status
+ * @property CarbonImmutable|null $published_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Category|null $primaryCategory
+ * @property ProductVariant|null $defaultVariant
+ * @property-read Collection<int, Category> $categories
+ */
 class Product extends Model
 {
     use HasCompanyScope, HasUuid, SoftDeletes;

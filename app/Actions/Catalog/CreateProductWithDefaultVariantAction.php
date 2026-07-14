@@ -3,15 +3,14 @@
 namespace App\Actions\Catalog;
 
 use App\Actions\Catalog\Exceptions\CatalogIdentifierConflict;
+use App\Actions\Catalog\Products\ProductAggregateCreator;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\ProductStatus;
-use App\Enums\Catalog\ProductVariantStatus;
 use App\Enums\CompanyPermission;
 use App\Enums\CompanyStatus;
 use App\Models\Catalog\Product;
-use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
@@ -22,18 +21,11 @@ use InvalidArgumentException;
 
 class CreateProductWithDefaultVariantAction
 {
-    private const PRODUCT_FIELDS = [
-        'name',
-        'short_description',
-        'description',
-        'brand',
-        'manufacturer',
-    ];
-
     public function __construct(
         private readonly CompanyAuthorizer $authorizer,
         private readonly CatalogIdentifierNormalizer $normalizer,
         private readonly AuditLogger $auditLogger,
+        private readonly ProductAggregateCreator $aggregateCreator,
     ) {}
 
     /**
@@ -85,40 +77,19 @@ class CreateProductWithDefaultVariantAction
                 $gtin,
                 $mpn,
             ): Product {
-                $product = new Product;
-                $product->fill(array_intersect_key($productData, array_flip(self::PRODUCT_FIELDS)));
-                $product->forceFill([
-                    'company_id' => $company->getKey(),
+                $product = $this->aggregateCreator->create($actor, $company, [
+                    ...$productData,
                     'name' => $name,
                     'slug' => $slug,
-                    'slug_normalized' => $slug,
-                    'status' => ProductStatus::Draft,
-                    'default_variant_id' => null,
-                    'primary_category_id' => null,
-                    'primary_media_id' => null,
-                    'published_at' => null,
-                    'created_by' => $actor->getKey(),
-                    'updated_by' => $actor->getKey(),
-                ])->save();
-
-                $variant = new ProductVariant;
-                $variantName = trim((string) ($variantData['name'] ?? ''));
-                $variant->forceFill([
-                    'company_id' => $company->getKey(),
-                    'product_id' => $product->getKey(),
-                    'name' => $variantName === '' ? 'Default' : $variantName,
+                ], [
+                    ...$variantData,
                     'sku' => $sku,
                     'sku_normalized' => $skuNormalized,
                     'gtin' => $gtin,
                     'mpn' => $mpn,
-                    'status' => ProductVariantStatus::Draft,
                     'sort_order' => max(0, (int) ($variantData['sort_order'] ?? 0)),
-                    'primary_media_id' => null,
-                    'created_by' => $actor->getKey(),
-                    'updated_by' => $actor->getKey(),
-                ])->save();
-
-                $product->forceFill(['default_variant_id' => $variant->getKey()])->save();
+                ]);
+                $variant = $product->defaultVariant;
 
                 $this->auditLogger->logTenant(
                     $company,
@@ -129,17 +100,17 @@ class CreateProductWithDefaultVariantAction
                         'product_uuid' => $product->getAttribute('uuid'),
                         'product_name' => $product->getAttribute('name'),
                         'status' => ProductStatus::Draft->value,
-                        'default_variant_uuid' => $variant->getAttribute('uuid'),
+                        'default_variant_uuid' => $variant?->getAttribute('uuid'),
                     ],
                 );
                 $this->auditLogger->logTenant(
                     $company,
                     AuditEvent::CatalogVariantCreated,
                     $actor,
-                    $variant,
+                    $variant ?? $product,
                     [
                         'product_uuid' => $product->getAttribute('uuid'),
-                        'variant_uuid' => $variant->getAttribute('uuid'),
+                        'variant_uuid' => $variant?->getAttribute('uuid'),
                     ],
                 );
 

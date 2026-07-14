@@ -8,7 +8,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        if (app()->environment(['local', 'testing'])) {
+        if (app()->environment('local')) {
+            $this->call(LocalDevelopmentSeeder::class);
+            $this->call(CatalogDemoSeeder::class);
+
+            return;
+        }
+
+        if (app()->environment('testing')) {
             $this->call(LocalDevelopmentSeeder::class);
 
             return;
