@@ -1,12 +1,12 @@
 <div>
     <x-input-label for="name" :value="__('Name')" />
-    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $product?->name)" required autofocus />
+    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('name', $product?->name)" required autofocus />
     <x-input-error :messages="$errors->get('name')" class="mt-2" />
 </div>
 
 <div>
     <x-input-label for="slug" :value="__('Slug')" />
-    <x-text-input id="slug" name="slug" type="text" class="mt-1 block w-full" :value="old('slug', $product?->slug)" :required="$product !== null" />
+    <x-text-input id="slug" name="slug" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('slug', $product?->slug)" :required="$product !== null" />
     <p class="mt-1 text-xs text-slate-500">{{ __('Leave blank when creating to generate it from the name.') }}</p>
     <x-input-error :messages="$errors->get('slug')" class="mt-2" />
 </div>
@@ -26,12 +26,12 @@
 <div class="grid gap-6 sm:grid-cols-2">
     <div>
         <x-input-label for="brand" :value="__('Brand')" />
-        <x-text-input id="brand" name="brand" type="text" class="mt-1 block w-full" :value="old('brand', $product?->brand)" maxlength="255" />
+        <x-text-input id="brand" name="brand" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('brand', $product?->brand)" maxlength="255" />
         <x-input-error :messages="$errors->get('brand')" class="mt-2" />
     </div>
     <div>
         <x-input-label for="manufacturer" :value="__('Manufacturer')" />
-        <x-text-input id="manufacturer" name="manufacturer" type="text" class="mt-1 block w-full" :value="old('manufacturer', $product?->manufacturer)" maxlength="255" />
+        <x-text-input id="manufacturer" name="manufacturer" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('manufacturer', $product?->manufacturer)" maxlength="255" />
         <x-input-error :messages="$errors->get('manufacturer')" class="mt-2" />
     </div>
 </div>
@@ -40,7 +40,7 @@
     <legend class="px-2 font-semibold text-slate-900">{{ __('Categories') }}</legend>
     <div>
         <x-input-label for="primary_category_uuid" :value="__('Primary category')" />
-        <select id="primary_category_uuid" name="primary_category_uuid" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <select id="primary_category_uuid" name="primary_category_uuid" class="mt-1 block w-full scroll-mt-24 rounded-lg border-slate-300 shadow-sm target:border-amber-500 target:ring-4 target:ring-amber-200 focus:border-indigo-500 focus:ring-indigo-500">
             <option value="">{{ __('No primary category') }}</option>
             @foreach ($categoryOptions as $categoryOption)
                 <option value="{{ $categoryOption->uuid }}" @selected(old('primary_category_uuid', $product?->primaryCategory?->uuid) === $categoryOption->uuid)>{{ str_repeat('— ', $categoryOption->depth) }}{{ $categoryOption->name }}</option>

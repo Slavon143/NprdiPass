@@ -17,8 +17,32 @@
                     <div><h2 class="text-lg font-semibold text-slate-900">{{ __('Activation readiness') }}</h2><p class="mt-1 text-xs text-slate-500">{{ __('Evaluated :time', ['time' => $readiness->checkedAt->format('Y-m-d H:i:s')]) }}</p></div>
                     <x-badge :tone="$readiness->ready ? 'emerald' : 'red'">{{ $readiness->ready ? __('Ready') : __('Not ready') }}</x-badge>
                 </div>
-                @if($readiness->blockers !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-red-800">{{ __('Blockers') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->blockers as $item)<li class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"><a href="#{{ $item->section }}" class="font-medium hover:underline">{{ $item->message }}</a><span class="ml-2 font-mono text-xs text-red-500">{{ $item->code }}</span></li>@endforeach</ul></div>@endif
-                @if($readiness->warnings !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-amber-800">{{ __('Warnings') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->warnings as $item)<li class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"><a href="#{{ $item->section }}" class="hover:underline">{{ $item->message }}</a><span class="ml-2 font-mono text-xs text-amber-600">{{ $item->code }}</span></li>@endforeach</ul></div>@endif
+                <?php
+                    $readinessHref = static function ($item) use ($product, $canUpdate, $canManageAttributes, $canManageMedia): string {
+                        $fallback = '#'.$item->section;
+                        $defaultVariant = $product->defaultVariant;
+
+                        return match ($item->code) {
+                            'missing_product_name' => $canUpdate ? route('catalog.products.edit', $product->uuid).'#name' : $fallback,
+                            'missing_product_slug' => $canUpdate ? route('catalog.products.edit', $product->uuid).'#slug' : $fallback,
+                            'missing_product_brand' => $canUpdate ? route('catalog.products.edit', $product->uuid).'#brand' : $fallback,
+                            'missing_product_manufacturer' => $canUpdate ? route('catalog.products.edit', $product->uuid).'#manufacturer' : $fallback,
+                            'missing_primary_category', 'invalid_primary_category', 'archived_primary_category', 'archived_secondary_category' => $canUpdate ? route('catalog.products.edit', $product->uuid).'#primary_category_uuid' : $fallback,
+                            'missing_primary_media', 'missing_primary_media_file' => $canManageMedia ? route('catalog.products.media.index', $product->uuid).'#product-image-management' : $fallback,
+                            'missing_default_variant', 'invalid_default_variant', 'no_available_variants' => route('catalog.products.variants.index', $product->uuid),
+                            'missing_variant_sku' => $canUpdate && $defaultVariant ? route('catalog.products.variants.edit', [$product->uuid, $defaultVariant->uuid]).'#sku' : $fallback,
+                            'missing_variant_gtin' => $canUpdate && $defaultVariant ? route('catalog.products.variants.edit', [$product->uuid, $defaultVariant->uuid]).'#gtin' : $fallback,
+                            'missing_required_product_attribute' => $canManageAttributes ? route('catalog.products.attributes.edit', $product->uuid).'#required-attributes' : $fallback,
+                            'missing_required_variant_attribute' => $canManageAttributes && $defaultVariant ? route('catalog.products.variants.attributes.edit', [$product->uuid, $defaultVariant->uuid]).'#required-attributes' : $fallback,
+                            'invalid_attribute_value', 'archived_attribute_option' => $canManageAttributes && $item->entityType === 'ProductVariant' && $defaultVariant
+                                ? route('catalog.products.variants.attributes.edit', [$product->uuid, $defaultVariant->uuid]).'#required-attributes'
+                                : ($canManageAttributes ? route('catalog.products.attributes.edit', $product->uuid).'#required-attributes' : $fallback),
+                            default => $fallback,
+                        };
+                    };
+                ?>
+                @if($readiness->blockers !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-red-800">{{ __('Blockers') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->blockers as $item)<li class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"><a href="{{ $readinessHref($item) }}" class="font-medium underline decoration-red-300 underline-offset-2 hover:decoration-red-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a><span class="ml-2 font-mono text-xs text-red-500">{{ $item->code }}</span></li>@endforeach</ul></div>@endif
+                @if($readiness->warnings !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-amber-800">{{ __('Warnings') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->warnings as $item)<li class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"><a href="{{ $readinessHref($item) }}" class="underline decoration-amber-300 underline-offset-2 hover:decoration-amber-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a><span class="ml-2 font-mono text-xs text-amber-600">{{ $item->code }}</span></li>@endforeach</ul></div>@endif
                 <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
                     @if($product->status->value === 'draft' && $canActivate)<form method="POST" action="{{ route('catalog.products.activate', $product->uuid) }}">@csrf<button type="submit" @disabled(!$readiness->ready) class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300">{{ __('Activate') }}</button></form>@endif
                     @if($product->status->value === 'active' && $canReturnToDraft)<form method="POST" action="{{ route('catalog.products.return-to-draft', $product->uuid) }}">@csrf<button type="submit" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Return to draft') }}</button></form>@endif

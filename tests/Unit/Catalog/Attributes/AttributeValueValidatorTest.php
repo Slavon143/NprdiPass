@@ -19,6 +19,21 @@ test('select and boolean reject arbitrary validation rules', function (Attribute
         ->toThrow(AttributeOperationException::class, 'not allowed');
 })->with([AttributeDataType::Select, AttributeDataType::Boolean]);
 
+test('blank rules from the shared definition form are ignored before the type allowlist is applied', function () {
+    $rules = [
+        'min_length' => '',
+        'max_length' => null,
+        'min' => '',
+        'max' => null,
+        'min_date' => '',
+        'max_date' => null,
+        'min_selections' => '',
+        'max_selections' => null,
+    ];
+
+    expect((new AttributeValueValidator)->normalizeRules(AttributeDataType::Select, $rules))->toBe([]);
+});
+
 test('validation rule bounds and minimum maximum order are enforced', function (AttributeDataType $type, array $rules) {
     expect(fn () => (new AttributeValueValidator)->normalizeRules($type, $rules))
         ->toThrow(AttributeOperationException::class);

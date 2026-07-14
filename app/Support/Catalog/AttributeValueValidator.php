@@ -46,6 +46,15 @@ class AttributeValueValidator
             throw AttributeOperationException::invalid('validation_rules', 'Validation rules must be a structured object.');
         }
 
+        $rules = array_filter(
+            $rules,
+            static fn (mixed $value): bool => $value !== null && $value !== '',
+        );
+
+        if ($rules === []) {
+            return [];
+        }
+
         $allowed = match ($type) {
             AttributeDataType::Text => ['min_length', 'max_length'],
             AttributeDataType::Integer, AttributeDataType::Decimal => ['min', 'max'],
@@ -63,7 +72,7 @@ class AttributeValueValidator
         foreach ($allowed as $key) {
             $value = $rules[$key] ?? null;
 
-            if ($value === null || $value === '') {
+            if ($value === null) {
                 continue;
             }
 

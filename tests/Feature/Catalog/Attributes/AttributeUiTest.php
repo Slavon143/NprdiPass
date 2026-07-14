@@ -73,6 +73,26 @@ test('definition management pages render typed fields and options only for optio
     ])->assertRedirect();
     $color = AttributeDefinition::query()->where('code', 'color')->sole();
     $this->get(route('catalog.attributes.show', $color->uuid))->assertOk()->assertSee('New option label');
+
+    $color->forceFill(['required' => true])->save();
+    $this->patch(route('catalog.attributes.update', $color->uuid), [
+        'name' => $color->name,
+        'code' => $color->code,
+        'description' => null,
+        'type' => 'select',
+        'scope' => 'variant',
+        'unit' => null,
+        'required' => '0',
+        'filterable' => '1',
+        'searchable' => '0',
+        'sort_order' => 20,
+        'validation_rules' => [
+            'min_length' => '', 'max_length' => '', 'min' => '', 'max' => '',
+            'min_date' => '', 'max_date' => '', 'min_selections' => '', 'max_selections' => '',
+        ],
+    ])->assertRedirect(route('catalog.attributes.show', $color->uuid));
+    expect($color->fresh()?->required)->toBeFalse()
+        ->and($color->fresh()?->validation_rules)->toBeNull();
 });
 
 test('Product and Variant assignment pages expose only compatible scopes and show required missing state', function () {

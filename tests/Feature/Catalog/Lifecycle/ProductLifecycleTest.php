@@ -329,7 +329,11 @@ test('wrong tenant lifecycle routes are concealed and lifecycle controls match a
     $this->post(route('catalog.products.activate', $foreignProduct->uuid))->assertNotFound();
     $this->get(route('catalog.products.activate', $product->uuid))->assertMethodNotAllowed();
     $this->get(route('catalog.products.show', $product->uuid))
-        ->assertOk()->assertSee('Activation readiness')->assertSee('Ready')->assertSee('Activate');
+        ->assertOk()
+        ->assertSee('Activation readiness')
+        ->assertSee('Ready')
+        ->assertSee('Activate')
+        ->assertSee(route('catalog.products.variants.edit', [$product->uuid, $product->defaultVariant?->uuid]).'#gtin', false);
 
     $viewer = User::factory()->create();
     CompanyMembership::factory()->viewer()->create(['company_id' => $company, 'user_id' => $viewer]);

@@ -8,13 +8,13 @@
 <div class="grid gap-6 sm:grid-cols-2">
     <div>
         <x-input-label for="sku" :value="__('SKU')" />
-        <x-text-input id="sku" name="sku" type="text" class="mt-1 block w-full" :value="old('sku', $variant?->sku)" maxlength="100" />
+        <x-text-input id="sku" name="sku" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('sku', $variant?->sku)" maxlength="100" />
         <p class="mt-1 text-xs text-slate-500">{{ __('Optional and unique inside the current company.') }}</p>
         <x-input-error :messages="$errors->get('sku')" class="mt-2" />
     </div>
     <div>
         <x-input-label for="gtin" :value="__('GTIN')" />
-        <x-text-input id="gtin" name="gtin" type="text" inputmode="numeric" class="mt-1 block w-full" :value="old('gtin', $variant?->gtin)" maxlength="14" />
+        <x-text-input id="gtin" name="gtin" type="text" inputmode="numeric" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('gtin', $variant?->gtin)" maxlength="14" />
         <p class="mt-1 text-xs text-slate-500">{{ __('Optional GTIN-8, GTIN-12, GTIN-13, or GTIN-14 with a valid check digit.') }}</p>
         <x-input-error :messages="$errors->get('gtin')" class="mt-2" />
     </div>
