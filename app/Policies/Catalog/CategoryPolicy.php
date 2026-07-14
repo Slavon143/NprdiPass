@@ -34,6 +34,11 @@ class CategoryPolicy extends CatalogPolicy
         return $this->allowsModel($user, $category, CompanyPermission::CatalogManageCategories);
     }
 
+    public function reorder(User $user, Company $company): bool
+    {
+        return $this->allowsCompany($user, $company, CompanyPermission::CatalogManageCategories);
+    }
+
     public function archive(User $user, Category $category): bool
     {
         return $this->allowsModel($user, $category, CompanyPermission::CatalogManageCategories);

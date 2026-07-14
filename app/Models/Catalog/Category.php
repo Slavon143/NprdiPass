@@ -14,6 +14,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $company_id
+ * @property int|null $parent_id
+ * @property int $depth
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property int $sort_order
+ * @property CategoryStatus $status
+ * @property Category|null $parent
+ */
 class Category extends Model
 {
     use HasCompanyScope, HasUuid, SoftDeletes;
@@ -52,6 +65,11 @@ class Category extends Model
             ->withPivot(['id', 'company_id', 'created_at']);
     }
 
+    public function primaryProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'primary_category_id');
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -80,6 +98,7 @@ class Category extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy($query->qualifyColumn('sort_order'))
-            ->orderBy($query->qualifyColumn('name'));
+            ->orderBy($query->qualifyColumn('name'))
+            ->orderBy($query->qualifyColumn('id'));
     }
 }

@@ -4,6 +4,11 @@ use App\Http\Controllers\AcceptCompanyInvitationController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CancelCompanyInvitationController;
+use App\Http\Controllers\Catalog\CategoryArchiveController;
+use App\Http\Controllers\Catalog\CategoryController;
+use App\Http\Controllers\Catalog\CategoryMoveController;
+use App\Http\Controllers\Catalog\CategoryReorderController;
+use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
@@ -57,6 +62,18 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
+
+    Route::prefix('settings/catalog/categories')->name('catalog.categories.')->group(function (): void {
+        Route::get('/', [CategoryController::class, 'index'])->name('index');
+        Route::get('/create', [CategoryController::class, 'create'])->name('create');
+        Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::patch('/reorder', CategoryReorderController::class)->name('reorder');
+        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->whereUuid('category')->name('edit');
+        Route::patch('/{category}', [CategoryController::class, 'update'])->whereUuid('category')->name('update');
+        Route::patch('/{category}/move', CategoryMoveController::class)->whereUuid('category')->name('move');
+        Route::patch('/{category}/archive', CategoryArchiveController::class)->whereUuid('category')->name('archive');
+        Route::patch('/{category}/restore', CategoryRestoreController::class)->whereUuid('category')->name('restore');
+    });
 
     Route::prefix('settings')->name('settings.')->group(function (): void {
         Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');

@@ -25,6 +25,7 @@ enum AuditEvent: string
     case CatalogCategoryCreated = 'catalog.category.created';
     case CatalogCategoryUpdated = 'catalog.category.updated';
     case CatalogCategoryMoved = 'catalog.category.moved';
+    case CatalogCategoryReordered = 'catalog.category.reordered';
     case CatalogCategoryArchived = 'catalog.category.archived';
     case CatalogCategoryRestored = 'catalog.category.restored';
     case CatalogProductCreated = 'catalog.product.created';
@@ -68,6 +69,7 @@ enum AuditEvent: string
             self::CatalogCategoryCreated => 'Catalog category created',
             self::CatalogCategoryUpdated => 'Catalog category updated',
             self::CatalogCategoryMoved => 'Catalog category moved',
+            self::CatalogCategoryReordered => 'Catalog categories reordered',
             self::CatalogCategoryArchived => 'Catalog category archived',
             self::CatalogCategoryRestored => 'Catalog category restored',
             self::CatalogProductCreated => 'Catalog product created',
