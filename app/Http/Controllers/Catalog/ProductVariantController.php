@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Variants\CreateProductVariantAction;
 use App\Actions\Catalog\Variants\UpdateProductVariantAction;
+use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Variants\StoreProductVariantRequest;
 use App\Http\Requests\Catalog\Variants\UpdateProductVariantRequest;
+use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductVariant;
+use App\Models\Catalog\VariantAttributeValue;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\Catalog\AttributeValueFormatter;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -66,6 +71,7 @@ class ProductVariantController extends Controller
     public function show(
         Request $request,
         CurrentCompany $currentCompany,
+        AttributeValueFormatter $attributeFormatter,
         string $product,
         string $variant,
     ): View {
@@ -74,7 +80,12 @@ class ProductVariantController extends Controller
         $variant = $this->resolveVariant($company, $product, $variant);
         $this->authorize('view', $variant);
         $product->load('defaultVariant');
-        $variant->load(['createdBy', 'updatedBy']);
+        $variant->load(['createdBy', 'updatedBy', 'attributeValues.definition', 'attributeValues.selectedOption', 'attributeValues.selectedOptions']);
+        $attributeDefinitions = AttributeDefinition::query()->forCompany($company)
+            ->where('status', AttributeDefinitionStatus::Active->value)
+            ->whereIn('scope', [AttributeScope::Variant->value, AttributeScope::Both->value])
+            ->ordered()
+            ->get();
 
         return view()->make('catalog.products.variants.show', [
             'company' => $company,
@@ -82,6 +93,11 @@ class ProductVariantController extends Controller
             'variant' => $variant,
             'canUpdate' => $request->user()?->can('update', $variant) === true,
             'canSetDefault' => $request->user()?->can('setDefault', $variant) === true,
+            'canManageAttributes' => $request->user()?->can('manageAttributes', $variant) === true,
+            'attributeDefinitions' => $attributeDefinitions,
+            'attributeValues' => $variant->attributeValues->keyBy('attribute_definition_id'),
+            'archivedAttributeValues' => $variant->attributeValues->filter(fn (VariantAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),
+            'attributeFormatter' => $attributeFormatter,
         ]);
     }
 

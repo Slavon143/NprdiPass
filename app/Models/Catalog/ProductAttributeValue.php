@@ -4,11 +4,28 @@ namespace App\Models\Catalog;
 
 use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $company_id
+ * @property int $product_id
+ * @property int $attribute_definition_id
+ * @property string|null $value_text
+ * @property int|null $value_integer
+ * @property string|null $value_decimal
+ * @property bool|null $value_boolean
+ * @property CarbonImmutable|null $value_date
+ * @property int|null $value_option_id
+ * @property AttributeDefinition $definition
+ * @property AttributeOption|null $selectedOption
+ * @property-read Collection<int, AttributeOption> $selectedOptions
+ */
 class ProductAttributeValue extends Model
 {
     use HasCompanyScope;

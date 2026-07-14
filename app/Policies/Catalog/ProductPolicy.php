@@ -43,4 +43,9 @@ class ProductPolicy extends CatalogPolicy
     {
         return $this->allowsModel($user, $product, CompanyPermission::CatalogManageMedia);
     }
+
+    public function manageAttributes(User $user, Product $product): bool
+    {
+        return $this->allowsModel($user, $product, CompanyPermission::CatalogUpdate);
+    }
 }

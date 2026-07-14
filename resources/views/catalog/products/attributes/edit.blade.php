@@ -1,0 +1,8 @@
+<x-app-layout>
+    <x-slot name="header"><div><p class="text-sm font-medium text-indigo-600">{{ __('Catalog · Product attributes') }}</p><h1 class="mt-1 text-2xl font-bold text-slate-900">{{ $product->name }}</h1></div></x-slot>
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8"><form method="POST" action="{{ route('catalog.products.attributes.update', $product->uuid) }}" class="space-y-6">@csrf @method('PUT')
+        @foreach([true => __('Required'), false => __('Optional')] as $required => $heading)@php($group = $definitions->where('required', $required))@if($group->isNotEmpty())<section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-lg font-semibold text-slate-900">{{ $heading }}</h2>@foreach($group as $definition)@include('catalog.attributes._value_field')@endforeach</section>@endif @endforeach
+        @if($archivedValues->isNotEmpty())<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 class="font-semibold text-slate-900">{{ __('Archived values') }}</h2><dl class="mt-4 divide-y divide-slate-100">@foreach($archivedValues as $archived)<div class="flex justify-between gap-4 py-3 text-sm"><dt>{{ $archived->definition->name }} <x-badge tone="gray">{{ __('Archived') }}</x-badge></dt><dd class="font-medium">{{ $formatter->format($archived) }}</dd></div>@endforeach</dl></section>@endif
+        <div class="flex justify-end gap-3"><a href="{{ route('catalog.products.show', $product->uuid) }}" class="px-4 py-2 text-sm font-semibold text-slate-600">{{ __('Cancel') }}</a><x-primary-button>{{ __('Save attributes') }}</x-primary-button></div>
+    </form></div>
+</x-app-layout>

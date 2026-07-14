@@ -2,6 +2,8 @@
 
 use App\Enums\Catalog\ProductStatus;
 use App\Models\AuditLog;
+use App\Models\Catalog\AttributeDefinition;
+use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductAttributeValue;
@@ -89,8 +91,11 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         ))->toBeTrue()
         ->and($variants->pluck('mpn')->filter())->toHaveCount(10)
         ->and(ProductMedia::query()->count())->toBe(0)
-        ->and(ProductAttributeValue::query()->count())->toBe(0)
-        ->and(VariantAttributeValue::query()->count())->toBe(0)
+        ->and(AttributeDefinition::query()->forCompany($demoCompany)->count())->toBe(6)
+        ->and(AttributeOption::query()->forCompany($demoCompany)->count())->toBe(14)
+        ->and(ProductAttributeValue::query()->forCompany($demoCompany)->count())->toBe(7)
+        ->and(VariantAttributeValue::query()->forCompany($demoCompany)->count())->toBe(14)
+        ->and(AttributeDefinition::query()->forCompany($unrelatedCompany)->count())->toBe(0)
         ->and(AuditLog::query()->count())->toBe(0);
 
     $this->seed(CatalogDemoSeeder::class);
@@ -99,6 +104,10 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         ->and(Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all())->toBe($productIds)
         ->and(ProductVariant::query()->forCompany($demoCompany)->orderBy('id')->pluck('id')->all())->toBe($variantIds)
         ->and(Product::query()->forCompany($demoCompany)->orderBy('id')->pluck('default_variant_id')->all())->toBe($defaultPointers)
+        ->and(AttributeDefinition::query()->forCompany($demoCompany)->count())->toBe(6)
+        ->and(AttributeOption::query()->forCompany($demoCompany)->count())->toBe(14)
+        ->and(ProductAttributeValue::query()->forCompany($demoCompany)->count())->toBe(7)
+        ->and(VariantAttributeValue::query()->forCompany($demoCompany)->count())->toBe(14)
         ->and(AuditLog::query()->count())->toBe(0);
 });
 

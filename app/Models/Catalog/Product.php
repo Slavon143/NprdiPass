@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property Category|null $primaryCategory
  * @property ProductVariant|null $defaultVariant
  * @property-read Collection<int, Category> $categories
+ * @property-read Collection<int, ProductAttributeValue> $attributeValues
  */
 class Product extends Model
 {

@@ -14,7 +14,7 @@
     </x-slot>
 
     <div class="mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8">
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div class="space-y-6"><section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('Identifiers') }}</h2>
             <dl class="mt-5 grid gap-5 sm:grid-cols-2">
                 <div><dt class="text-sm text-slate-500">{{ __('SKU') }}</dt><dd class="mt-1 font-semibold text-slate-900">{{ $variant->sku ?: '—' }}</dd></div>
@@ -31,6 +31,10 @@
                 </form>
             @endif
         </section>
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="flex items-center justify-between gap-3"><h2 class="text-lg font-semibold text-slate-900">{{ __('Variant Attributes') }}</h2>@if($canManageAttributes)<a href="{{ route('catalog.products.variants.attributes.edit', [$product->uuid, $variant->uuid]) }}" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Edit attributes') }}</a>@endif</div>
+            <dl class="mt-4 divide-y divide-slate-100">@forelse($attributeDefinitions as $definition)@php($attributeValue = $attributeValues->get($definition->getKey())) @php($hasArchivedOption = $attributeValue && ($attributeValue->selectedOption?->status?->value === 'archived' || $attributeValue->selectedOptions->contains(fn ($option) => $option->status->value === 'archived')))<div class="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"><dt class="flex items-center gap-2 text-sm font-medium text-slate-700">{{ $definition->name }}@if($definition->required)<x-badge tone="amber">{{ __('Required') }}</x-badge>@endif</dt><dd class="text-sm font-semibold">@if($attributeValue){{ $attributeFormatter->format($attributeValue) }} @if($hasArchivedOption)<x-badge tone="gray">{{ __('Archived option') }}</x-badge>@endif @elseif($definition->required)<x-badge tone="red">{{ __('Missing required value') }}</x-badge>@else<span class="font-normal text-slate-400">{{ __('Not set') }}</span>@endif</dd></div>@empty<p class="py-4 text-sm text-slate-500">{{ __('No Variant attributes are defined.') }}</p>@endforelse @foreach($archivedAttributeValues as $attributeValue)<div class="flex items-center justify-between gap-4 py-3"><dt class="text-sm">{{ $attributeValue->definition->name }} <x-badge tone="gray">{{ __('Archived') }}</x-badge></dt><dd class="text-sm font-semibold">{{ $attributeFormatter->format($attributeValue) }}</dd></div>@endforeach</dl>
+        </section></div>
 
         <aside class="space-y-6">
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 class="font-semibold text-slate-900">{{ __('Product') }}</h2><p class="mt-3 font-semibold text-slate-900">{{ $product->name }}</p><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p><a href="{{ route('catalog.products.variants.index', $product->uuid) }}" class="mt-4 inline-block text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Manage variants') }}</a></section>

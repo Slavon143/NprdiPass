@@ -69,7 +69,17 @@ jobs:
         env:
           APP_ENV: testing
 
-      - name: Run tests
+      - name: Run Attribute MySQL tests
+        run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
+        env:
+          APP_ENV: testing
+
+      - name: Run Catalog MySQL tests
+        run: php artisan test tests/Feature/Catalog tests/Unit/Catalog
+        env:
+          APP_ENV: testing
+
+      - name: Run full application MySQL tests
         run: php artisan test
         env:
           APP_ENV: testing

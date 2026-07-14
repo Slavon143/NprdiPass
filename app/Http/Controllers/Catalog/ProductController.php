@@ -4,17 +4,22 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Products\CreateProductAction;
 use App\Actions\Catalog\Products\UpdateProductAction;
+use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Products\StoreProductRequest;
 use App\Http\Requests\Catalog\Products\UpdateProductRequest;
+use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CategoryHierarchyService;
+use App\Support\Catalog\AttributeValueFormatter;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -86,7 +91,7 @@ class ProductController extends Controller
             ->with('success', 'Product created.');
     }
 
-    public function show(Request $request, CurrentCompany $currentCompany, string $product): View
+    public function show(Request $request, CurrentCompany $currentCompany, AttributeValueFormatter $attributeFormatter, string $product): View
     {
         $company = $currentCompany->require();
         $product = $this->resolveProduct($company, $product);
@@ -98,13 +103,27 @@ class ProductController extends Controller
             'variants' => fn ($query) => $query->ordered()->limit(5),
             'createdBy',
             'updatedBy',
+            'attributeValues.definition',
+            'attributeValues.selectedOption',
+            'attributeValues.selectedOptions',
         ])->loadCount('variants');
+
+        $attributeDefinitions = AttributeDefinition::query()->forCompany($company)
+            ->where('status', AttributeDefinitionStatus::Active->value)
+            ->whereIn('scope', [AttributeScope::Product->value, AttributeScope::Both->value])
+            ->ordered()
+            ->get();
 
         return view()->make('catalog.products.show', [
             'company' => $company,
             'product' => $product,
             'canUpdate' => $request->user()?->can('update', $product) === true,
             'canCreateVariant' => $request->user()?->can('create', [ProductVariant::class, $product]) === true,
+            'canManageAttributes' => $request->user()?->can('manageAttributes', $product) === true,
+            'attributeDefinitions' => $attributeDefinitions,
+            'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
+            'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),
+            'attributeFormatter' => $attributeFormatter,
         ]);
     }
 

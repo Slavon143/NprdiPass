@@ -21,6 +21,10 @@
                             <x-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')">{{ __('Categories') }}</x-nav-link>
                         @endcan
 
+                        @can('viewAny', [\App\Models\Catalog\AttributeDefinition::class, $currentCompany])
+                            <x-nav-link :href="route('catalog.attributes.index')" :active="request()->routeIs('catalog.attributes.*')">{{ __('Attributes') }}</x-nav-link>
+                        @endcan
+
                         @can('viewAny', [\App\Models\CompanyMembership::class, $currentCompany])
                             <x-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')">{{ __('Members') }}</x-nav-link>
                         @endcan
@@ -119,6 +123,9 @@
                 @endcan
                 @can('viewAny', [\App\Models\Catalog\Category::class, $currentCompany])
                     <x-responsive-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')">{{ __('Categories') }}</x-responsive-nav-link>
+                @endcan
+                @can('viewAny', [\App\Models\Catalog\AttributeDefinition::class, $currentCompany])
+                    <x-responsive-nav-link :href="route('catalog.attributes.index')" :active="request()->routeIs('catalog.attributes.*')">{{ __('Attributes') }}</x-responsive-nav-link>
                 @endcan
                 @can('viewAny', [\App\Models\CompanyMembership::class, $currentCompany])
                     <x-responsive-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')">{{ __('Members') }}</x-responsive-nav-link>

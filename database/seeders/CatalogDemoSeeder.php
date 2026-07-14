@@ -3,12 +3,20 @@
 namespace Database\Seeders;
 
 use App\Actions\Catalog\Products\ProductAggregateCreator;
+use App\Enums\Catalog\AttributeDataType;
+use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionStatus;
+use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
 use App\Enums\Catalog\ProductVariantStatus;
+use App\Models\Catalog\AttributeDefinition;
+use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Catalog\ProductVariant;
+use App\Models\Catalog\VariantAttributeValue;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\ProductCategoryService;
@@ -111,7 +119,162 @@ class CatalogDemoSeeder extends Seeder
                     $specification['additional_variants'],
                 );
             }
+
+            $this->seedAttributes($company, $owner);
         });
+    }
+
+    private function seedAttributes(Company $company, User $owner): void
+    {
+        $specifications = [
+            'size' => [AttributeDataType::Select, AttributeScope::Variant, null, true, [], ['s' => 'S', 'm' => 'M', 'l' => 'L', 'xl' => 'XL']],
+            'color' => [AttributeDataType::Select, AttributeScope::Variant, null, false, [], ['black' => 'Black', 'yellow' => 'Yellow', 'orange' => 'Orange']],
+            'material' => [AttributeDataType::Select, AttributeScope::Product, null, false, [], ['nitrile' => 'Nitrile', 'polyester' => 'Polyester', 'steel' => 'Steel', 'abs_plastic' => 'ABS plastic']],
+            'weight' => [AttributeDataType::Decimal, AttributeScope::Product, 'kg', false, ['min' => '0'], []],
+            'power' => [AttributeDataType::Integer, AttributeScope::Variant, 'W', false, ['min' => '0'], []],
+            'certifications' => [AttributeDataType::Multiselect, AttributeScope::Product, null, false, [], ['ce' => 'CE', 'en_388' => 'EN 388', 'en_iso_20471' => 'EN ISO 20471']],
+        ];
+        $definitions = [];
+        $options = [];
+
+        foreach ($specifications as $code => [$type, $scope, $unit, $required, $rules, $optionSpecs]) {
+            $definition = AttributeDefinition::query()->forCompany($company)->where('code', $code)->lockForUpdate()->first() ?? new AttributeDefinition;
+            $definition->forceFill([
+                'company_id' => $company->getKey(),
+                'name' => ucfirst($code),
+                'code' => $code,
+                'description' => null,
+                'type' => $type,
+                'scope' => $scope,
+                'unit' => $unit,
+                'required' => $required,
+                'filterable' => false,
+                'searchable' => false,
+                'validation_rules' => $rules === [] ? null : $rules,
+                'sort_order' => (count($definitions) + 1) * 10,
+                'status' => AttributeDefinitionStatus::Active,
+                'created_by' => $definition->exists ? $definition->created_by : $owner->getKey(),
+                'updated_by' => $owner->getKey(),
+            ])->save();
+            $definitions[$code] = $definition;
+
+            foreach ($optionSpecs as $optionCode => $label) {
+                $option = AttributeOption::query()->forCompany($company)
+                    ->where('attribute_definition_id', $definition->getKey())
+                    ->where('code', $optionCode)
+                    ->lockForUpdate()
+                    ->first() ?? new AttributeOption;
+                $option->forceFill([
+                    'company_id' => $company->getKey(),
+                    'attribute_definition_id' => $definition->getKey(),
+                    'label' => $label,
+                    'code' => $optionCode,
+                    'sort_order' => (count($options[$code] ?? []) + 1) * 10,
+                    'status' => AttributeOptionStatus::Active,
+                ])->save();
+                $options[$code][$optionCode] = $option;
+            }
+        }
+
+        $productAssignments = [
+            'progrip-work-gloves' => ['material' => 'nitrile', 'certifications' => ['ce', 'en_388']],
+            'reflective-safety-vest' => ['material' => 'polyester', 'certifications' => ['ce', 'en_iso_20471']],
+            'fire-extinguisher-6kg' => ['weight' => '6.0000', 'certifications' => ['ce']],
+            'industrial-led-work-lamp' => ['material' => 'abs_plastic'],
+        ];
+
+        foreach ($productAssignments as $slug => $assignments) {
+            $product = Product::query()->forCompany($company)->where('slug_normalized', $slug)->lockForUpdate()->firstOrFail();
+
+            foreach ($assignments as $code => $assigned) {
+                $this->seedProductAttributeValue($company, $product, $definitions[$code], $assigned, $options[$code] ?? []);
+            }
+        }
+
+        $variantAssignments = [
+            'DEMO-GLOVE-PRO-M' => ['size' => 'm', 'color' => 'black'],
+            'DEMO-GLOVE-PRO-L' => ['size' => 'l', 'color' => 'black'],
+            'DEMO-GLOVE-PRO-XL' => ['size' => 'xl', 'color' => 'black'],
+            'DEMO-VEST-YELLOW-M' => ['size' => 'm', 'color' => 'yellow'],
+            'DEMO-VEST-YELLOW-L' => ['size' => 'l', 'color' => 'yellow'],
+            'DEMO-VEST-ORANGE-L' => ['size' => 'l', 'color' => 'orange'],
+            'DEMO-LAMP-40W' => ['power' => 40],
+            'DEMO-LAMP-60W' => ['power' => 60],
+        ];
+
+        foreach ($variantAssignments as $sku => $assignments) {
+            $variant = ProductVariant::query()->forCompany($company)->where('sku_normalized', $this->normalizer->normalizeSku($sku))->lockForUpdate()->firstOrFail();
+
+            foreach ($assignments as $code => $assigned) {
+                $definition = $definitions[$code];
+                $option = is_string($assigned) ? $this->attributeOption($options[$code] ?? [], $assigned) : null;
+                $value = VariantAttributeValue::query()->forCompany($company)
+                    ->where('product_variant_id', $variant->getKey())
+                    ->where('attribute_definition_id', $definition->getKey())
+                    ->lockForUpdate()
+                    ->first() ?? new VariantAttributeValue;
+                $value->forceFill([
+                    'company_id' => $company->getKey(),
+                    'product_variant_id' => $variant->getKey(),
+                    'attribute_definition_id' => $definition->getKey(),
+                    'value_text' => null,
+                    'value_integer' => is_int($assigned) ? $assigned : null,
+                    'value_decimal' => null,
+                    'value_boolean' => null,
+                    'value_date' => null,
+                    'value_option_id' => $option?->getKey(),
+                ])->save();
+            }
+        }
+    }
+
+    /** @param string|list<string> $assigned @param array<string, AttributeOption> $options */
+    private function seedProductAttributeValue(Company $company, Product $product, AttributeDefinition $definition, string|array $assigned, array $options): void
+    {
+        $value = ProductAttributeValue::query()->forCompany($company)
+            ->where('product_id', $product->getKey())
+            ->where('attribute_definition_id', $definition->getKey())
+            ->lockForUpdate()
+            ->first() ?? new ProductAttributeValue;
+        $isMultiselect = $definition->type === AttributeDataType::Multiselect;
+        $option = $definition->type === AttributeDataType::Select && is_string($assigned)
+            ? $this->attributeOption($options, $assigned)
+            : null;
+        $value->forceFill([
+            'company_id' => $company->getKey(),
+            'product_id' => $product->getKey(),
+            'attribute_definition_id' => $definition->getKey(),
+            'value_text' => null,
+            'value_integer' => null,
+            'value_decimal' => $definition->type === AttributeDataType::Decimal ? $assigned : null,
+            'value_boolean' => null,
+            'value_date' => null,
+            'value_option_id' => $option?->getKey(),
+        ])->save();
+
+        DB::table('product_attribute_value_options')->where('product_attribute_value_id', $value->getKey())->delete();
+
+        if ($isMultiselect && is_array($assigned)) {
+            DB::table('product_attribute_value_options')->insert(array_map(fn (string $code): array => [
+                'company_id' => $company->getKey(),
+                'attribute_definition_id' => $definition->getKey(),
+                'product_attribute_value_id' => $value->getKey(),
+                'attribute_option_id' => $this->attributeOption($options, $code)->getKey(),
+                'created_at' => now(),
+            ], $assigned));
+        }
+    }
+
+    /** @param array<string, AttributeOption> $options */
+    private function attributeOption(array $options, string $code): AttributeOption
+    {
+        $option = $options[$code] ?? null;
+
+        if (! $option instanceof AttributeOption) {
+            throw new RuntimeException("Demo attribute option {$code} is unavailable.");
+        }
+
+        return $option;
     }
 
     /**

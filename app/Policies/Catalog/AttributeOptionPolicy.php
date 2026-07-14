@@ -28,4 +28,14 @@ class AttributeOptionPolicy extends CatalogPolicy
     {
         return $this->allowsModel($user, $option, CompanyPermission::CatalogManageAttributes);
     }
+
+    public function restore(User $user, AttributeOption $option): bool
+    {
+        return $this->allowsModel($user, $option, CompanyPermission::CatalogManageAttributes);
+    }
+
+    public function reorder(User $user, AttributeDefinition $definition): bool
+    {
+        return $this->allowsModel($user, $definition, CompanyPermission::CatalogManageAttributes);
+    }
 }

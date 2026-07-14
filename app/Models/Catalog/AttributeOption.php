@@ -10,6 +10,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $company_id
+ * @property int $attribute_definition_id
+ * @property string $label
+ * @property string $code
+ * @property int $sort_order
+ * @property AttributeOptionStatus $status
+ */
 class AttributeOption extends Model
 {
     use HasCompanyScope;

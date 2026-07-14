@@ -51,4 +51,9 @@ class ProductVariantPolicy extends CatalogPolicy
     {
         return $this->allowsModel($user, $variant, CompanyPermission::CatalogManageMedia);
     }
+
+    public function manageAttributes(User $user, ProductVariant $variant): bool
+    {
+        return $this->allowsModel($user, $variant, CompanyPermission::CatalogUpdate);
+    }
 }

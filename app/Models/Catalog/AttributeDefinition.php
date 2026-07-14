@@ -14,6 +14,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $company_id
+ * @property string $name
+ * @property string $code
+ * @property string|null $description
+ * @property AttributeDataType $type
+ * @property AttributeScope $scope
+ * @property string|null $unit
+ * @property bool $required
+ * @property bool $filterable
+ * @property bool $searchable
+ * @property array<string, int|float|string>|null $validation_rules
+ * @property int $sort_order
+ * @property AttributeDefinitionStatus $status
+ */
 class AttributeDefinition extends Model
 {
     use HasCompanyScope, HasUuid;
@@ -90,5 +107,10 @@ class AttributeDefinition extends Model
     {
         return $query->orderBy($query->qualifyColumn('sort_order'))
             ->orderBy($query->qualifyColumn('name'));
+    }
+
+    public function usesOptions(): bool
+    {
+        return in_array($this->type, [AttributeDataType::Select, AttributeDataType::Multiselect], true);
     }
 }

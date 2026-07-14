@@ -4,14 +4,18 @@ use App\Http\Controllers\AcceptCompanyInvitationController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CancelCompanyInvitationController;
+use App\Http\Controllers\Catalog\AttributeDefinitionController;
+use App\Http\Controllers\Catalog\AttributeOptionController;
 use App\Http\Controllers\Catalog\CategoryArchiveController;
 use App\Http\Controllers\Catalog\CategoryController;
 use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
+use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Catalog\ProductVariantController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
+use App\Http\Controllers\Catalog\VariantAttributeController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
@@ -66,6 +70,22 @@ Route::middleware([
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
 
+    Route::prefix('catalog/attributes')->name('catalog.attributes.')->group(function (): void {
+        Route::get('/', [AttributeDefinitionController::class, 'index'])->name('index');
+        Route::get('/create', [AttributeDefinitionController::class, 'create'])->name('create');
+        Route::post('/', [AttributeDefinitionController::class, 'store'])->name('store');
+        Route::get('/{attribute}', [AttributeDefinitionController::class, 'show'])->whereUuid('attribute')->name('show');
+        Route::get('/{attribute}/edit', [AttributeDefinitionController::class, 'edit'])->whereUuid('attribute')->name('edit');
+        Route::patch('/{attribute}', [AttributeDefinitionController::class, 'update'])->whereUuid('attribute')->name('update');
+        Route::post('/{attribute}/archive', [AttributeDefinitionController::class, 'archive'])->whereUuid('attribute')->name('archive');
+        Route::post('/{attribute}/restore', [AttributeDefinitionController::class, 'restore'])->whereUuid('attribute')->name('restore');
+        Route::post('/{attribute}/options', [AttributeOptionController::class, 'store'])->whereUuid('attribute')->name('options.store');
+        Route::patch('/{attribute}/options/reorder', [AttributeOptionController::class, 'reorder'])->whereUuid('attribute')->name('options.reorder');
+        Route::patch('/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->whereUuid('attribute')->whereNumber('option')->name('options.update');
+        Route::post('/{attribute}/options/{option}/archive', [AttributeOptionController::class, 'archive'])->whereUuid('attribute')->whereNumber('option')->name('options.archive');
+        Route::post('/{attribute}/options/{option}/restore', [AttributeOptionController::class, 'restore'])->whereUuid('attribute')->whereNumber('option')->name('options.restore');
+    });
+
     Route::prefix('catalog/products')->name('catalog.products.')->group(function (): void {
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
@@ -74,11 +94,15 @@ Route::middleware([
             Route::get('/', [ProductVariantController::class, 'index'])->name('index');
             Route::get('/create', [ProductVariantController::class, 'create'])->name('create');
             Route::post('/', [ProductVariantController::class, 'store'])->name('store');
+            Route::get('/{variant}/attributes/edit', [VariantAttributeController::class, 'edit'])->whereUuid('variant')->name('attributes.edit');
+            Route::put('/{variant}/attributes', [VariantAttributeController::class, 'update'])->whereUuid('variant')->name('attributes.update');
             Route::get('/{variant}', [ProductVariantController::class, 'show'])->whereUuid('variant')->name('show');
             Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->whereUuid('variant')->name('edit');
             Route::patch('/{variant}', [ProductVariantController::class, 'update'])->whereUuid('variant')->name('update');
             Route::post('/{variant}/set-default', SetDefaultProductVariantController::class)->whereUuid('variant')->name('set-default');
         });
+        Route::get('/{product}/attributes/edit', [ProductAttributeController::class, 'edit'])->whereUuid('product')->name('attributes.edit');
+        Route::put('/{product}/attributes', [ProductAttributeController::class, 'update'])->whereUuid('product')->name('attributes.update');
         Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');

@@ -33,4 +33,14 @@ class AttributeDefinitionPolicy extends CatalogPolicy
     {
         return $this->allowsModel($user, $definition, CompanyPermission::CatalogManageAttributes);
     }
+
+    public function restore(User $user, AttributeDefinition $definition): bool
+    {
+        return $this->allowsModel($user, $definition, CompanyPermission::CatalogManageAttributes);
+    }
+
+    public function manageOptions(User $user, AttributeDefinition $definition): bool
+    {
+        return $this->allowsModel($user, $definition, CompanyPermission::CatalogManageAttributes);
+    }
 }
