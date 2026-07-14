@@ -657,6 +657,18 @@ Should API token ability alone grant access, or must the membership role also pe
 
 ---
 
+## Decision 20: R1 Media Security and Limits
+
+R1.8 stores catalog images only on the private `catalog_media` disk and serves them through an authenticated, tenant-authorized controller. Server-generated paths use `{company_uuid}/products/{product_uuid}/{media_uuid}.{extension}` and add `/variants/{variant_uuid}` for Variant images. Original filenames are sanitized display metadata only.
+
+Only content-verified JPEG, PNG, and WEBP are accepted. The application checks finfo MIME, the image header, declared MIME, filename extension, byte size, dimensions, pixel count, and SHA-256. Limits are 10 MB, 12,000 px per dimension, 40 million pixels, 50 total images per Product aggregate, and 10 per Variant. Existing R1.1/schema limits remain 500 characters for alt text and caption.
+
+The first Product-level or Variant-level image becomes that owner's primary image. Later uploads replace the pointer only when explicitly requested. Deleting a primary image clears the pointer and never selects a hidden replacement. Reorder uses a complete ordered UUID set and writes `10, 20, 30, ...`.
+
+Database transactions do not make filesystem changes atomic. Upload writes the private file first and compensates on database failure. Delete commits the pointer clear, soft-delete, and audit before attempting physical deletion. `catalog:prune-orphan-media` retries residual soft-deleted files and removes old unknown files; it is dry-run unless `--delete` is supplied.
+
+---
+
 ## R1.2 Architecture Addendum: Tenant-Safe Pointers and Category Self-Parent Protection
 
 ### Original decision

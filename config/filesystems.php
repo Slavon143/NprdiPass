@@ -30,6 +30,16 @@ return [
 
     'disks' => [
 
+        'catalog_media' => [
+            'driver' => 'local',
+            'root' => env('CATALOG_MEDIA_ROOT', env('APP_ENV') === 'testing'
+                ? storage_path('framework/testing/disks/catalog-media-testing')
+                : storage_path('app/catalog-media')),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

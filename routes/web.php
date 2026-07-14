@@ -11,11 +11,14 @@ use App\Http\Controllers\Catalog\CategoryController;
 use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
+use App\Http\Controllers\Catalog\MediaContentController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
+use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductVariantController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
 use App\Http\Controllers\Catalog\VariantAttributeController;
+use App\Http\Controllers\Catalog\VariantMediaController;
 use App\Http\Controllers\CompanyInvitationRegistrationController;
 use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
@@ -69,6 +72,8 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/catalog/media/{media}/content', MediaContentController::class)
+        ->whereUuid('media')->name('catalog.media.content');
 
     Route::prefix('catalog/attributes')->name('catalog.attributes.')->group(function (): void {
         Route::get('/', [AttributeDefinitionController::class, 'index'])->name('index');
@@ -94,12 +99,28 @@ Route::middleware([
             Route::get('/', [ProductVariantController::class, 'index'])->name('index');
             Route::get('/create', [ProductVariantController::class, 'create'])->name('create');
             Route::post('/', [ProductVariantController::class, 'store'])->name('store');
+            Route::prefix('/{variant}/media')->whereUuid('variant')->name('media.')->group(function (): void {
+                Route::get('/', [VariantMediaController::class, 'index'])->name('index');
+                Route::post('/', [VariantMediaController::class, 'store'])->name('store');
+                Route::patch('/reorder', [VariantMediaController::class, 'reorder'])->name('reorder');
+                Route::patch('/{media}', [VariantMediaController::class, 'update'])->whereUuid('media')->name('update');
+                Route::post('/{media}/set-primary', [VariantMediaController::class, 'setPrimary'])->whereUuid('media')->name('set-primary');
+                Route::delete('/{media}', [VariantMediaController::class, 'destroy'])->whereUuid('media')->name('destroy');
+            });
             Route::get('/{variant}/attributes/edit', [VariantAttributeController::class, 'edit'])->whereUuid('variant')->name('attributes.edit');
             Route::put('/{variant}/attributes', [VariantAttributeController::class, 'update'])->whereUuid('variant')->name('attributes.update');
             Route::get('/{variant}', [ProductVariantController::class, 'show'])->whereUuid('variant')->name('show');
             Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->whereUuid('variant')->name('edit');
             Route::patch('/{variant}', [ProductVariantController::class, 'update'])->whereUuid('variant')->name('update');
             Route::post('/{variant}/set-default', SetDefaultProductVariantController::class)->whereUuid('variant')->name('set-default');
+        });
+        Route::prefix('/{product}/media')->whereUuid('product')->name('media.')->group(function (): void {
+            Route::get('/', [ProductMediaController::class, 'index'])->name('index');
+            Route::post('/', [ProductMediaController::class, 'store'])->name('store');
+            Route::patch('/reorder', [ProductMediaController::class, 'reorder'])->name('reorder');
+            Route::patch('/{media}', [ProductMediaController::class, 'update'])->whereUuid('media')->name('update');
+            Route::post('/{media}/set-primary', [ProductMediaController::class, 'setPrimary'])->whereUuid('media')->name('set-primary');
+            Route::delete('/{media}', [ProductMediaController::class, 'destroy'])->whereUuid('media')->name('destroy');
         });
         Route::get('/{product}/attributes/edit', [ProductAttributeController::class, 'edit'])->whereUuid('product')->name('attributes.edit');
         Route::put('/{product}/attributes', [ProductAttributeController::class, 'update'])->whereUuid('product')->name('attributes.update');

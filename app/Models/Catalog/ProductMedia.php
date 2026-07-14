@@ -64,6 +64,7 @@ class ProductMedia extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy($query->qualifyColumn('sort_order'))
+            ->orderBy($query->qualifyColumn('created_at'))
             ->orderBy($query->qualifyColumn('id'));
     }
 }

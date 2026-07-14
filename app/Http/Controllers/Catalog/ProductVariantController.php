@@ -79,8 +79,8 @@ class ProductVariantController extends Controller
         $product = $this->resolveProduct($company, $product);
         $variant = $this->resolveVariant($company, $product, $variant);
         $this->authorize('view', $variant);
-        $product->load('defaultVariant');
-        $variant->load(['createdBy', 'updatedBy', 'attributeValues.definition', 'attributeValues.selectedOption', 'attributeValues.selectedOptions']);
+        $product->load(['defaultVariant', 'primaryMedia']);
+        $variant->load(['primaryMedia', 'createdBy', 'updatedBy', 'attributeValues.definition', 'attributeValues.selectedOption', 'attributeValues.selectedOptions'])->loadCount('media');
         $attributeDefinitions = AttributeDefinition::query()->forCompany($company)
             ->where('status', AttributeDefinitionStatus::Active->value)
             ->whereIn('scope', [AttributeScope::Variant->value, AttributeScope::Both->value])
@@ -94,6 +94,7 @@ class ProductVariantController extends Controller
             'canUpdate' => $request->user()?->can('update', $variant) === true,
             'canSetDefault' => $request->user()?->can('setDefault', $variant) === true,
             'canManageAttributes' => $request->user()?->can('manageAttributes', $variant) === true,
+            'canManageMedia' => $request->user()?->can('manageMedia', $variant) === true,
             'attributeDefinitions' => $attributeDefinitions,
             'attributeValues' => $variant->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $variant->attributeValues->filter(fn (VariantAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),

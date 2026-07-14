@@ -37,8 +37,8 @@ class ProductController extends Controller
         ]);
         $query = Product::query()
             ->forCompany($company)
-            ->with(['primaryCategory:id,uuid,name', 'defaultVariant:id,uuid,product_id,name,sku,status'])
-            ->withCount(['categories', 'variants']);
+            ->with(['primaryCategory:id,uuid,name', 'defaultVariant:id,uuid,product_id,name,sku,status', 'primaryMedia:id,uuid,product_id,alt_text,mime_type'])
+            ->withCount(['categories', 'variants', 'productMedia']);
         $status = $filters['status'] ?? 'all';
 
         if ($status !== 'all') {
@@ -103,10 +103,11 @@ class ProductController extends Controller
             'variants' => fn ($query) => $query->ordered()->limit(5),
             'createdBy',
             'updatedBy',
+            'primaryMedia',
             'attributeValues.definition',
             'attributeValues.selectedOption',
             'attributeValues.selectedOptions',
-        ])->loadCount('variants');
+        ])->loadCount(['variants', 'productMedia']);
 
         $attributeDefinitions = AttributeDefinition::query()->forCompany($company)
             ->where('status', AttributeDefinitionStatus::Active->value)
@@ -120,6 +121,7 @@ class ProductController extends Controller
             'canUpdate' => $request->user()?->can('update', $product) === true,
             'canCreateVariant' => $request->user()?->can('create', [ProductVariant::class, $product]) === true,
             'canManageAttributes' => $request->user()?->can('manageAttributes', $product) === true,
+            'canManageMedia' => $request->user()?->can('manageMedia', $product) === true,
             'attributeDefinitions' => $attributeDefinitions,
             'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),

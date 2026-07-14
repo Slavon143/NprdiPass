@@ -13,6 +13,10 @@
     <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
         <div class="space-y-6">
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-semibold text-slate-900">{{ __('Product images') }}</h2><p class="mt-1 text-sm text-slate-500">{{ trans_choice(':count image|:count images', $product->product_media_count, ['count'=>$product->product_media_count]) }}</p></div><a href="{{ route('catalog.products.media.index',$product->uuid) }}" class="text-sm font-semibold text-indigo-700">{{ $canManageMedia ? __('Manage images') : __('View images') }}</a></div>
+                @if($product->primaryMedia)<img src="{{ route('catalog.media.content',$product->primaryMedia->uuid) }}" alt="{{ $product->primaryMedia->alt_text ?? '' }}" decoding="async" class="mt-4 max-h-96 w-full rounded-xl bg-slate-100 object-contain">@else<div class="mt-4 flex h-52 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500">{{ __('No primary image selected') }}</div>@endif
+            </section>
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-900">{{ __('Product details') }}</h2>
                 <dl class="mt-5 grid gap-5 sm:grid-cols-2">
                     <div><dt class="text-sm text-slate-500">{{ __('Brand') }}</dt><dd class="mt-1 font-semibold text-slate-900">{{ $product->brand ?: __('Not set') }}</dd></div>

@@ -15,6 +15,7 @@ use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductAttributeValue;
+use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Catalog\VariantAttributeValue;
 use App\Models\Company;
@@ -23,6 +24,8 @@ use App\Services\Catalog\ProductCategoryService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class CatalogDemoSeeder extends Seeder
@@ -121,7 +124,48 @@ class CatalogDemoSeeder extends Seeder
             }
 
             $this->seedAttributes($company, $owner);
+            $this->seedMedia($company, $owner);
         });
+    }
+
+    private function seedMedia(Company $company, User $owner): void
+    {
+        $fixtures = [
+            'png' => 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            'jpeg' => '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAEf/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EB//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EB//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EB//2Q==',
+            'webp' => 'UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAUAmJaQAA3AA/v89WAAAAA==',
+        ];
+        $specifications = [
+            ['progrip-work-gloves', null, 'gloves-front.png', 'png', true],
+            ['progrip-work-gloves', null, 'gloves-detail.jpg', 'jpeg', false],
+            ['progrip-work-gloves', 'DEMO-GLOVE-PRO-M', 'gloves-medium.webp', 'webp', true],
+            ['progrip-work-gloves', 'DEMO-GLOVE-PRO-L', 'gloves-large.png', 'png', true],
+            ['reflective-safety-vest', null, 'vest-front.webp', 'webp', true],
+            ['reflective-safety-vest', 'DEMO-VEST-YELLOW-L', 'vest-yellow-large.jpg', 'jpeg', true],
+            ['industrial-led-work-lamp', null, 'lamp-front.jpg', 'jpeg', true],
+            ['industrial-led-work-lamp', null, 'lamp-detail.png', 'png', false],
+            ['industrial-led-work-lamp', 'DEMO-LAMP-40W', 'lamp-40w.webp', 'webp', true],
+        ];
+
+        foreach ($specifications as $position => [$slug, $sku, $filename, $format, $primary]) {
+            $product = Product::query()->forCompany($company)->where('slug_normalized', $slug)->lockForUpdate()->firstOrFail();
+            $variant = $sku === null ? null : ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->where('sku_normalized', $this->normalizer->normalizeSku($sku))->lockForUpdate()->firstOrFail();
+            $bytes = base64_decode($fixtures[$format], true);
+            $image = is_string($bytes) ? getimagesizefromstring($bytes) : false;
+            if (! is_array($image)) {
+                throw new RuntimeException("Invalid embedded demo {$format} image.");
+            }
+            $media = ProductMedia::query()->forCompany($company)->where('product_id', $product->getKey())
+                ->where('product_variant_id', $variant?->getKey())->where('original_filename', $filename)->lockForUpdate()->first() ?? new ProductMedia;
+            $uuid = $media->exists ? $media->uuid : (string) Str::uuid();
+            $extension = $format === 'jpeg' ? 'jpg' : $format;
+            $path = $company->uuid.'/products/'.$product->uuid.($variant ? '/variants/'.$variant->uuid : '').'/'.$uuid.'.'.$extension;
+            Storage::disk((string) config('catalog.media.disk'))->put($path, $bytes, ['visibility' => 'private']);
+            $media->forceFill(['uuid' => $uuid, 'company_id' => $company->getKey(), 'product_id' => $product->getKey(), 'product_variant_id' => $variant?->getKey(), 'original_filename' => $filename, 'storage_path' => $path, 'mime_type' => $image['mime'], 'size_bytes' => strlen($bytes), 'width' => (int) $image[0], 'height' => (int) $image[1], 'checksum_sha256' => hash('sha256', $bytes), 'alt_text' => pathinfo($filename, PATHINFO_FILENAME), 'caption' => null, 'sort_order' => (($position % 3) + 1) * 10, 'uploaded_by' => $owner->getKey()])->save();
+            if ($primary) {
+                ($variant ?? $product)->forceFill(['primary_media_id' => $media->getKey(), 'updated_by' => $owner->getKey()])->save();
+            }
+        }
     }
 
     private function seedAttributes(Company $company, User $owner): void

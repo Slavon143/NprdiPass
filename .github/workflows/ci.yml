@@ -20,6 +20,7 @@ env:
   DB_DATABASE: nordipass_testing
   DB_USERNAME: root
   DB_PASSWORD: root
+  CATALOG_MEDIA_ROOT: ${{ runner.temp }}/catalog-media-testing
 
 jobs:
   backend:
@@ -71,6 +72,11 @@ jobs:
 
       - name: Run Attribute MySQL tests
         run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
+        env:
+          APP_ENV: testing
+
+      - name: Run Media MySQL tests
+        run: php artisan test tests/Feature/Catalog/Media tests/Unit/Catalog/Media
         env:
           APP_ENV: testing
 

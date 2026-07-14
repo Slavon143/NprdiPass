@@ -15,8 +15,11 @@ use Database\Seeders\CatalogDemoSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\LocalDevelopmentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
+
+beforeEach(fn () => Storage::fake('catalog_media'));
 
 test('catalog demo seeder refuses a production environment', function () {
     $originalEnvironment = $this->app->environment();
@@ -70,17 +73,14 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         expect($product->company_id)->toBe($demoCompany->id)
             ->and($product->status)->toBe(ProductStatus::Draft)
             ->and($product->published_at)->toBeNull()
-            ->and($product->primary_media_id)->toBeNull()
             ->and($product->variants)->toHaveCount($expectedVariantCounts[$index])
             ->and($product->defaultVariant)->not->toBeNull()
             ->and($product->defaultVariant?->company_id)->toBe($demoCompany->id)
             ->and($product->defaultVariant?->product_id)->toBe($product->id)
             ->and($product->defaultVariant?->gtin)->toBeNull()
-            ->and($product->defaultVariant?->primary_media_id)->toBeNull()
             ->and($product->variants->every(fn (ProductVariant $variant): bool => $variant->company_id === $demoCompany->id
                 && $variant->product_id === $product->id
-                && $variant->gtin === null
-                && $variant->primary_media_id === null))->toBeTrue()
+                && $variant->gtin === null))->toBeTrue()
             ->and($product->categories->pluck('id')->all())->toContain($product->primary_category_id);
     }
 
@@ -90,13 +90,23 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
             fn (?string $sku): bool => is_string($sku) && str_starts_with($sku, 'DEMO-'),
         ))->toBeTrue()
         ->and($variants->pluck('mpn')->filter())->toHaveCount(10)
-        ->and(ProductMedia::query()->count())->toBe(0)
+        ->and(ProductMedia::query()->count())->toBe(9)
         ->and(AttributeDefinition::query()->forCompany($demoCompany)->count())->toBe(6)
         ->and(AttributeOption::query()->forCompany($demoCompany)->count())->toBe(14)
         ->and(ProductAttributeValue::query()->forCompany($demoCompany)->count())->toBe(7)
         ->and(VariantAttributeValue::query()->forCompany($demoCompany)->count())->toBe(14)
         ->and(AttributeDefinition::query()->forCompany($unrelatedCompany)->count())->toBe(0)
         ->and(AuditLog::query()->count())->toBe(0);
+
+    $mediaIds = ProductMedia::query()->orderBy('id')->pluck('id')->all();
+    $mediaPaths = ProductMedia::query()->pluck('storage_path')->all();
+    foreach ($mediaPaths as $path) {
+        Storage::disk('catalog_media')->assertExists($path);
+    }
+    expect(ProductMedia::query()->whereNull('product_variant_id')->count())->toBe(5)
+        ->and(ProductMedia::query()->whereNotNull('product_variant_id')->count())->toBe(4)
+        ->and(Product::query()->forCompany($demoCompany)->whereNotNull('primary_media_id')->count())->toBe(3)
+        ->and(ProductVariant::query()->forCompany($demoCompany)->whereNotNull('primary_media_id')->count())->toBe(4);
 
     $this->seed(CatalogDemoSeeder::class);
 
@@ -108,6 +118,8 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
         ->and(AttributeOption::query()->forCompany($demoCompany)->count())->toBe(14)
         ->and(ProductAttributeValue::query()->forCompany($demoCompany)->count())->toBe(7)
         ->and(VariantAttributeValue::query()->forCompany($demoCompany)->count())->toBe(14)
+        ->and(ProductMedia::query()->orderBy('id')->pluck('id')->all())->toBe($mediaIds)
+        ->and(ProductMedia::query()->pluck('storage_path')->all())->toBe($mediaPaths)
         ->and(AuditLog::query()->count())->toBe(0);
 });
 

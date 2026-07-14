@@ -51,6 +51,8 @@ enum AuditEvent: string
     case CatalogVariantAttributesUpdated = 'catalog.variant.attributes.updated';
     case CatalogMediaUploaded = 'catalog.media.uploaded';
     case CatalogMediaUpdated = 'catalog.media.updated';
+    case CatalogMediaPrimaryChanged = 'catalog.media.primary_changed';
+    case CatalogMediaReordered = 'catalog.media.reordered';
     case CatalogMediaDeleted = 'catalog.media.deleted';
 
     public function label(): string
@@ -103,6 +105,8 @@ enum AuditEvent: string
             self::CatalogVariantAttributesUpdated => 'Catalog variant attributes updated',
             self::CatalogMediaUploaded => 'Catalog media uploaded',
             self::CatalogMediaUpdated => 'Catalog media updated',
+            self::CatalogMediaPrimaryChanged => 'Catalog media primary changed',
+            self::CatalogMediaReordered => 'Catalog media reordered',
             self::CatalogMediaDeleted => 'Catalog media deleted',
         };
     }
