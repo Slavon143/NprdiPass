@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Products\CreateProductAction;
 use App\Actions\Catalog\Products\UpdateProductAction;
+use App\Data\Catalog\Search\CatalogProductSearchCriteria;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
@@ -12,6 +14,7 @@ use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Products\StoreProductRequest;
 use App\Http\Requests\Catalog\Products\UpdateProductRequest;
+use App\Http\Requests\Catalog\Search\SearchProductsRequest;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
@@ -19,9 +22,11 @@ use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
+use App\Queries\Catalog\ProductCatalogQuery;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Services\Catalog\ProductActivationReadinessService;
 use App\Support\Catalog\AttributeValueFormatter;
+use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -29,38 +34,31 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request, CurrentCompany $currentCompany): View
-    {
+    public function index(
+        SearchProductsRequest $request,
+        CurrentCompany $currentCompany,
+        ProductCatalogQuery $catalogQuery,
+        CategoryHierarchyService $hierarchy,
+        CatalogSearchStringNormalizer $searchNormalizer,
+    ): View {
         $company = $currentCompany->require();
-        $this->authorize('viewAny', [Product::class, $company]);
-        $filters = $request->validate([
-            'status' => ['nullable', 'in:draft,active,archived,all'],
-            'primary_category' => ['nullable', 'uuid'],
-        ]);
-        $query = Product::query()
-            ->forCompany($company)
-            ->with(['primaryCategory:id,uuid,name', 'defaultVariant:id,uuid,product_id,name,sku,status', 'primaryMedia:id,uuid,product_id,alt_text,mime_type'])
-            ->withCount(['categories', 'variants', 'productMedia']);
-        $status = $filters['status'] ?? 'all';
-
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
-
-        $primaryCategoryUuid = $filters['primary_category'] ?? null;
-
-        if (is_string($primaryCategoryUuid) && $primaryCategoryUuid !== '') {
-            $primaryCategory = $this->resolveCategory($company, $primaryCategoryUuid);
-            $query->where('primary_category_id', $primaryCategory->getKey());
-        }
+        $criteria = $request->toCriteria($company, $hierarchy, $searchNormalizer);
+        $products = $catalogQuery->build($company, $criteria)
+            ->paginate($criteria->perPage)
+            ->withQueryString();
 
         return view()->make('catalog.products.index', [
             'company' => $company,
-            'products' => $query->latest('updated_at')->latest('id')->paginate(25)->withQueryString(),
+            'products' => $products,
+            'criteria' => $criteria,
+            'hasProducts' => Product::query()->forCompany($company)->exists(),
             'categoryOptions' => $this->activeCategories($company),
+            'brandOptions' => $this->distinctProductValues($company, 'brand'),
+            'manufacturerOptions' => $this->distinctProductValues($company, 'manufacturer'),
+            'attributeFilterDefinitions' => $this->filterableAttributeDefinitions($company),
+            'activeFilterChips' => $this->activeFilterChips($request, $criteria),
             'canCreate' => $request->user()?->can('create', [Product::class, $company]) === true,
             'canUpdate' => $request->user()?->can(CompanyPermission::CatalogUpdate->value, $company) === true,
-            'filters' => ['status' => $status, 'primary_category' => $primaryCategoryUuid],
         ]);
     }
 
@@ -200,6 +198,86 @@ class ProductController extends Controller
             ->ordered()
             ->limit(CategoryHierarchyService::MAX_CATEGORIES_PER_COMPANY + 1)
             ->get();
+    }
+
+    private function filterableAttributeDefinitions(Company $company)
+    {
+        return AttributeDefinition::query()->forCompany($company)
+            ->where('status', AttributeDefinitionStatus::Active->value)
+            ->where('filterable', true)
+            ->where('type', '!=', AttributeDataType::Text->value)
+            ->with(['options' => fn ($query) => $query
+                ->where('status', 'active')
+                ->ordered()])
+            ->ordered()
+            ->limit(50)
+            ->get();
+    }
+
+    /** @return list<string> */
+    private function distinctProductValues(Company $company, string $column): array
+    {
+        return Product::query()
+            ->forCompany($company)
+            ->whereNotNull($column)
+            ->whereRaw("TRIM({$column}) <> ''")
+            ->distinct()
+            ->orderBy($column)
+            ->limit(100)
+            ->pluck($column)
+            ->map(fn (mixed $value): string => (string) $value)
+            ->all();
+    }
+
+    /**
+     * @return list<array{label: string, url: string}>
+     */
+    private function activeFilterChips(SearchProductsRequest $request, CatalogProductSearchCriteria $criteria): array
+    {
+        $chips = [];
+        $base = $request->query();
+        $route = fn (array $query): string => route('catalog.products.index', array_filter($query, fn (mixed $value): bool => $value !== null && $value !== []));
+
+        if ($criteria->query !== '') {
+            $query = $base;
+            unset($query['q']);
+            $chips[] = ['label' => 'Search: '.$criteria->query, 'url' => $route($query)];
+        }
+
+        foreach (['brand' => 'Brand', 'manufacturer' => 'Manufacturer', 'readiness' => 'Readiness'] as $key => $label) {
+            $value = $base[$key] ?? null;
+            if (is_string($value) && $value !== '' && ! ($key === 'readiness' && $value === 'any')) {
+                $query = $base;
+                unset($query[$key]);
+                $chips[] = ['label' => "{$label}: {$value}", 'url' => $route($query)];
+            }
+        }
+
+        foreach (['product_statuses' => 'Product status', 'variant_statuses' => 'Variant status', 'category_uuids' => 'Category', 'missing_data' => 'Missing'] as $key => $label) {
+            $values = $base[$key] ?? [];
+            if (! is_array($values)) {
+                continue;
+            }
+
+            foreach ($values as $index => $value) {
+                if (! is_string($value) || $value === '') {
+                    continue;
+                }
+
+                $query = $base;
+                unset($query[$key][$index]);
+                $query[$key] = array_values($query[$key] ?? []);
+                $chips[] = ['label' => "{$label}: {$value}", 'url' => $route($query)];
+            }
+        }
+
+        if (($base['attributes'] ?? []) !== [] && is_array($base['attributes'])) {
+            $query = $base;
+            unset($query['attributes']);
+            $chips[] = ['label' => 'Attribute filters', 'url' => $route($query)];
+        }
+
+        return $chips;
     }
 
     private function actor(Request $request): User
