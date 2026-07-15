@@ -30,4 +30,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->middleware('api.ability:'.ApiTokenAbility::MembersRead->value)
             ->name('company.members.index');
     });
+
+    Route::middleware([
+        'auth:sanctum',
+        'api.token.valid',
+        'api.company.resolve',
+        'api.company.member',
+        'api.company.active',
+    ])->group(base_path('routes/catalog-api.php'));
 });

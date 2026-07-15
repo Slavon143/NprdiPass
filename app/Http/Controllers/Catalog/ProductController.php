@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Catalog;
 use App\Actions\Catalog\Products\CreateProductAction;
 use App\Actions\Catalog\Products\UpdateProductAction;
 use App\Data\Catalog\Search\CatalogProductSearchCriteria;
-use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeDataType;
+use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
@@ -184,11 +184,6 @@ class ProductController extends Controller
     private function resolveProduct(Company $company, string $uuid): Product
     {
         return Product::query()->forCompany($company)->where('uuid', $uuid)->firstOrFail();
-    }
-
-    private function resolveCategory(Company $company, string $uuid): Category
-    {
-        return Category::query()->forCompany($company)->where('uuid', $uuid)->firstOrFail();
     }
 
     private function activeCategories(Company $company)

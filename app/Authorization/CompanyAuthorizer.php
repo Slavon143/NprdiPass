@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Tenancy\Contracts\CurrentCompany;
 use App\Tenancy\CurrentMembership;
+use App\Tenancy\TokenCurrentCompany;
 use Illuminate\Auth\Access\AuthorizationException;
 
 class CompanyAuthorizer
@@ -18,6 +19,7 @@ class CompanyAuthorizer
         private readonly CurrentCompany $currentCompany,
         private readonly CurrentMembership $currentMembership,
         private readonly CompanyPermissionMatrix $permissionMatrix,
+        private readonly TokenCurrentCompany $tokenCurrentCompany,
     ) {}
 
     public function allows(User $user, Company $company, CompanyPermission $permission): bool
@@ -27,6 +29,10 @@ class CompanyAuthorizer
         }
 
         $currentCompany = $this->currentCompany->get();
+
+        if ($currentCompany === null) {
+            $currentCompany = $this->tokenCurrentCompany->get();
+        }
 
         if ($currentCompany === null || ! $currentCompany->is($company)) {
             return false;

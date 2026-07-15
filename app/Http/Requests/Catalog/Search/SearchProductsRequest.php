@@ -7,7 +7,6 @@ use App\Data\Catalog\Search\CatalogProductSearchCriteria;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
-use App\Enums\Catalog\AttributeScope;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
@@ -16,6 +15,8 @@ use App\Models\Company;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
+use App\Tenancy\TokenCurrentCompany;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -34,6 +35,10 @@ class SearchProductsRequest extends FormRequest
     public function authorize(): bool
     {
         $company = app(CurrentCompany::class)->get();
+
+        if (! $company instanceof Company) {
+            $company = app(TokenCurrentCompany::class)->get();
+        }
 
         return $company instanceof Company
             && $this->user()?->can('viewAny', [Product::class, $company]) === true;
@@ -338,7 +343,7 @@ class SearchProductsRequest extends FormRequest
         return $criteria;
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Category> */
+    /** @return Collection<int, Category> */
     private function categories(Company $company)
     {
         $uuids = $this->stringList($this->validated('category_uuids', []));
@@ -346,7 +351,7 @@ class SearchProductsRequest extends FormRequest
         return Category::query()->forCompany($company)->whereIn('uuid', $uuids)->get();
     }
 
-    /** @return list<string> */
+    /** @return array<array-key, mixed> */
     private function arrayInput(mixed $value): array
     {
         return is_array($value) ? $value : [];

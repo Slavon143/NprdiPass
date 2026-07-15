@@ -100,7 +100,7 @@ jobs:
         run: ./vendor/bin/pint --test
 
       - name: Run composer audit
-        run: composer audit --locked || true
+        run: composer audit --locked
 
       - name: Cache routes and config
         run: |
@@ -128,7 +128,7 @@ jobs:
         run: npm ci
 
       - name: Audit frontend dependencies
-        run: npm audit --omit=dev --audit-level=high || true
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Build frontend assets
         run: npm run build

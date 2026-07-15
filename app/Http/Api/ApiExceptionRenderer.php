@@ -6,6 +6,13 @@ use App\Domain\Api\Exceptions\ApiCompanyInactive;
 use App\Domain\Api\Exceptions\ApiTokenAbilityMissing;
 use App\Domain\Api\Exceptions\ApiTokenExpired;
 use App\Domain\Api\Exceptions\ApiTokenInvalid;
+use App\Exceptions\Catalog\AttributeOperationException;
+use App\Exceptions\Catalog\CategoryOperationException;
+use App\Exceptions\Catalog\LifecycleOperationException;
+use App\Exceptions\Catalog\MediaOperationException;
+use App\Exceptions\Catalog\ProductActivationBlocked;
+use App\Exceptions\Catalog\ProductOperationException;
+use App\Exceptions\Catalog\VariantOperationException;
 use App\Models\PersonalAccessToken;
 use App\Tenancy\Exceptions\CurrentCompanyNotSet;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -70,6 +77,38 @@ class ApiExceptionRenderer
 
         if ($exception instanceof AuthorizationException) {
             return $this->response->error('forbidden', 'This action is forbidden.', 403);
+        }
+
+        if ($exception instanceof ProductActivationBlocked) {
+            return $this->response->error(
+                'activation_blocked',
+                $exception->getMessage(),
+                422,
+                ['blockers' => $exception->blockerCodes()],
+            );
+        }
+
+        if ($exception instanceof LifecycleOperationException) {
+            return $this->response->error(
+                $exception->errorCode,
+                $exception->getMessage(),
+                409,
+            );
+        }
+
+        if ($exception instanceof ProductOperationException
+            || $exception instanceof CategoryOperationException
+            || $exception instanceof VariantOperationException
+            || $exception instanceof AttributeOperationException
+            || $exception instanceof MediaOperationException) {
+            $status = str_contains($exception->errorCode, 'conflict') || str_contains($exception->errorCode, 'immutable') ? 409 : 422;
+
+            return $this->response->error(
+                $exception->errorCode,
+                $exception->getMessage(),
+                $status,
+                [$exception->field => [$exception->getMessage()]],
+            );
         }
 
         if ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {

@@ -101,18 +101,18 @@ test('company members endpoint is paginated and strictly tenant scoped', functio
     $default = $this->getJson('/api/v1/company/members?company_uuid='.$companyB->uuid, $headers)
         ->assertOk();
     $default->assertJsonCount(25, 'data')
-        ->assertJsonPath('meta.pagination.current_page', 1)
-        ->assertJsonPath('meta.pagination.per_page', 25)
-        ->assertJsonPath('meta.pagination.total', 31)
-        ->assertJsonPath('meta.pagination.last_page', 2)
+        ->assertJsonPath('meta.current_page', 1)
+        ->assertJsonPath('meta.per_page', 25)
+        ->assertJsonPath('meta.total', 31)
+        ->assertJsonPath('meta.last_page', 2)
         ->assertJsonMissing(['id' => $user->getKey()])
         ->assertDontSee('Foreign Member Marker');
 
     $custom = $this->getJson('/api/v1/company/members?per_page=100&company_id='.$companyB->getKey(), $headers)
         ->assertOk();
     $custom->assertJsonCount(31, 'data')
-        ->assertJsonPath('meta.pagination.per_page', 100)
-        ->assertJsonPath('meta.pagination.total', 31)
+        ->assertJsonPath('meta.per_page', 100)
+        ->assertJsonPath('meta.total', 31)
         ->assertJsonMissingPath('data.0.id')
         ->assertJsonMissingPath('data.0.user.id');
 

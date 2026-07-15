@@ -251,7 +251,7 @@ class ProductCatalogQuery
         $contains = '%'.$this->searchNormalizer->escapeLike($rawQuery).'%';
 
         $query->orderByRaw(
-            "CASE
+            'CASE
                 WHEN EXISTS (SELECT 1 FROM product_variants v WHERE v.company_id = ? AND v.product_id = products.id AND v.deleted_at IS NULL AND v.sku_normalized = ?) THEN 0
                 WHEN EXISTS (SELECT 1 FROM product_variants v WHERE v.company_id = ? AND v.product_id = products.id AND v.deleted_at IS NULL AND v.gtin = ?) THEN 1
                 WHEN EXISTS (SELECT 1 FROM product_variants v WHERE v.company_id = ? AND v.product_id = products.id AND v.deleted_at IS NULL AND v.mpn = ?) THEN 2
@@ -259,7 +259,7 @@ class ProductCatalogQuery
                 WHEN EXISTS (SELECT 1 FROM product_variants v WHERE v.company_id = ? AND v.product_id = products.id AND v.deleted_at IS NULL AND v.name = ?) THEN 4
                 WHEN products.name LIKE ? THEN 5
                 ELSE 9
-            END ASC",
+            END ASC',
             [$company->getKey(), $sku, $company->getKey(), $gtin, $company->getKey(), $rawQuery, $slug, $company->getKey(), $rawQuery, $contains],
         );
     }

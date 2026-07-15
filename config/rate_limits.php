@@ -23,4 +23,11 @@ return [
         'create_per_minute' => (int) env('RATE_LIMIT_TOKEN_CREATE_PER_MINUTE', 10),
         'revoke_per_minute' => (int) env('RATE_LIMIT_TOKEN_REVOKE_PER_MINUTE', 30),
     ],
+
+    'catalog_api' => [
+        'read_per_minute' => (int) env('RATE_LIMIT_CATALOG_API_READ_PER_MINUTE', 120),
+        'write_per_minute' => (int) env('RATE_LIMIT_CATALOG_API_WRITE_PER_MINUTE', 60),
+        'media_per_minute' => (int) env('RATE_LIMIT_CATALOG_API_MEDIA_PER_MINUTE', 20),
+        'lifecycle_per_minute' => (int) env('RATE_LIMIT_CATALOG_API_LIFECYCLE_PER_MINUTE', 30),
+    ],
 ];

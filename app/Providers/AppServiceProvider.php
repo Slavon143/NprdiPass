@@ -90,5 +90,41 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(config('rate_limits.auth.per_minute', 5))->by($key);
         });
+
+        RateLimiter::for('catalog-api-read', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'catalog-read:token:'.$token->getKey()
+                : 'catalog-read:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.catalog_api.read_per_minute', 120))->by($tokenKey);
+        });
+
+        RateLimiter::for('catalog-api-write', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'catalog-write:token:'.$token->getKey()
+                : 'catalog-write:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.catalog_api.write_per_minute', 60))->by($tokenKey);
+        });
+
+        RateLimiter::for('catalog-api-media', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'catalog-media:token:'.$token->getKey()
+                : 'catalog-media:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.catalog_api.media_per_minute', 20))->by($tokenKey);
+        });
+
+        RateLimiter::for('catalog-api-lifecycle', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'catalog-lifecycle:token:'.$token->getKey()
+                : 'catalog-lifecycle:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.catalog_api.lifecycle_per_minute', 30))->by($tokenKey);
+        });
     }
 }
