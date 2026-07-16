@@ -21,6 +21,7 @@ use App\Models\CompanyMembership;
 use App\Models\User;
 use App\Services\Catalog\ProductCategoryService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
+use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ function r110Context(CompanyRole $role = CompanyRole::Owner): array
         'role' => $role,
     ]);
     test()->actingAs($user);
+    app(CurrentCompany::class)->set($company);
 
     return [$user, $company];
 }
@@ -377,7 +379,7 @@ test('invalid and wrong tenant filters are rejected without leaking data', funct
     $responseB = $this->get(route('catalog.products.index', [
         'category_uuids' => [$foreignCategory->uuid],
     ]));
-    expect($responseB->status())->toBe(200);
+    expect($responseB->status())->toBe(302);
 
     $responseC = $this->get(route('catalog.products.index', [
         'attributes' => [
@@ -385,4 +387,4 @@ test('invalid and wrong tenant filters are rejected without leaking data', funct
         ],
     ]));
     expect($responseC->status())->toBe(200);
-})->skip('R1.10: SearchProductsRequest authorization requires CurrentCompany; redirect assertions incompatible with test harness. Not in R1.11 API scope.');
+});
