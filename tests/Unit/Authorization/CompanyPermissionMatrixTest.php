@@ -17,10 +17,13 @@ foreach (CompanyRole::cases() as $role) {
                 CompanyPermission::CatalogCreate,
                 CompanyPermission::CatalogUpdate,
                 CompanyPermission::CatalogManageMedia,
+                CompanyPermission::CatalogViewDocuments,
+                CompanyPermission::CatalogManageDocuments,
             ], true),
             CompanyRole::Viewer => in_array($permission, [
                 CompanyPermission::CompanyView,
                 CompanyPermission::CatalogView,
+                CompanyPermission::CatalogViewDocuments,
             ], true),
         };
 

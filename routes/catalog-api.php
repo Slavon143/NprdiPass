@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Catalog\CategoryController;
 use App\Http\Controllers\Api\V1\Catalog\MediaContentController;
 use App\Http\Controllers\Api\V1\Catalog\ProductAttributeController;
 use App\Http\Controllers\Api\V1\Catalog\ProductController;
+use App\Http\Controllers\Api\V1\Catalog\ProductDocumentController;
 use App\Http\Controllers\Api\V1\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Api\V1\Catalog\ProductMediaController;
 use App\Http\Controllers\Api\V1\Catalog\ProductVariantController;
@@ -199,4 +200,30 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::get('/media/{media}/content', MediaContentController::class)
         ->middleware(['throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::CatalogRead->value])
         ->name('media.content');
+
+    // Product documents
+    Route::get('/products/{product}/documents', [ProductDocumentController::class, 'index'])
+        ->middleware(['throttle:documents-api-read', 'api.ability:'.ApiTokenAbility::DocumentsRead->value])
+        ->name('products.documents.index');
+    Route::post('/products/{product}/documents', [ProductDocumentController::class, 'store'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.store');
+    Route::get('/products/{product}/documents/{document}', [ProductDocumentController::class, 'show'])
+        ->middleware(['throttle:documents-api-read', 'api.ability:'.ApiTokenAbility::DocumentsRead->value])
+        ->name('products.documents.show');
+    Route::get('/products/{product}/documents/{document}/versions', [ProductDocumentController::class, 'versions'])
+        ->middleware(['throttle:documents-api-read', 'api.ability:'.ApiTokenAbility::DocumentsRead->value])
+        ->name('products.documents.versions.index');
+    Route::post('/products/{product}/documents/{document}/versions', [ProductDocumentController::class, 'addVersion'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.versions.store');
+    Route::get('/products/{product}/documents/{document}/versions/{version}/content', [ProductDocumentController::class, 'versionContent'])
+        ->middleware(['throttle:documents-api-media', 'api.ability:'.ApiTokenAbility::DocumentsMedia->value])
+        ->name('products.documents.versions.content');
+    Route::post('/products/{product}/documents/{document}/archive', [ProductDocumentController::class, 'archive'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.archive');
+    Route::post('/products/{product}/documents/{document}/restore', [ProductDocumentController::class, 'restore'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.restore');
 });

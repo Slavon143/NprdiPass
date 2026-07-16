@@ -89,6 +89,18 @@
                 </div>
                 @if ($product->variants_count > 5)<p class="mt-3 text-xs text-slate-500">{{ __('Showing the first 5 variants in catalog order.') }}</p>@endif
             </section>
+
+            @if($canManageDocuments)
+            <section id="documents" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">{{ __('Documents') }}</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ trans_choice(':count document|:count documents', $documentCount, ['count' => $documentCount]) }}</p>
+                    </div>
+                    <a href="{{ route('catalog.products.documents.index', $product->uuid) }}" class="text-sm font-semibold text-indigo-700">{{ __('Manage documents') }}</a>
+                </div>
+            </section>
+            @endif
         </div>
 
         <aside class="space-y-6">

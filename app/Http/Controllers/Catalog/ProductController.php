@@ -19,6 +19,7 @@ use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductAttributeValue;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\User;
@@ -129,6 +130,8 @@ class ProductController extends Controller
             'canCreateVariant' => ! $isArchived && $request->user()?->can('create', [ProductVariant::class, $product]) === true,
             'canManageAttributes' => ! $isArchived && $request->user()?->can('manageAttributes', $product) === true,
             'canManageMedia' => ! $isArchived && $request->user()?->can('manageMedia', $product) === true,
+            'canManageDocuments' => $request->user()?->can('viewAny', [ProductDocument::class, $company]) === true,
+            'documentCount' => ProductDocument::query()->forCompany($company)->where('product_id', $product->getKey())->active()->count(),
             'canActivate' => $request->user()?->can('activate', $product) === true,
             'canReturnToDraft' => $request->user()?->can('returnToDraft', $product) === true,
             'canArchive' => $request->user()?->can('archive', $product) === true,

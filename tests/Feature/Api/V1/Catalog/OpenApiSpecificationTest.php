@@ -109,7 +109,7 @@ test('All operationId values are unique', function () {
     $unique = array_unique($ids);
 
     expect(count($ids))->toEqual(count($unique), 'Duplicate operationId detected');
-    expect(count($ids))->toEqual(53, 'Must have exactly 53 operations matching 53 registered routes');
+    expect(count($ids))->toEqual(61, 'Must have exactly 61 operations matching 61 registered routes');
 });
 
 test('All internal $ref references resolve', function () {

@@ -70,6 +70,21 @@ jobs:
         env:
           APP_ENV: testing
 
+      - name: Run Passport MySQL tests
+        run: php artisan test tests/Feature/Passports/Schema tests/Unit/Passports
+        env:
+          APP_ENV: testing
+
+      - name: Run Document MySQL tests
+        run: php artisan test tests/Feature/Documents tests/Unit/Documents
+        env:
+          APP_ENV: testing
+
+      - name: Run Document API MySQL tests
+        run: php artisan test tests/Feature/Api/V1/Documents
+        env:
+          APP_ENV: testing
+
       - name: Run Attribute MySQL tests
         run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
         env:

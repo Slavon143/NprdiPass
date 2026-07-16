@@ -7,6 +7,7 @@ use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Concerns\HasUuid;
@@ -118,5 +119,10 @@ class Company extends Model
     public function productPassports(): HasMany
     {
         return $this->hasMany(ProductPassport::class);
+    }
+
+    public function productDocuments(): HasMany
+    {
+        return $this->hasMany(ProductDocument::class);
     }
 }

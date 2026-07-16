@@ -22,4 +22,7 @@ enum CompanyPermission: string
     case CatalogManageCategories = 'catalog.manage_categories';
     case CatalogManageAttributes = 'catalog.manage_attributes';
     case CatalogManageMedia = 'catalog.manage_media';
+    case CatalogManageDocuments = 'catalog.manage_documents';
+    case CatalogViewDocuments = 'catalog.view_documents';
+    case CatalogArchiveDocuments = 'catalog.archive_documents';
 }

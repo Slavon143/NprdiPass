@@ -126,5 +126,32 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(config('rate_limits.catalog_api.lifecycle_per_minute', 30))->by($tokenKey);
         });
+
+        RateLimiter::for('documents-api-read', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'documents-read:token:'.$token->getKey()
+                : 'documents-read:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.documents_api.read_per_minute', 120))->by($tokenKey);
+        });
+
+        RateLimiter::for('documents-api-write', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'documents-write:token:'.$token->getKey()
+                : 'documents-write:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.documents_api.write_per_minute', 60))->by($tokenKey);
+        });
+
+        RateLimiter::for('documents-api-media', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'documents-media:token:'.$token->getKey()
+                : 'documents-media:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.documents_api.media_per_minute', 20))->by($tokenKey);
+        });
     }
 }

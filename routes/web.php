@@ -15,6 +15,7 @@ use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\Catalog\MediaContentController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
+use App\Http\Controllers\Catalog\ProductDocumentController;
 use App\Http\Controllers\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductVariantController;
@@ -128,6 +129,16 @@ Route::middleware([
             Route::patch('/{media}', [ProductMediaController::class, 'update'])->whereUuid('media')->name('update');
             Route::post('/{media}/set-primary', [ProductMediaController::class, 'setPrimary'])->whereUuid('media')->name('set-primary');
             Route::delete('/{media}', [ProductMediaController::class, 'destroy'])->whereUuid('media')->name('destroy');
+        });
+        Route::prefix('/{product}/documents')->whereUuid('product')->name('documents.')->group(function (): void {
+            Route::get('/', [ProductDocumentController::class, 'index'])->name('index');
+            Route::get('/create', [ProductDocumentController::class, 'create'])->name('create');
+            Route::post('/', [ProductDocumentController::class, 'store'])->name('store');
+            Route::get('/{document}', [ProductDocumentController::class, 'show'])->whereUuid('document')->name('show');
+            Route::post('/{document}/versions', [ProductDocumentController::class, 'addVersion'])->whereUuid('document')->name('versions.store');
+            Route::get('/{document}/versions/{version}/download', [ProductDocumentController::class, 'downloadVersion'])->whereUuid('document')->whereUuid('version')->name('versions.download');
+            Route::post('/{document}/archive', [ProductDocumentController::class, 'archive'])->whereUuid('document')->name('archive');
+            Route::post('/{document}/restore', [ProductDocumentController::class, 'restore'])->whereUuid('document')->name('restore');
         });
         Route::get('/{product}/attributes/edit', [ProductAttributeController::class, 'edit'])->whereUuid('product')->name('attributes.edit');
         Route::put('/{product}/attributes', [ProductAttributeController::class, 'update'])->whereUuid('product')->name('attributes.update');

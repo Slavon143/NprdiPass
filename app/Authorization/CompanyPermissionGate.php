@@ -103,6 +103,21 @@ class CompanyPermissionGate
         return $this->allowsCatalog($user, $company, CompanyPermission::CatalogManageMedia);
     }
 
+    public function catalogViewDocuments(User $user, Company $company): bool
+    {
+        return $this->allowsCatalog($user, $company, CompanyPermission::CatalogViewDocuments);
+    }
+
+    public function catalogManageDocuments(User $user, Company $company): bool
+    {
+        return $this->allowsCatalog($user, $company, CompanyPermission::CatalogManageDocuments);
+    }
+
+    public function catalogArchiveDocuments(User $user, Company $company): bool
+    {
+        return $this->allowsCatalog($user, $company, CompanyPermission::CatalogArchiveDocuments);
+    }
+
     private function allowsCatalog(User $user, Company $company, CompanyPermission $permission): bool
     {
         $freshCompany = Company::query()->find($company->getKey());

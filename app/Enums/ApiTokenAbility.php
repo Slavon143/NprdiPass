@@ -10,4 +10,7 @@ enum ApiTokenAbility: string
     case CatalogWrite = 'catalog.write';
     case CatalogLifecycle = 'catalog.lifecycle';
     case CatalogMedia = 'catalog.media';
+    case DocumentsRead = 'documents.read';
+    case DocumentsWrite = 'documents.write';
+    case DocumentsMedia = 'documents.media';
 }

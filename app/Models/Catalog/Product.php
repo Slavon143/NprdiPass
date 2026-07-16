@@ -129,6 +129,11 @@ class Product extends Model
         return $this->hasOne(ProductPassport::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ProductDocument::class);
+    }
+
     public function scopeDraft(Builder $query): Builder
     {
         return $query->where($query->qualifyColumn('status'), ProductStatus::Draft->value);

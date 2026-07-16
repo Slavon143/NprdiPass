@@ -11,6 +11,7 @@ use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
@@ -20,6 +21,7 @@ use App\Policies\AuditLogPolicy;
 use App\Policies\Catalog\AttributeDefinitionPolicy;
 use App\Policies\Catalog\AttributeOptionPolicy;
 use App\Policies\Catalog\CategoryPolicy;
+use App\Policies\Catalog\ProductDocumentPolicy;
 use App\Policies\Catalog\ProductMediaPolicy;
 use App\Policies\Catalog\ProductPolicy;
 use App\Policies\Catalog\ProductVariantPolicy;
@@ -49,6 +51,7 @@ class AuthorizationServiceProvider extends ServiceProvider
         $gate->policy(AttributeDefinition::class, AttributeDefinitionPolicy::class);
         $gate->policy(AttributeOption::class, AttributeOptionPolicy::class);
         $gate->policy(ProductMedia::class, ProductMediaPolicy::class);
+        $gate->policy(ProductDocument::class, ProductDocumentPolicy::class);
 
         $gate->define(CompanyPermission::CompanyView, CompanyPermissionGate::class.'@companyView');
         $gate->define(CompanyPermission::CompanyUpdate, CompanyPermissionGate::class.'@companyUpdate');
@@ -68,5 +71,8 @@ class AuthorizationServiceProvider extends ServiceProvider
         $gate->define(CompanyPermission::CatalogManageCategories, CompanyPermissionGate::class.'@catalogManageCategories');
         $gate->define(CompanyPermission::CatalogManageAttributes, CompanyPermissionGate::class.'@catalogManageAttributes');
         $gate->define(CompanyPermission::CatalogManageMedia, CompanyPermissionGate::class.'@catalogManageMedia');
+        $gate->define(CompanyPermission::CatalogViewDocuments, CompanyPermissionGate::class.'@catalogViewDocuments');
+        $gate->define(CompanyPermission::CatalogManageDocuments, CompanyPermissionGate::class.'@catalogManageDocuments');
+        $gate->define(CompanyPermission::CatalogArchiveDocuments, CompanyPermissionGate::class.'@catalogArchiveDocuments');
     }
 }

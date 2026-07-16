@@ -6,6 +6,7 @@ use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
@@ -282,6 +283,41 @@ trait AuthorizesCatalogApi
     protected function authorizeProductViewReadiness(Product $product): void
     {
         if (! request()->user()?->can('viewReadiness', $product)) {
+            throw new AuthorizationException;
+        }
+    }
+
+    protected function authorizeDocumentViewAny(Company $company): void
+    {
+        if (! request()->user()?->can('viewAny', [ProductDocument::class, $company])) {
+            throw new AuthorizationException;
+        }
+    }
+
+    protected function authorizeDocumentView(ProductDocument $document): void
+    {
+        if (! request()->user()?->can('view', $document)) {
+            throw new AuthorizationException;
+        }
+    }
+
+    protected function authorizeDocumentCreate(Company $company): void
+    {
+        if (! request()->user()?->can('create', [ProductDocument::class, $company])) {
+            throw new AuthorizationException;
+        }
+    }
+
+    protected function authorizeDocumentManage(ProductDocument $document): void
+    {
+        if (! request()->user()?->can('addVersion', $document)) {
+            throw new AuthorizationException;
+        }
+    }
+
+    protected function authorizeDocumentDownload(ProductDocument $document): void
+    {
+        if (! request()->user()?->can('download', $document)) {
             throw new AuthorizationException;
         }
     }

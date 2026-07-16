@@ -30,6 +30,16 @@ return [
 
     'disks' => [
 
+        'product_documents' => [
+            'driver' => 'local',
+            'root' => env('DOCUMENTS_ROOT', env('APP_ENV') === 'testing'
+                ? storage_path('framework/testing/disks/product-documents')
+                : storage_path('app/product-documents')),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         'catalog_media' => [
             'driver' => 'local',
             'root' => env('CATALOG_MEDIA_ROOT', env('APP_ENV') === 'testing'

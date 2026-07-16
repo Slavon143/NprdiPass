@@ -55,6 +55,10 @@ enum AuditEvent: string
     case CatalogMediaPrimaryChanged = 'catalog.media.primary_changed';
     case CatalogMediaReordered = 'catalog.media.reordered';
     case CatalogMediaDeleted = 'catalog.media.deleted';
+    case CatalogDocumentCreated = 'catalog.document.created';
+    case CatalogDocumentVersionAdded = 'catalog.document.version_added';
+    case CatalogDocumentArchived = 'catalog.document.archived';
+    case CatalogDocumentRestored = 'catalog.document.restored';
 
     public function label(): string
     {
@@ -110,6 +114,10 @@ enum AuditEvent: string
             self::CatalogMediaPrimaryChanged => 'Catalog media primary changed',
             self::CatalogMediaReordered => 'Catalog media reordered',
             self::CatalogMediaDeleted => 'Catalog media deleted',
+            self::CatalogDocumentCreated => 'Catalog document created',
+            self::CatalogDocumentVersionAdded => 'Catalog document version added',
+            self::CatalogDocumentArchived => 'Catalog document archived',
+            self::CatalogDocumentRestored => 'Catalog document restored',
         };
     }
 }
