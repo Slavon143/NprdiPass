@@ -41,3 +41,20 @@ Schedule::command('queue:prune-failed --hours=168')
     ->daily()
     ->withoutOverlapping(60)
     ->appendOutputTo(storage_path('logs/scheduler-prune-failed-jobs.log'));
+
+Schedule::command('catalog:integrity-check --all-companies --severity=critical --fail-on=critical --format=table')
+    ->dailyAt('06:00')
+    ->withoutOverlapping(120)
+    ->appendOutputTo(storage_path('logs/scheduler-catalog-integrity.log'));
+
+Schedule::command('catalog:summary --all-companies --format=table')
+    ->dailyAt('05:00')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/scheduler-catalog-summary.log'));
+
+Schedule::command('catalog:media-cleanup --all-companies --dry-run --older-than=168 --format=table')
+    ->weekly()
+    ->sundays()
+    ->at('03:00')
+    ->withoutOverlapping(120)
+    ->appendOutputTo(storage_path('logs/scheduler-catalog-media-cleanup-dryrun.log'));

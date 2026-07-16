@@ -6,6 +6,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CancelCompanyInvitationController;
 use App\Http\Controllers\Catalog\AttributeDefinitionController;
 use App\Http\Controllers\Catalog\AttributeOptionController;
+use App\Http\Controllers\Catalog\CatalogAuditController;
 use App\Http\Controllers\Catalog\CategoryArchiveController;
 use App\Http\Controllers\Catalog\CategoryController;
 use App\Http\Controllers\Catalog\CategoryMoveController;
@@ -74,6 +75,8 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/catalog/audit', [CatalogAuditController::class, 'index'])->name('catalog.audit.index');
+    Route::get('/catalog/audit/{auditEvent}', [CatalogAuditController::class, 'show'])->whereNumber('auditEvent')->name('catalog.audit.show');
     Route::get('/catalog/media/{media}/content', MediaContentController::class)
         ->whereUuid('media')->name('catalog.media.content');
 

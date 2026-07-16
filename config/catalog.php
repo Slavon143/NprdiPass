@@ -21,4 +21,27 @@ return [
             'image/webp' => 'webp',
         ],
     ],
+
+    'operations' => [
+        'stale_draft_days' => (int) env('CATALOG_STALE_DRAFT_DAYS', 90),
+        'integrity_batch_size' => (int) env('CATALOG_INTEGRITY_BATCH_SIZE', 500),
+        'cleanup_min_age_hours' => (int) env('CATALOG_CLEANUP_MIN_AGE_HOURS', 24),
+        'cleanup_max_batch_size' => (int) env('CATALOG_CLEANUP_MAX_BATCH_SIZE', 1000),
+        'summary_batch_size' => (int) env('CATALOG_SUMMARY_BATCH_SIZE', 500),
+    ],
+
+    'audit' => [
+        'per_page_options' => [25, 50, 100],
+        'default_per_page' => 50,
+        'max_date_range_days' => 366,
+        'resource_types' => [
+            'category',
+            'product',
+            'variant',
+            'attribute_definition',
+            'attribute_option',
+            'product_media',
+            'variant_media',
+        ],
+    ],
 ];
