@@ -10,6 +10,7 @@ use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Concerns\HasUuid;
+use App\Models\Passports\ProductPassport;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -112,5 +113,10 @@ class Company extends Model
     public function productMedia(): HasMany
     {
         return $this->hasMany(ProductMedia::class);
+    }
+
+    public function productPassports(): HasMany
+    {
+        return $this->hasMany(ProductPassport::class);
     }
 }

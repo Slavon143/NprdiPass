@@ -6,6 +6,7 @@ use App\Enums\Catalog\ProductStatus;
 use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
 use App\Models\Concerns\HasUuid;
+use App\Models\Passports\ProductPassport;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -120,6 +122,11 @@ class Product extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function passport(): HasOne
+    {
+        return $this->hasOne(ProductPassport::class);
     }
 
     public function scopeDraft(Builder $query): Builder
