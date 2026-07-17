@@ -391,6 +391,42 @@ class NordiPassShowcaseSeeder extends Seeder
         $this->seedDrillArchived($company, $owner, $products['cordless-drill-18v']);
 
         // Product F: No Passport (storage case — intentionally not created)
+
+        // Apply multilingual language configuration
+        $this->applyMultilingualDefaults($company, $products);
+    }
+
+    private function applyMultilingualDefaults(Company $company, array $products): void
+    {
+        // Product A: English default, Swedish enabled
+        $passport = ProductPassport::query()->forCompany($company)
+            ->where('product_id', $products['industrial-led-work-lamp']->getKey())->first();
+        if ($passport) {
+            $passport->forceFill([
+                'default_language' => 'en',
+                'enabled_languages' => ['en', 'sv'],
+            ])->save();
+        }
+
+        // Product B: English default, Swedish enabled (partial)
+        $passport = ProductPassport::query()->forCompany($company)
+            ->where('product_id', $products['fire-extinguisher-6kg']->getKey())->first();
+        if ($passport) {
+            $passport->forceFill([
+                'default_language' => 'en',
+                'enabled_languages' => ['en', 'sv'],
+            ])->save();
+        }
+
+        // Product C: English default only
+        $passport = ProductPassport::query()->forCompany($company)
+            ->where('product_id', $products['reflective-safety-vest']->getKey())->first();
+        if ($passport) {
+            $passport->forceFill([
+                'default_language' => 'en',
+                'enabled_languages' => ['en'],
+            ])->save();
+        }
     }
 
     private function makePayload(array $sectionData): array

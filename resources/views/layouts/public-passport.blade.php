@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ $passport->defaultLanguage }}">
+<html lang="{{ $passport->requestedLocale ?? $passport->defaultLanguage }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,6 +28,13 @@
     @endif
 
     <meta name="robots" content="index, follow">
+
+    @if(isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
+        @foreach($passport->enabledLocales as $locale)
+            <link rel="alternate" hreflang="{{ $locale }}" href="{{ url('p/'.$passport->passportPublicId.'?lang='.$locale) }}">
+        @endforeach
+        <link rel="alternate" hreflang="x-default" href="{{ url('p/'.$passport->passportPublicId) }}">
+    @endif
 
     <script type="application/ld+json">{!! $passport->jsonLd !!}</script>
 

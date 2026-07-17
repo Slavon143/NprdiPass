@@ -9,6 +9,7 @@ readonly class PublicPassportViewModel
     /** @param  array<string, string>  $sectionLabels */
     /** @param  PublicPassportMedia[]  $media */
     /** @param  PublicPassportDocument[]  $documents */
+    /** @param  string[]  $enabledLocales */
     public function __construct(
         public string $passportPublicId,
         public int $versionNumber,
@@ -34,5 +35,8 @@ readonly class PublicPassportViewModel
         public string $jsonLd,
         public ?string $countryOfOrigin,
         public ?string $manufacturerDisplayName,
+        public string $requestedLocale = 'en',
+        public array $enabledLocales = ['en'],
+        public bool $isFallback = false,
     ) {}
 }

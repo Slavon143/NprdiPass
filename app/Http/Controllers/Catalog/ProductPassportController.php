@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Catalog;
 use App\Actions\Passports\CreateProductPassportDraftAction;
 use App\Actions\Passports\ResetProductPassportSectionAction;
 use App\Actions\Passports\SyncProductPassportDocumentsAction;
+use App\Actions\Passports\UpdatePassportLanguagesAction;
 use App\Actions\Passports\UpdateProductPassportSectionAction;
 use App\Actions\Passports\UpdateProductPassportSettingsAction;
 use App\Enums\CompanyPermission;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Passports\CreatePassportRequest;
 use App\Http\Requests\Passports\ResetPassportSectionRequest;
 use App\Http\Requests\Passports\SyncPassportDocumentsRequest;
+use App\Http\Requests\Passports\UpdatePassportLanguagesRequest;
 use App\Http\Requests\Passports\UpdatePassportSectionRequest;
 use App\Http\Requests\Passports\UpdatePassportSettingsRequest;
 use App\Models\Catalog\Product;
@@ -137,6 +139,7 @@ class ProductPassportController extends Controller
                 $section,
                 $validated['section_payload'],
                 (int) $validated['expected_revision'],
+                $validated['locale'] ?? null,
             );
 
             $draft = $updated->currentDraftVersion;
@@ -296,6 +299,41 @@ class ProductPassportController extends Controller
                 'message' => 'Validation failed.',
                 'errors' => $e->errors(),
             ], 422);
+        }
+    }
+
+    public function updateLanguages(
+        Product $product,
+        UpdatePassportLanguagesRequest $request,
+        CurrentCompany $currentCompany,
+        UpdatePassportLanguagesAction $action,
+    ): JsonResponse {
+        $company = $this->resolveCompany($currentCompany);
+        $this->assertProductBelongsToCompany($company, $product);
+
+        $passport = $this->resolvePassport($product);
+
+        try {
+            $validated = $request->validated();
+
+            $updated = $action->handle(
+                $this->actor($request),
+                $company,
+                $product,
+                $passport,
+                $validated['default_language'],
+                $validated['enabled_languages'],
+            );
+
+            return response()->json([
+                'data' => [
+                    'passport_uuid' => $updated->getAttribute('uuid'),
+                    'default_language' => $updated->default_language,
+                    'enabled_languages' => $updated->enabled_languages,
+                ],
+            ]);
+        } catch (ConflictHttpException $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
         }
     }
 

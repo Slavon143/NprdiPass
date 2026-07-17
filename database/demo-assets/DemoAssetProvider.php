@@ -9,19 +9,20 @@ class DemoAssetProvider
     private const PNG_SIGNATURE = "\x89PNG\r\n\x1a\n";
 
     private const WIDTH = 200;
+
     private const HEIGHT = 200;
 
     private static array $imageSpecs = [
-        'lamp-primary'       => [0x26, 0x6B, 0xD7],
-        'lamp-gallery-1'     => [0x22, 0xA6, 0x3E],
-        'lamp-gallery-2'     => [0xE8, 0xC5, 0x11],
-        'lamp-variant'       => [0x7B, 0x2D, 0xA5],
+        'lamp-primary' => [0x26, 0x6B, 0xD7],
+        'lamp-gallery-1' => [0x22, 0xA6, 0x3E],
+        'lamp-gallery-2' => [0xE8, 0xC5, 0x11],
+        'lamp-variant' => [0x7B, 0x2D, 0xA5],
         'extinguisher-primary' => [0xD9, 0x2B, 0x2B],
         'extinguisher-gallery' => [0xF0, 0x7B, 0x13],
-        'vest-primary'        => [0x8B, 0xC3, 0x12],
-        'gloves-primary'      => [0x80, 0x80, 0x80],
-        'drill-primary'       => [0x8B, 0x5E, 0x3C],
-        'lamp-v2-primary'     => [0x1C, 0x2E, 0x60],
+        'vest-primary' => [0x8B, 0xC3, 0x12],
+        'gloves-primary' => [0x80, 0x80, 0x80],
+        'drill-primary' => [0x8B, 0x5E, 0x3C],
+        'lamp-v2-primary' => [0x1C, 0x2E, 0x60],
     ];
 
     private static array $pdfDocs = [
@@ -65,7 +66,7 @@ class DemoAssetProvider
 
     public function imageDataUri(string $key): string
     {
-        return 'data:image/png;base64,' . $this->imageBase64($key);
+        return 'data:image/png;base64,'.$this->imageBase64($key);
     }
 
     public function pdfContent(string $key): string
@@ -131,7 +132,7 @@ class DemoAssetProvider
         for ($y = 0; $y < $height; $y++) {
             $raw .= "\x00";
             for ($x = 0; $x < $width; $x++) {
-                $raw .= chr($r) . chr($g) . chr($b);
+                $raw .= chr($r).chr($g).chr($b);
             }
         }
 
@@ -141,15 +142,15 @@ class DemoAssetProvider
 
         $iend = $this->pngChunk('IEND', '');
 
-        return $header . $ihdr . $idat . $iend;
+        return $header.$ihdr.$idat.$iend;
     }
 
     private function pngChunk(string $type, string $data): string
     {
         $len = pack('N', strlen($data));
-        $crc = pack('N', crc32($type . $data));
+        $crc = pack('N', crc32($type.$data));
 
-        return $len . $type . $data . $crc;
+        return $len.$type.$data.$crc;
     }
 
     private function buildPdfContent(string $title, string $body): string
@@ -167,17 +168,17 @@ class DemoAssetProvider
 
         $streamObjNum = 4;
         $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents {$streamObjNum} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\nendobj";
-        $objects[] = "{$streamObjNum} 0 obj\n<< /Length " . strlen($content) . " >>\nstream\n{$content}\nendstream\nendobj";
+        $objects[] = "{$streamObjNum} 0 obj\n<< /Length ".strlen($content)." >>\nstream\n{$content}\nendstream\nendobj";
 
         $xrefOffset = 9;
         $header = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
 
         $bodyText = '';
         foreach ($objects as $obj) {
-            $bodyText .= $obj . "\n";
+            $bodyText .= $obj."\n";
         }
 
-        $xref = "xref\n0 " . (count($objects) + 1) . "\n0000000000 65535 f \n";
+        $xref = "xref\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
 
         $offsets = [];
         $offset = strlen($header);
@@ -191,9 +192,9 @@ class DemoAssetProvider
             $xref .= sprintf("%010d 00000 n \n", $off);
         }
 
-        $trailer = "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
+        $trailer = "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
 
-        return $header . $bodyText . $xref . $trailer;
+        return $header.$bodyText.$xref.$trailer;
     }
 
     private function pdfEscape(string $text): string

@@ -42,6 +42,38 @@
     </div>
 </section>
 
+{{-- Language Selector --}}
+@if(isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
+<section class="mb-6">
+    <div class="flex items-center gap-3 text-sm">
+        <span class="text-slate-500 font-medium">Language</span>
+        @foreach($passport->enabledLocales as $locale)
+            @php
+                $isActive = ($passport->requestedLocale ?? $passport->defaultLanguage) === $locale;
+                $localeUrl = url('p/'.$passport->passportPublicId.($locale !== $passport->defaultLanguage ? '?lang='.$locale : ''));
+            @endphp
+            <a href="{{ $localeUrl }}"
+               @class([
+                   'px-3 py-1 rounded-full text-sm font-medium transition-colors',
+                   'bg-blue-600 text-white' => $isActive,
+                   'bg-slate-100 text-slate-600 hover:bg-slate-200' => !$isActive,
+               ])
+               hreflang="{{ $locale }}">
+                {{ $locale === 'en' ? 'English' : ($locale === 'sv' ? 'Svenska' : strtoupper($locale)) }}
+            </a>
+        @endforeach
+    </div>
+</section>
+
+@endif
+
+{{-- Fallback Notice --}}
+@if(isset($passport->isFallback) && $passport->isFallback)
+<section class="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+    Some information is shown in {{ $passport->defaultLanguage === 'en' ? 'English' : 'the default language' }} because a translation is not available in the selected language.
+</section>
+@endif
+
 {{-- Gallery --}}
 @if(count($passport->media) > 1)
     <section class="mb-8" aria-label="Product gallery">

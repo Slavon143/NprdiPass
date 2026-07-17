@@ -145,6 +145,26 @@ jobs:
         env:
           APP_ENV: testing
 
+      - name: Run Passport Localization Unit tests
+        run: php artisan test tests/Unit/Passports/Localization
+        env:
+          APP_ENV: testing
+
+      - name: Run Passport Localization Web tests
+        run: php artisan test tests/Feature/Passports/Localization
+        env:
+          APP_ENV: testing
+
+      - name: Run Multilingual Public Page tests
+        run: php artisan test tests/Feature/Passports/Public/PublicPassportLanguageTest.php tests/Feature/Passports/Public/PublicPassportLanguageSeoTest.php tests/Feature/Passports/Public/PublicPassportLanguageCacheTest.php
+        env:
+          APP_ENV: testing
+
+      - name: Run Multilingual Demo Dataset tests
+        run: php artisan test tests/Feature/Demo/NordiPassShowcaseMultilingualTest.php
+        env:
+          APP_ENV: testing
+
       - name: Run Attribute MySQL tests
         run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
         env:

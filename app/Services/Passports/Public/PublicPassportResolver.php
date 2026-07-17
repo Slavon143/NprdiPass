@@ -13,7 +13,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PublicPassportResolver
 {
-    public function resolve(string $publicId): PublicPassportViewModel
+    public function resolve(string $publicId, ?string $requestedLocale = null): PublicPassportViewModel
     {
         $passport = ProductPassport::query()
             ->with('currentPublishedVersion')
@@ -44,7 +44,11 @@ class PublicPassportResolver
         $translations = $payload['translations'] ?? [];
         $defaultLanguage = $passport->default_language;
 
-        $sectionData = $this->buildSectionData($enabledSections, $data, $translations, $defaultLanguage);
+        $enabledLocales = $passport->enabled_languages ?? [$defaultLanguage];
+        $effectiveLocale = $this->resolveEffectiveLocale($requestedLocale, $defaultLanguage, $enabledLocales);
+        $isFallback = $effectiveLocale !== $requestedLocale;
+
+        $sectionData = $this->buildSectionData($enabledSections, $data, $translations, $defaultLanguage, $effectiveLocale);
         $sectionLabels = $this->buildSectionLabels($enabledSections);
         $media = $this->buildMedia($catalogContext['media'] ?? []);
         $documents = $this->buildDocuments($catalogContext['documents'] ?? []);
@@ -56,6 +60,7 @@ class PublicPassportResolver
         $metaDescription = $this->buildMetaDescription($sectionData, $product);
 
         $canonicalUrl = url("p/{$publicId}");
+        $localizedUrl = $canonicalUrl.($effectiveLocale !== $defaultLanguage ? "?lang={$effectiveLocale}" : '');
         $ogImageUrl = null;
 
         if ($media !== []) {
@@ -66,7 +71,7 @@ class PublicPassportResolver
             $productName,
             $product,
             $defaultVariant,
-            $canonicalUrl,
+            $localizedUrl,
             $ogImageUrl,
         );
 
@@ -102,12 +107,25 @@ class PublicPassportResolver
             documents: $documents,
             pageTitle: $pageTitle,
             metaDescription: $metaDescription,
-            canonicalUrl: $canonicalUrl,
+            canonicalUrl: $localizedUrl,
             ogImageUrl: $ogImageUrl,
             jsonLd: $jsonLd,
             countryOfOrigin: $countryOfOrigin,
             manufacturerDisplayName: $manufacturerDisplayName,
+            requestedLocale: $effectiveLocale,
+            enabledLocales: $enabledLocales,
+            isFallback: $isFallback,
         );
+    }
+
+    /** @param  string[]  $enabledLocales */
+    private function resolveEffectiveLocale(?string $requested, string $default, array $enabledLocales): string
+    {
+        if ($requested !== null && in_array($requested, $enabledLocales, true)) {
+            return $requested;
+        }
+
+        return $default;
     }
 
     /**
@@ -116,15 +134,36 @@ class PublicPassportResolver
      * @param  array<string, array<string, mixed>>  $translations
      * @return array<string, array<string, mixed>>
      */
-    private function buildSectionData(array $enabledSections, array $data, array $translations, string $defaultLanguage): array
-    {
+    private function buildSectionData(
+        array $enabledSections,
+        array $data,
+        array $translations,
+        string $defaultLanguage,
+        string $requestedLocale,
+    ): array {
         $sectionData = [];
-        $localeTranslations = $translations[$defaultLanguage] ?? [];
+        $defaultTranslations = $translations[$defaultLanguage] ?? [];
+        $requestedTranslations = $translations[$requestedLocale] ?? [];
 
         foreach ($enabledSections as $sectionKey) {
-            $fields = $data[$sectionKey] ?? [];
-            $sectionTranslations = $localeTranslations[$sectionKey] ?? [];
-            $sectionData[$sectionKey] = array_merge($fields, $sectionTranslations);
+            $shared = $data[$sectionKey] ?? [];
+            $defaultSection = $defaultTranslations[$sectionKey] ?? [];
+            $requestedSection = $requestedTranslations[$sectionKey] ?? [];
+
+            // Start with shared (non-translatable) data
+            $merged = $shared;
+
+            // Layer default locale translations
+            foreach ($defaultSection as $key => $value) {
+                $merged[$key] = $value;
+            }
+
+            // Layer requested locale translations (overrides default)
+            foreach ($requestedSection as $key => $value) {
+                $merged[$key] = $value;
+            }
+
+            $sectionData[$sectionKey] = $merged;
         }
 
         return $sectionData;

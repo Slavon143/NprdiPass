@@ -57,6 +57,8 @@ use App\Services\Passports\Readiness\Rules\PassportCurrentDraftBelongsToPassport
 use App\Services\Passports\Readiness\Rules\PassportCurrentDraftExists;
 use App\Services\Passports\Readiness\Rules\PassportCurrentDraftStatus;
 use App\Services\Passports\Readiness\Rules\PassportDefaultLanguageEnabled;
+use App\Services\Passports\Readiness\Rules\PassportDefaultLanguageSupported;
+use App\Services\Passports\Readiness\Rules\PassportEnabledLanguagesSupported;
 use App\Services\Passports\Readiness\Rules\PassportExists;
 use App\Services\Passports\Readiness\Rules\PassportOptionalSectionsNone;
 use App\Services\Passports\Readiness\Rules\PassportPayloadSize;
@@ -64,6 +66,7 @@ use App\Services\Passports\Readiness\Rules\PassportPayloadValid;
 use App\Services\Passports\Readiness\Rules\PassportRevisionValid;
 use App\Services\Passports\Readiness\Rules\PassportSchemaSupported;
 use App\Services\Passports\Readiness\Rules\PassportStatusEditable;
+use App\Services\Passports\Readiness\Rules\PassportTranslationCompletenessRule;
 
 return [
     'profile' => 'nordipass-pilot',
@@ -106,6 +109,8 @@ return [
         PassportCoreSectionsEnabled::class,
         PassportRevisionValid::class,
         PassportOptionalSectionsNone::class,
+        PassportDefaultLanguageSupported::class,
+        PassportEnabledLanguagesSupported::class,
         DppIdentityNamePresent::class,
         DppIdentityDescriptionPresent::class,
         DppIdentityCatalogNameOverridden::class,

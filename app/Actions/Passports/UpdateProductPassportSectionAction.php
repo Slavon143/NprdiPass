@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Services\Passports\DppPayloadValidator;
 use App\Services\Passports\DppSchemaRegistry;
+use App\Services\Passports\Localization\PassportLocaleRegistry;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +30,7 @@ class UpdateProductPassportSectionAction
         private readonly AuditLogger $auditLogger,
         private readonly DppPayloadNormalizer $normalizer,
         private readonly DppPayloadValidator $validator,
+        private readonly PassportLocaleRegistry $localeRegistry,
     ) {}
 
     /**
@@ -42,6 +44,7 @@ class UpdateProductPassportSectionAction
         string $sectionKey,
         array $sectionPayload,
         int $expectedRevision,
+        ?string $locale = null,
     ): ProductPassport {
         DB::beginTransaction();
 
@@ -78,14 +81,15 @@ class UpdateProductPassportSectionAction
 
             $isTranslatable = $sectionDef->translatable;
             $defaultLanguage = $passport->default_language;
+            $targetLocale = $this->resolveLocale($locale, $defaultLanguage, $passport);
 
             if ($isTranslatable) {
-                $this->validator->validateSectionPayload($sectionKey, $sectionPayload, true, $defaultLanguage);
+                $this->validator->validateSectionPayload($sectionKey, $sectionPayload, true, $targetLocale);
                 $translatableFields = $this->buildTranslatableFields($sectionDef, $sectionPayload);
                 $nonTranslatableFields = $this->buildNonTranslatableFields($sectionDef, $sectionPayload);
 
                 if ($translatableFields !== []) {
-                    $payload['translations'][$defaultLanguage][$sectionKey] = $translatableFields;
+                    $payload['translations'][$targetLocale][$sectionKey] = $translatableFields;
                 }
 
                 if ($nonTranslatableFields !== []) {
@@ -119,6 +123,7 @@ class UpdateProductPassportSectionAction
                     'passport_uuid' => $passport->getAttribute('uuid'),
                     'draft_version_uuid' => $draft->getAttribute('uuid'),
                     'section_key' => $sectionKey,
+                    'locale' => $targetLocale,
                     'old_revision' => $oldRevision,
                     'new_revision' => $newRevision,
                 ],
@@ -228,5 +233,24 @@ class UpdateProductPassportSectionAction
         $this->authorizer->authorize($actor, $freshCompany, CompanyPermission::PassportsManage);
 
         return $freshCompany;
+    }
+
+    private function resolveLocale(?string $locale, string $defaultLanguage, ProductPassport $passport): string
+    {
+        if ($locale === null) {
+            return $defaultLanguage;
+        }
+
+        $enabledLanguages = $passport->enabled_languages;
+
+        if (! in_array($locale, $enabledLanguages, true)) {
+            throw new ConflictHttpException("Language '{$locale}' is not enabled for this passport.");
+        }
+
+        if (! $this->localeRegistry->supports($locale)) {
+            throw new ConflictHttpException("Unsupported language: {$locale}.");
+        }
+
+        return $locale;
     }
 }

@@ -15,9 +15,10 @@ class PublicPassportController extends Controller
         PublicPassportResolver $resolver,
         string $publicId,
     ): View|Response {
-        $viewModel = $resolver->resolve($publicId);
+        $requestedLocale = $request->query('lang');
+        $viewModel = $resolver->resolve($publicId, $requestedLocale);
 
-        $etag = '"'.$viewModel->snapshotChecksum.'"';
+        $etag = '"'.$viewModel->snapshotChecksum.':'.$viewModel->requestedLocale.'"';
 
         if ($request->headers->get('If-None-Match') === $etag) {
             return response('', 304, [

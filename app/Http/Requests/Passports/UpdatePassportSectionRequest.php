@@ -17,6 +17,7 @@ class UpdatePassportSectionRequest extends FormRequest
         return [
             'section_payload' => ['required', 'array'],
             'expected_revision' => ['required', 'integer', 'min:1'],
+            'locale' => ['sometimes', 'string', 'size:2'],
         ];
     }
 
@@ -29,6 +30,7 @@ class UpdatePassportSectionRequest extends FormRequest
             'expected_revision.required' => 'Expected revision is required.',
             'expected_revision.integer' => 'Expected revision must be an integer.',
             'expected_revision.min' => 'Expected revision must be at least 1.',
+            'locale.size' => 'Locale must be a 2-letter code.',
         ];
     }
 }
