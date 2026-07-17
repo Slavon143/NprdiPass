@@ -22,10 +22,13 @@ use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
+use App\Models\Passports\ProductPassport;
 use App\Models\User;
 use App\Queries\Catalog\ProductCatalogQuery;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Services\Catalog\ProductActivationReadinessService;
+use App\Services\Passports\Readiness\PassportReadinessEvaluator;
+use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Support\Catalog\AttributeValueFormatter;
 use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
@@ -97,6 +100,8 @@ class ProductController extends Controller
         CurrentCompany $currentCompany,
         AttributeValueFormatter $attributeFormatter,
         ProductActivationReadinessService $readinessService,
+        ReadinessContextBuilder $passportContextBuilder,
+        PassportReadinessEvaluator $passportEvaluator,
         string $product,
     ): View {
         $company = $currentCompany->require();
@@ -113,6 +118,7 @@ class ProductController extends Controller
             'attributeValues.definition',
             'attributeValues.selectedOption',
             'attributeValues.selectedOptions',
+            'passport.currentDraftVersion',
         ])->loadCount(['variants', 'productMedia']);
 
         $attributeDefinitions = AttributeDefinition::query()->forCompany($company)
@@ -122,6 +128,16 @@ class ProductController extends Controller
             ->get();
         $readiness = $readinessService->evaluate($company, $product);
         $isArchived = $product->status === ProductStatus::Archived;
+
+        $passport = $product->passport;
+        $passportReadiness = null;
+        $canManagePassports = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canViewPassports = $canManagePassports || $request->user()?->can(CompanyPermission::PassportsView->value, [$company]) === true;
+
+        if ($passport instanceof ProductPassport) {
+            $passportContext = $passportContextBuilder->build($company, $product);
+            $passportReadiness = $passportEvaluator->evaluate($passportContext);
+        }
 
         return view()->make('catalog.products.show', [
             'company' => $company,
@@ -137,6 +153,10 @@ class ProductController extends Controller
             'canArchive' => $request->user()?->can('archive', $product) === true,
             'canRestore' => $request->user()?->can('restore', $product) === true,
             'readiness' => $readiness,
+            'passport' => $passport,
+            'passportReadiness' => $passportReadiness,
+            'canManagePassports' => $canManagePassports,
+            'canViewPassports' => $canViewPassports,
             'attributeDefinitions' => $attributeDefinitions,
             'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),

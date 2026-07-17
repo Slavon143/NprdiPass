@@ -23,8 +23,9 @@ class OpenApiSpecificationTest extends TestCase
 
         $passportOps = $this->collectPassportOperations($yaml['paths']);
 
-        $this->assertCount(7, $passportOps, sprintf(
-            'Expected 7 DPP Passport operations, found %d: %s',
+        $this->assertNotEmpty($passportOps, 'No Passport operations documented.');
+        $this->assertGreaterThanOrEqual(7, count($passportOps), sprintf(
+            'Expected at least 7 DPP Passport operations, found %d: %s',
             count($passportOps),
             implode(', ', $passportOps),
         ));

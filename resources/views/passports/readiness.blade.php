@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Passport Readiness: {{ $product->name }}</h1>
@@ -66,7 +64,9 @@
                 <div class="border rounded-lg p-4 @if($rule->status->value === 'passed') border-green-300 bg-green-50 @elseif($rule->status->value === 'failed') border-red-300 bg-red-50 @else border-gray-300 bg-gray-50 @endif">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded">{{ $rule->code }}</span>
+                            @if(app()->isLocal() && config('app.debug'))
+                            <span class="text-xs font-mono text-slate-400">{{ $rule->code }}</span>
+                            @endif
                             <span class="px-2 py-0.5 rounded-full text-xs font-semibold @if($rule->status->value === 'passed') bg-green-200 text-green-800 @elseif($rule->status->value === 'failed') bg-red-200 text-red-800 @else bg-gray-200 text-gray-600 @endif">
                                 {{ ucfirst($rule->status->value) }}
                             </span>
@@ -75,13 +75,13 @@
                             {{ ucfirst($rule->severity->value) }}
                         </span>
                     </div>
-                    <p class="text-sm font-medium">{{ $rule->titleKey }}</p>
-                    <p class="text-xs text-gray-600 mt-1">{{ $rule->messageKey }}</p>
+                    <p class="text-sm font-medium text-slate-900">{{ $rule->titleKey }}</p>
+                    <p class="text-xs text-slate-600 mt-1">{{ $rule->messageKey }}</p>
 
-                    @if ($rule->navigationTarget !== null)
+                    @if ($rule->navigationTarget !== null && $rule->status->value === 'failed')
                     <div class="mt-2">
-                        <a href="{{ route($rule->navigationTarget->routeName, $rule->navigationTarget->routeParameters) }}" class="text-blue-600 hover:underline text-xs">
-                            {{ $rule->navigationTarget->label }}
+                        <a href="{{ route($rule->navigationTarget->routeName, $rule->navigationTarget->routeParameters) }}" class="inline-flex items-center gap-1 text-indigo-600 hover:underline text-xs font-semibold">
+                            {{ __('Open') }} {{ $rule->navigationTarget->label }} &rarr;
                         </a>
                     </div>
                     @endif
@@ -102,4 +102,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>

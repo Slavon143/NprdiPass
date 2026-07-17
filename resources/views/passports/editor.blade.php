@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Edit Product Passport: {{ $product->name }}</h1>
@@ -239,4 +237,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endif
-@endsection
+</x-app-layout>

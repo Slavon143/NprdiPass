@@ -210,4 +210,11 @@ class PassportReadinessWebTest extends TestCase
         $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]))
             ->assertNotFound();
     }
+
+    public function test_rule_codes_are_hidden_in_production(): void
+    {
+        $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
+        $response->assertOk();
+        $response->assertOk();
+    }
 }

@@ -52,6 +52,72 @@
                 @if($product->status->value === 'draft' && !$readiness->ready)<p class="mt-3 text-sm text-slate-600">{{ __('Resolve all blockers before activation.') }}</p>@endif
                 <x-input-error :messages="$errors->get('lifecycle')" class="mt-3" />
             </section>
+
+            {{-- Product Passport --}}
+            <section id="passport" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">{{ __('Product Passport') }}</h2>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Digital Product Passport containing product information, safety instructions, documents and recycling information.') }}</p>
+                    </div>
+                    @if($passport instanceof \App\Models\Passports\ProductPassport)
+                        <x-badge :tone="$passport->status->value === 'draft' ? 'indigo' : ($passport->status->value === 'published' ? 'emerald' : 'slate')">{{ $passport->status->value }}</x-badge>
+                    @else
+                        <x-badge tone="gray">{{ __('Not created') }}</x-badge>
+                    @endif
+                </div>
+
+                @if($passport instanceof \App\Models\Passports\ProductPassport)
+                    <dl class="mt-4 grid gap-4 sm:grid-cols-3">
+                        <div>
+                            <dt class="text-xs text-slate-500">{{ __('Default language') }}</dt>
+                            <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $passport->default_language }}</dd>
+                        </div>
+                        @if($passport->currentDraftVersion)
+                        <div>
+                            <dt class="text-xs text-slate-500">{{ __('Draft revision') }}</dt>
+                            <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $passport->currentDraftVersion->draft_revision }}</dd>
+                        </div>
+                        @endif
+                        @if($passportReadiness)
+                        <div>
+                            <dt class="text-xs text-slate-500">{{ __('Passport readiness') }}</dt>
+                            <dd class="mt-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold @if($passportReadiness->score >= 80) text-emerald-700 @elseif($passportReadiness->score >= 50) text-amber-700 @else text-red-700 @endif">{{ $passportReadiness->score }}%</span>
+                                    <x-badge :tone="$passportReadiness->status->value === 'ready' ? 'emerald' : ($passportReadiness->status->value === 'ready_with_warnings' ? 'amber' : 'red')">{{ str_replace('_', ' ', $passportReadiness->status->value) }}</x-badge>
+                                </div>
+                            </dd>
+                        </div>
+                        @endif
+                    </dl>
+                    @if($passportReadiness)
+                    <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                        <span class="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-800">{{ __(':count blockers', ['count' => $passportReadiness->counts->blockers]) }}</span>
+                        <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">{{ __(':count warnings', ['count' => $passportReadiness->counts->warnings]) }}</span>
+                        <span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-800">{{ __(':count recommendations', ['count' => $passportReadiness->counts->recommendations]) }}</span>
+                        <span class="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800">{{ __(':count passed', ['count' => $passportReadiness->counts->passed]) }}</span>
+                    </div>
+                    @endif
+                    <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
+                        @if($canManagePassports ?? false)
+                        <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit Passport') }}</a>
+                        @endif
+                        <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('View readiness report') }}</a>
+                    </div>
+                @else
+                    <p class="mt-4 text-sm text-slate-500">{{ __('No Product Passport has been created for this product.') }}</p>
+                    @if($canManagePassports ?? false)
+                    <div class="mt-5">
+                        <form method="POST" action="{{ route('catalog.products.passport.store', $product->uuid) }}">
+                            @csrf
+                            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Create Product Passport') }}</button>
+                        </form>
+                    </div>
+                    @endif
+                @endif
+            </section>
+
             <section id="media" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-semibold text-slate-900">{{ __('Product images') }}</h2><p class="mt-1 text-sm text-slate-500">{{ trans_choice(':count image|:count images', $product->product_media_count, ['count'=>$product->product_media_count]) }}</p></div><a href="{{ route('catalog.products.media.index',$product->uuid) }}" class="text-sm font-semibold text-indigo-700">{{ $canManageMedia ? __('Manage images') : __('View images') }}</a></div>
                 @if($product->primaryMedia)<img src="{{ route('catalog.media.content',$product->primaryMedia->uuid) }}" alt="{{ $product->primaryMedia->alt_text ?? '' }}" decoding="async" class="mt-4 max-h-96 w-full rounded-xl bg-slate-100 object-contain">@else<div class="mt-4 flex h-52 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500">{{ __('No primary image selected') }}</div>@endif
