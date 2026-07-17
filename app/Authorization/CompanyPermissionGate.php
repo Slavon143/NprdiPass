@@ -118,6 +118,16 @@ class CompanyPermissionGate
         return $this->allowsCatalog($user, $company, CompanyPermission::CatalogArchiveDocuments);
     }
 
+    public function passportsView(User $user, Company $company): bool
+    {
+        return $this->allows($user, $company, CompanyPermission::PassportsView);
+    }
+
+    public function passportsManage(User $user, Company $company): bool
+    {
+        return $this->allows($user, $company, CompanyPermission::PassportsManage);
+    }
+
     private function allowsCatalog(User $user, Company $company, CompanyPermission $permission): bool
     {
         $freshCompany = Company::query()->find($company->getKey());

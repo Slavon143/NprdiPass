@@ -75,8 +75,18 @@
                             {{ ucfirst($rule->severity->value) }}
                         </span>
                     </div>
-                    <p class="text-sm font-medium text-slate-900">{{ $rule->titleKey }}</p>
-                    <p class="text-xs text-slate-600 mt-1">{{ $rule->messageKey }}</p>
+                    @php
+                        $titleText = __($rule->titleKey);
+                        $msgText = __($rule->messageKey);
+                        if ($titleText === $rule->titleKey) {
+                            $titleText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->titleKey)), '. title'));
+                        }
+                        if ($msgText === $rule->messageKey) {
+                            $msgText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->messageKey)), '. failed passed'));
+                        }
+                    @endphp
+                    <p class="text-sm font-medium text-slate-900">{{ $titleText }}</p>
+                    <p class="text-xs text-slate-600 mt-1">{{ $msgText }}</p>
 
                     @if ($rule->navigationTarget !== null && $rule->status->value === 'failed')
                     <div class="mt-2">

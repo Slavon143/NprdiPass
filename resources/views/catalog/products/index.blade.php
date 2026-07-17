@@ -19,6 +19,8 @@
         $selectedVariantStatuses = $criteria->variantStatuses;
         $selectedCategories = $criteria->categoryUuids;
         $selectedMissing = $criteria->missingData;
+        $selectedPassportStatuses = $criteria->passportStatuses;
+        $needsAttention = $criteria->needsAttention;
         $attributeCriteriaByUuid = collect($criteria->attributeFilters)->keyBy('definitionUuid');
     ?>
 
@@ -80,13 +82,35 @@
                         </div>
                     </fieldset>
 
+                    <fieldset>
+                        <legend class="text-sm font-semibold text-slate-900">{{ __('Passport status') }}</legend>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach (['not_created' => 'Not created', 'draft' => 'Draft', 'published' => 'Published'] as $value => $label)
+                                <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="checkbox" name="passport_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600" @checked(in_array($value, $selectedPassportStatuses, true))>
+                                    <span>{{ __($label) }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="grid gap-5 lg:grid-cols-3">
                     <div>
                         <x-input-label for="readiness" :value="__('Activation readiness')" />
                         <select id="readiness" name="readiness" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="any" @selected($criteria->readiness === 'any')>{{ __('Any readiness') }}</option>
+                            <option value="any" @selected($criteria->readiness === 'any')>{{ __('All') }}</option>
                             <option value="ready" @selected($criteria->readiness === 'ready')>{{ __('Ready') }}</option>
                             <option value="not_ready" @selected($criteria->readiness === 'not_ready')>{{ __('Not ready') }}</option>
                         </select>
+                    </div>
+
+                    <div class="flex items-end pb-1">
+                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                            <input type="checkbox" name="needs_attention" value="1" class="rounded border-slate-300 text-indigo-600" @checked($needsAttention)>
+                            <span class="font-medium">{{ __('Needs attention') }}</span>
+                            <span class="text-xs text-slate-500">{{ __('(Blockers or missing passport)') }}</span>
+                        </label>
                     </div>
                 </div>
 
@@ -207,32 +231,167 @@
         </div>
 
         @if ($products->isEmpty())
-            <section class="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-                <p class="font-semibold text-slate-900">{{ $hasProducts ? __('No products match these filters.') : __('No products have been created yet.') }}</p>
+            <section class="rounded-2xl border border-slate-200 bg-white px-6 py-20 shadow-sm text-center">
+                @if ($hasProducts)
+                    <p class="font-semibold text-slate-900">{{ __('No products match these filters.') }}</p>
+                    <p class="mt-2 text-sm text-slate-500">{{ __('Try adjusting your filter criteria or clear all filters to see all products.') }}</p>
+                @else
+                    <div class="mx-auto max-w-sm">
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                            <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m6 4.125 2.25 2.25m0 0 2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                            </svg>
+                        </div>
+                        <p class="text-lg font-semibold text-slate-900">{{ __('No products yet') }}</p>
+                        <p class="mt-2 text-sm text-slate-500">{{ __('Get started by creating your first product.') }}</p>
+                        @if ($canCreate)
+                            <a href="{{ route('catalog.products.create') }}" class="mt-6 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Add your first product') }}</a>
+                        @endif
+                    </div>
+                @endif
             </section>
         @else
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <tr><th class="px-5 py-3">{{ __('Product') }}</th><th class="px-5 py-3">{{ __('Status') }}</th><th class="px-5 py-3">{{ __('Primary category') }}</th><th class="px-5 py-3">{{ __('Default variant') }}</th><th class="px-5 py-3">{{ __('Updated') }}</th><th class="px-5 py-3 text-right">{{ __('Actions') }}</th></tr>
+                            <tr>
+                                <th class="px-5 py-3">{{ __('Product') }}</th>
+                                <th class="px-5 py-3">{{ __('Status') }}</th>
+                                <th class="px-5 py-3">{{ __('Passport') }}</th>
+                                <th class="px-5 py-3">{{ __('Readiness') }}</th>
+                                <th class="px-5 py-3">{{ __('Primary Category') }}</th>
+                                <th class="px-5 py-3">{{ __('Updated') }}</th>
+                                <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
+                            </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach ($products as $product)
-                                @php($statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' })
+                                @php
+                                    $statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' };
+                                    $summary = $passportSummaries[$product->uuid] ?? null;
+                                @endphp
                                 <tr @class(['bg-amber-50/40' => $product->status->value === 'archived'])>
-                                    <td class="px-5 py-4"><div class="flex items-center gap-3">@if($product->primaryMedia)<img src="{{ route('catalog.media.content',$product->primaryMedia->uuid) }}" alt="{{ $product->primaryMedia->alt_text ?? '' }}" loading="lazy" decoding="async" class="h-14 w-14 rounded-lg bg-slate-100 object-contain">@else<div class="h-14 w-14 rounded-lg bg-slate-100"></div>@endif<div><p class="font-semibold text-slate-900">{{ $product->name }}</p><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->brand ?: __('No brand') }} · {{ $product->manufacturer ?: __('No manufacturer') }} · {{ trans_choice(':count category|:count categories', $product->categories_count, ['count' => $product->categories_count]) }} · {{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }} · {{ trans_choice(':count image|:count images',$product->product_media_count,['count'=>$product->product_media_count]) }}</p></div></div></td>
-                                    <td class="px-5 py-4"><x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge></td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $product->primaryCategory?->name ?? __('Not assigned') }}</td>
-                                    <td class="px-5 py-4"><p class="font-medium text-slate-800">{{ $product->defaultVariant?->name ?? __('Unavailable') }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->defaultVariant?->sku ?: __('No SKU') }}</p></td>
-                                    <td class="px-5 py-4 text-slate-600"><time datetime="{{ $product->updated_at?->toAtomString() }}">{{ $product->updated_at?->format('Y-m-d H:i') }}</time></td>
-                                    <td class="px-5 py-4"><div class="flex justify-end gap-2"><a href="{{ route('catalog.products.show', $product->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('View') }}</a>@if ($canUpdate && $product->status->value !== 'archived')<a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>@endif</div></td>
+                                    <td class="px-5 py-4">
+                                        <div class="flex items-center gap-3">
+                                            @if ($product->primaryMedia)
+                                                <img src="{{ route('catalog.media.content', $product->primaryMedia->uuid) }}" alt="" loading="lazy" decoding="async" class="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 object-cover">
+                                            @else
+                                                <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                                    </svg>
+                                                </div>
+                                            @endif
+                                            <div class="min-w-0 flex-1">
+                                                <p class="font-semibold text-slate-900 truncate">{{ $product->name }}</p>
+                                                @php
+                                                    $brand = $product->brand ? trim($product->brand) : null;
+                                                    $manufacturer = $product->manufacturer ? trim($product->manufacturer) : null;
+                                                @endphp
+                                                @if ($brand || $manufacturer)
+                                                    <p class="mt-0.5 text-xs text-slate-500 truncate">
+                                                        @if ($brand && $manufacturer && strcasecmp($brand, $manufacturer) !== 0)
+                                                            {{ $brand }} · {{ $manufacturer }}
+                                                        @else
+                                                            {{ $brand ?: $manufacturer }}
+                                                        @endif
+                                                    </p>
+                                                @endif
+                                                <p class="mt-0.5 text-xs text-slate-400">
+                                                    {{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }} · {{ trans_choice(':count image|:count images', $product->product_media_count, ['count' => $product->product_media_count]) }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        @if ($summary === null || $summary['passport_status'] === 'not_created')
+                                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/20">{{ __('Not created') }}</span>
+                                            @if ($canManagePassports)
+                                                <form method="POST" action="{{ route('catalog.products.passport.store', $product->uuid) }}" class="mt-1">
+                                                    @csrf
+                                                    <button type="submit" class="text-xs font-medium text-indigo-600 hover:text-indigo-500">{{ __('Create') }}</button>
+                                                </form>
+                                            @endif
+                                        @elseif ($summary['passport_status'] === 'draft')
+                                            <x-badge tone="indigo">{{ __('Draft') }}</x-badge>
+                                            @if ($summary['passport_revision'] !== null)
+                                                <p class="mt-1 text-xs text-slate-500">{{ __('Revision :rev', ['rev' => $summary['passport_revision']]) }}</p>
+                                            @endif
+                                        @elseif ($summary['passport_status'] === 'published')
+                                            <x-badge tone="emerald">{{ __('Published') }}</x-badge>
+                                        @elseif ($summary['passport_status'] === 'unpublished')
+                                            <x-badge tone="amber">{{ __('Unpublished') }}</x-badge>
+                                        @elseif ($summary['passport_status'] === 'archived')
+                                            <x-badge tone="slate">{{ __('Archived') }}</x-badge>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        @if ($summary && $summary['score'] !== null)
+                                            <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="block group">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-sm font-semibold text-slate-900">{{ $summary['score'] }}%</span>
+                                                    @php
+                                                        $readinessTone = match ($summary['readiness_status'] ?? null) {
+                                                            'ready' => 'emerald',
+                                                            'ready_with_warnings' => 'amber',
+                                                            'not_ready' => 'red',
+                                                            default => 'slate',
+                                                        };
+                                                        $readinessLabel = match ($summary['readiness_status'] ?? null) {
+                                                            'ready' => __('Ready'),
+                                                            'ready_with_warnings' => __('Warnings'),
+                                                            'not_ready' => __('Not ready'),
+                                                            default => __('Unknown'),
+                                                        };
+                                                    @endphp
+                                                    <x-badge :tone="$readinessTone">{{ $readinessLabel }}</x-badge>
+                                                </div>
+                                                <p class="mt-1 text-xs text-slate-500 group-hover:text-indigo-600">
+                                                    {{ trans_choice(':count blocker|:count blockers', $summary['blockers'], ['count' => $summary['blockers']]) }} · {{ trans_choice(':count warning|:count warnings', $summary['warnings'], ['count' => $summary['warnings']]) }}
+                                                </p>
+                                            </a>
+                                        @elseif ($summary && $summary['score'] === 0)
+                                            <div>
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-sm font-semibold text-slate-900">0%</span>
+                                                    <x-badge tone="red">{{ __('Not ready') }}</x-badge>
+                                                </div>
+                                                <p class="mt-1 text-xs text-slate-500">{{ $summary['blockers'] }} {{ __('blockers') }} · {{ $summary['warnings'] }} {{ __('warnings') }}</p>
+                                            </div>
+                                        @else
+                                            <div>
+                                                <span class="text-sm text-slate-400">—</span>
+                                                <p class="mt-1 text-xs text-slate-400">{{ __('Not created') }}</p>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4 text-slate-700">
+                                        {{ $product->primaryCategory?->name ?? '—' }}
+                                    </td>
+                                    <td class="px-5 py-4 text-slate-600">
+                                        <time datetime="{{ $product->updated_at?->toAtomString() }}">{{ $product->updated_at?->format('Y-m-d H:i') }}</time>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <div class="flex justify-end gap-2">
+                                            <a href="{{ route('catalog.products.show', $product->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Open') }}</a>
+                                            @if ($canUpdate && $product->status->value !== 'archived')
+                                                <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
+                                            @endif
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                @if ($products->hasPages())<div class="border-t border-slate-200 px-5 py-4">{{ $products->links() }}</div>@endif
+                @if ($products->hasPages())
+                    <div class="border-t border-slate-200 px-5 py-4">{{ $products->links() }}</div>
+                @endif
             </section>
         @endif
     </div>

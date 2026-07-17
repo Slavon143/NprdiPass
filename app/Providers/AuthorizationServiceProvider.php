@@ -74,5 +74,7 @@ class AuthorizationServiceProvider extends ServiceProvider
         $gate->define(CompanyPermission::CatalogViewDocuments, CompanyPermissionGate::class.'@catalogViewDocuments');
         $gate->define(CompanyPermission::CatalogManageDocuments, CompanyPermissionGate::class.'@catalogManageDocuments');
         $gate->define(CompanyPermission::CatalogArchiveDocuments, CompanyPermissionGate::class.'@catalogArchiveDocuments');
+        $gate->define(CompanyPermission::PassportsView, CompanyPermissionGate::class.'@passportsView');
+        $gate->define(CompanyPermission::PassportsManage, CompanyPermissionGate::class.'@passportsManage');
     }
 }

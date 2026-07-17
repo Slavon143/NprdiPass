@@ -63,6 +63,9 @@ class SearchProductsRequest extends FormRequest
             'brand' => ['nullable', 'string', 'max:255'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'readiness' => ['nullable', Rule::in(['any', 'ready', 'not_ready'])],
+            'passport_statuses' => ['nullable', 'array', 'max:5'],
+            'passport_statuses.*' => ['string', Rule::in(['not_created', 'draft', 'published', 'unpublished', 'archived'])],
+            'needs_attention' => ['nullable', 'boolean'],
             'missing_data' => ['nullable', 'array', 'max:6'],
             'missing_data.*' => ['string', Rule::in([
                 'primary_category',
@@ -81,7 +84,7 @@ class SearchProductsRequest extends FormRequest
             'attributes.*.max' => ['nullable', 'regex:/^-?\d+(?:\.\d{1,4})?$/'],
             'attributes.*.from' => ['nullable', 'date_format:Y-m-d'],
             'attributes.*.to' => ['nullable', 'date_format:Y-m-d'],
-            'sort' => ['nullable', Rule::in(['relevance', 'updated', 'created', 'name', 'brand', 'variant_count'])],
+            'sort' => ['nullable', Rule::in(['relevance', 'updated', 'created', 'name', 'brand', 'variant_count', 'readiness', 'blockers'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
             'per_page' => ['nullable', Rule::in([25, 50, 100])],
         ];
@@ -176,6 +179,8 @@ class SearchProductsRequest extends FormRequest
             manufacturer: $this->filledString($validated['manufacturer'] ?? null),
             readiness: (string) ($validated['readiness'] ?? 'any'),
             missingData: $this->stringList($validated['missing_data'] ?? []),
+            passportStatuses: $this->stringList($validated['passport_statuses'] ?? []),
+            needsAttention: $this->boolean('needs_attention'),
             attributeFilters: $this->attributeCriteria($company, $validated['attributes'] ?? []),
             sort: (string) ($validated['sort'] ?? 'updated'),
             direction: (string) ($validated['direction'] ?? 'desc'),

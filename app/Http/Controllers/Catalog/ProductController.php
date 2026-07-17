@@ -28,6 +28,7 @@ use App\Queries\Catalog\ProductCatalogQuery;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Services\Catalog\ProductActivationReadinessService;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
+use App\Services\Passports\Readiness\ProductIndexReadinessProvider;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Support\Catalog\AttributeValueFormatter;
 use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
@@ -51,6 +52,9 @@ class ProductController extends Controller
             ->paginate($criteria->perPage)
             ->withQueryString();
 
+        $readinessProvider = app(ProductIndexReadinessProvider::class);
+        $passportSummaries = $readinessProvider->loadSummaries($company, $products);
+
         return view()->make('catalog.products.index', [
             'company' => $company,
             'products' => $products,
@@ -61,8 +65,10 @@ class ProductController extends Controller
             'manufacturerOptions' => $this->distinctProductValues($company, 'manufacturer'),
             'attributeFilterDefinitions' => $this->filterableAttributeDefinitions($company),
             'activeFilterChips' => $this->activeFilterChips($request, $criteria),
+            'passportSummaries' => $passportSummaries,
             'canCreate' => $request->user()?->can('create', [Product::class, $company]) === true,
             'canUpdate' => $request->user()?->can(CompanyPermission::CatalogUpdate->value, $company) === true,
+            'canManagePassports' => $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true,
         ]);
     }
 
@@ -131,8 +137,8 @@ class ProductController extends Controller
 
         $passport = $product->passport;
         $passportReadiness = null;
-        $canManagePassports = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
-        $canViewPassports = $canManagePassports || $request->user()?->can(CompanyPermission::PassportsView->value, [$company]) === true;
+        $canManagePassports = $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true;
+        $canViewPassports = $canManagePassports || $request->user()?->can(CompanyPermission::PassportsView->value, $company) === true;
 
         if ($passport instanceof ProductPassport) {
             $passportContext = $passportContextBuilder->build($company, $product);
@@ -271,7 +277,7 @@ class ProductController extends Controller
             }
         }
 
-        foreach (['product_statuses' => 'Product status', 'variant_statuses' => 'Variant status', 'category_uuids' => 'Category', 'missing_data' => 'Missing'] as $key => $label) {
+        foreach (['product_statuses' => 'Product status', 'variant_statuses' => 'Variant status', 'category_uuids' => 'Category', 'missing_data' => 'Missing', 'passport_statuses' => 'Passport'] as $key => $label) {
             $values = $base[$key] ?? [];
             if (! is_array($values)) {
                 continue;
@@ -287,6 +293,12 @@ class ProductController extends Controller
                 $query[$key] = array_values($query[$key] ?? []);
                 $chips[] = ['label' => "{$label}: {$value}", 'url' => $route($query)];
             }
+        }
+
+        if ($criteria->needsAttention) {
+            $query = $base;
+            unset($query['needs_attention']);
+            $chips[] = ['label' => 'Needs attention', 'url' => $route($query)];
         }
 
         if (($base['attributes'] ?? []) !== [] && is_array($base['attributes'])) {

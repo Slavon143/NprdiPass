@@ -41,6 +41,7 @@ class ProductCatalogQuery
         $this->applyAttributeFilters($query, $company, $criteria);
         $this->applyMissingDataFilters($query, $company, $criteria);
         $this->applyReadinessFilter($query, $company, $criteria);
+        $this->applyPassportStatusFilter($query, $company, $criteria);
         $this->applySorting($query, $company, $criteria);
 
         return $query;
@@ -185,6 +186,62 @@ class ProductCatalogQuery
         }
 
         $this->applyReadyPredicates($query, $company, $criteria->readiness === 'ready');
+    }
+
+    private function applyPassportStatusFilter(Builder $query, Company $company, CatalogProductSearchCriteria $criteria): void
+    {
+        $statuses = $criteria->passportStatuses;
+
+        if ($criteria->needsAttention) {
+            $query->where(function (Builder $query) use ($company): void {
+                $query->whereNotExists(function (QueryBuilder $exists) use ($company): void {
+                    $exists->selectRaw('1')
+                        ->from('product_passports')
+                        ->where('product_passports.company_id', $company->getKey())
+                        ->whereColumn('product_passports.product_id', 'products.id');
+                });
+
+                $this->applyReadyPredicates($query, $company, false);
+            });
+
+            return;
+        }
+
+        if ($statuses === []) {
+            return;
+        }
+
+        $query->where(function (Builder $query) use ($company, $statuses): void {
+            $dbStatuses = [];
+            $notCreated = false;
+
+            foreach ($statuses as $status) {
+                if ($status === 'not_created') {
+                    $notCreated = true;
+                } else {
+                    $dbStatuses[] = $status;
+                }
+            }
+
+            if ($dbStatuses !== []) {
+                $query->whereExists(function (QueryBuilder $exists) use ($company, $dbStatuses): void {
+                    $exists->selectRaw('1')
+                        ->from('product_passports')
+                        ->where('product_passports.company_id', $company->getKey())
+                        ->whereColumn('product_passports.product_id', 'products.id')
+                        ->whereIn('product_passports.status', $dbStatuses);
+                });
+            }
+
+            if ($notCreated) {
+                $query->orWhereNotExists(function (QueryBuilder $exists) use ($company): void {
+                    $exists->selectRaw('1')
+                        ->from('product_passports')
+                        ->where('product_passports.company_id', $company->getKey())
+                        ->whereColumn('product_passports.product_id', 'products.id');
+                });
+            }
+        });
     }
 
     private function applyReadyPredicates(Builder $query, Company $company, bool $positive): void

@@ -10,6 +10,7 @@ final readonly class CatalogProductSearchCriteria
      * @param  list<int>  $categoryIds
      * @param  list<string>  $categoryUuids
      * @param  list<string>  $missingData
+     * @param  list<string>  $passportStatuses
      * @param  list<CatalogAttributeFilterCriteria>  $attributeFilters
      */
     public function __construct(
@@ -24,6 +25,8 @@ final readonly class CatalogProductSearchCriteria
         public ?string $manufacturer = null,
         public string $readiness = 'any',
         public array $missingData = [],
+        public array $passportStatuses = [],
+        public bool $needsAttention = false,
         public array $attributeFilters = [],
         public string $sort = 'updated',
         public string $direction = 'desc',
@@ -40,6 +43,8 @@ final readonly class CatalogProductSearchCriteria
             || $this->manufacturer !== null
             || $this->readiness !== 'any'
             || $this->missingData !== []
+            || $this->passportStatuses !== []
+            || $this->needsAttention !== false
             || $this->attributeFilters !== []
             || $this->sort !== 'updated'
             || $this->direction !== 'desc'

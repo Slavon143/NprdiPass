@@ -47,6 +47,8 @@ class ProductController extends Controller
             manufacturer: $request->query('manufacturer'),
             readiness: (string) $request->query('readiness', 'any'),
             missingData: (array) $request->query('missing_data', []),
+            passportStatuses: (array) $request->query('passport_statuses', []),
+            needsAttention: $request->boolean('needs_attention'),
             attributeFilters: [],
             sort: (string) $request->query('sort', 'updated'),
             direction: (string) $request->query('direction', 'desc'),
