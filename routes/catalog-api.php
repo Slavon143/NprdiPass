@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Catalog\AttributeDefinitionController;
 use App\Http\Controllers\Api\V1\Catalog\AttributeOptionController;
 use App\Http\Controllers\Api\V1\Catalog\CategoryController;
 use App\Http\Controllers\Api\V1\Catalog\MediaContentController;
+use App\Http\Controllers\Api\V1\Catalog\PassportReadinessController;
 use App\Http\Controllers\Api\V1\Catalog\ProductAttributeController;
 use App\Http\Controllers\Api\V1\Catalog\ProductController;
 use App\Http\Controllers\Api\V1\Catalog\ProductDocumentController;
@@ -229,6 +230,9 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
         ->name('products.documents.restore');
 
     // Product Passports
+    Route::get('/products/{product}/passport/readiness', [PassportReadinessController::class, 'show'])
+        ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
+        ->name('products.passport.readiness');
     Route::get('/products/{product}/passport', [ProductPassportController::class, 'show'])
         ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
         ->name('products.passport.show');

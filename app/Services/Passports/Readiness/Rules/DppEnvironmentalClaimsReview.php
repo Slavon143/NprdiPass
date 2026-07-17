@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Services\Passports\Readiness\Rules;
+
+use App\Contracts\Passports\PassportReadinessRule;
+use App\Data\Passports\Readiness\ReadinessEvaluationContext;
+use App\Data\Passports\Readiness\ReadinessNavigationTarget;
+use App\Data\Passports\Readiness\ReadinessRuleResult;
+use App\Enums\Passports\DppSectionKey;
+use App\Enums\Passports\Readiness\ReadinessRuleGroup;
+use App\Enums\Passports\Readiness\ReadinessRuleStatus;
+use App\Enums\Passports\Readiness\ReadinessSeverity;
+
+class DppEnvironmentalClaimsReview implements PassportReadinessRule
+{
+    public function code(): string
+    {
+        return 'dpp.environmental.claims.review';
+    }
+
+    public function group(): ReadinessRuleGroup
+    {
+        return ReadinessRuleGroup::Environmental;
+    }
+
+    public function severity(): ReadinessSeverity
+    {
+        return ReadinessSeverity::Recommendation;
+    }
+
+    public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
+    {
+        $enabledSections = $context->normalizedPayload['enabled_sections'] ?? [];
+
+        if (! in_array(DppSectionKey::EnvironmentalInformation->value, $enabledSections, true)) {
+            return new ReadinessRuleResult(
+                code: $this->code(),
+                group: $this->group(),
+                severity: $this->severity(),
+                status: ReadinessRuleStatus::NotApplicable,
+                titleKey: 'readiness.dpp.environmental.claims.review.title',
+                messageKey: 'readiness.dpp.environmental.claims.review.not_applicable',
+                safeContext: ['section_enabled' => false],
+            );
+        }
+
+        return new ReadinessRuleResult(
+            code: $this->code(),
+            group: $this->group(),
+            severity: $this->severity(),
+            status: ReadinessRuleStatus::Failed,
+            titleKey: 'readiness.dpp.environmental.claims.review.title',
+            messageKey: 'readiness.dpp.environmental.claims.review.recommendation',
+            section: DppSectionKey::EnvironmentalInformation,
+            navigationTarget: new ReadinessNavigationTarget(
+                type: 'passport_section',
+                section: DppSectionKey::EnvironmentalInformation->value,
+                routeName: 'catalog.products.passport.edit',
+                routeParameters: ['product' => $context->product->uuid ?? ''],
+                label: 'Review Environmental Claims',
+            ),
+            safeContext: [
+                'reminder' => 'Review all environmental claims for accuracy and compliance.',
+            ],
+        );
+    }
+}

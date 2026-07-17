@@ -13,6 +13,7 @@ use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\Catalog\MediaContentController;
+use App\Http\Controllers\Catalog\PassportReadinessController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Catalog\ProductDocumentController;
@@ -151,6 +152,7 @@ Route::middleware([
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
 
+        Route::get('/{product}/passport/readiness', [PassportReadinessController::class, 'show'])->whereUuid('product')->name('passport.readiness');
         Route::get('/{product}/passport', [ProductPassportController::class, 'show'])->whereUuid('product')->name('passport.show');
         Route::post('/{product}/passport', [ProductPassportController::class, 'store'])->whereUuid('product')->name('passport.store');
         Route::get('/{product}/passport/edit', [ProductPassportController::class, 'edit'])->whereUuid('product')->name('passport.edit');

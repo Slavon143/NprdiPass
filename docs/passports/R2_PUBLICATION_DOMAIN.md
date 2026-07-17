@@ -1654,3 +1654,4 @@ The following table verifies that all three R2.1 documents agree on the same beh
 - **R1 Audit:** [../catalog/CATALOG_AUDIT.md](../catalog/CATALOG_AUDIT.md)
 - **R1 Operations:** [../catalog/CATALOG_OPERATIONS.md](../catalog/CATALOG_OPERATIONS.md)
 - **R2.4 DPP Data Model:** [R2_DPP_DATA_MODEL.md](R2_DPP_DATA_MODEL.md) — DPP schema v1, authoring layer, validation, normalization, and revision control
+- **R2.5 — DPP Readiness:** [R2_DPP_READINESS.md](R2_DPP_READINESS.md)

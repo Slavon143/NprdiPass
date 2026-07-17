@@ -440,3 +440,4 @@ php artisan test tests/Feature/Api/V1/Documents
 ## References
 
 - **R2.4 DPP Data Model:** [R2_DPP_DATA_MODEL.md](R2_DPP_DATA_MODEL.md) — Document references in DPP payloads (`document_references[]`) bind `ProductDocument` UUIDs to passport sections with role and display order. Validation enforces document ownership, active status, and product membership.
+- **R2.5 — DPP Readiness:** [R2_DPP_READINESS.md](R2_DPP_READINESS.md)

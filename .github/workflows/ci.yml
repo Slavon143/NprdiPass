@@ -105,6 +105,21 @@ jobs:
         env:
           APP_ENV: testing
 
+      - name: Run DPP Readiness Unit tests
+        run: php artisan test tests/Unit/Passports/Readiness
+        env:
+          APP_ENV: testing
+
+      - name: Run DPP Readiness Feature and Web tests
+        run: php artisan test tests/Feature/Passports/Readiness tests/Feature/Passports/Web/PassportReadinessWebTest.php
+        env:
+          APP_ENV: testing
+
+      - name: Run DPP Readiness API tests
+        run: php artisan test tests/Feature/Api/V1/Passports/PassportReadinessApiTest.php
+        env:
+          APP_ENV: testing
+
       - name: Run Attribute MySQL tests
         run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
         env:

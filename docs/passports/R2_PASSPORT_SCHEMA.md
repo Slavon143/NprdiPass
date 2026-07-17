@@ -213,3 +213,4 @@ Schema tests verify:
 ## 9. References
 
 - **R2.4 DPP Data Model:** [R2_DPP_DATA_MODEL.md](R2_DPP_DATA_MODEL.md) — The schema defined here is consumed by the R2.4 authoring layer, which validates and normalizes DPP payloads stored in `product_passport_versions.payload`.
+- **R2.5 — DPP Readiness:** [R2_DPP_READINESS.md](R2_DPP_READINESS.md)

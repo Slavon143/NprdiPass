@@ -1176,3 +1176,4 @@ graph LR
 - **R2 Publication Decisions:** [R2_PUBLICATION_DECISIONS.md](R2_PUBLICATION_DECISIONS.md)
 - **R2 Passport Schema:** [R2_PASSPORT_SCHEMA.md](R2_PASSPORT_SCHEMA.md)
 - **R2 Documents & Certificates:** [R2_DOCUMENTS_AND_CERTIFICATES.md](R2_DOCUMENTS_AND_CERTIFICATES.md)
+- **R2.5 — DPP Readiness:** [R2_DPP_READINESS.md](R2_DPP_READINESS.md)

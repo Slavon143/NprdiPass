@@ -1507,6 +1507,24 @@ paths:
         "409": { $ref: "#/components/responses/RevisionConflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /products/{product}/passport/readiness:
+    get:
+      operationId: getProductPassportReadiness
+      summary: Evaluate product passport readiness
+      description: |
+        Returns readiness evaluation for the current product passport draft.
+        Readiness is operational validation and not legal certification.
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.read]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/PassportReadinessResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
 # ════════════════════════════════════════════════════════════════
 components:
   securitySchemes:
@@ -1843,6 +1861,58 @@ components:
       properties:
         expected_revision: { type: integer }
 
+    # ── Readiness schemas ───────────────────────────────
+    PassportReadinessResult:
+      type: object
+      properties:
+        profile: { type: string }
+        profile_version: { type: string }
+        schema_version: { type: string }
+        passport_uuid: { type: string, format: uuid }
+        draft_version_uuid: { type: string, format: uuid }
+        passport_revision: { type: integer }
+        status: { type: string }
+        score: { type: integer }
+        counts:
+          $ref: "#/components/schemas/ReadinessCounts"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReadinessRuleItem"
+        evaluated_at: { type: string, format: date-time }
+
+    ReadinessCounts:
+      type: object
+      properties:
+        passed: { type: integer }
+        blockers: { type: integer }
+        warnings: { type: integer }
+        recommendations: { type: integer }
+        not_applicable: { type: integer }
+
+    ReadinessRuleItem:
+      type: object
+      properties:
+        code: { type: string }
+        group: { type: string }
+        severity: { type: string }
+        status: { type: string }
+        title_key: { type: string }
+        message_key: { type: string }
+        section: { type: string, nullable: true }
+        field: { type: string, nullable: true }
+        navigation_target:
+          $ref: "#/components/schemas/ReadinessNavigationTarget"
+
+    ReadinessNavigationTarget:
+      type: object
+      properties:
+        type: { type: string }
+        section: { type: string }
+        route_name: { type: string }
+        route_parameters: { type: object }
+        label: { type: string }
+
   responses:
     Success:
       description: Successful response
@@ -2103,6 +2173,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/DppSchema"
+    PassportReadinessResponse:
+      description: Readiness evaluation result
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PassportReadinessResult"
 
 tags:
   - name: Categories
