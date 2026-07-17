@@ -22,6 +22,7 @@ use App\Http\Controllers\Catalog\ProductDocumentController;
 use App\Http\Controllers\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductPassportController;
+use App\Http\Controllers\Catalog\ProductPassportQrController;
 use App\Http\Controllers\Catalog\ProductVariantController;
 use App\Http\Controllers\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
@@ -171,6 +172,9 @@ Route::middleware([
         Route::put('/{product}/passport/settings', [ProductPassportController::class, 'updateSettings'])->whereUuid('product')->name('passport.settings.update');
         Route::put('/{product}/passport/documents', [ProductPassportController::class, 'syncDocuments'])->whereUuid('product')->name('passport.documents.update');
         Route::post('/{product}/passport/sections/{section}/reset', [ProductPassportController::class, 'resetSection'])->whereUuid('product')->name('passport.sections.reset');
+        Route::get('/{product}/passport/qr', [ProductPassportQrController::class, 'show'])->whereUuid('product')->name('passport.qr.show');
+        Route::get('/{product}/passport/qr.svg', [ProductPassportQrController::class, 'svg'])->whereUuid('product')->name('passport.qr.svg');
+        Route::get('/{product}/passport/qr.png', [ProductPassportQrController::class, 'png'])->whereUuid('product')->name('passport.qr.png');
     });
 
     Route::prefix('settings/catalog/categories')->name('catalog.categories.')->group(function (): void {

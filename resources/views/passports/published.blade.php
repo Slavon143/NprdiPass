@@ -71,6 +71,11 @@
                    class="inline-block text-blue-600 hover:underline text-sm">
                     View Version History
                 </a>
+
+                <a href="{{ route('catalog.products.passport.qr.show', $product->uuid) }}"
+                   class="inline-block text-blue-600 hover:underline text-sm">
+                    View QR Code
+                </a>
             </div>
 
             @if($canPublish)

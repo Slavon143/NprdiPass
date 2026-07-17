@@ -104,6 +104,7 @@
                         <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit Passport') }}</a>
                         @endif
                         <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('View readiness report') }}</a>
+                        <a href="{{ route('catalog.products.passport.qr.show', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('View QR') }}</a>
                     </div>
                 @else
                     <p class="mt-4 text-sm text-slate-500">{{ __('No Product Passport has been created for this product.') }}</p>
