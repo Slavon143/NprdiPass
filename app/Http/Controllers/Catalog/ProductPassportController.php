@@ -21,11 +21,14 @@ use App\Models\User;
 use App\Queries\Passports\ProductPassportEditorQuery;
 use App\Services\Passports\DppCatalogContextProvider;
 use App\Services\Passports\DppSchemaRegistry;
+use App\Services\Passports\Readiness\PassportReadinessEvaluator;
+use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -115,6 +118,8 @@ class ProductPassportController extends Controller
         UpdatePassportSectionRequest $request,
         CurrentCompany $currentCompany,
         UpdateProductPassportSectionAction $action,
+        PassportReadinessEvaluator $readinessEvaluator,
+        ReadinessContextBuilder $readinessContextBuilder,
     ): JsonResponse {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
@@ -135,15 +140,33 @@ class ProductPassportController extends Controller
             );
 
             $draft = $updated->currentDraftVersion;
+            $readinessContext = $readinessContextBuilder->build($company, $product);
+            $readinessResult = $readinessEvaluator->evaluate($readinessContext);
 
             return response()->json([
-                'passport_uuid' => $updated->getAttribute('uuid'),
-                'draft_version_uuid' => $draft?->getAttribute('uuid'),
-                'draft_revision' => $draft?->getAttribute('draft_revision'),
-                'payload' => $draft?->getAttribute('payload'),
+                'data' => [
+                    'section' => $section,
+                    'passport_uuid' => $updated->getAttribute('uuid'),
+                    'draft_version_uuid' => $draft?->getAttribute('uuid'),
+                    'draft_revision' => $draft?->getAttribute('draft_revision'),
+                    'saved_at' => now()->toISOString(),
+                    'payload' => $draft?->getAttribute('payload'),
+                    'readiness' => [
+                        'score' => $readinessResult->score,
+                        'status' => $readinessResult->status->value,
+                        'blockers' => $readinessResult->counts->blockers,
+                        'warnings' => $readinessResult->counts->warnings,
+                        'recommendations' => $readinessResult->counts->recommendations,
+                    ],
+                ],
             ]);
         } catch (ConflictHttpException $e) {
             return response()->json(['message' => $e->getMessage()], 409);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
         }
     }
 
@@ -225,6 +248,8 @@ class ProductPassportController extends Controller
         ResetPassportSectionRequest $request,
         CurrentCompany $currentCompany,
         ResetProductPassportSectionAction $action,
+        PassportReadinessEvaluator $readinessEvaluator,
+        ReadinessContextBuilder $readinessContextBuilder,
     ): JsonResponse {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
@@ -244,15 +269,33 @@ class ProductPassportController extends Controller
             );
 
             $draft = $updated->currentDraftVersion;
+            $readinessContext = $readinessContextBuilder->build($company, $product);
+            $readinessResult = $readinessEvaluator->evaluate($readinessContext);
 
             return response()->json([
-                'passport_uuid' => $updated->getAttribute('uuid'),
-                'draft_version_uuid' => $draft?->getAttribute('uuid'),
-                'draft_revision' => $draft?->getAttribute('draft_revision'),
-                'payload' => $draft?->getAttribute('payload'),
+                'data' => [
+                    'section' => $section,
+                    'passport_uuid' => $updated->getAttribute('uuid'),
+                    'draft_version_uuid' => $draft?->getAttribute('uuid'),
+                    'draft_revision' => $draft?->getAttribute('draft_revision'),
+                    'saved_at' => now()->toISOString(),
+                    'payload' => $draft?->getAttribute('payload'),
+                    'readiness' => [
+                        'score' => $readinessResult->score,
+                        'status' => $readinessResult->status->value,
+                        'blockers' => $readinessResult->counts->blockers,
+                        'warnings' => $readinessResult->counts->warnings,
+                        'recommendations' => $readinessResult->counts->recommendations,
+                    ],
+                ],
             ]);
         } catch (ConflictHttpException $e) {
             return response()->json(['message' => $e->getMessage()], 409);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
         }
     }
 

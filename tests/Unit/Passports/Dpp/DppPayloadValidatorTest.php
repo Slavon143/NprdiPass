@@ -328,12 +328,12 @@ class DppPayloadValidatorTest extends TestCase
         );
     }
 
-    public function test_validate_section_payload_rejects_non_translatable_field_in_translatable_mode(): void
+    public function test_validate_section_payload_accepts_non_translatable_field_in_translatable_mode(): void
     {
-        $this->expectValidationError(
-            fn () => $this->validator->validateSectionPayload('repair_and_spare_parts', ['repairable' => true], true),
-            'fields',
-        );
+        $result = $this->validator->validateSectionPayload('repair_and_spare_parts', ['repairable' => true], true);
+
+        $this->assertArrayHasKey('repairable', $result);
+        $this->assertTrue($result['repairable']);
     }
 
     public function test_validate_section_payload_rejects_wrong_type_for_boolean(): void

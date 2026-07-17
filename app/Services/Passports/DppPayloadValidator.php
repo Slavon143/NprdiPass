@@ -341,10 +341,10 @@ class DppPayloadValidator
      */
     private function validateTranslatableSectionFields(array $fields, DppSectionDefinition $sectionDef, string $locale, array &$errors): void
     {
+        $allFieldKeys = [];
+
         foreach ($sectionDef->fields as $fieldDef) {
-            if (! $fieldDef->translatable) {
-                continue;
-            }
+            $allFieldKeys[$fieldDef->key] = true;
 
             if (! array_key_exists($fieldDef->key, $fields)) {
                 continue;
@@ -354,17 +354,8 @@ class DppPayloadValidator
         }
 
         foreach (array_keys($fields) as $fieldKey) {
-            $known = false;
-
-            foreach ($sectionDef->fields as $fieldDef) {
-                if ($fieldDef->key === $fieldKey && $fieldDef->translatable) {
-                    $known = true;
-                    break;
-                }
-            }
-
-            if (! $known) {
-                $errors['fields'][] = "Unknown field '{$fieldKey}' in translatable section '{$sectionDef->key->value}'.";
+            if (! isset($allFieldKeys[$fieldKey])) {
+                $errors['fields'][] = "Unknown field '{$fieldKey}' in section '{$sectionDef->key->value}'.";
             }
         }
     }
@@ -444,8 +435,8 @@ class DppPayloadValidator
             DppFieldType::Integer => $this->validateIntegerField($fieldKey, $value, $def, $errors),
             DppFieldType::Decimal => $this->validateDecimalField($fieldKey, $value, $def, $errors),
             DppFieldType::Date => $this->validateDateField($fieldKey, $value, $errors),
-            DppFieldType::Email => $this->validateEmailField($fieldKey, $value, $errors),
-            DppFieldType::Url => $this->validateUrlField($fieldKey, $value, $errors),
+            DppFieldType::Email => $this->validateEmailField($fieldKey, $value, $def, $errors),
+            DppFieldType::Url => $this->validateUrlField($fieldKey, $value, $def, $errors),
             DppFieldType::CountryCode => $this->validateCountryCodeField($fieldKey, $value, $errors),
             DppFieldType::StringList => $this->validateStringListField($fieldKey, $value, $def, $errors),
             DppFieldType::MaterialList => $this->validateMaterialListField($fieldKey, $value, $def, $errors),
@@ -539,7 +530,7 @@ class DppPayloadValidator
     /**
      * @param  array<string, string[]>  $errors
      */
-    private function validateEmailField(string $fieldKey, mixed $value, array &$errors): void
+    private function validateEmailField(string $fieldKey, mixed $value, DppFieldDefinition $def, array &$errors): void
     {
         if (! is_string($value)) {
             $errors[$fieldKey][] = "Field '{$fieldKey}' must be a string.";
@@ -548,14 +539,18 @@ class DppPayloadValidator
         }
 
         if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            $errors[$fieldKey][] = "Field '{$fieldKey}' must be a valid email.";
+            $errors[$fieldKey][] = 'Enter a valid email address.';
+        }
+
+        if ($def->maxLength !== null && mb_strlen($value) > $def->maxLength) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must be at most {$def->maxLength} characters.";
         }
     }
 
     /**
      * @param  array<string, string[]>  $errors
      */
-    private function validateUrlField(string $fieldKey, mixed $value, array &$errors): void
+    private function validateUrlField(string $fieldKey, mixed $value, DppFieldDefinition $def, array &$errors): void
     {
         if (! is_string($value)) {
             $errors[$fieldKey][] = "Field '{$fieldKey}' must be a string.";
@@ -564,12 +559,20 @@ class DppPayloadValidator
         }
 
         if (! filter_var($value, FILTER_VALIDATE_URL)) {
-            $errors[$fieldKey][] = "Field '{$fieldKey}' must be a valid URL.";
+            $errors[$fieldKey][] = 'Enter a valid http:// or https:// URL.';
+
+            return;
         }
 
         $parsed = parse_url($value);
 
-        if ($parsed !== false && (isset($parsed['user']) || isset($parsed['pass']))) {
+        if (! isset($parsed['scheme']) || ! in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+            $errors[$fieldKey][] = 'Enter a valid http:// or https:// URL.';
+
+            return;
+        }
+
+        if (isset($parsed['user']) || isset($parsed['pass'])) {
             $errors[$fieldKey][] = "Field '{$fieldKey}' must not contain credentials.";
         }
     }

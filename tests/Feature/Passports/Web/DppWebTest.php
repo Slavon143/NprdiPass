@@ -21,7 +21,6 @@ use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\View;
-use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class DppWebTest extends TestCase
@@ -202,19 +201,16 @@ class DppWebTest extends TestCase
         $response->assertOk();
         $json = $response->json();
 
-        $this->assertArrayHasKey('passport_uuid', $json);
-        $this->assertSame(2, $json['draft_revision']);
+        $this->assertArrayHasKey('data', $json);
+        $this->assertArrayHasKey('passport_uuid', $json['data']);
+        $this->assertSame(2, $json['data']['draft_revision']);
     }
 
     public function test_validation_error_on_section_update(): void
     {
         $this->createDraftPassport($this->product);
 
-        $this->withoutExceptionHandling();
-
-        $this->expectException(ValidationException::class);
-
-        $this->put(
+        $response = $this->putJson(
             route('catalog.products.passport.sections.update', [
                 'product' => $this->product->uuid,
                 'section' => DppSectionKey::UsageAndCare->value,
@@ -224,6 +220,11 @@ class DppWebTest extends TestCase
                 'expected_revision' => 1,
             ],
         );
+
+        $response->assertStatus(422);
+        $json = $response->json();
+
+        $this->assertArrayHasKey('errors', $json);
     }
 
     public function test_stale_revision_conflict(): void
@@ -358,7 +359,7 @@ class DppWebTest extends TestCase
         $response->assertOk();
         $json = $response->json();
 
-        $this->assertSame(3, $json['draft_revision']);
+        $this->assertSame(3, $json['data']['draft_revision']);
     }
 
     public function test_wrong_tenant_returns_404(): void

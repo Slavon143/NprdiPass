@@ -82,7 +82,15 @@ class UpdateProductPassportSectionAction
             if ($isTranslatable) {
                 $this->validator->validateSectionPayload($sectionKey, $sectionPayload, true, $defaultLanguage);
                 $translatableFields = $this->buildTranslatableFields($sectionDef, $sectionPayload);
-                $payload['translations'][$defaultLanguage][$sectionKey] = $translatableFields;
+                $nonTranslatableFields = $this->buildNonTranslatableFields($sectionDef, $sectionPayload);
+
+                if ($translatableFields !== []) {
+                    $payload['translations'][$defaultLanguage][$sectionKey] = $translatableFields;
+                }
+
+                if ($nonTranslatableFields !== []) {
+                    $payload['data'][$sectionKey] = $nonTranslatableFields;
+                }
             } else {
                 $this->validator->validateSectionPayload($sectionKey, $sectionPayload, false);
                 $nonTranslatableFields = $this->buildNonTranslatableFields($sectionDef, $sectionPayload);
