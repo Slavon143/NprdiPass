@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Catalog\ProductController;
 use App\Http\Controllers\Api\V1\Catalog\ProductDocumentController;
 use App\Http\Controllers\Api\V1\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Api\V1\Catalog\ProductMediaController;
+use App\Http\Controllers\Api\V1\Catalog\ProductPassportController;
 use App\Http\Controllers\Api\V1\Catalog\ProductVariantController;
 use App\Http\Controllers\Api\V1\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Api\V1\Catalog\VariantAttributeController;
@@ -226,4 +227,27 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::post('/products/{product}/documents/{document}/restore', [ProductDocumentController::class, 'restore'])
         ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
         ->name('products.documents.restore');
+
+    // Product Passports
+    Route::get('/products/{product}/passport', [ProductPassportController::class, 'show'])
+        ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
+        ->name('products.passport.show');
+    Route::post('/products/{product}/passport', [ProductPassportController::class, 'store'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.store');
+    Route::get('/passports/schema', [ProductPassportController::class, 'schema'])
+        ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
+        ->name('passports.schema');
+    Route::put('/products/{product}/passport/sections/{section}', [ProductPassportController::class, 'updateSection'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.sections.update');
+    Route::put('/products/{product}/passport/settings', [ProductPassportController::class, 'updateSettings'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.settings.update');
+    Route::put('/products/{product}/passport/documents', [ProductPassportController::class, 'syncDocuments'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.documents.update');
+    Route::post('/products/{product}/passport/sections/{section}/reset', [ProductPassportController::class, 'resetSection'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.sections.reset');
 });

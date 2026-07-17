@@ -20,11 +20,14 @@ class CompanyPermissionMatrix
                 CompanyPermission::CatalogManageMedia,
                 CompanyPermission::CatalogViewDocuments,
                 CompanyPermission::CatalogManageDocuments,
+                CompanyPermission::PassportsView,
+                CompanyPermission::PassportsManage,
             ], true),
             CompanyRole::Viewer => in_array($permission, [
                 CompanyPermission::CompanyView,
                 CompanyPermission::CatalogView,
                 CompanyPermission::CatalogViewDocuments,
+                CompanyPermission::PassportsView,
             ], true),
         };
     }

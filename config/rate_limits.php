@@ -36,4 +36,9 @@ return [
         'write_per_minute' => (int) env('RATE_LIMIT_DOCUMENTS_API_WRITE_PER_MINUTE', 60),
         'media_per_minute' => (int) env('RATE_LIMIT_DOCUMENTS_API_MEDIA_PER_MINUTE', 20),
     ],
+
+    'passports_api' => [
+        'read_per_minute' => (int) env('RATE_LIMIT_PASSPORTS_API_READ_PER_MINUTE', 120),
+        'write_per_minute' => (int) env('RATE_LIMIT_PASSPORTS_API_WRITE_PER_MINUTE', 60),
+    ],
 ];

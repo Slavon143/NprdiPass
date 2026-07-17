@@ -25,4 +25,6 @@ enum CompanyPermission: string
     case CatalogManageDocuments = 'catalog.manage_documents';
     case CatalogViewDocuments = 'catalog.view_documents';
     case CatalogArchiveDocuments = 'catalog.archive_documents';
+    case PassportsView = 'passports.view';
+    case PassportsManage = 'passports.manage';
 }

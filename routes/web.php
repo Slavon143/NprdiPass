@@ -18,6 +18,7 @@ use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Catalog\ProductDocumentController;
 use App\Http\Controllers\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Catalog\ProductMediaController;
+use App\Http\Controllers\Catalog\ProductPassportController;
 use App\Http\Controllers\Catalog\ProductVariantController;
 use App\Http\Controllers\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
@@ -149,6 +150,14 @@ Route::middleware([
         Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
+
+        Route::get('/{product}/passport', [ProductPassportController::class, 'show'])->whereUuid('product')->name('passport.show');
+        Route::post('/{product}/passport', [ProductPassportController::class, 'store'])->whereUuid('product')->name('passport.store');
+        Route::get('/{product}/passport/edit', [ProductPassportController::class, 'edit'])->whereUuid('product')->name('passport.edit');
+        Route::put('/{product}/passport/sections/{section}', [ProductPassportController::class, 'updateSection'])->whereUuid('product')->name('passport.sections.update');
+        Route::put('/{product}/passport/settings', [ProductPassportController::class, 'updateSettings'])->whereUuid('product')->name('passport.settings.update');
+        Route::put('/{product}/passport/documents', [ProductPassportController::class, 'syncDocuments'])->whereUuid('product')->name('passport.documents.update');
+        Route::post('/{product}/passport/sections/{section}/reset', [ProductPassportController::class, 'resetSection'])->whereUuid('product')->name('passport.sections.reset');
     });
 
     Route::prefix('settings/catalog/categories')->name('catalog.categories.')->group(function (): void {

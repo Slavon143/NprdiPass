@@ -153,5 +153,23 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(config('rate_limits.documents_api.media_per_minute', 20))->by($tokenKey);
         });
+
+        RateLimiter::for('passports-api-read', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'passports-read:token:'.$token->getKey()
+                : 'passports-read:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.passports_api.read_per_minute', 120))->by($tokenKey);
+        });
+
+        RateLimiter::for('passports-api-write', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'passports-write:token:'.$token->getKey()
+                : 'passports-write:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.passports_api.write_per_minute', 60))->by($tokenKey);
+        });
     }
 }

@@ -1370,6 +1370,143 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ── Product Passports ───────────────────────────────────────────────
+  /products/{product}/passport:
+    get:
+      operationId: getProductPassport
+      summary: Get product passport editor data
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.read]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createProductPassport
+      summary: Create a product passport draft
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "201": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/RevisionConflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /passports/schema:
+    get:
+      operationId: getPassportSchema
+      summary: Get DPP section and field schema
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.read]
+      responses:
+        "200": { $ref: "#/components/responses/DppSchemaResponse" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /products/{product}/passport/sections/{section}:
+    put:
+      operationId: updatePassportSection
+      summary: Update a DPP section
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+        - $ref: "#/components/parameters/PassportSectionKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DppSectionPayload"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/RevisionConflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /products/{product}/passport/settings:
+    put:
+      operationId: updatePassportSettings
+      summary: Update passport settings (enabled sections)
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassportSettingsPayload"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/RevisionConflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /products/{product}/passport/documents:
+    put:
+      operationId: syncPassportDocuments
+      summary: Sync document references in passport
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentReferencesPayload"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/RevisionConflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /products/{product}/passport/sections/{section}/reset:
+    post:
+      operationId: resetPassportSection
+      summary: Reset a DPP section to empty state
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+        - $ref: "#/components/parameters/PassportSectionKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassportSectionResetPayload"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/RevisionConflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # ════════════════════════════════════════════════════════════════
 components:
   securitySchemes:
@@ -1421,6 +1558,14 @@ components:
       schema:
         type: string
         format: uuid
+
+    PassportSectionKey:
+      name: section
+      in: path
+      required: true
+      schema:
+        type: string
+      description: DPP section key
 
   schemas:
     Error:
@@ -1605,6 +1750,98 @@ components:
             request_id: { type: string, format: uuid }
         error:
           $ref: "#/components/schemas/Error"
+
+    # ── Passport schemas ────────────────────────────────
+    ProductPassportEditor:
+      type: object
+      properties:
+        passport_uuid: { type: string, format: uuid }
+        public_id: { type: string, format: uuid }
+        status: { type: string, enum: [draft, published, unpublished, archived] }
+        default_language: { type: string }
+        enabled_languages: { type: array, items: { type: string } }
+        draft_version_uuid: { type: string, format: uuid, nullable: true }
+        draft_revision: { type: integer, nullable: true }
+        schema_version: { type: string, nullable: true }
+        payload: { $ref: "#/components/schemas/DppPayload" }
+        created_at: { type: string, format: date-time, nullable: true }
+
+    DppSchema:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/DppSectionDefinition"
+
+    DppSectionDefinition:
+      type: object
+      properties:
+        key: { type: string }
+        label: { type: string }
+        core: { type: boolean }
+        translatable: { type: boolean }
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/DppFieldDefinition"
+
+    DppFieldDefinition:
+      type: object
+      properties:
+        key: { type: string }
+        type: { type: string, enum: [short_text, long_text, boolean, integer, decimal, date, email, url, country_code, string_list, material_list] }
+        translatable: { type: boolean }
+        nullable: { type: boolean }
+        max_length: { type: integer, nullable: true }
+        max_items: { type: integer, nullable: true }
+        min: { type: number, nullable: true }
+        max: { type: number, nullable: true }
+
+    DppPayload:
+      type: object
+      properties:
+        enabled_sections: { type: array, items: { type: string } }
+        data: { type: object }
+        translations: { type: object }
+        document_references:
+          type: array
+          items:
+            $ref: "#/components/schemas/DppDocumentReference"
+
+    DppDocumentReference:
+      type: object
+      properties:
+        document_uuid: { type: string, format: uuid }
+        role: { type: string }
+        display_order: { type: integer }
+
+    DppSectionPayload:
+      type: object
+      required: [section, expected_revision]
+      properties:
+        section: { type: object }
+        expected_revision: { type: integer }
+
+    PassportSettingsPayload:
+      type: object
+      required: [settings, expected_revision]
+      properties:
+        settings: { type: object }
+        expected_revision: { type: integer }
+
+    DocumentReferencesPayload:
+      type: object
+      required: [document_references, expected_revision]
+      properties:
+        document_references: { type: array, items: { $ref: "#/components/schemas/DppDocumentReference" } }
+        expected_revision: { type: integer }
+
+    PassportSectionResetPayload:
+      type: object
+      required: [expected_revision]
+      properties:
+        expected_revision: { type: integer }
 
   responses:
     Success:
@@ -1848,6 +2085,25 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
 
+    RevisionConflict:
+      description: Revision conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RevisionConflictError"
+    ProductPassportEditor:
+      description: Product passport editor data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProductPassportEditor"
+    DppSchemaResponse:
+      description: DPP schema definition
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DppSchema"
+
 tags:
   - name: Categories
     description: Category management
@@ -1865,3 +2121,5 @@ tags:
     description: Product and variant image management
   - name: Documents
     description: Product document and certificate management
+  - name: Passports
+    description: Product Digital Product Passport (DPP) authoring and editing

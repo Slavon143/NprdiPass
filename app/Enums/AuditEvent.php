@@ -59,6 +59,8 @@ enum AuditEvent: string
     case CatalogDocumentVersionAdded = 'catalog.document.version_added';
     case CatalogDocumentArchived = 'catalog.document.archived';
     case CatalogDocumentRestored = 'catalog.document.restored';
+    case PassportCreated = 'passport.created';
+    case PassportDraftUpdated = 'passport.draft.updated';
 
     public function label(): string
     {
@@ -118,6 +120,8 @@ enum AuditEvent: string
             self::CatalogDocumentVersionAdded => 'Catalog document version added',
             self::CatalogDocumentArchived => 'Catalog document archived',
             self::CatalogDocumentRestored => 'Catalog document restored',
+            self::PassportCreated => 'Passport created',
+            self::PassportDraftUpdated => 'Passport draft updated',
         };
     }
 }
