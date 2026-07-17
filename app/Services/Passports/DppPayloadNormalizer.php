@@ -388,6 +388,12 @@ class DppPayloadNormalizer
             return null;
         }
 
+        $scheme = mb_strtolower($parsed['scheme']);
+
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
+
         unset($parsed['user'], $parsed['pass']);
 
         return $this->buildUrl($parsed);

@@ -9,19 +9,18 @@ use RuntimeException;
 class PublicationAssetStager
 {
     /**
-     * @param  array<int, array{asset_uuid: string, source_disk: string, source_storage_key: string, file_extension: string, checksum_sha256: string}>  $assetManifest
-     * @return array<string, string> staged paths keyed by asset UUID
+     * @param  array<int, array{asset_uuid: string, source_disk: string, source_storage_key: string, file_extension: string}>  $assetManifest
+     * @return array<string, array{path: string, checksum: string}> staged data keyed by asset UUID
      */
     public function stageAssets(ProductPassport $passport, string $versionUuid, array $assetManifest): array
     {
-        $stagedPaths = [];
+        $staged = [];
 
         foreach ($assetManifest as $asset) {
             $assetUuid = $asset['asset_uuid'];
             $sourceDisk = $asset['source_disk'];
             $sourceKey = $asset['source_storage_key'];
             $extension = $asset['file_extension'];
-            $expectedChecksum = $asset['checksum_sha256'];
 
             $sourceStorage = Storage::disk($sourceDisk);
 
@@ -37,32 +36,30 @@ class PublicationAssetStager
                 throw new RuntimeException("Failed to read source file: {$sourceKey}");
             }
 
-            $actualChecksum = hash('sha256', $sourceContent);
-
-            if ($actualChecksum !== $expectedChecksum) {
-                throw new RuntimeException(
-                    "Checksum mismatch for asset {$assetUuid}: expected {$expectedChecksum}, got {$actualChecksum}",
-                );
-            }
+            $checksum = hash('sha256', $sourceContent);
 
             Storage::disk('passport_assets')->put($stagingPath, $sourceContent);
 
-            $stagedPaths[$assetUuid] = $stagingPath;
+            $staged[$assetUuid] = [
+                'path' => $stagingPath,
+                'checksum' => $checksum,
+            ];
         }
 
-        return $stagedPaths;
+        return $staged;
     }
 
     /**
-     * @param  array<string, string>  $stagedPaths
-     * @return array<string, string> final paths keyed by asset UUID
+     * @param  array<string, array{path: string, checksum: string}>  $staged
+     * @return array<string, array{path: string, checksum: string}> final data keyed by asset UUID
      */
-    public function promoteAssets(array $stagedPaths, string $versionUuid): array
+    public function promoteAssets(array $staged, string $versionUuid): array
     {
-        $finalPaths = [];
+        $final = [];
         $disk = Storage::disk('passport_assets');
 
-        foreach ($stagedPaths as $assetUuid => $stagingPath) {
+        foreach ($staged as $assetUuid => $data) {
+            $stagingPath = $data['path'];
             $finalPath = preg_replace(
                 '#/staging/#',
                 '/media/',
@@ -72,20 +69,24 @@ class PublicationAssetStager
 
             $disk->move($stagingPath, $finalPath);
 
-            $finalPaths[$assetUuid] = $finalPath;
+            $final[$assetUuid] = [
+                'path' => $finalPath,
+                'checksum' => $data['checksum'],
+            ];
         }
 
-        return $finalPaths;
+        return $final;
     }
 
     /**
-     * @param  array<string, string>  $stagedPaths
+     * @param  array<string, array{path: string, checksum: string}>  $staged
      */
-    public function cleanupStaging(array $stagedPaths): void
+    public function cleanupStaging(array $staged): void
     {
         $disk = Storage::disk('passport_assets');
 
-        foreach ($stagedPaths as $stagingPath) {
+        foreach ($staged as $data) {
+            $stagingPath = $data['path'];
             if ($disk->exists($stagingPath)) {
                 $disk->delete($stagingPath);
             }

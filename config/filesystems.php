@@ -52,7 +52,9 @@ return [
 
         'passport_assets' => [
             'driver' => 'local',
-            'root' => storage_path('app/passport-assets'),
+            'root' => env('PASSPORT_ASSETS_ROOT', env('APP_ENV') === 'testing'
+                ? storage_path('framework/testing/disks/passport-assets-testing')
+                : storage_path('app/passport-assets')),
             'throw' => false,
         ],
 

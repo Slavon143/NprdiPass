@@ -74,6 +74,9 @@ class DocumentPinningTest extends TestCase
         Storage::fake('catalog_media');
         Storage::disk('catalog_media')->put('test/test.jpg', 'fake content');
         Storage::fake('product_documents');
+        Storage::disk('product_documents')->put('test/doc-cert-v1.pdf', 'fake pdf v1 content');
+        Storage::disk('product_documents')->put('test/doc-cert-v2.pdf', 'fake pdf v2 content');
+        Storage::disk('product_documents')->put('test/doc-cert-v3.pdf', 'fake pdf v3 content');
 
         $category = new Category;
         $category->forceFill([

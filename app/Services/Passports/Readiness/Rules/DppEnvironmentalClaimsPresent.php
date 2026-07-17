@@ -49,6 +49,17 @@ class DppEnvironmentalClaimsPresent implements PassportReadinessRule
         $environmentalClaims = $envData['environmental_claims'] ?? null;
         $environmentalNotes = $envData['environmental_notes'] ?? null;
 
+        $defaultLang = $context->passport->default_language ?? 'sv';
+        $envTranslations = $context->normalizedPayload['translations'][$defaultLang]['environmental_information'] ?? [];
+
+        if ($environmentalClaims === null) {
+            $environmentalClaims = $envTranslations['environmental_claims'] ?? null;
+        }
+
+        if ($environmentalNotes === null) {
+            $environmentalNotes = $envTranslations['environmental_notes'] ?? null;
+        }
+
         $passed = ! empty($environmentalClaims) || ! empty($environmentalNotes);
 
         return new ReadinessRuleResult(

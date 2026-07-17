@@ -46,6 +46,22 @@
         <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-xl font-semibold mb-4">Actions</h2>
             <div class="space-y-3">
+                @if($passport->isPublished() && $publishedVersion)
+                    <div class="mb-3 pb-3 border-b">
+                        <a href="{{ route('public.passports.show', $publishedVersion->passport->public_id) }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1 text-indigo-600 hover:underline text-sm font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" /><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" /></svg>
+                            Open Public Page
+                        </a>
+                        <button type="button"
+                                onclick="navigator.clipboard.writeText('{{ route('public.passports.show', $publishedVersion->passport->public_id) }}').then(function(){this.textContent='Public link copied';var el=this;setTimeout(function(){el.textContent='Copy public link';},2000)}.bind(this))"
+                                class="block mt-1 text-xs text-slate-500 hover:text-slate-700 cursor-pointer">
+                            Copy public link
+                        </button>
+                    </div>
+                @endif
+
                 <a href="{{ route('catalog.products.passport.versions.show', ['product' => $product->uuid, 'version' => $publishedVersion?->uuid ?? '']) }}"
                    class="inline-block text-blue-600 hover:underline text-sm">
                     View Published Version Detail

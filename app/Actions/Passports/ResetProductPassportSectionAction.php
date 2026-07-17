@@ -72,9 +72,7 @@ class ResetProductPassportSectionAction
                 throw ValidationException::withMessages(['section' => ['Core sections cannot be reset.']]);
             }
 
-            if (! $sectionDef->translatable) {
-                unset($payload['data'][$sectionKey]);
-            }
+            unset($payload['data'][$sectionKey]);
 
             $defaultLanguage = $passport->default_language;
 

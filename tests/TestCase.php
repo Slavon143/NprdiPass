@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -22,5 +23,7 @@ abstract class TestCase extends BaseTestCase
                 'MySQL tests must use a dedicated database whose name ends with _testing.',
             );
         }
+
+        Storage::fake('passport_assets');
     }
 }

@@ -65,10 +65,18 @@ class DppSchemaRegistry
 
     private function sectionIsTranslatable(DppSectionKey $key): bool
     {
-        return ! in_array($key, [
+        return in_array($key, [
+            DppSectionKey::Identity,
+            DppSectionKey::ManufacturerAndOperator,
             DppSectionKey::OriginAndTraceability,
             DppSectionKey::MaterialsAndComposition,
+            DppSectionKey::Safety,
+            DppSectionKey::UsageAndCare,
+            DppSectionKey::RepairAndSpareParts,
+            DppSectionKey::RecyclingAndDisposal,
             DppSectionKey::EnvironmentalInformation,
+            DppSectionKey::CertificationsAndDocuments,
+            DppSectionKey::SupportAndContact,
         ], true);
     }
 

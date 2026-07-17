@@ -171,5 +171,15 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(config('rate_limits.passports_api.write_per_minute', 60))->by($tokenKey);
         });
+
+        RateLimiter::for('public-passport', function (Request $request): Limit {
+            return Limit::perMinute(config('rate_limits.public_passport.per_minute', 60))
+                ->by($request->ip());
+        });
+
+        RateLimiter::for('public-passport-assets', function (Request $request): Limit {
+            return Limit::perMinute(config('rate_limits.public_passport.assets_per_minute', 120))
+                ->by($request->ip());
+        });
     }
 }

@@ -130,12 +130,12 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertContains('contact_notes', $translatableKeys);
     }
 
-    public function test_origin_and_traceability_has_5_fields_section_non_translatable(): void
+    public function test_origin_and_traceability_has_5_fields_section_translatable(): void
     {
         $section = $this->registry->sections()['origin_and_traceability'];
 
         $this->assertCount(5, $section->fields);
-        $this->assertFalse($section->translatable);
+        $this->assertTrue($section->translatable);
 
         $fieldKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $section->fields);
         $expected = ['country_of_origin', 'manufacturing_countries', 'production_date', 'traceability_notes', 'batch_identification_instructions'];

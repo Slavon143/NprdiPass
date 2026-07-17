@@ -27,6 +27,11 @@
                        class="ml-4 text-sm text-blue-600 hover:underline">
                         Version History
                     </a>
+                    <a href="{{ route('public.passports.show', $passport->public_id) }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="ml-4 text-sm text-indigo-600 hover:underline font-medium">
+                        Open Public Page
+                    </a>
                 @elseif($passport->isUnpublished())
                     <span class="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">Unpublished</span>
                 @elseif($passport->isArchived())
@@ -88,8 +93,8 @@
 
                                     @foreach($sectionDef->fields as $field)
                                         @php
-                                            if($sectionDef->translatable) {
-                                                $value = $editorData['payload']['translations'][$passport->default_language][$sectionKey][$field->key] ?? null;
+                                            if($field->translatable) {
+                                                $value = $editorData['payload']['translations'][$passport->default_language][$sectionKey][$field->key] ?? $editorData['payload']['data'][$sectionKey][$field->key] ?? null;
                                             } else {
                                                 $value = $editorData['payload']['data'][$sectionKey][$field->key] ?? null;
                                             }

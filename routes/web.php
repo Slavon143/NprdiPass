@@ -34,6 +34,8 @@ use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CompanySwitchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoCompanyController;
+use App\Http\Controllers\Passports\PublicPassportAssetController;
+use App\Http\Controllers\Passports\PublicPassportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RemoveCompanyMemberController;
@@ -220,6 +222,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::prefix('p/{publicId}')->name('public.passports.')->middleware('throttle:public-passport')->group(function (): void {
+    Route::get('media/{asset}', [PublicPassportAssetController::class, 'media'])
+        ->whereUuid('asset')
+        ->name('media.show')
+        ->middleware('throttle:public-passport-assets');
+    Route::get('documents/{asset}', [PublicPassportAssetController::class, 'document'])
+        ->whereUuid('asset')
+        ->name('documents.download')
+        ->middleware('throttle:public-passport-assets');
+    Route::get('/', PublicPassportController::class)
+        ->name('show');
 });
 
 Route::get('/ready', ReadinessController::class)

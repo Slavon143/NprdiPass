@@ -81,6 +81,8 @@ class DocumentContractTest extends TestCase
         Storage::fake('catalog_media');
         Storage::disk('catalog_media')->put('test/doc-contract.jpg', 'fake content');
         Storage::fake('product_documents');
+        Storage::disk('product_documents')->put('test/cert-v1.pdf', 'fake pdf v1 content');
+        Storage::disk('product_documents')->put('test/cert-v2.pdf', 'fake pdf v2 content');
 
         $category = new Category;
         $category->forceFill([
