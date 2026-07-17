@@ -34,6 +34,10 @@ pest()->extend(TestCase::class)
 pest()->extend(TestCase::class)
     ->in('Concurrency');
 
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('Demo');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

@@ -176,6 +176,12 @@ class DppPayloadNormalizer
             $sectionDef = $sections[$sectionKey];
 
             if ($sectionDef->translatable) {
+                $nonTranslatableFields = $this->normalizeNonTranslatableFields($fields, $sectionDef->fields);
+
+                if ($nonTranslatableFields !== []) {
+                    $result[$sectionKey] = $nonTranslatableFields;
+                }
+
                 continue;
             }
 
@@ -521,6 +527,7 @@ class DppPayloadNormalizer
 
             $result[] = [
                 'document_uuid' => $uuid,
+                'document_version_uuid' => isset($ref['document_version_uuid']) ? trim((string) $ref['document_version_uuid']) : null,
                 'role' => isset($ref['role']) ? trim((string) $ref['role']) : 'other',
                 'display_order' => isset($ref['display_order']) ? max(0, (int) $ref['display_order']) : 0,
             ];

@@ -139,8 +139,7 @@ test('catalog demo seeder uses only the dedicated company and is idempotent', fu
 test('normal testing database seeding does not install catalog demo records', function () {
     $this->seed(DatabaseSeeder::class);
 
-    expect(Company::query()->where('name', 'NordiPass Demo AB')->exists())->toBeTrue()
-        ->and(Category::query()->count())->toBe(0)
+    expect(Category::query()->count())->toBe(0)
         ->and(Product::query()->count())->toBe(0)
         ->and(ProductVariant::query()->count())->toBe(0);
 });

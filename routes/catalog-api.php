@@ -254,4 +254,24 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::post('/products/{product}/passport/sections/{section}/reset', [ProductPassportController::class, 'resetSection'])
         ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
         ->name('products.passport.sections.reset');
+
+    // Passport publication
+    Route::post('/products/{product}/passport/publish', [ProductPassportController::class, 'publish'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsPublish->value])
+        ->name('products.passport.publish');
+    Route::post('/products/{product}/passport/unpublish', [ProductPassportController::class, 'unpublish'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.unpublish');
+    Route::post('/products/{product}/passport/archive', [ProductPassportController::class, 'archive'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.archive');
+    Route::post('/products/{product}/passport/restore', [ProductPassportController::class, 'restore'])
+        ->middleware(['throttle:passports-api-write', 'api.ability:'.ApiTokenAbility::PassportsWrite->value])
+        ->name('products.passport.restore');
+    Route::get('/products/{product}/passport/versions', [ProductPassportController::class, 'versions'])
+        ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
+        ->name('products.passport.versions.index');
+    Route::get('/products/{product}/passport/versions/{version}', [ProductPassportController::class, 'versionDetail'])
+        ->middleware(['throttle:passports-api-read', 'api.ability:'.ApiTokenAbility::PassportsRead->value])
+        ->name('products.passport.versions.show');
 });

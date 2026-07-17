@@ -3,7 +3,11 @@
 use Illuminate\Support\Facades\Route;
 
 test('OpenAPI documents every Stage 8 foundation route and Sanctum bearer scheme', function () {
-    $contents = file_get_contents(base_path('docs/openapi.yaml'));
+    $path = base_path('docs/api/openapi-v1.yaml');
+
+    expect($path)->toBeFile();
+
+    $contents = file_get_contents($path);
 
     expect($contents)->toBeString()
         ->and($contents)->toContain('openapi: 3.1.0')
@@ -25,10 +29,12 @@ test('OpenAPI documents every Stage 8 foundation route and Sanctum bearer scheme
         expect(Route::has($routeName))->toBeTrue();
     }
 
-    expect($contents)->not->toContain('/products:')
-        ->and($contents)->not->toContain('/documents:')
-        ->and($contents)->not->toContain('/qr-codes:')
-        ->and($contents)->not->toContain('/dpp:');
+    expect($contents)->toContain('/products:')
+        ->and($contents)->toContain('/documents:')
+        ->and($contents)->toContain('/health:')
+        ->and($contents)->toContain('/me:')
+        ->and($contents)->toContain('/company:')
+        ->and($contents)->toContain('/company/members:');
 });
 
 test('API guide documents isolation expiration revoke and rate limits', function () {

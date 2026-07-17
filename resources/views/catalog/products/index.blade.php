@@ -258,8 +258,8 @@
                             <tr>
                                 <th class="px-5 py-3">{{ __('Product') }}</th>
                                 <th class="px-5 py-3">{{ __('Status') }}</th>
-                                <th class="px-5 py-3">{{ __('Passport') }}</th>
-                                <th class="px-5 py-3">{{ __('Readiness') }}</th>
+                                <th class="px-5 py-3">{{ __('passports.label') }}</th>
+                                <th class="px-5 py-3">{{ __('readiness.label') }}</th>
                                 <th class="px-5 py-3">{{ __('Primary Category') }}</th>
                                 <th class="px-5 py-3">{{ __('Updated') }}</th>
                                 <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
@@ -330,11 +330,12 @@
                                             <x-badge tone="slate">{{ __('Archived') }}</x-badge>
                                         @endif
                                     </td>
-                                    <td class="px-5 py-4">
-                                        @if ($summary && $summary['score'] !== null)
+                                     <td class="px-5 py-4">
+                                        @php $score = is_array($summary) ? ($summary['score'] ?? null) : null; $blockers = is_array($summary) ? ((int) ($summary['blockers'] ?? 0)) : 0; $warnings = is_array($summary) ? ((int) ($summary['warnings'] ?? 0)) : 0; @endphp
+                                        @if (is_array($summary) && is_int($score) && $score > 0)
                                             <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="block group">
                                                 <div class="flex items-center gap-1.5">
-                                                    <span class="text-sm font-semibold text-slate-900">{{ $summary['score'] }}%</span>
+                                                    <span class="text-sm font-semibold text-slate-900">{{ $score }}%</span>
                                                     @php
                                                         $readinessTone = match ($summary['readiness_status'] ?? null) {
                                                             'ready' => 'emerald',
@@ -352,16 +353,16 @@
                                                     <x-badge :tone="$readinessTone">{{ $readinessLabel }}</x-badge>
                                                 </div>
                                                 <p class="mt-1 text-xs text-slate-500 group-hover:text-indigo-600">
-                                                    {{ trans_choice(':count blocker|:count blockers', $summary['blockers'], ['count' => $summary['blockers']]) }} · {{ trans_choice(':count warning|:count warnings', $summary['warnings'], ['count' => $summary['warnings']]) }}
+                                                    {{ trans_choice(':count blocker|:count blockers', (int) $blockers, ['count' => (int) $blockers]) }} · {{ trans_choice(':count warning|:count warnings', (int) $warnings, ['count' => (int) $warnings]) }}
                                                 </p>
                                             </a>
-                                        @elseif ($summary && $summary['score'] === 0)
+                                        @elseif (is_array($summary) && $score === 0)
                                             <div>
                                                 <div class="flex items-center gap-1.5">
                                                     <span class="text-sm font-semibold text-slate-900">0%</span>
                                                     <x-badge tone="red">{{ __('Not ready') }}</x-badge>
                                                 </div>
-                                                <p class="mt-1 text-xs text-slate-500">{{ $summary['blockers'] }} {{ __('blockers') }} · {{ $summary['warnings'] }} {{ __('warnings') }}</p>
+                                                <p class="mt-1 text-xs text-slate-500">{{ (int) $blockers }} {{ __('blockers') }} · {{ (int) $warnings }} {{ __('warnings') }}</p>
                                             </div>
                                         @else
                                             <div>

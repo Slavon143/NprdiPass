@@ -30,10 +30,18 @@ class DppRecyclingInstructionsPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $recyclingData = $context->normalizedPayload['data']['recycling_and_disposal'] ?? [];
 
-        $recyclingInstructions = $recyclingData['recycling_instructions'] ?? null;
-        $disposalInstructions = $recyclingData['disposal_instructions'] ?? null;
+        $recyclingTranslations = $context->normalizedPayload['translations'][$defaultLanguage]['recycling_and_disposal']
+            ?? $context->normalizedPayload['translations']['sv']['recycling_and_disposal']
+            ?? [];
+
+        $allFields = array_merge($recyclingData, $recyclingTranslations);
+
+        $recyclingInstructions = $allFields['recycling_instructions'] ?? null;
+        $disposalInstructions = $allFields['disposal_instructions'] ?? null;
 
         $passed = ! empty($recyclingInstructions) || ! empty($disposalInstructions);
 

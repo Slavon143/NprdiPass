@@ -15,12 +15,6 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        if (app()->environment('testing')) {
-            $this->call(LocalDevelopmentSeeder::class);
-
-            return;
-        }
-
         $this->call(RolePermissionSeeder::class);
     }
 }

@@ -8,7 +8,6 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 
 function createProductForModelTest(Company $company): Product
@@ -43,13 +42,6 @@ function createTestPassportForModels(Company $company): ProductPassport
         'updated_at' => now(),
     ]);
 }
-
-beforeEach(function () {
-    DB::statement('SET FOREIGN_KEY_CHECKS=0');
-    ProductPassportVersion::query()->delete();
-    ProductPassport::query()->delete();
-    DB::statement('SET FOREIGN_KEY_CHECKS=1');
-});
 
 test('ProductPassport casts status to enum', function () {
     $company = Company::factory()->create();

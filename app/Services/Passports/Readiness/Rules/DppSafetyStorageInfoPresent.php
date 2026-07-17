@@ -30,7 +30,11 @@ class DppSafetyStorageInfoPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $storageInstructions = $context->normalizedPayload['data']['safety']['storage_instructions']
+            ?? $context->normalizedPayload['translations'][$defaultLanguage]['safety']['storage_instructions']
+            ?? $context->normalizedPayload['translations']['sv']['safety']['storage_instructions']
             ?? null;
 
         $passed = ! empty($storageInstructions);

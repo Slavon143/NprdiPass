@@ -30,14 +30,22 @@ class DppSafetyReviewed implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $safetyData = $context->normalizedPayload['data']['safety'] ?? [];
 
+        $safetyTranslations = $context->normalizedPayload['translations'][$defaultLanguage]['safety']
+            ?? $context->normalizedPayload['translations']['sv']['safety']
+            ?? [];
+
+        $allFields = array_merge($safetyData, $safetyTranslations);
+
         $fields = [
-            'warnings' => $safetyData['warnings'] ?? null,
-            'hazards' => $safetyData['hazards'] ?? null,
-            'storage_instructions' => $safetyData['storage_instructions'] ?? null,
-            'emergency_instructions' => $safetyData['emergency_instructions'] ?? null,
-            'age_restrictions' => $safetyData['age_restrictions'] ?? null,
+            'warnings' => $allFields['warnings'] ?? null,
+            'hazards' => $allFields['hazards'] ?? null,
+            'storage_instructions' => $allFields['storage_instructions'] ?? null,
+            'emergency_instructions' => $allFields['emergency_instructions'] ?? null,
+            'age_restrictions' => $allFields['age_restrictions'] ?? null,
         ];
 
         $hasContent = false;

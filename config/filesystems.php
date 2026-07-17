@@ -50,6 +50,12 @@ return [
             'report' => true,
         ],
 
+        'passport_assets' => [
+            'driver' => 'local',
+            'root' => storage_path('app/passport-assets'),
+            'throw' => false,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

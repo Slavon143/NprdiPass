@@ -10,6 +10,9 @@ use App\Models\Catalog\VariantAttributeValue;
 use App\Models\Company;
 use Database\Seeders\CatalogDemoSeeder;
 use Database\Seeders\LocalDevelopmentSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('demo attributes options and assignments are typed tenant safe and idempotent', function () {
     $this->seed(LocalDevelopmentSeeder::class);

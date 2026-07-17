@@ -1,4 +1,4 @@
-openapi: "3.1.0"
+openapi: 3.1.0
 info:
   title: NordiPass Catalog API
   version: "1.0.0"
@@ -17,6 +17,47 @@ security:
   - bearerAuth: []
 
 paths:
+  # ── Foundation ────────────────────────────────────────────────
+  /health:
+    get:
+      operationId: health
+      summary: Health check
+      tags: [Foundation]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+  /me:
+    get:
+      operationId: me
+      summary: Current authenticated user
+      tags: [Foundation]
+      security:
+        - bearerAuth: [company.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+  /company:
+    get:
+      operationId: getCompany
+      summary: Get current company
+      tags: [Foundation]
+      security:
+        - bearerAuth: [company.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /company/members:
+    get:
+      operationId: listCompanyMembers
+      summary: List company members
+      tags: [Foundation]
+      security:
+        - bearerAuth: [members.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # ── Categories ────────────────────────────────────────────────
   /categories:
     get:
@@ -1525,13 +1566,115 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /products/{product}/passport/publish:
+    post:
+      operationId: publishProductPassport
+      summary: Publish the current passport draft
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.publish]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassportPublishPayload"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /products/{product}/passport/unpublish:
+    post:
+      operationId: unpublishProductPassport
+      summary: Unpublish a published passport
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /products/{product}/passport/archive:
+    post:
+      operationId: archiveProductPassport
+      summary: Archive an unpublished passport
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /products/{product}/passport/restore:
+    post:
+      operationId: restoreProductPassport
+      summary: Restore an archived passport to draft
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/ProductPassportEditor" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /products/{product}/passport/versions:
+    get:
+      operationId: listPassportVersions
+      summary: List published passport versions
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.read]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/PassportVersionCollection" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /products/{product}/passport/versions/{version}:
+    get:
+      operationId: getPassportVersion
+      summary: Get a specific published passport version
+      tags: [Passports]
+      security:
+        - bearerAuth: [passports.read]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+        - $ref: "#/components/parameters/VersionUuid"
+      responses:
+        "200": { $ref: "#/components/responses/PassportVersionResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
 # ════════════════════════════════════════════════════════════════
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: NordiPass API Token
+      bearerFormat: Sanctum personal access token
 
   parameters:
     CategoryUuid:
@@ -1569,14 +1712,6 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
-
-  headers:
-    RequestId:
-      description: Correlation identifier for the request.
-      schema:
-        type: string
-        format: uuid
-
     PassportSectionKey:
       name: section
       in: path
@@ -1585,6 +1720,13 @@ components:
         type: string
       description: DPP section key
 
+  headers:
+    RequestId:
+      description: Correlation identifier for the request.
+      schema:
+        type: string
+        format: uuid
+
   schemas:
     Error:
       type: object
@@ -1592,6 +1734,16 @@ components:
         code: { type: string }
         message: { type: string }
         details: { type: object }
+        request_id: { type: string, format: uuid }
+    RevisionConflictError:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details:
+          type: object
+          properties:
+            current_revision: { type: integer }
         request_id: { type: string, format: uuid }
     Category:
       type: object
@@ -1860,6 +2012,34 @@ components:
       required: [expected_revision]
       properties:
         expected_revision: { type: integer }
+
+    PassportPublishPayload:
+      type: object
+      required: [expected_revision]
+      properties:
+        expected_revision: { type: integer }
+        acknowledge_warnings: { type: boolean, default: false }
+
+    PassportVersionSummary:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        version_number: { type: integer }
+        status: { type: string }
+        published_at: { type: string, format: date-time }
+        content_checksum: { type: string }
+
+    PassportVersionDetail:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        version_number: { type: integer }
+        status: { type: string }
+        schema_version: { type: string }
+        payload: { type: object }
+        content_checksum: { type: string }
+        published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
 
     # ── Readiness schemas ───────────────────────────────
     PassportReadinessResult:
@@ -2179,6 +2359,25 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PassportReadinessResult"
+    PassportVersionCollection:
+      description: Paginated list of published passport versions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PassportVersionSummary"
+              meta:
+                $ref: "#/components/schemas/PaginationMeta"
+    PassportVersionResource:
+      description: Single passport version detail
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PassportVersionDetail"
 
 tags:
   - name: Categories

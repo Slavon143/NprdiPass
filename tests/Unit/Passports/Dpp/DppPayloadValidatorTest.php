@@ -9,12 +9,15 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
 use App\Services\Passports\DppPayloadValidator;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 class DppPayloadValidatorTest extends TestCase
 {
+    use RefreshDatabase;
+
     private DppPayloadValidator $validator;
 
     protected function setUp(): void

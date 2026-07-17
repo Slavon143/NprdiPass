@@ -30,7 +30,11 @@ class DppManufacturerNamePresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $dppManufacturer = $context->normalizedPayload['data']['manufacturer_and_operator']['manufacturer_display_name']
+            ?? $context->normalizedPayload['translations'][$defaultLanguage]['manufacturer_and_operator']['manufacturer_display_name']
+            ?? $context->normalizedPayload['translations']['sv']['manufacturer_and_operator']['manufacturer_display_name']
             ?? null;
 
         $catalogManufacturer = $context->product->manufacturer;

@@ -5,6 +5,45 @@
         <a href="{{ route('catalog.products.passport.show', $product->uuid) }}" class="text-blue-600 hover:underline">View Passport</a>
     </div>
 
+    {{-- Publication Section --}}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                @if($passport->isDraft())
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">Draft</span>
+                    <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}"
+                       class="ml-4 text-sm text-blue-600 hover:underline">
+                        View Readiness
+                    </a>
+                @elseif($passport->isPublished())
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                        Published &middot; Version {{ $passport->currentPublishedVersion?->version_number ?? 'N/A' }}
+                    </span>
+                    <a href="{{ route('catalog.products.passport.versions.show', ['product' => $product->uuid, 'version' => $passport->currentPublishedVersion?->uuid ?? '']) }}"
+                       class="ml-4 text-sm text-blue-600 hover:underline">
+                        View Published Version
+                    </a>
+                    <a href="{{ route('catalog.products.passport.versions.index', $product->uuid) }}"
+                       class="ml-4 text-sm text-blue-600 hover:underline">
+                        Version History
+                    </a>
+                @elseif($passport->isUnpublished())
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">Unpublished</span>
+                @elseif($passport->isArchived())
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">Archived</span>
+                @endif
+            </div>
+            @if($passport->isDraft() && $canManage)
+                <a href="{{ route('catalog.products.passport.publish-confirm', $product->uuid) }}"
+                   class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm font-semibold">
+                    Publish Passport
+                </a>
+            @elseif(!$canManage)
+                <span class="text-sm text-gray-500 italic">Read-only</span>
+            @endif
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2">
             <div class="bg-white shadow rounded-lg p-6">

@@ -9,6 +9,48 @@
     </div>
 
     <div class="space-y-6">
+        {{-- Publication Action Card --}}
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-semibold mb-1">Publication Status</h2>
+                    @if($readiness->status->value === 'not_ready')
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">Not Ready</span>
+                            <span class="text-sm text-gray-600">Resolve blockers before publishing</span>
+                        </div>
+                    @elseif($readiness->status->value === 'ready_with_warnings')
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800">Ready with Warnings</span>
+                            <span class="text-sm text-gray-600">{{ $readiness->counts->warnings }} warning(s)</span>
+                        </div>
+                    @else
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">Ready for Publication</span>
+                        </div>
+                    @endif
+                </div>
+                <div>
+                    @php
+                        $user = auth()->user();
+                        $canPublish = $user && ($user->can(\App\Enums\CompanyPermission::PassportsPublish->value, [$company]) || $user->can(\App\Enums\CompanyPermission::PassportsManage->value, [$company]));
+                    @endphp
+                    @if($canPublish)
+                        @if($readiness->status->value === 'not_ready')
+                            <button type="button" class="bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed" disabled>
+                                Publish Passport
+                            </button>
+                        @else
+                            <a href="{{ route('catalog.products.passport.publish-confirm', $product->uuid) }}"
+                               class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm font-semibold">
+                                Publish Passport
+                            </a>
+                        @endif
+                    @endif
+                </div>
+            </div>
+        </div>
+
         {{-- Status & Score --}}
         <div class="bg-white shadow rounded-lg p-6">
             <div class="flex items-center gap-4 mb-4">
@@ -76,13 +118,23 @@
                         </span>
                     </div>
                     @php
-                        $titleText = __($rule->titleKey);
-                        $msgText = __($rule->messageKey);
-                        if ($titleText === $rule->titleKey) {
-                            $titleText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->titleKey)), '. title'));
+                        $statusSuffix = $rule->status->value;
+                        $titleText = __("readiness.{$rule->code}.title", []);
+                        if ($titleText === "readiness.{$rule->code}.title") {
+                            $titleText = __($rule->titleKey);
+                            if ($titleText === $rule->titleKey) {
+                                $titleText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->titleKey)), '. title'));
+                            }
                         }
-                        if ($msgText === $rule->messageKey) {
-                            $msgText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->messageKey)), '. failed passed'));
+                        $msgText = __("readiness.{$rule->code}.{$statusSuffix}", []);
+                        if ($msgText === "readiness.{$rule->code}.{$statusSuffix}") {
+                            $msgText = __("readiness.{$rule->code}.message", []);
+                        }
+                        if ($msgText === "readiness.{$rule->code}.message" || $msgText === "readiness.{$rule->code}.{$statusSuffix}") {
+                            $msgText = __($rule->messageKey);
+                            if ($msgText === $rule->messageKey) {
+                                $msgText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->messageKey)), '. failed passed not_applicable recommendation'));
+                            }
                         }
                     @endphp
                     <p class="text-sm font-medium text-slate-900">{{ $titleText }}</p>

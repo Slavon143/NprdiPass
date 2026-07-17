@@ -61,6 +61,10 @@ enum AuditEvent: string
     case CatalogDocumentRestored = 'catalog.document.restored';
     case PassportCreated = 'passport.created';
     case PassportDraftUpdated = 'passport.draft.updated';
+    case PassportPublished = 'passport.published';
+    case PassportUnpublished = 'passport.unpublished';
+    case PassportArchived = 'passport.archived';
+    case PassportRestored = 'passport.restored';
 
     public function label(): string
     {
@@ -122,6 +126,10 @@ enum AuditEvent: string
             self::CatalogDocumentRestored => 'Catalog document restored',
             self::PassportCreated => 'Passport created',
             self::PassportDraftUpdated => 'Passport draft updated',
+            self::PassportPublished => 'Passport published',
+            self::PassportUnpublished => 'Passport unpublished',
+            self::PassportArchived => 'Passport archived',
+            self::PassportRestored => 'Passport restored',
         };
     }
 }

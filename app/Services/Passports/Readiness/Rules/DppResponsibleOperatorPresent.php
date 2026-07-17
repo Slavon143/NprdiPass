@@ -30,7 +30,11 @@ class DppResponsibleOperatorPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $operatorName = $context->normalizedPayload['data']['manufacturer_and_operator']['responsible_operator_display_name']
+            ?? $context->normalizedPayload['translations'][$defaultLanguage]['manufacturer_and_operator']['responsible_operator_display_name']
+            ?? $context->normalizedPayload['translations']['sv']['manufacturer_and_operator']['responsible_operator_display_name']
             ?? null;
 
         $passed = ! empty($operatorName);

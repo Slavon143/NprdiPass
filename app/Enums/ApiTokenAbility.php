@@ -15,4 +15,5 @@ enum ApiTokenAbility: string
     case DocumentsMedia = 'documents.media';
     case PassportsRead = 'passports.read';
     case PassportsWrite = 'passports.write';
+    case PassportsPublish = 'passports.publish';
 }

@@ -30,7 +30,11 @@ class DppSafetyEmergencyInfoPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
+        $defaultLanguage = $context->passport->default_language ?? 'sv';
+
         $emergencyInstructions = $context->normalizedPayload['data']['safety']['emergency_instructions']
+            ?? $context->normalizedPayload['translations'][$defaultLanguage]['safety']['emergency_instructions']
+            ?? $context->normalizedPayload['translations']['sv']['safety']['emergency_instructions']
             ?? null;
 
         $passed = ! empty($emergencyInstructions);

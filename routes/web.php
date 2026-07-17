@@ -13,7 +13,9 @@ use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
 use App\Http\Controllers\Catalog\MediaContentController;
+use App\Http\Controllers\Catalog\PassportPublicationController;
 use App\Http\Controllers\Catalog\PassportReadinessController;
+use App\Http\Controllers\Catalog\PassportVersionController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Catalog\ProductDocumentController;
@@ -153,6 +155,13 @@ Route::middleware([
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
 
         Route::get('/{product}/passport/readiness', [PassportReadinessController::class, 'show'])->whereUuid('product')->name('passport.readiness');
+        Route::get('/{product}/passport/publish-confirm', [PassportPublicationController::class, 'publishConfirm'])->whereUuid('product')->name('passport.publish-confirm');
+        Route::post('/{product}/passport/publish', [PassportPublicationController::class, 'publish'])->whereUuid('product')->name('passport.publish');
+        Route::post('/{product}/passport/unpublish', [PassportPublicationController::class, 'unpublish'])->whereUuid('product')->name('passport.unpublish');
+        Route::post('/{product}/passport/archive', [PassportPublicationController::class, 'archive'])->whereUuid('product')->name('passport.archive');
+        Route::post('/{product}/passport/restore', [PassportPublicationController::class, 'restore'])->whereUuid('product')->name('passport.restore');
+        Route::get('/{product}/passport/versions', [PassportVersionController::class, 'index'])->whereUuid('product')->name('passport.versions.index');
+        Route::get('/{product}/passport/versions/{version}', [PassportVersionController::class, 'show'])->whereUuid('product')->whereUuid('version')->name('passport.versions.show');
         Route::get('/{product}/passport', [ProductPassportController::class, 'show'])->whereUuid('product')->name('passport.show');
         Route::post('/{product}/passport', [ProductPassportController::class, 'store'])->whereUuid('product')->name('passport.store');
         Route::get('/{product}/passport/edit', [ProductPassportController::class, 'edit'])->whereUuid('product')->name('passport.edit');

@@ -119,7 +119,7 @@ class DppPayloadNormalizerTest extends TestCase
         $this->assertArrayNotHasKey('sv', $normalized['translations']);
     }
 
-    public function test_normalize_excludes_translatable_sections_from_data(): void
+    public function test_normalize_preserves_non_translatable_fields_in_translatable_sections(): void
     {
         $normalized = $this->normalizer->normalize([
             'enabled_sections' => ['identity', 'manufacturer_and_operator', 'safety', 'recycling_and_disposal'],
@@ -133,7 +133,8 @@ class DppPayloadNormalizerTest extends TestCase
             'document_references' => [],
         ]);
 
-        $this->assertArrayNotHasKey('manufacturer_and_operator', $normalized['data']);
+        $this->assertArrayHasKey('manufacturer_and_operator', $normalized['data']);
+        $this->assertSame('user@example.com', $normalized['data']['manufacturer_and_operator']['manufacturer_email']);
     }
 
     public function test_normalize_uppercases_country_codes(): void
