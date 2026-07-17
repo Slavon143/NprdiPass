@@ -94,7 +94,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiStol Ek'],
                 'expected_revision' => 1,
             ],
         );
@@ -114,7 +114,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'A'],
+                'section_payload' => ['public_name' => 'NordiByrå'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -127,7 +127,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Safety->value,
             ]),
             [
-                'section_payload' => ['age_restrictions' => '18+'],
+                'section_payload' => ['age_restrictions' => 'Rekommenderas från 6 år'],
                 'expected_revision' => $revAfter1,
             ],
         )->assertOk();
@@ -148,7 +148,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Test'],
+                'section_payload' => ['usage_instructions' => 'Montera enligt bifogad manual.'],
                 'expected_revision' => 1,
             ],
         );
@@ -174,7 +174,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'First.'],
+                'section_payload' => ['usage_instructions' => 'Skruva fast väggfästet först.'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -185,7 +185,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Stale.'],
+                'section_payload' => ['usage_instructions' => 'Gammal data — förväntas avvisas.'],
                 'expected_revision' => 1,
             ],
         )->assertStatus(409);
@@ -201,7 +201,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'First.'],
+                'section_payload' => ['usage_instructions' => 'Undvik direkt solljus.'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -212,7 +212,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Stale.'],
+                'section_payload' => ['usage_instructions' => 'För gammal revision.'],
                 'expected_revision' => 1,
             ],
         );
@@ -231,7 +231,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Good data.'],
+                'section_payload' => ['usage_instructions' => 'Förvara i rumstemperatur.'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -246,7 +246,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Bad stale data.'],
+                'section_payload' => ['usage_instructions' => 'Data med gammal revision.'],
                 'expected_revision' => 1,
             ],
         )->assertStatus(409);
@@ -345,7 +345,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Should not save'],
+                'section_payload' => ['public_name' => 'Ska ej sparas'],
                 'expected_revision' => 1,
             ],
         );
@@ -375,7 +375,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiStol Ek'],
                 'expected_revision' => 1,
             ],
         )->assertNotFound();
@@ -389,7 +389,7 @@ class ProductPassportEditorRevisionTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiStol Ek'],
                 'expected_revision' => 1,
             ],
         );

@@ -193,7 +193,7 @@ class DppWebTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Web update.'],
+                'section_payload' => ['usage_instructions' => 'Montera enligt anvisning.'],
                 'expected_revision' => 1,
             ],
         );
@@ -237,7 +237,7 @@ class DppWebTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'First.'],
+                'section_payload' => ['usage_instructions' => 'Undvik kontakt med vatten.'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -248,7 +248,7 @@ class DppWebTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Stale.'],
+                'section_payload' => ['usage_instructions' => 'För gammal revision.'],
                 'expected_revision' => 1,
             ],
         )->assertStatus(409);
@@ -341,7 +341,7 @@ class DppWebTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Will be reset.'],
+                'section_payload' => ['usage_instructions' => 'Kommer att återställas.'],
                 'expected_revision' => 1,
             ],
         )->assertOk();

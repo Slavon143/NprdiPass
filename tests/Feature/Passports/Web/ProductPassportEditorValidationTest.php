@@ -97,7 +97,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'manufacturer_email' => 'test@example.com',
+            'manufacturer_email' => 'contact@manufacturer.se',
         ])->assertOk();
     }
 
@@ -121,7 +121,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'responsible_operator_email' => 'user@',
+            'responsible_operator_email' => 'operator@',
         ]);
 
         $response->assertStatus(422);
@@ -136,7 +136,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::SupportAndContact->value, [
-            'support_email' => '@example.com',
+            'support_email' => '@support.se',
         ]);
 
         $response->assertStatus(422);
@@ -151,7 +151,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'manufacturer_email' => 'user example.com',
+            'manufacturer_email' => 'contact @manufacturer.se',
         ]);
 
         $response->assertStatus(422);
@@ -168,7 +168,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'manufacturer_website' => 'https://example.com',
+            'manufacturer_website' => 'https://www.manufacturer.se',
         ])->assertOk();
     }
 
@@ -177,7 +177,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'manufacturer_website' => 'http://example.test',
+            'manufacturer_website' => 'http://manufacturer.local',
         ])->assertOk();
     }
 
@@ -186,7 +186,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::ManufacturerAndOperator->value, [
-            'manufacturer_website' => 'not-a-url',
+            'manufacturer_website' => 'www.manufacturer.se',
         ]);
 
         $response->assertStatus(422);
@@ -201,7 +201,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::SupportAndContact->value, [
-            'support_url' => 'javascript:alert(1)',
+            'support_url' => 'javascript:void(0)',
         ]);
 
         $response->assertStatus(422);
@@ -216,7 +216,7 @@ class ProductPassportEditorValidationTest extends TestCase
         $this->draft();
 
         $response = $this->saveSection(DppSectionKey::RepairAndSpareParts->value, [
-            'spare_parts_url' => 'file:///C:/secret',
+            'spare_parts_url' => 'ftp://files.example.com/parts.pdf',
         ]);
 
         $response->assertStatus(422);
@@ -418,7 +418,7 @@ class ProductPassportEditorValidationTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiMatbord'],
                 'expected_revision' => 1,
             ],
         )->assertNotFound();

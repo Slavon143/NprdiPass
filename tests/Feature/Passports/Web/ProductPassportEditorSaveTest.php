@@ -92,7 +92,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test Product'],
+                'section_payload' => ['public_name' => 'NordiChair Pro'],
                 'expected_revision' => 1,
             ],
         );
@@ -124,7 +124,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Product Name'],
+                'section_payload' => ['public_name' => 'NordiTable Basic'],
                 'expected_revision' => 1,
             ],
         );
@@ -161,7 +161,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Step 1.'],
+                'section_payload' => ['usage_instructions' => 'Lyft endast i bottenplattan.'],
                 'expected_revision' => 1,
             ],
         );
@@ -175,7 +175,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Step 2.'],
+                'section_payload' => ['usage_instructions' => 'Använd endast inomhus.'],
                 'expected_revision' => $rev1,
             ],
         );
@@ -189,7 +189,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::UsageAndCare->value,
             ]),
             [
-                'section_payload' => ['usage_instructions' => 'Step 3.'],
+                'section_payload' => ['usage_instructions' => 'Rengör med fuktig trasa.'],
                 'expected_revision' => $rev2,
             ],
         );
@@ -207,11 +207,11 @@ class ProductPassportEditorSaveTest extends TestCase
         $passport = $this->draft();
 
         $sections = [
-            DppSectionKey::Identity->value => ['public_name' => 'Product A'],
-            DppSectionKey::ManufacturerAndOperator->value => ['manufacturer_display_name' => 'Mfr Co'],
-            DppSectionKey::Safety->value => ['age_restrictions' => '18+'],
-            DppSectionKey::UsageAndCare->value => ['usage_instructions' => 'Use carefully'],
-            DppSectionKey::SupportAndContact->value => ['support_phone' => '+461234567'],
+            DppSectionKey::Identity->value => ['public_name' => 'NordiShelf Wall'],
+            DppSectionKey::ManufacturerAndOperator->value => ['manufacturer_display_name' => 'Nordic Furniture AB'],
+            DppSectionKey::Safety->value => ['age_restrictions' => 'Rekommenderas från 3 år'],
+            DppSectionKey::UsageAndCare->value => ['usage_instructions' => 'Torka av med torr trasa.'],
+            DppSectionKey::SupportAndContact->value => ['support_phone' => '+46812345678'],
         ];
 
         $revision = 1;
@@ -256,7 +256,7 @@ class ProductPassportEditorSaveTest extends TestCase
             ]),
             [
                 'section_payload' => [
-                    'manufacturer_email' => '  Test@Example.Com  ',
+                    'manufacturer_email' => '  Kontakt@NordicMobel.Se  ',
                     'manufacturer_country' => 'SE',
                 ],
                 'expected_revision' => 1,
@@ -269,7 +269,7 @@ class ProductPassportEditorSaveTest extends TestCase
         $payload = $json['data']['payload'];
         $sectionData = $payload['data'][DppSectionKey::ManufacturerAndOperator->value] ?? [];
 
-        $this->assertSame('test@example.com', $sectionData['manufacturer_email']);
+        $this->assertSame('kontakt@nordicmobel.se', $sectionData['manufacturer_email']);
         $this->assertSame('SE', $sectionData['manufacturer_country']);
     }
 
@@ -283,7 +283,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Keep Me'],
+                'section_payload' => ['public_name' => 'NordiLamp Golv'],
                 'expected_revision' => 1,
             ],
         )->assertOk();
@@ -294,7 +294,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Safety->value,
             ]),
             [
-                'section_payload' => ['age_restrictions' => '18+'],
+                'section_payload' => ['age_restrictions' => 'Ej lämplig för barn under 3 år'],
                 'expected_revision' => 2,
             ],
         );
@@ -308,7 +308,7 @@ class ProductPassportEditorSaveTest extends TestCase
         $this->assertArrayHasKey('translations', $payload);
         $this->assertArrayHasKey($locale, $payload['translations']);
         $this->assertArrayHasKey(DppSectionKey::Identity->value, $payload['translations'][$locale]);
-        $this->assertSame('Keep Me', $payload['translations'][$locale][DppSectionKey::Identity->value]['public_name']);
+        $this->assertSame('NordiLamp Golv', $payload['translations'][$locale][DppSectionKey::Identity->value]['public_name']);
     }
 
     // ── Response structure ────────────────────────────────────────
@@ -323,7 +323,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiDesk Sit/Stand'],
                 'expected_revision' => 1,
             ],
         );
@@ -345,7 +345,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiDesk Sit/Stand'],
                 'expected_revision' => 1,
             ],
         );
@@ -368,7 +368,7 @@ class ProductPassportEditorSaveTest extends TestCase
                 'section' => DppSectionKey::Identity->value,
             ]),
             [
-                'section_payload' => ['public_name' => 'Test'],
+                'section_payload' => ['public_name' => 'NordiDesk Sit/Stand'],
                 'expected_revision' => 1,
             ],
         );

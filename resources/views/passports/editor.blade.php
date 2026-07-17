@@ -110,7 +110,7 @@
                                         @endphp
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700" for="{{ $fieldId }}">
-                                                {{ $field->key }}
+                                                {{ $field->label() }}
                                                 @if($field->translatable)
                                                     <span class="text-xs bg-blue-100 rounded px-1">translatable</span>
                                                 @endif
