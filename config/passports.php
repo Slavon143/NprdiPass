@@ -7,6 +7,8 @@ return [
 
     'public_base_url' => env('PASSPORT_PUBLIC_BASE_URL', env('APP_URL')),
 
+    'demo_password' => env('NORDIPASS_DEMO_PASSWORD', null),
+
     'qr' => [
         'renderer_version' => '1',
 

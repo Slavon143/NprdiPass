@@ -49,7 +49,7 @@ class NordiPassShowcaseSeeder extends Seeder
             $this->seedPassports($company, $owner, $products);
         });
 
-        if ($this->command && ! app()->runningUnitTests()) {
+        if (! app()->runningUnitTests() && $this->command !== null) {
             $this->command->info('Showcase dataset seeded successfully.');
         }
     }
@@ -80,9 +80,9 @@ class NordiPassShowcaseSeeder extends Seeder
             'demo.viewer@nordipass.test' => ['Viewer', CompanyRole::Viewer],
         ];
 
-        $password = env('NORDIPASS_DEMO_PASSWORD') ?: bin2hex(random_bytes(16));
+        $password = config('passports.demo_password') ?: bin2hex(random_bytes(16));
 
-        if ($this->command && ! app()->runningUnitTests() && empty(env('NORDIPASS_DEMO_PASSWORD'))) {
+        if (! app()->runningUnitTests() && $this->command !== null && empty(config('passports.demo_password'))) {
             $this->command->info("Demo password generated: {$password}");
         }
 
@@ -173,6 +173,7 @@ class NordiPassShowcaseSeeder extends Seeder
 
         foreach ($specs as $code => [$name, $type, $scope, $optionSpecs]) {
             $typeEnum = $type === 'select' ? AttributeDataType::Select : AttributeDataType::Text;
+            /** @var string $scope */
             $scopeEnum = $scope === 'variant' ? AttributeScope::Variant : AttributeScope::Product;
 
             $def = AttributeDefinition::query()->forCompany($company)->where('code', $code)->first() ?? new AttributeDefinition;
@@ -266,39 +267,60 @@ class NordiPassShowcaseSeeder extends Seeder
 
         foreach ($specs as $slug => $spec) {
             $product = Product::query()->forCompany($company)
-                ->where('slug_normalized', $slug)->first() ?? new Product([
-                    'company_id' => $company->getKey(),
-                    'status' => ProductStatus::Active,
-                    'published_at' => now(),
-                    'created_by' => $owner->getKey(),
-                ]);
+                ->where('slug_normalized', $slug)->first();
+
+            if (! $product) {
+                $product = Product::query()->withTrashed()->forCompany($company)
+                    ->where('slug_normalized', $slug)->first();
+            }
+
+            if (! $product) {
+                $product = new Product;
+            }
 
             $product->forceFill([
+                'company_id' => $company->getKey(),
                 'name' => $spec['name'],
                 'slug' => $slug,
                 'slug_normalized' => $slug,
                 'short_description' => $spec['desc'],
                 'brand' => $spec['brand'],
                 'manufacturer' => $spec['manufacturer'],
+                'status' => ProductStatus::Active,
+                'published_at' => $product->published_at ?? now(),
+                'created_by' => $product->exists ? $product->created_by : $owner->getKey(),
                 'updated_by' => $owner->getKey(),
+                'deleted_at' => null,
             ])->save();
 
             $vSpec = $spec['variant'];
 
             $variant = ProductVariant::query()->forCompany($company)
                 ->where('product_id', $product->getKey())
-                ->where('sku_normalized', Str::lower($vSpec[1]))->first() ?? new ProductVariant([
-                    'company_id' => $company->getKey(),
-                    'product_id' => $product->getKey(),
-                    'status' => ProductVariantStatus::Active,
-                    'sort_order' => 0,
-                    'created_by' => $owner->getKey(),
-                ]);
+                ->where('sku_normalized', Str::lower($vSpec[1]))->first();
+
+            if (! $variant) {
+                $variant = ProductVariant::query()->withTrashed()->forCompany($company)
+                    ->where('product_id', $product->getKey())
+                    ->where('sku_normalized', Str::lower($vSpec[1]))->first();
+            }
+
+            if (! $variant) {
+                $variant = new ProductVariant;
+            }
 
             $variant->forceFill([
-                'name' => $vSpec[0], 'sku' => $vSpec[1],
-                'sku_normalized' => Str::lower($vSpec[1]), 'mpn' => $vSpec[2],
+                'company_id' => $company->getKey(),
+                'product_id' => $product->getKey(),
+                'name' => $vSpec[0],
+                'sku' => $vSpec[1],
+                'sku_normalized' => Str::lower($vSpec[1]),
+                'mpn' => $vSpec[2],
+                'status' => ProductVariantStatus::Active,
+                'sort_order' => $variant->exists ? $variant->sort_order : 0,
+                'created_by' => $variant->exists ? $variant->created_by : $owner->getKey(),
                 'updated_by' => $owner->getKey(),
+                'deleted_at' => null,
             ])->save();
 
             if (! $product->default_variant_id) {
@@ -309,6 +331,12 @@ class NordiPassShowcaseSeeder extends Seeder
                 $exists = ProductVariant::query()->forCompany($company)
                     ->where('product_id', $product->getKey())
                     ->where('sku_normalized', Str::lower($ev[1]))->first();
+
+                if (! $exists) {
+                    $exists = ProductVariant::query()->withTrashed()->forCompany($company)
+                        ->where('product_id', $product->getKey())
+                        ->where('sku_normalized', Str::lower($ev[1]))->first();
+                }
 
                 if (! $exists) {
                     ProductVariant::create([

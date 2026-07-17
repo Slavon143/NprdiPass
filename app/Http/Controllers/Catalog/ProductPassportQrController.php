@@ -29,7 +29,7 @@ class ProductPassportQrController extends Controller
 
         $passport = $this->resolvePassport($product);
 
-        if (! $request->user()?->can(CompanyPermission::PassportsView->value, [$company])) {
+        if (! $request->user()->can(CompanyPermission::PassportsView->value, [$company])) {
             throw new NotFoundHttpException;
         }
 
@@ -46,7 +46,7 @@ class ProductPassportQrController extends Controller
             productUuid: $product->uuid,
         );
 
-        $canManage = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canManage = $request->user()->can(CompanyPermission::PassportsManage->value, [$company]) === true;
 
         return view()->make('passports.qr.show', [
             'company' => $company,
@@ -68,7 +68,7 @@ class ProductPassportQrController extends Controller
 
         $passport = $this->resolvePassport($product);
 
-        if (! $request->user()?->can(CompanyPermission::PassportsView->value, [$company])) {
+        if (! $request->user()->can(CompanyPermission::PassportsView->value, [$company])) {
             throw new NotFoundHttpException;
         }
 
@@ -101,7 +101,7 @@ class ProductPassportQrController extends Controller
 
         $passport = $this->resolvePassport($product);
 
-        if (! $request->user()?->can(CompanyPermission::PassportsView->value, [$company])) {
+        if (! $request->user()->can(CompanyPermission::PassportsView->value, [$company])) {
             throw new NotFoundHttpException;
         }
 

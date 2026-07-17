@@ -120,6 +120,31 @@ jobs:
         env:
           APP_ENV: testing
 
+      - name: Run DPP Publication tests
+        run: php artisan test tests/Feature/Passports/Publication
+        env:
+          APP_ENV: testing
+
+      - name: Run DPP Public Passport tests
+        run: php artisan test tests/Feature/Passports/Public
+        env:
+          APP_ENV: testing
+
+      - name: Run QR Unit tests
+        run: php artisan test tests/Unit/Passports/Qr
+        env:
+          APP_ENV: testing
+
+      - name: Run QR Web tests
+        run: php artisan test tests/Feature/Passports/Qr
+        env:
+          APP_ENV: testing
+
+      - name: Run Showcase Seeder tests
+        run: php artisan test tests/Feature/Demo/NordiPassShowcaseSeederTest.php
+        env:
+          APP_ENV: testing
+
       - name: Run Attribute MySQL tests
         run: php artisan test tests/Feature/Catalog/Attributes tests/Unit/Catalog/Attributes
         env:
