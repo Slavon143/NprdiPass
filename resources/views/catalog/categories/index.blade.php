@@ -7,14 +7,14 @@
                 <p class="mt-1 text-sm text-slate-500">{{ __('Manage the category hierarchy for :company.', ['company' => $company->name]) }}</p>
             </div>
             @if ($canManage)
-                <a href="{{ route('catalog.categories.create') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Create category') }}</a>
+                <a href="{{ route('catalog.categories.create') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-testid="category-create-button">{{ __('Create category') }}</a>
             @else
                 <x-badge>{{ __('Read only') }}</x-badge>
             @endif
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="categories-page">
         <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <form method="GET" action="{{ route('catalog.categories.index') }}" class="grid gap-4 lg:grid-cols-[1fr_12rem_16rem_auto] lg:items-end">
                 <div>

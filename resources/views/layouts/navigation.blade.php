@@ -1,4 +1,4 @@
-<nav x-data="{ mobileOpen: false }" class="border-b border-slate-200 bg-white" aria-label="Primary navigation">
+<nav x-data="{ mobileOpen: false }" class="border-b border-slate-200 bg-white" aria-label="Primary navigation" data-testid="primary-navigation">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-4">
             <div class="flex min-w-0 items-center gap-8">
@@ -8,33 +8,33 @@
                 </a>
 
                 <div class="hidden items-center gap-7 lg:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Dashboard') }}</x-nav-link>
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" data-testid="navigation-dashboard">{{ __('Dashboard') }}</x-nav-link>
 
                     @if ($currentCompany)
-                        <x-nav-link :href="route('settings.company.edit')" :active="request()->routeIs('settings.company.*')">{{ __('Company settings') }}</x-nav-link>
+                        <x-nav-link :href="route('settings.company.edit')" :active="request()->routeIs('settings.company.*')" data-testid="navigation-company-settings">{{ __('Company settings') }}</x-nav-link>
 
                         @can('viewAny', [\App\Models\Catalog\Product::class, $currentCompany])
-                            <x-nav-link :href="route('catalog.products.index')" :active="request()->routeIs('catalog.products.*')">{{ __('Products') }}</x-nav-link>
+                            <x-nav-link :href="route('catalog.products.index')" :active="request()->routeIs('catalog.products.*')" data-testid="navigation-products">{{ __('Products') }}</x-nav-link>
                         @endcan
 
                         @can('viewAny', [\App\Models\Catalog\Category::class, $currentCompany])
-                            <x-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')">{{ __('Categories') }}</x-nav-link>
+                            <x-nav-link :href="route('catalog.categories.index')" :active="request()->routeIs('catalog.categories.*')" data-testid="navigation-categories">{{ __('Categories') }}</x-nav-link>
                         @endcan
 
                         @can('viewAny', [\App\Models\Catalog\AttributeDefinition::class, $currentCompany])
-                            <x-nav-link :href="route('catalog.attributes.index')" :active="request()->routeIs('catalog.attributes.*')">{{ __('Attributes') }}</x-nav-link>
+                            <x-nav-link :href="route('catalog.attributes.index')" :active="request()->routeIs('catalog.attributes.*')" data-testid="navigation-attributes">{{ __('Attributes') }}</x-nav-link>
                         @endcan
 
                         @can('viewAny', [\App\Models\CompanyMembership::class, $currentCompany])
-                            <x-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')">{{ __('Members') }}</x-nav-link>
+                            <x-nav-link :href="route('settings.members.index')" :active="request()->routeIs('settings.members.*')" data-testid="navigation-members">{{ __('Members') }}</x-nav-link>
                         @endcan
 
                         @can('viewAny', [\App\Models\AuditLog::class, $currentCompany])
-                            <x-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">{{ __('Audit') }}</x-nav-link>
+                            <x-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')" data-testid="navigation-audit">{{ __('Audit') }}</x-nav-link>
                         @endcan
 
                         @can(\App\Enums\CompanyPermission::ApiTokensView->value, $currentCompany)
-                            <x-nav-link :href="route('settings.api-tokens.index')" :active="request()->routeIs('settings.api-tokens.*')">{{ __('API tokens') }}</x-nav-link>
+                            <x-nav-link :href="route('settings.api-tokens.index')" :active="request()->routeIs('settings.api-tokens.*')" data-testid="navigation-api-tokens">{{ __('API tokens') }}</x-nav-link>
                         @endcan
                     @endif
                 </div>

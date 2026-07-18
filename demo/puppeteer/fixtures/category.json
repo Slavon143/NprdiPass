@@ -1,0 +1,10 @@
+{
+  "workwear": {
+    "name": "Workwear",
+    "description": "Professional clothing and equipment for workplace use."
+  },
+  "protectiveClothing": {
+    "name": "Protective Clothing",
+    "description": "Protective clothing for professional environments."
+  }
+}

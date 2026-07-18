@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8" data-testid="dashboard-page">
         <div class="grid gap-4 sm:grid-cols-3">
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-slate-500">{{ __('Your role') }}</p>

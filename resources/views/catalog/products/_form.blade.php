@@ -1,6 +1,6 @@
-<div>
+<div data-testid="product-name-field">
     <x-input-label for="name" :value="__('Name')" />
-    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('name', $product?->name)" required autofocus />
+    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full scroll-mt-24 target:border-amber-500 target:ring-4 target:ring-amber-200" :value="old('name', $product?->name)" required autofocus data-testid="product-name-input" />
     <x-input-error :messages="$errors->get('name')" class="mt-2" />
 </div>
 

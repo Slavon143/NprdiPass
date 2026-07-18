@@ -1,0 +1,9 @@
+{
+  "material": { "name": "Material", "code": "material", "type": "text" },
+  "size": { "name": "Size", "code": "size", "type": "select", "options": ["M", "L", "XL"] },
+  "primaryColor": { "name": "Primary color", "code": "primary_color", "type": "select", "options": ["Yellow", "Black", "Orange"] },
+  "waterResistance": { "name": "Water resistance", "code": "water_resistance", "type": "integer", "unit": "mm" },
+  "recyclablePackaging": { "name": "Recyclable packaging", "code": "recyclable_packaging", "type": "boolean" },
+  "countryOfManufacture": { "name": "Country of manufacture", "code": "country_of_manufacture", "type": "text" },
+  "warranty": { "name": "Warranty", "code": "warranty", "type": "text" }
+}

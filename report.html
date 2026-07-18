@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>NordiPass Demo Report — DEMO-20260718-093220</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+    .header { background: #2c3e50; color: #fff; padding: 24px 32px; border-radius: 8px; margin-bottom: 24px; }
+    .header h1 { margin: 0 0 8px; font-size: 24px; }
+    .header p { margin: 4px 0; opacity: 0.85; font-size: 14px; }
+    .summary { display: flex; gap: 16px; margin-bottom: 24px; }
+    .summary-card { flex: 1; background: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .summary-card .count { font-size: 32px; font-weight: bold; }
+    .summary-card .label { font-size: 12px; color: #666; text-transform: uppercase; }
+    .passed { color: #2ecc71; }
+    .failed { color: #e74c3c; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th { background: #ecf0f1; padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #555; }
+    td { padding: 10px 16px; border-top: 1px solid #eee; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>NordiPass Demo Report</h1>
+    <p>Run ID: DEMO-20260718-093220 | Company: NordiPass Demo AB</p>
+    <p>Started: 2026-07-18T07:32:21.141Z | Finished: 2026-07-18T07:34:40.338Z</p>
+  </div>
+  <div class="summary">
+    <div class="summary-card">
+      <div class="count passed">28</div>
+      <div class="label">Passed</div>
+    </div>
+    <div class="summary-card">
+      <div class="count failed">14</div>
+      <div class="label">Failed</div>
+    </div>
+    <div class="summary-card">
+      <div class="count">0</div>
+      <div class="label">Skipped</div>
+    </div>
+    <div class="summary-card">
+      <div class="count">42</div>
+      <div class="label">Total</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th></th><th>Step</th><th>Status</th></tr>
+    </thead>
+    <tbody><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>login</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Dashboard</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Company settings</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Products</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Categories</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Attributes</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Members</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: Audit</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu: API tokens</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Menu Tour</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create root category "Workwear"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create child category "Protective Clothing"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>categories</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Material"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Size"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Primary color"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Water resistance"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Recyclable packaging"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Country of manufacture"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create attribute "Warranty"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>attributes</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create product</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>product</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>Create variant "M"</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Create variant "L"</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Create variant "XL"</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>variants</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload image 1/4</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload image 2/4</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload image 3/4</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload image 4/4</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Set primary image</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>images</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload document: Product manual</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload document: Declaration of conformity</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Upload document: Care instructions</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>documents</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Create passport</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Fill passport sections</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>Publish passport</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#e74c3c; font-weight:bold">✗</td>
+      <td>QR code and public URL</td>
+      <td style="color:#e74c3c">failed</td>
+    </tr><tr>
+      <td style="color:#2ecc71; font-weight:bold">✓</td>
+      <td>publishing</td>
+      <td style="color:#2ecc71">passed</td>
+    </tr></tbody>
+  </table>
+</body>
+</html>

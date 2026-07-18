@@ -7,7 +7,13 @@
     },
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "demo:nordipass": "node demo/puppeteer/run-demo.js",
+        "demo:tour": "node demo/puppeteer/run-demo.js --tour-only",
+        "demo:business": "node demo/puppeteer/run-demo.js --business-only",
+        "demo:headless": "node demo/puppeteer/run-demo.js --headless",
+        "demo:keep-data": "node demo/puppeteer/run-demo.js --keep-data",
+        "demo:cleanup": "node demo/puppeteer/run-demo.js --cleanup"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
@@ -16,6 +22,7 @@
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^3.1",
         "postcss": "^8.4.31",
+        "puppeteer": "^24.43.1",
         "tailwindcss": "^3.1.0",
         "vite": "^8.0.0"
     }

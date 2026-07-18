@@ -1,0 +1,367 @@
+{
+  "status": "failed",
+  "startedAt": "2026-07-18T07:32:21.141Z",
+  "finishedAt": "2026-07-18T07:34:40.338Z",
+  "runId": "DEMO-20260718-093220",
+  "company": "NordiPass Demo AB",
+  "productName": null,
+  "steps": [
+    {
+      "name": "login",
+      "status": "passed",
+      "details": {
+        "email": "admin@nordipass.local"
+      }
+    },
+    {
+      "name": "Menu: Dashboard",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Company settings",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Products",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Categories",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Attributes",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Members",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: Audit",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu: API tokens",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Menu Tour",
+      "status": "passed",
+      "details": null
+    },
+    {
+      "name": "Create root category \"Workwear\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "category",
+        "categoryName": "Workwear",
+        "categorySlug": "workwear-demo-demo-20260718-093220"
+      }
+    },
+    {
+      "name": "Create child category \"Protective Clothing\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "category",
+        "categoryName": "Protective Clothing",
+        "categorySlug": "protective-clothing-demo-demo-20260718-093220"
+      }
+    },
+    {
+      "name": "categories",
+      "status": "passed",
+      "details": {
+        "rootCategory": {
+          "name": "Workwear",
+          "slug": "workwear-demo-demo-20260718-093220"
+        },
+        "childCategory": {
+          "name": "Protective Clothing",
+          "slug": "protective-clothing-demo-demo-20260718-093220"
+        }
+      }
+    },
+    {
+      "name": "Create attribute \"Material\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Material",
+        "attributeCode": "material_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Size\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Size",
+        "attributeCode": "size_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Primary color\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Primary color",
+        "attributeCode": "primary_color_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Water resistance\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Water resistance",
+        "attributeCode": "water_resistance_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Recyclable packaging\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Recyclable packaging",
+        "attributeCode": "recyclable_packaging_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Country of manufacture\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Country of manufacture",
+        "attributeCode": "country_of_manufacture_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "Create attribute \"Warranty\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "attribute",
+        "attributeName": "Warranty",
+        "attributeCode": "warranty_demo_20260718_093220"
+      }
+    },
+    {
+      "name": "attributes",
+      "status": "passed",
+      "details": {
+        "count": 7,
+        "attributes": [
+          {
+            "name": "Material",
+            "code": "material_demo_20260718_093220"
+          },
+          {
+            "name": "Size",
+            "code": "size_demo_20260718_093220"
+          },
+          {
+            "name": "Primary color",
+            "code": "primary_color_demo_20260718_093220"
+          },
+          {
+            "name": "Water resistance",
+            "code": "water_resistance_demo_20260718_093220"
+          },
+          {
+            "name": "Recyclable packaging",
+            "code": "recyclable_packaging_demo_20260718_093220"
+          },
+          {
+            "name": "Country of manufacture",
+            "code": "country_of_manufacture_demo_20260718_093220"
+          },
+          {
+            "name": "Warranty",
+            "code": "warranty_demo_20260718_093220"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Create product",
+      "status": "passed",
+      "details": {
+        "createdItem": "product",
+        "productName": "NordiSafe Work Jacket Pro",
+        "productUuid": "create"
+      }
+    },
+    {
+      "name": "product",
+      "status": "passed",
+      "details": {
+        "productUuid": "create",
+        "productName": "NordiSafe Work Jacket Pro"
+      }
+    },
+    {
+      "name": "Create variant \"M\"",
+      "status": "passed",
+      "details": {
+        "createdItem": "variant",
+        "variantName": "NordiSafe Work Jacket Pro — M",
+        "variantSize": "M"
+      }
+    },
+    {
+      "name": "Create variant \"L\"",
+      "status": "failed",
+      "details": {
+        "error": "Waiting for selector `#name` failed"
+      }
+    },
+    {
+      "name": "Create variant \"XL\"",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "variants",
+      "status": "passed",
+      "details": {
+        "count": 1,
+        "variants": [
+          {
+            "name": "NordiSafe Work Jacket Pro — M",
+            "size": "M"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Upload image 1/4",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Upload image 2/4",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Upload image 3/4",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Upload image 4/4",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Set primary image",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "images",
+      "status": "passed",
+      "details": {
+        "count": 0
+      }
+    },
+    {
+      "name": "Upload document: Product manual",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Upload document: Declaration of conformity",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Upload document: Care instructions",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "documents",
+      "status": "passed",
+      "details": {
+        "count": 0,
+        "documents": []
+      }
+    },
+    {
+      "name": "Create passport",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Fill passport sections",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "Publish passport",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "QR code and public URL",
+      "status": "failed",
+      "details": {
+        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+      }
+    },
+    {
+      "name": "publishing",
+      "status": "passed",
+      "details": {
+        "published": true,
+        "publicUrl": "",
+        "publicId": "create"
+      }
+    }
+  ],
+  "counts": {
+    "total": 42,
+    "passed": 28,
+    "failed": 14,
+    "skipped": 0,
+    "categories": 2,
+    "attributes": 7,
+    "products": 1,
+    "variants": 1,
+    "images": 0,
+    "documents": 0
+  }
+}

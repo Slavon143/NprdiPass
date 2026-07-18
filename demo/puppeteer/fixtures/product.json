@@ -1,0 +1,27 @@
+{
+  "name": "NordiSafe Work Jacket Pro",
+  "brand": "NordiSafe",
+  "shortDescription": "Professional high-visibility jacket for Nordic working conditions.",
+  "description": "Durable high-visibility work jacket designed for professional use in Nordic weather conditions. The jacket combines recycled materials, water resistance and practical storage for industrial and construction environments.",
+  "gtin": "07350000000013",
+  "variants": [
+    { "name": "NordiSafe Work Jacket Pro — M", "size": "M", "status": "active" },
+    { "name": "NordiSafe Work Jacket Pro — L", "size": "L", "status": "active" },
+    { "name": "NordiSafe Work Jacket Pro — XL", "size": "XL", "status": "active" }
+  ],
+  "images": ["product-front.jpg", "product-back.jpg", "product-detail.jpg", "product-packaging.jpg"],
+  "documents": [
+    { "title": "Product manual", "type": "manual", "language": "en", "visibility": "passport_public", "file": "product-manual.pdf" },
+    { "title": "Declaration of conformity", "type": "compliance", "language": "en", "visibility": "passport_public", "file": "declaration-of-conformity.pdf" },
+    { "title": "Care instructions", "type": "instructions", "language": "en", "visibility": "passport_public", "file": "care-instructions.pdf" }
+  ],
+  "passport": {
+    "manufacturer": "NordiSafe AB",
+    "countryOfManufacture": "Sweden",
+    "materialComposition": "80% recycled polyester, 20% polyester",
+    "repairInformation": "Replaceable zipper and reflective panels",
+    "recyclingInstructions": "Textile recycling",
+    "warrantyPeriod": "24 months",
+    "complianceStatus": "Conformity documentation available"
+  }
+}

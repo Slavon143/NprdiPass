@@ -10,7 +10,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
+    <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8" data-testid="product-show-page">
         <div class="space-y-6">
             <section id="readiness" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
