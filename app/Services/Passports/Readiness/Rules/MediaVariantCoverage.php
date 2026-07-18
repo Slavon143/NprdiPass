@@ -66,9 +66,9 @@ class MediaVariantCoverage implements PassportReadinessRule
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'product_media',
                 section: null,
-                routeName: 'catalog.products.show',
+                routeName: 'catalog.products.variants.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Manage Media',
+                label: 'Variant images',
             ),
             safeContext: [
                 'total_variants' => $totalVariants,

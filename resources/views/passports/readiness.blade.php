@@ -64,7 +64,7 @@
                 <div class="h-4 rounded-full @if($readiness->score >= 80) bg-green-500 @elseif($readiness->score >= 50) bg-amber-500 @else bg-red-500 @endif" style="width: {{ $readiness->score }}%"></div>
             </div>
 
-            @include('passports.partials.readiness-score-breakdown', ['readiness' => $readiness])
+            @include('passports.partials.readiness-score-breakdown', ['readiness' => $readiness, 'product' => $product])
         </div>
 
         {{-- Profile & Passport Info --}}
@@ -83,17 +83,18 @@
         {{-- Counts Summary --}}
         <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-lg font-semibold mb-4">Rule Summary</h2>
-            <div class="flex gap-4 text-sm">
-                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full font-semibold">Blockers: {{ $readiness->counts->blockers }}</span>
-                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full font-semibold">Warnings: {{ $readiness->counts->warnings }}</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">Recommendations: {{ $readiness->counts->recommendations }}</span>
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full font-semibold">Passed: {{ $readiness->counts->passed }}</span>
-                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full font-semibold">Not Applicable: {{ $readiness->counts->notApplicable }}</span>
+            <div class="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-5">
+                <span class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800">Blockers: {{ $readiness->counts->blockers }}</span>
+                <span class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-amber-800">Warnings: {{ $readiness->counts->warnings }}</span>
+                <span class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-semibold text-blue-800">Recommendations: {{ $readiness->counts->recommendations }}</span>
+                <span class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 font-semibold text-green-800">Passed: {{ $readiness->counts->passed }}</span>
+                <span class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-semibold text-gray-600">Not applicable: {{ $readiness->counts->notApplicable }}</span>
             </div>
         </div>
 
         {{-- Rules by Group --}}
         @php
+            $rulePresenter = app(\App\Support\Passports\ReadinessRulePresenter::class);
             $rulesByGroup = [];
             foreach ($readiness->rules as $rule) {
                 $rulesByGroup[$rule->group->value][] = $rule;
@@ -101,58 +102,70 @@
         @endphp
 
         @foreach ($rulesByGroup as $group => $rules)
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold mb-4 capitalize">{{ $group }} Rules</h2>
-            <div class="space-y-3">
+        @php
+            $groupCounts = [
+                'blocker' => 0,
+                'warning' => 0,
+                'recommendation' => 0,
+                'passed' => 0,
+                'not_applicable' => 0,
+            ];
+
+            foreach ($rules as $groupRule) {
+                if ($groupRule->status->value === 'passed') {
+                    $groupCounts['passed']++;
+                } elseif ($groupRule->status->value === 'not_applicable') {
+                    $groupCounts['not_applicable']++;
+                } else {
+                    $groupCounts[$groupRule->severity->value] = ($groupCounts[$groupRule->severity->value] ?? 0) + 1;
+                }
+            }
+        @endphp
+        <details class="group rounded-lg bg-white shadow" open>
+            <summary class="flex cursor-pointer list-none flex-col gap-3 rounded-lg p-4 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-900">{{ $rulePresenter->groupLabel($group) }}</h2>
+                    <p class="mt-1 text-xs text-slate-500">{{ $rulePresenter->groupDescription($group) }}</p>
+                </div>
+                <div class="flex flex-wrap gap-1.5 text-xs">
+                    @if($groupCounts['blocker'] > 0)<span class="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-800">{{ $groupCounts['blocker'] }} blockers</span>@endif
+                    @if($groupCounts['warning'] > 0)<span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">{{ $groupCounts['warning'] }} warnings</span>@endif
+                    @if($groupCounts['recommendation'] > 0)<span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-800">{{ $groupCounts['recommendation'] }} recommendations</span>@endif
+                    <span class="rounded-full bg-green-100 px-2 py-0.5 font-semibold text-green-800">{{ $groupCounts['passed'] }} passed</span>
+                    @if($groupCounts['not_applicable'] > 0)<span class="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{{ $groupCounts['not_applicable'] }} n/a</span>@endif
+                </div>
+            </summary>
+            <div class="grid gap-2 border-t border-slate-100 p-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach ($rules as $rule)
-                <div class="border rounded-lg p-4 @if($rule->status->value === 'passed') border-green-300 bg-green-50 @elseif($rule->status->value === 'failed') border-red-300 bg-red-50 @else border-gray-300 bg-gray-50 @endif">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2">
-                            @if(app()->isLocal() && config('app.debug'))
-                            <span class="text-xs font-mono text-slate-400">{{ $rule->code }}</span>
-                            @endif
-                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold @if($rule->status->value === 'passed') bg-green-200 text-green-800 @elseif($rule->status->value === 'failed') bg-red-200 text-red-800 @else bg-gray-200 text-gray-600 @endif">
-                                {{ ucfirst($rule->status->value) }}
-                            </span>
-                        </div>
-                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold @if($rule->severity->value === 'blocker') bg-red-200 text-red-800 @elseif($rule->severity->value === 'warning') bg-amber-200 text-amber-800 @else bg-blue-200 text-blue-800 @endif">
-                            {{ ucfirst($rule->severity->value) }}
+                @php
+                        $titleText = $rulePresenter->title($rule);
+                        $msgText = $rulePresenter->message($rule);
+                        $actionUrl = $rulePresenter->actionUrl($product, $rule);
+                    @endphp
+                <div class="rounded-lg border p-3 {{ $rulePresenter->cardTone($rule) }}">
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="text-sm font-semibold leading-5 text-slate-900">{{ $titleText }}</p>
+                        <span title="{{ $rulePresenter->statusHelp($rule) }}" class="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $rulePresenter->statusTone($rule) }}">
+                            {{ $rulePresenter->statusLabel($rule) }}
                         </span>
                     </div>
-                    @php
-                        $statusSuffix = $rule->status->value;
-                        $titleText = __("readiness.{$rule->code}.title", []);
-                        if ($titleText === "readiness.{$rule->code}.title") {
-                            $titleText = __($rule->titleKey);
-                            if ($titleText === $rule->titleKey) {
-                                $titleText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->titleKey)), '. title'));
-                            }
-                        }
-                        $msgText = __("readiness.{$rule->code}.{$statusSuffix}", []);
-                        if ($msgText === "readiness.{$rule->code}.{$statusSuffix}") {
-                            $msgText = __("readiness.{$rule->code}.message", []);
-                        }
-                        if ($msgText === "readiness.{$rule->code}.message" || $msgText === "readiness.{$rule->code}.{$statusSuffix}") {
-                            $msgText = __($rule->messageKey);
-                            if ($msgText === $rule->messageKey) {
-                                $msgText = ucfirst(trim(str_replace('.', ' ', str_replace('readiness.', '', $rule->messageKey)), '. failed passed not_applicable recommendation'));
-                            }
-                        }
-                    @endphp
-                    <p class="text-sm font-medium text-slate-900">{{ $titleText }}</p>
-                    <p class="text-xs text-slate-600 mt-1">{{ $msgText }}</p>
+                    <p class="mt-1 text-xs leading-5 text-slate-600">{{ $msgText }}</p>
 
-                    @if ($rule->navigationTarget !== null && $rule->status->value === 'failed')
-                    <div class="mt-2">
-                        <a href="{{ route($rule->navigationTarget->routeName, $rule->navigationTarget->routeParameters) }}" class="inline-flex items-center gap-1 text-indigo-600 hover:underline text-xs font-semibold">
-                            {{ __('Open') }} {{ $rule->navigationTarget->label }} &rarr;
+                    @if ($rule->status->value !== 'passed')
+                        <p class="mt-1 text-[11px] leading-4 text-slate-500">{{ $rulePresenter->statusHelp($rule) }}</p>
+                    @endif
+
+                    @if ($actionUrl !== null)
+                    <div class="mt-2 border-t border-white/70 pt-2">
+                        <a href="{{ $actionUrl }}" class="inline-flex items-center gap-1 text-indigo-600 hover:underline text-xs font-semibold">
+                            {{ __('Fix:') }} {{ $rulePresenter->actionLabel($rule) }} &rarr;
                         </a>
                     </div>
                     @endif
                 </div>
                 @endforeach
             </div>
-        </div>
+        </details>
         @endforeach
 
         {{-- Legal Disclaimer --}}

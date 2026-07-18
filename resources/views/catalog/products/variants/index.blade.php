@@ -15,7 +15,7 @@
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <x-input-error :messages="$errors->get('variant')" class="mb-4" />
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section id="product-variants" class="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm target:ring-4 target:ring-amber-100">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">

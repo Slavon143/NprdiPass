@@ -42,6 +42,16 @@
         'UA' => 'Ukraine',
     ];
 @endphp
+<style>
+    [id^="section-"]:target,
+    [id^="field-"]:target,
+    #sectionsContainer:target {
+        scroll-margin-top: 6rem;
+        outline: 3px solid rgb(251 191 36 / 0.75);
+        outline-offset: 4px;
+        border-color: rgb(245 158 11);
+    }
+</style>
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Edit Product Passport: {{ $product->name }}</h1>
@@ -110,7 +120,7 @@
                             if(!$sectionDef) continue;
                             $isEnabled = in_array($sectionKey, $editorData['payload']['enabled_sections'] ?? []);
                         @endphp
-                        <div class="border rounded-lg p-4 {{ $isEnabled ? '' : 'opacity-50' }}" data-section="{{ $sectionKey }}">
+                        <div id="section-{{ $sectionKey }}" class="border rounded-lg p-4 {{ $isEnabled ? '' : 'opacity-50' }}" data-section="{{ $sectionKey }}">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-medium">
                                     {{ $sectionDef->key->label() }}

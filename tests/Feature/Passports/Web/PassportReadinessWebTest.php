@@ -214,7 +214,26 @@ class PassportReadinessWebTest extends TestCase
     public function test_rule_codes_are_hidden_in_production(): void
     {
         $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
+
         $response->assertOk();
+        $response->assertDontSee('catalog.product.active');
+        $response->assertDontSee('readiness.catalog.product.active');
+        $response->assertDontSee('readiness.passport.payload.valid');
+        $response->assertDontSee('Optional Sections None');
+        $response->assertSee('Optional sections enabled');
+        $response->assertDontSee('Declaration Present');
+        $response->assertSee('Declaration of Conformity present');
+        $response->assertSee('No Declaration of Conformity has been linked.');
+    }
+
+    public function test_failed_passport_fields_link_to_editor_field(): void
+    {
+        $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
+
         $response->assertOk();
+        $response->assertSee(
+            route('catalog.products.passport.edit', $this->product->uuid).'#field-manufacturer_and_operator-manufacturer_country',
+            false,
+        );
     }
 }

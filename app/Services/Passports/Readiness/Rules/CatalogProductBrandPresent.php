@@ -47,11 +47,11 @@ class CatalogProductBrandPresent implements PassportReadinessRule
             section: DppSectionKey::ManufacturerAndOperator,
             field: 'manufacturer_display_name',
             navigationTarget: new ReadinessNavigationTarget(
-                type: 'passport_section',
-                section: DppSectionKey::ManufacturerAndOperator->value,
-                routeName: 'catalog.products.passport.edit',
+                type: 'catalog_product',
+                section: null,
+                routeName: 'catalog.products.edit',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Edit Manufacturer',
+                label: 'Product brand',
             ),
             safeContext: [
                 'catalog_brand_exists' => ! empty($catalogBrand),

@@ -270,6 +270,18 @@ test('return archive and restore preserve the aggregate and create one audit per
         ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductRestored->value)->count())->toBe(1);
 });
 
+test('activation readiness hides internal codes and links lifecycle status blocker to actions', function () {
+    [$actor, $company] = r19Context();
+    $product = r19Product($actor, $company);
+    $product = app(ActivateProductAction::class)->execute($actor, $company, $product);
+
+    $this->get(route('catalog.products.show', $product->uuid))
+        ->assertOk()
+        ->assertSee('Only a draft product can be activated.')
+        ->assertSee('#lifecycle-actions', false)
+        ->assertDontSee('invalid_product_status');
+});
+
 test('variant archive protects default and last available variants and restore preserves identifiers', function () {
     [$actor, $company] = r19Context();
     $product = r19Product($actor, $company);

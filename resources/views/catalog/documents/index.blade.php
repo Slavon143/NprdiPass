@@ -14,7 +14,7 @@
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <a href="{{ route('catalog.products.show', $product->uuid) }}" class="text-sm text-indigo-600 hover:text-indigo-900">{{ __('← Back to product') }}</a>
 
-        <div class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div id="product-documents" class="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white shadow-sm target:ring-4 target:ring-amber-100">
             @if($documents->isEmpty())
             <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
                 <p class="text-lg font-semibold text-slate-600">{{ __('No documents yet') }}</p>

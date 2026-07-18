@@ -69,9 +69,9 @@ class DocumentsReferencesValid implements PassportReadinessRule
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'product_document',
                 section: null,
-                routeName: 'catalog.products.passport.edit',
+                routeName: 'catalog.products.documents.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Manage Documents',
+                label: 'Product documents',
             ),
             safeContext: [
                 'total_references' => count($documentRefs),

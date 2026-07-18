@@ -41,7 +41,7 @@ class PassportOptionalSectionsNone implements PassportReadinessRule
         );
 
         $enabledOptionals = array_intersect($enabledSections, $optionalSections);
-        $passed = count($enabledOptionals) === 0;
+        $passed = count($enabledOptionals) > 0;
 
         return new ReadinessRuleResult(
             code: $this->code(),

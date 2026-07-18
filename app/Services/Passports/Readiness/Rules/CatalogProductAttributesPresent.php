@@ -41,9 +41,9 @@ class CatalogProductAttributesPresent implements PassportReadinessRule
             navigationTarget: $hasAttributes ? null : new ReadinessNavigationTarget(
                 type: 'catalog_product',
                 section: null,
-                routeName: 'catalog.products.show',
+                routeName: 'catalog.products.attributes.edit',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'View Product',
+                label: 'Product attributes',
             ),
             safeContext: [
                 'has_attributes' => $hasAttributes,

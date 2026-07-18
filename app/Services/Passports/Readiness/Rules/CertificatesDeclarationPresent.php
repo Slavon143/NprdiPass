@@ -52,9 +52,9 @@ class CertificatesDeclarationPresent implements PassportReadinessRule
             navigationTarget: new ReadinessNavigationTarget(
                 type: 'product_document',
                 section: null,
-                routeName: 'catalog.products.passport.edit',
+                routeName: 'catalog.products.documents.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Manage Documents',
+                label: 'Declaration of Conformity documents',
             ),
             safeContext: [
                 'has_declaration_of_conformity' => $hasDeclaration,

@@ -41,9 +41,9 @@ class CatalogProductCategoryPresent implements PassportReadinessRule
             navigationTarget: $hasCategories ? null : new ReadinessNavigationTarget(
                 type: 'catalog_product',
                 section: null,
-                routeName: 'catalog.products.show',
+                routeName: 'catalog.products.edit',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'View Product',
+                label: 'Product category',
             ),
             safeContext: [
                 'has_categories' => $hasCategories,

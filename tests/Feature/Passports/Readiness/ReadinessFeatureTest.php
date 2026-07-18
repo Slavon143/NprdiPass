@@ -270,6 +270,17 @@ class ReadinessFeatureTest extends TestCase
         $this->assertLessThanOrEqual(100, $result->score);
     }
 
+    public function test_enabled_optional_sections_pass_optional_sections_readiness_rule(): void
+    {
+        $this->createFullReadyPassport();
+
+        $result = $this->evaluate();
+        $rule = collect($result->rules)->firstWhere('code', 'passport.optional_sections.none');
+
+        $this->assertNotNull($rule);
+        $this->assertSame('passed', $rule->status->value);
+    }
+
     public function test_missing_passport_returns_not_ready(): void
     {
         // Product exists but no passport

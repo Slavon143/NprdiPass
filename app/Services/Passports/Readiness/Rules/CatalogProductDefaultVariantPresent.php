@@ -44,9 +44,9 @@ class CatalogProductDefaultVariantPresent implements PassportReadinessRule
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'catalog_product',
                 section: null,
-                routeName: 'catalog.products.show',
+                routeName: 'catalog.products.variants.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'View Product',
+                label: 'Product variants',
             ),
             safeContext: [
                 'has_variants' => $hasVariants,

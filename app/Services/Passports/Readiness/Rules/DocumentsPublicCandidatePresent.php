@@ -65,9 +65,9 @@ class DocumentsPublicCandidatePresent implements PassportReadinessRule
             navigationTarget: new ReadinessNavigationTarget(
                 type: 'product_document',
                 section: null,
-                routeName: 'catalog.products.passport.edit',
+                routeName: 'catalog.products.documents.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Manage Documents',
+                label: 'Public product documents',
             ),
             safeContext: [
                 'total_documents' => count($context->referencedDocuments),

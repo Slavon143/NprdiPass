@@ -61,9 +61,9 @@ class MediaPrimaryAvailable implements PassportReadinessRule
             navigationTarget: $exists ? null : new ReadinessNavigationTarget(
                 type: 'product_media',
                 section: null,
-                routeName: 'catalog.products.show',
+                routeName: 'catalog.products.media.index',
                 routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Manage Media',
+                label: 'Product images',
             ),
             safeContext: [
                 'storage_path' => $storagePath,
