@@ -1,4 +1,47 @@
 <x-app-layout>
+@php
+    $countryOptions = [
+        'SE' => 'Sweden',
+        'FI' => 'Finland',
+        'NO' => 'Norway',
+        'DK' => 'Denmark',
+        'IS' => 'Iceland',
+        'EE' => 'Estonia',
+        'LV' => 'Latvia',
+        'LT' => 'Lithuania',
+        'PL' => 'Poland',
+        'DE' => 'Germany',
+        'NL' => 'Netherlands',
+        'BE' => 'Belgium',
+        'FR' => 'France',
+        'ES' => 'Spain',
+        'IT' => 'Italy',
+        'PT' => 'Portugal',
+        'AT' => 'Austria',
+        'CH' => 'Switzerland',
+        'CZ' => 'Czechia',
+        'SK' => 'Slovakia',
+        'HU' => 'Hungary',
+        'RO' => 'Romania',
+        'BG' => 'Bulgaria',
+        'SI' => 'Slovenia',
+        'HR' => 'Croatia',
+        'GR' => 'Greece',
+        'IE' => 'Ireland',
+        'GB' => 'United Kingdom',
+        'US' => 'United States',
+        'CA' => 'Canada',
+        'MX' => 'Mexico',
+        'CN' => 'China',
+        'JP' => 'Japan',
+        'KR' => 'South Korea',
+        'IN' => 'India',
+        'VN' => 'Vietnam',
+        'TH' => 'Thailand',
+        'TR' => 'Türkiye',
+        'UA' => 'Ukraine',
+    ];
+@endphp
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Edit Product Passport: {{ $product->name }}</h1>
@@ -110,7 +153,9 @@
                                             };
                                             $displayValue = $value;
                                             if (is_array($value)) {
-                                                $displayValue = implode(', ', $value);
+                                                $displayValue = collect($value)
+                                                    ->filter(fn ($item) => is_scalar($item))
+                                                    ->implode(', ');
                                             }
                                         @endphp
                                         <div>
@@ -166,6 +211,87 @@
                                                        aria-invalid="false"
                                                        aria-describedby="{{ $errorId }}"
                                                        {{ $canManage ? '' : 'disabled' }}>
+                                            @elseif($field->type->value === 'country_code')
+                                                <select name="{{ $field->key }}"
+                                                        id="{{ $fieldId }}"
+                                                        class="section-input mt-1 w-full border rounded px-3 py-2"
+                                                        data-field="{{ $field->key }}"
+                                                        data-field-type="{{ $field->type->value }}"
+                                                        aria-invalid="false"
+                                                        aria-describedby="{{ $errorId }}"
+                                                        {{ $canManage ? '' : 'disabled' }}>
+                                                    <option value="">Select country</option>
+                                                    @foreach($countryOptions as $code => $label)
+                                                        <option value="{{ $code }}" @selected($displayValue === $code)>{{ $label }} ({{ $code }})</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif($field->type->value === 'material_list')
+                                                @php
+                                                    $materials = is_array($value) ? array_values($value) : [];
+                                                @endphp
+                                                <div id="{{ $fieldId }}"
+                                                     class="section-input material-list mt-2 rounded border border-slate-200 bg-slate-50 p-3"
+                                                     data-field="{{ $field->key }}"
+                                                     data-field-type="{{ $field->type->value }}"
+                                                     aria-invalid="false"
+                                                     aria-describedby="{{ $errorId }}">
+                                                    <div class="space-y-3 material-rows">
+                                                        @forelse($materials as $material)
+                                                            @php
+                                                                $materialName = is_array($material) ? ($material['name'] ?? '') : '';
+                                                                $materialPercentage = is_array($material) ? ($material['percentage'] ?? '') : '';
+                                                                $materialRecycled = is_array($material) ? ($material['recycled_content_percentage'] ?? '') : '';
+                                                                $materialCountry = is_array($material) ? ($material['country_of_origin'] ?? '') : '';
+                                                                $materialHazardous = is_array($material) && ($material['hazardous'] ?? false);
+                                                            @endphp
+                                                            <div class="material-row grid gap-2 rounded border border-white bg-white p-3 md:grid-cols-12">
+                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" value="{{ $materialName }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" value="{{ $materialPercentage }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" value="{{ $materialRecycled }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" {{ $canManage ? '' : 'disabled' }}>
+                                                                    <option value="">Country</option>
+                                                                    @foreach($countryOptions as $code => $label)
+                                                                        <option value="{{ $code }}" @selected($materialCountry === $code)>{{ $label }} ({{ $code }})</option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <label class="md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600">
+                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" @checked($materialHazardous) {{ $canManage ? '' : 'disabled' }}>
+                                                                    Hazardous
+                                                                </label>
+                                                                @if($canManage)
+                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline">Remove</button>
+                                                                @endif
+                                                            </div>
+                                                        @empty
+                                                            <div class="material-row grid gap-2 rounded border border-white bg-white p-3 md:grid-cols-12">
+                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" {{ $canManage ? '' : 'disabled' }}>
+                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" {{ $canManage ? '' : 'disabled' }}>
+                                                                    <option value="">Country</option>
+                                                                    @foreach($countryOptions as $code => $label)
+                                                                        <option value="{{ $code }}">{{ $label }} ({{ $code }})</option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <label class="md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600">
+                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" {{ $canManage ? '' : 'disabled' }}>
+                                                                    Hazardous
+                                                                </label>
+                                                                @if($canManage)
+                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline">Remove</button>
+                                                                @endif
+                                                            </div>
+                                                        @endforelse
+                                                    </div>
+                                                    @if($canManage)
+                                                        <button type="button" class="add-material-row mt-3 text-sm font-semibold text-indigo-600 hover:underline">
+                                                            + Add material
+                                                        </button>
+                                                    @endif
+                                                    <p class="mt-2 text-xs text-slate-500">
+                                                        Add one material per row. Percentages should not exceed 100 total. Countries are saved as ISO 3166-1 alpha-2 codes.
+                                                    </p>
+                                                </div>
                                             @else
                                                 <input type="{{ $inputType }}"
                                                        name="{{ $field->key }}"
@@ -279,6 +405,7 @@
 
 <script>
 (function() {
+    const countryOptions = @json($countryOptions);
     const sectionStates = {};
     let globalRevision = 0;
     let hasUnsavedChanges = false;
@@ -302,6 +429,31 @@
         document.querySelectorAll('.section-input').forEach(function(input) {
             input.addEventListener('input', function() { onFieldChange(input); });
             input.addEventListener('change', function() { onFieldChange(input); });
+        });
+
+        document.addEventListener('input', function(event) {
+            if (event.target && event.target.classList && event.target.classList.contains('material-input')) {
+                onFieldChange(event.target);
+            }
+        });
+
+        document.addEventListener('change', function(event) {
+            if (event.target && event.target.classList && event.target.classList.contains('material-input')) {
+                onFieldChange(event.target);
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            var addButton = event.target.closest('.add-material-row');
+            if (addButton) {
+                addMaterialRow(addButton);
+                return;
+            }
+
+            var removeButton = event.target.closest('.remove-material-row');
+            if (removeButton) {
+                removeMaterialRow(removeButton);
+            }
         });
 
         window.addEventListener('beforeunload', onBeforeUnload);
@@ -449,6 +601,150 @@
         }));
     }
 
+    function createCountrySelect() {
+        var select = document.createElement('select');
+        select.className = 'material-input md:col-span-3 border rounded px-3 py-2';
+        select.dataset.materialField = 'country_of_origin';
+
+        var emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = 'Country';
+        select.appendChild(emptyOption);
+
+        Object.keys(countryOptions).forEach(function(code) {
+            var option = document.createElement('option');
+            option.value = code;
+            option.textContent = countryOptions[code] + ' (' + code + ')';
+            select.appendChild(option);
+        });
+
+        return select;
+    }
+
+    function addMaterialRow(button) {
+        var wrapper = button.closest('.material-list');
+        if (!wrapper) return;
+
+        var rows = wrapper.querySelector('.material-rows');
+        if (!rows) return;
+
+        var row = document.createElement('div');
+        row.className = 'material-row grid gap-2 rounded border border-white bg-white p-3 md:grid-cols-12';
+
+        var name = document.createElement('input');
+        name.type = 'text';
+        name.className = 'material-input md:col-span-3 border rounded px-3 py-2';
+        name.dataset.materialField = 'name';
+        name.placeholder = 'Material name';
+
+        var percentage = document.createElement('input');
+        percentage.type = 'number';
+        percentage.className = 'material-input md:col-span-2 border rounded px-3 py-2';
+        percentage.dataset.materialField = 'percentage';
+        percentage.placeholder = '% of product';
+        percentage.min = '0';
+        percentage.max = '100';
+        percentage.step = 'any';
+
+        var recycled = document.createElement('input');
+        recycled.type = 'number';
+        recycled.className = 'material-input md:col-span-2 border rounded px-3 py-2';
+        recycled.dataset.materialField = 'recycled_content_percentage';
+        recycled.placeholder = 'Recycled %';
+        recycled.min = '0';
+        recycled.max = '100';
+        recycled.step = 'any';
+
+        var label = document.createElement('label');
+        label.className = 'md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600';
+        var hazardous = document.createElement('input');
+        hazardous.type = 'checkbox';
+        hazardous.className = 'material-input rounded border-gray-300';
+        hazardous.dataset.materialField = 'hazardous';
+        label.appendChild(hazardous);
+        label.appendChild(document.createTextNode('Hazardous'));
+
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline';
+        remove.textContent = 'Remove';
+
+        row.appendChild(name);
+        row.appendChild(percentage);
+        row.appendChild(recycled);
+        row.appendChild(createCountrySelect());
+        row.appendChild(label);
+        row.appendChild(remove);
+
+        rows.appendChild(row);
+        name.focus();
+        onFieldChange(wrapper);
+    }
+
+    function removeMaterialRow(button) {
+        var wrapper = button.closest('.material-list');
+        var row = button.closest('.material-row');
+        if (!wrapper || !row) return;
+
+        var rows = wrapper.querySelectorAll('.material-row');
+        if (rows.length <= 1) {
+            row.querySelectorAll('.material-input').forEach(function(input) {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                }
+            });
+        } else {
+            row.remove();
+        }
+
+        onFieldChange(wrapper);
+    }
+
+    function numberOrNull(value) {
+        var trimmed = (value || '').trim();
+        return trimmed === '' ? null : parseFloat(trimmed);
+    }
+
+    function collectMaterialList(wrapper) {
+        var materials = [];
+
+        wrapper.querySelectorAll('.material-row').forEach(function(row) {
+            var material = {};
+
+            row.querySelectorAll('.material-input').forEach(function(input) {
+                var key = input.dataset.materialField;
+                if (!key) return;
+
+                if (key === 'hazardous') {
+                    material[key] = input.checked;
+                } else if (key === 'percentage' || key === 'recycled_content_percentage') {
+                    material[key] = numberOrNull(input.value);
+                } else {
+                    material[key] = (input.value || '').trim();
+                }
+            });
+
+            var hasAnyValue = Object.keys(material).some(function(key) {
+                if (key === 'hazardous') return material[key] === true;
+                return material[key] !== null && material[key] !== '';
+            });
+
+            if (!hasAnyValue) {
+                return;
+            }
+
+            if (material.percentage === null) delete material.percentage;
+            if (material.recycled_content_percentage === null) delete material.recycled_content_percentage;
+            if (!material.country_of_origin) delete material.country_of_origin;
+
+            materials.push(material);
+        });
+
+        return materials;
+    }
+
     function updateReadiness(readiness) {
         var el = document.getElementById('readinessSummary');
         if (!el) return;
@@ -490,6 +786,8 @@
 
             if (input.type === 'checkbox') {
                 payload[fieldKey] = input.checked;
+            } else if (fieldType === 'material_list') {
+                payload[fieldKey] = collectMaterialList(input);
             } else if (fieldType === 'string_list') {
                 payload[fieldKey] = input.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
             } else if (fieldType === 'decimal' || fieldType === 'integer') {

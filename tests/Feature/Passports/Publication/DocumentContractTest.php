@@ -28,6 +28,7 @@ use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Passports\PassportSnapshotBuilder;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
@@ -378,6 +379,97 @@ class DocumentContractTest extends TestCase
             $ref['document_version_uuid'],
             'Published version must pin current document version at publication time.',
         );
+    }
+
+    public function test_snapshot_builder_does_not_resolve_document_references_outside_current_product(): void
+    {
+        $this->passport = app(CreateProductPassportDraftAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+        );
+
+        $foreignCompany = Company::factory()->create(['status' => CompanyStatus::Active]);
+        $foreignCategory = new Category;
+        $foreignCategory->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $foreignCompany->getKey(),
+            'name' => 'Foreign Doc Category',
+            'slug' => 'foreign-doc-cat-'.fake()->unique()->slug(1),
+            'slug_normalized' => 'foreign-doc-cat-'.fake()->unique()->slug(1),
+            'depth' => 0,
+            'sort_order' => 0,
+            'status' => CategoryStatus::Active,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $foreignProduct = new Product;
+        $foreignProduct->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $foreignCompany->getKey(),
+            'name' => 'Foreign Doc Product '.fake()->unique()->word(),
+            'slug' => 'foreign-doc-product-'.fake()->unique()->slug(1),
+            'slug_normalized' => 'foreign-doc-product-'.fake()->unique()->slug(1),
+            'brand' => 'Foreign Brand',
+            'manufacturer' => 'Foreign Manufacturer',
+            'status' => ProductStatus::Active,
+            'primary_category_id' => $foreignCategory->getKey(),
+            'created_by' => $this->actor->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $foreignDocument = ProductDocument::query()->forceCreate([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $foreignCompany->getKey(),
+            'product_id' => $foreignProduct->getKey(),
+            'status' => ProductDocumentStatus::Active->value,
+            'created_by_user_id' => $this->actor->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $foreignVersion = new ProductDocumentVersion;
+        $foreignVersion->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $foreignCompany->getKey(),
+            'document_id' => $foreignDocument->getKey(),
+            'version_number' => 1,
+            'document_type' => ProductDocumentType::Certificate->value,
+            'title' => 'Foreign Certificate',
+            'language' => 'sv',
+            'visibility' => ProductDocumentVisibility::PassportPublic->value,
+            'issuer_name' => 'Foreign Issuer',
+            'issue_date' => now()->subMonth(),
+            'original_filename' => 'foreign-cert.pdf',
+            'mime_type' => 'application/pdf',
+            'file_extension' => 'pdf',
+            'size_bytes' => 1024,
+            'checksum_sha256' => str_repeat('f', 64),
+            'storage_key' => 'test/foreign-cert.pdf',
+            'created_by_user_id' => $this->actor->getKey(),
+        ])->save();
+
+        $foreignDocument->forceFill(['current_version_id' => $foreignVersion->getKey()])->save();
+
+        $payload = $this->passport->currentDraftVersion->payload;
+        $payload['document_references'] = [
+            [
+                'document_uuid' => $foreignDocument->uuid,
+                'document_version_uuid' => $foreignVersion->uuid,
+                'role' => 'certificate',
+            ],
+        ];
+
+        $snapshot = app(PassportSnapshotBuilder::class)->build($payload, $this->product);
+
+        $this->assertArrayNotHasKey(
+            'document_version_uuid',
+            $snapshot['document_references'][0],
+            'Foreign document version UUID must be stripped instead of pinned into this product snapshot.',
+        );
+        $this->assertSame([], $snapshot['_catalog_context']['documents']);
     }
 
     public function test_new_document_version_does_not_change_draft_reference(): void

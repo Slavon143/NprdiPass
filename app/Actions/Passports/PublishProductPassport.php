@@ -406,7 +406,7 @@ class PublishProductPassport
             $asset->setAttribute('company_id', $company->getKey());
             $asset->setAttribute('passport_id', $passport->getKey());
             $asset->setAttribute('version_id', $version->getKey());
-            $asset->setAttribute('kind', ProductPassportAssetKind::ProductMedia);
+            $asset->setAttribute('kind', ProductPassportAssetKind::Document);
             $asset->setAttribute('source_resource_uuid', $docItem['document_uuid'] ?? null);
             $asset->setAttribute('role', $docItem['role'] ?? 'other');
             $asset->setAttribute('sort_order', $docItem['display_order'] ?? 0);

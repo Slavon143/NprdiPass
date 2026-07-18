@@ -757,6 +757,18 @@ class PublicPassportImmutableAssetTest extends TestCase
         );
 
         $passport = $this->freshPassport();
+        $publishedVersion = $passport->currentPublishedVersion;
+        $this->assertNotNull($publishedVersion);
+
+        $documentAsset = ProductPassportAsset::query()
+            ->forCompany($this->company)
+            ->where('passport_id', $passport->getKey())
+            ->where('version_id', $publishedVersion->getKey())
+            ->where('kind', ProductPassportAssetKind::Document)
+            ->first();
+
+        $this->assertNotNull($documentAsset, 'Published document must be tracked as a document passport asset.');
+
         $publicId = $passport->public_id;
 
         $documentUuid = $this->getDocumentUrlFromPublicPage($publicId);

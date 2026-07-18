@@ -47,6 +47,18 @@ class ProductPassportAssetFactory extends Factory
         return $this->state(fn (array $attributes) => ['kind' => ProductPassportAssetKind::VariantMedia]);
     }
 
+    public function document(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kind' => ProductPassportAssetKind::Document,
+            'role' => 'certificate',
+            'mime_type' => 'application/pdf',
+            'file_extension' => 'pdf',
+            'width' => null,
+            'height' => null,
+        ]);
+    }
+
     public function public(): static
     {
         return $this->state(fn (array $attributes) => ['is_public' => true]);

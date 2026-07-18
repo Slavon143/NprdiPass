@@ -18,19 +18,8 @@ class PassportSnapshotBuilder
     {
         $normalized = $this->normalizer->normalize($draftPayload);
 
-        if (! empty($normalized['document_references'])) {
-            foreach ($normalized['document_references'] as &$ref) {
-                if (empty($ref['document_version_uuid']) && ! empty($ref['document_uuid'])) {
-                    $document = ProductDocument::query()
-                        ->where('uuid', $ref['document_uuid'])
-                        ->first();
-
-                    if ($document !== null && $document->currentVersion !== null) {
-                        $ref['document_version_uuid'] = $document->currentVersion->uuid;
-                    }
-                }
-            }
-            unset($ref);
+        if ($product !== null && ! empty($normalized['document_references'])) {
+            $normalized = $this->resolveDocumentReferencesForProduct($normalized, $product);
         }
 
         if ($product !== null) {
@@ -40,9 +29,64 @@ class PassportSnapshotBuilder
         return $normalized;
     }
 
+    /**
+     * @param  array<string, mixed>  $normalized
+     * @return array<string, mixed>
+     */
+    private function resolveDocumentReferencesForProduct(array $normalized, Product $product): array
+    {
+        foreach ($normalized['document_references'] as &$ref) {
+            $documentUuid = $ref['document_uuid'] ?? null;
+
+            if (! is_string($documentUuid) || $documentUuid === '') {
+                unset($ref['document_version_uuid']);
+
+                continue;
+            }
+
+            $document = ProductDocument::query()
+                ->where('company_id', $product->company_id)
+                ->where('product_id', $product->getKey())
+                ->where('uuid', $documentUuid)
+                ->active()
+                ->with('currentVersion')
+                ->first();
+
+            if ($document === null) {
+                unset($ref['document_version_uuid']);
+
+                continue;
+            }
+
+            $versionUuid = $ref['document_version_uuid'] ?? null;
+
+            if (! is_string($versionUuid) || $versionUuid === '') {
+                if ($document->currentVersion !== null) {
+                    $ref['document_version_uuid'] = $document->currentVersion->uuid;
+                }
+
+                continue;
+            }
+
+            $versionBelongsToDocument = ProductDocumentVersion::query()
+                ->where('company_id', $product->company_id)
+                ->where('document_id', $document->getKey())
+                ->where('uuid', $versionUuid)
+                ->exists();
+
+            if (! $versionBelongsToDocument) {
+                unset($ref['document_version_uuid']);
+            }
+        }
+        unset($ref);
+
+        return $normalized;
+    }
+
     private function buildCatalogContext(Product $product, array $normalized): array
     {
         $product->loadMissing([
+            'primaryCategory',
             'defaultVariant',
             'variants',
             'productMedia' => function ($query) {
@@ -60,7 +104,14 @@ class PassportSnapshotBuilder
 
             if (! empty($versionUuids)) {
                 $versions = ProductDocumentVersion::query()
+                    ->where('company_id', $product->company_id)
                     ->whereIn('uuid', $versionUuids)
+                    ->whereHas('document', function ($query) use ($product): void {
+                        $query
+                            ->where('company_id', $product->company_id)
+                            ->where('product_id', $product->getKey())
+                            ->active();
+                    })
                     ->with('document')
                     ->get()
                     ->keyBy('uuid');

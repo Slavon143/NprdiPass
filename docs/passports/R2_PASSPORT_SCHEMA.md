@@ -108,7 +108,7 @@ Immutable file manifests for passport versions.
 | `company_id` | `BIGINT UNSIGNED` | `NOT NULL` |
 | `passport_id` | `BIGINT UNSIGNED` | `NOT NULL` |
 | `version_id` | `BIGINT UNSIGNED` | `NOT NULL` |
-| `kind` | `VARCHAR(30)` | `NOT NULL CHECK(kind IN ('product_media','variant_media'))` |
+| `kind` | `VARCHAR(30)` | `NOT NULL CHECK(kind IN ('product_media','variant_media','document'))` |
 | `source_resource_uuid` | `CHAR(36)` | `NULLABLE` |
 | `role` | `VARCHAR(50)` | `NULLABLE` |
 | `sort_order` | `INT UNSIGNED` | `NOT NULL DEFAULT 0` |

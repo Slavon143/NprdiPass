@@ -48,6 +48,7 @@
                 <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full font-semibold">Passed: {{ $readiness->counts->passed }}</span>
                 <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full font-semibold">Not Applicable: {{ $readiness->counts->notApplicable }}</span>
             </div>
+            @include('passports.partials.readiness-score-breakdown', ['readiness' => $readiness])
         </div>
 
         {{-- Documents & Media Count --}}

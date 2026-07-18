@@ -20,10 +20,11 @@ test('ProductPassportVersionStatus has exact values', function () {
 
 test('ProductPassportAssetKind has exact values', function () {
     expect(ProductPassportAssetKind::ProductMedia->value)->toBe('product_media')
-        ->and(ProductPassportAssetKind::VariantMedia->value)->toBe('variant_media');
+        ->and(ProductPassportAssetKind::VariantMedia->value)->toBe('variant_media')
+        ->and(ProductPassportAssetKind::Document->value)->toBe('document');
 });
 
-test('ProductPassportAssetKind does not include document kind', function () {
+test('ProductPassportAssetKind includes document kind', function () {
     $values = array_column(ProductPassportAssetKind::cases(), 'value');
-    expect($values)->not->toContain('document');
+    expect($values)->toContain('document');
 });

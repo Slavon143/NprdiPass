@@ -63,6 +63,8 @@
             <div class="w-full bg-gray-200 rounded-full h-4">
                 <div class="h-4 rounded-full @if($readiness->score >= 80) bg-green-500 @elseif($readiness->score >= 50) bg-amber-500 @else bg-red-500 @endif" style="width: {{ $readiness->score }}%"></div>
             </div>
+
+            @include('passports.partials.readiness-score-breakdown', ['readiness' => $readiness])
         </div>
 
         {{-- Profile & Passport Info --}}
