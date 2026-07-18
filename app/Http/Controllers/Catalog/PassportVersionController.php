@@ -9,6 +9,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
+use App\Services\Passports\DppSchemaRegistry;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class PassportVersionController extends Controller
         ProductPassportVersion $version,
         Request $request,
         CurrentCompany $currentCompany,
+        DppSchemaRegistry $schemaRegistry,
     ): View {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
@@ -64,6 +66,9 @@ class PassportVersionController extends Controller
             'product' => $product,
             'passport' => $passport,
             'version' => $version,
+            'sections' => $schemaRegistry->sections(),
+            'sectionKeys' => $schemaRegistry->sectionKeysInOrder(),
+            'fields' => $schemaRegistry->flatFields(),
             'canPublish' => $canPublish,
         ]);
     }

@@ -52,7 +52,7 @@ class PassportPublicationController extends Controller
             );
 
             return redirect()
-                ->route('catalog.products.passport.show', ['product' => $product->uuid])
+                ->to(route('catalog.products.passport.show', ['product' => $product->uuid]).'#published-version')
                 ->with('success', 'Passport published as Version '.$result->publishedVersion->version_number.'.');
         } catch (ConflictHttpException $e) {
             return redirect()

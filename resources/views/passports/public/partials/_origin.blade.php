@@ -3,7 +3,14 @@
         <div><dt class="font-semibold text-slate-700">Country of Origin</dt><dd class="text-slate-600">{{ $fields['country_of_origin'] }}</dd></div>
     @endif
     @if(!empty($fields['manufacturing_countries']))
-        <div><dt class="font-semibold text-slate-700">Manufacturing Countries</dt><dd class="text-slate-600">{{ is_array($fields['manufacturing_countries']) ? implode(', ', $fields['manufacturing_countries']) : $fields['manufacturing_countries'] }}</dd></div>
+        @php
+            $manufacturingCountries = is_array($fields['manufacturing_countries'])
+                ? array_values(array_filter($fields['manufacturing_countries'], fn ($country): bool => is_string($country) && preg_match('/^[A-Z]{2}$/', $country) === 1))
+                : (is_string($fields['manufacturing_countries']) && preg_match('/^[A-Z]{2}$/', $fields['manufacturing_countries']) === 1 ? [$fields['manufacturing_countries']] : []);
+        @endphp
+        @if($manufacturingCountries !== [])
+            <div><dt class="font-semibold text-slate-700">Manufacturing Countries</dt><dd class="text-slate-600">{{ implode(', ', $manufacturingCountries) }}</dd></div>
+        @endif
     @endif
     @if(!empty($fields['production_date']))
         <div><dt class="font-semibold text-slate-700">Production Date</dt><dd class="text-slate-600">{{ $fields['production_date'] }}</dd></div>

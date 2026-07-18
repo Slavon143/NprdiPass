@@ -145,7 +145,7 @@ class ProductController extends Controller
         $canViewPassports = $canManagePassports || $request->user()?->can(CompanyPermission::PassportsView->value, $company) === true;
 
         if ($passport instanceof ProductPassport) {
-            $passportContext = $passportContextBuilder->build($company, $product);
+            $passportContext = $passportContextBuilder->build($company, $product->fresh() ?? $product);
             $passportReadiness = $passportEvaluator->evaluate($passportContext);
         }
 
@@ -158,10 +158,10 @@ class ProductController extends Controller
             'canManageMedia' => ! $isArchived && $request->user()?->can('manageMedia', $product) === true,
             'canManageDocuments' => $request->user()?->can('viewAny', [ProductDocument::class, $company]) === true,
             'documentCount' => ProductDocument::query()->forCompany($company)->where('product_id', $product->getKey())->active()->count(),
-            'canActivate' => $request->user()?->can('activate', $product) === true,
-            'canReturnToDraft' => $request->user()?->can('returnToDraft', $product) === true,
-            'canArchive' => $request->user()?->can('archive', $product) === true,
-            'canRestore' => $request->user()?->can('restore', $product) === true,
+            'canActivate' => $product->status === ProductStatus::Draft && $request->user()?->can('activate', $product) === true,
+            'canReturnToDraft' => $product->status === ProductStatus::Active && $request->user()?->can('returnToDraft', $product) === true,
+            'canArchive' => $product->status !== ProductStatus::Archived && $request->user()?->can('archive', $product) === true,
+            'canRestore' => $product->status === ProductStatus::Archived && $request->user()?->can('restore', $product) === true,
             'readiness' => $readiness,
             'passport' => $passport,
             'passportReadiness' => $passportReadiness,

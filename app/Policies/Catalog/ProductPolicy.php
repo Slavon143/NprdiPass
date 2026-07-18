@@ -33,7 +33,11 @@ class ProductPolicy extends CatalogPolicy
 
     public function archive(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
+        $fresh = $this->freshModel($product);
+
+        return $fresh instanceof Product
+            && $fresh->status !== ProductStatus::Archived
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
     }
 
     public function viewReadiness(User $user, Product $product): bool
@@ -43,17 +47,29 @@ class ProductPolicy extends CatalogPolicy
 
     public function activate(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
+        $fresh = $this->freshModel($product);
+
+        return $fresh instanceof Product
+            && $fresh->status === ProductStatus::Draft
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
     }
 
     public function returnToDraft(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
+        $fresh = $this->freshModel($product);
+
+        return $fresh instanceof Product
+            && $fresh->status === ProductStatus::Active
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogPublish);
     }
 
     public function restore(User $user, Product $product): bool
     {
-        return $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
+        $fresh = $this->freshModel($product);
+
+        return $fresh instanceof Product
+            && $fresh->status === ProductStatus::Archived
+            && $this->allowsModel($user, $product, CompanyPermission::CatalogArchive);
     }
 
     public function publish(User $user, Product $product): bool

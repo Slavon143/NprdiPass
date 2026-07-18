@@ -618,6 +618,10 @@ class DppPayloadValidator
             if ($def->maxLength !== null && mb_strlen($item) > $def->maxLength) {
                 $errors[$fieldKey][] = "Item at index {$index} in '{$fieldKey}' must be at most {$def->maxLength} characters.";
             }
+
+            if ($fieldKey === 'manufacturing_countries' && ! preg_match('/^[A-Z]{2}$/', $item)) {
+                $errors[$fieldKey][] = "Item at index {$index} in '{$fieldKey}' must be an ISO 3166-1 alpha-2 country code.";
+            }
         }
     }
 

@@ -20,10 +20,10 @@ return [
         'failed' => 'Only an active, non-archived product can be published.',
     ],
     'catalog.product.name.present' => [
-        'title' => 'Product name is set',
-        'message' => 'The product has a name.',
-        'passed' => 'The product has a name.',
-        'failed' => 'The product is missing a name.',
+        'title' => 'Product name for publication',
+        'message' => 'A catalog name or passport public name is available.',
+        'passed' => 'A catalog name or passport public name is available.',
+        'failed' => 'Add a catalog product name or a passport public name.',
     ],
     'catalog.product.identifier.present' => [
         'title' => 'Default variant identifier',
@@ -84,6 +84,25 @@ return [
         'message' => 'The passport default language has authoring content.',
         'passed' => 'The passport default language has authoring content.',
         'failed' => 'Add authoring content for the passport default language.',
+    ],
+    'passport.languages.default_supported' => [
+        'title' => 'Default language is supported',
+        'message' => 'The passport default language is supported by the DPP authoring system.',
+        'passed' => 'The passport default language is supported.',
+        'failed' => 'Choose a supported default language in the passport editor.',
+    ],
+    'passport.languages.enabled_unsupported' => [
+        'title' => 'Enabled language is supported',
+        'message' => 'Every enabled passport language must be supported.',
+        'passed' => 'All enabled passport languages are supported.',
+        'failed' => 'Remove unsupported enabled languages or choose supported languages in the passport editor.',
+    ],
+    'passport.languages.translation_completeness' => [
+        'title' => 'Required translations are complete',
+        'message' => 'Required fields are filled for the default passport language.',
+        'passed' => 'Required fields are complete for the default passport language.',
+        'failed' => 'Fill the required translated fields for the default passport language.',
+        'skipped' => 'Translation completeness is skipped until a passport draft exists.',
     ],
     'passport.core_sections.enabled' => [
         'title' => 'Required passport sections enabled',

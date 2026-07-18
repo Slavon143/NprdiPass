@@ -13,6 +13,9 @@ class ReadinessRulePresenter
     /** @var array<int, bool> */
     private array $passportExistsCache = [];
 
+    /** @var array<string, array<string, mixed>> */
+    private array $readinessLinesCache = [];
+
     public function title(ReadinessRuleResult $rule): string
     {
         $translated = $this->translation("readiness.{$rule->code}.title");
@@ -244,6 +247,10 @@ class ReadinessRulePresenter
             return $url.'#product-variants';
         }
 
+        if ($rule->navigationTarget?->routeName === 'catalog.products.variants.media.index') {
+            return $url.'#variant-image-management';
+        }
+
         if ($rule->navigationTarget?->routeName === 'catalog.products.attributes.edit') {
             return $url.'#required-attributes';
         }
@@ -298,9 +305,52 @@ class ReadinessRulePresenter
 
         $leaf = array_pop($segments);
         $ruleKey = implode('.', $segments);
-        $translated = __("readiness.{$ruleKey}.{$leaf}");
 
-        return $translated === "readiness.{$ruleKey}.{$leaf}" ? null : $translated;
+        foreach ([$this->locale(), $this->fallbackLocale()] as $locale) {
+            if ($locale === null) {
+                continue;
+            }
+
+            $lines = $this->readinessLines($locale);
+            $translated = $lines[$ruleKey][$leaf] ?? null;
+
+            if (is_string($translated) && $translated !== '') {
+                return $translated;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Laravel's dot notation cannot read literal keys like
+     * "media.variant_coverage" from lang/en/readiness.php, so readiness rule
+     * translations are read directly by the literal rule code.
+     *
+     * @return array<string, mixed>
+     */
+    private function readinessLines(string $locale): array
+    {
+        if (! array_key_exists($locale, $this->readinessLinesCache)) {
+            $loaded = trans()->getLoader()->load($locale, 'readiness', '*');
+            $this->readinessLinesCache[$locale] = is_array($loaded) ? $loaded : [];
+        }
+
+        return $this->readinessLinesCache[$locale];
+    }
+
+    private function locale(): ?string
+    {
+        $locale = app()->getLocale();
+
+        return is_string($locale) && $locale !== '' ? $locale : null;
+    }
+
+    private function fallbackLocale(): ?string
+    {
+        $locale = config('app.fallback_locale');
+
+        return is_string($locale) && $locale !== '' ? $locale : null;
     }
 
     private function fallbackTitle(ReadinessRuleResult $rule): string

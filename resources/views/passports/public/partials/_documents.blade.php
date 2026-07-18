@@ -26,7 +26,7 @@
     @endforeach
 
     @if(count($passport->documents) === 0)
-        <p class="text-slate-500 text-sm">No public documents available for this passport.</p>
+        <p class="text-slate-500 text-sm">No downloadable public documents are attached to this passport.</p>
     @endif
 
     @if(!empty($fields['certification_notes']))

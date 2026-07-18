@@ -1,11 +1,23 @@
 <x-app-layout>
+    @php
+        $productStatus = $product->status->value;
+    @endphp
+
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div><p class="text-sm font-medium text-indigo-600">{{ __('Catalog') }}</p><h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ $product->name }}</h1><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p></div>
             <div class="flex items-center gap-3">
-                @php($statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' })
-                <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
-                @if ($canUpdate)<a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit product') }}</a>@endif
+                @php
+                    $statusTone = match ($productStatus) {
+                        'active' => 'emerald',
+                        'archived' => 'amber',
+                        default => 'indigo',
+                    };
+                @endphp
+                <x-badge :tone="$statusTone">{{ ucfirst($productStatus) }}</x-badge>
+                @if ($canUpdate)
+                    <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit product') }}</a>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -14,8 +26,23 @@
         <div class="space-y-6">
             <section id="readiness" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div><h2 class="text-lg font-semibold text-slate-900">{{ __('Activation readiness') }}</h2><p class="mt-1 text-xs text-slate-500">{{ __('Evaluated :time', ['time' => $readiness->checkedAt->format('Y-m-d H:i:s')]) }}</p></div>
-                    <x-badge :tone="$readiness->ready ? 'emerald' : 'red'">{{ $readiness->ready ? __('Ready') : __('Not ready') }}</x-badge>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">{{ $productStatus === 'draft' ? __('Activation readiness') : __('Product lifecycle') }}</h2>
+                        @if($productStatus === 'draft')
+                            <p class="mt-1 text-xs text-slate-500">{{ __('Evaluated :time', ['time' => $readiness->checkedAt->format('Y-m-d H:i:s')]) }}</p>
+                        @elseif($productStatus === 'active')
+                            <p class="mt-1 text-xs text-slate-500">{{ __('This product is already active. Activation checks are only needed while the product is a draft.') }}</p>
+                        @else
+                            <p class="mt-1 text-xs text-slate-500">{{ __('This product is archived and hidden from normal catalog work until it is restored.') }}</p>
+                        @endif
+                    </div>
+                    @if($productStatus === 'draft')
+                        <x-badge :tone="$readiness->ready ? 'emerald' : 'red'">{{ $readiness->ready ? __('Ready') : __('Not ready') }}</x-badge>
+                    @elseif($productStatus === 'active')
+                        <x-badge tone="emerald">{{ __('Active') }}</x-badge>
+                    @else
+                        <x-badge tone="amber">{{ __('Archived') }}</x-badge>
+                    @endif
                 </div>
                 <?php
                     $readinessHref = static function ($item) use ($product, $canUpdate, $canManageAttributes, $canManageMedia): string {
@@ -42,15 +69,58 @@
                         };
                     };
                 ?>
-                @if($readiness->blockers !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-red-800">{{ __('Blockers') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->blockers as $item)<li class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"><a href="{{ $readinessHref($item) }}" class="font-medium underline decoration-red-300 underline-offset-2 hover:decoration-red-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a></li>@endforeach</ul></div>@endif
-                @if($readiness->warnings !== [])<div class="mt-5"><h3 class="text-sm font-semibold text-amber-800">{{ __('Warnings') }}</h3><ul class="mt-2 space-y-2">@foreach($readiness->warnings as $item)<li class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"><a href="{{ $readinessHref($item) }}" class="underline decoration-amber-300 underline-offset-2 hover:decoration-amber-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a></li>@endforeach</ul></div>@endif
+                @if($productStatus === 'draft' && $readiness->blockers !== [])
+                    <div class="mt-5">
+                        <h3 class="text-sm font-semibold text-red-800">{{ __('Blockers') }}</h3>
+                        <ul class="mt-2 space-y-2">
+                            @foreach($readiness->blockers as $item)
+                                <li class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
+                                    <a href="{{ $readinessHref($item) }}" class="font-medium underline decoration-red-300 underline-offset-2 hover:decoration-red-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @if($productStatus === 'draft' && $readiness->warnings !== [])
+                    <div class="mt-5">
+                        <h3 class="text-sm font-semibold text-amber-800">{{ __('Warnings') }}</h3>
+                        <ul class="mt-2 space-y-2">
+                            @foreach($readiness->warnings as $item)
+                                <li class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                                    <a href="{{ $readinessHref($item) }}" class="underline decoration-amber-300 underline-offset-2 hover:decoration-amber-700">{{ $item->message }} <span class="whitespace-nowrap">{{ __('Open →') }}</span></a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <div id="lifecycle-actions" class="mt-5 flex scroll-mt-24 flex-wrap gap-3 border-t border-slate-200 pt-5 target:rounded-lg target:border target:border-amber-300 target:bg-amber-50 target:p-3">
-                    @if($product->status->value === 'draft' && $canActivate)<form method="POST" action="{{ route('catalog.products.activate', $product->uuid) }}">@csrf<button type="submit" @disabled(!$readiness->ready) class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300">{{ __('Activate') }}</button></form>@endif
-                    @if($product->status->value === 'active' && $canReturnToDraft)<form method="POST" action="{{ route('catalog.products.return-to-draft', $product->uuid) }}">@csrf<button type="submit" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Return to draft') }}</button></form>@endif
-                    @if($product->status->value !== 'archived' && $canArchive)<form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Delete this product? It will be archived and kept for passport history.') }}')">@csrf @method('DELETE')<button type="submit" class="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">{{ __('Delete product') }}</button></form>@endif
-                    @if($product->status->value === 'archived' && $canRestore)<form method="POST" action="{{ route('catalog.products.restore', $product->uuid) }}">@csrf<button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Restore to draft') }}</button></form>@endif
+                    @if($productStatus === 'draft' && $canActivate)
+                        <form method="POST" action="{{ route('catalog.products.activate', $product->uuid) }}">
+                            @csrf
+                            <button type="submit" @disabled(!$readiness->ready) class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300">{{ __('Activate product') }}</button>
+                        </form>
+                    @endif
+                    @if($productStatus === 'active' && $canReturnToDraft)
+                        <form method="POST" action="{{ route('catalog.products.return-to-draft', $product->uuid) }}">
+                            @csrf
+                            <button type="submit" class="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Return to draft') }}</button>
+                        </form>
+                    @endif
+                    @if($productStatus !== 'archived' && $canArchive)
+                        <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">{{ __('Archive product') }}</button>
+                        </form>
+                    @endif
+                    @if($productStatus === 'archived' && $canRestore)
+                        <form method="POST" action="{{ route('catalog.products.restore', $product->uuid) }}">
+                            @csrf
+                            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Restore to draft') }}</button>
+                        </form>
+                    @endif
                 </div>
-                @if($product->status->value === 'draft' && !$readiness->ready)<p class="mt-3 text-sm text-slate-600">{{ __('Resolve all blockers before activation.') }}</p>@endif
+                @if($productStatus === 'draft' && !$readiness->ready)<p class="mt-3 text-sm text-slate-600">{{ __('Resolve all blockers before activation.') }}</p>@endif
                 <x-input-error :messages="$errors->get('lifecycle')" class="mt-3" />
             </section>
 
@@ -60,9 +130,21 @@
                     <div>
                         <h2 class="text-lg font-semibold text-slate-900">{{ __('Product Passport') }}</h2>
                         <p class="mt-1 text-xs text-slate-500">{{ __('Digital Product Passport containing product information, safety instructions, documents and recycling information.') }}</p>
+                        @if($passport instanceof \App\Models\Passports\ProductPassport && $passport->status->value === 'published')
+                            <p class="mt-1 text-xs text-slate-500">{{ __('Published means the last passport version is public. The readiness below checks the current draft and may change after edits.') }}</p>
+                        @endif
                     </div>
                     @if($passport instanceof \App\Models\Passports\ProductPassport)
-                        <x-badge :tone="$passport->status->value === 'draft' ? 'indigo' : ($passport->status->value === 'published' ? 'emerald' : 'slate')">{{ $passport->status->value }}</x-badge>
+                        @php
+                            $passportStatusLabel = match ($passport->status->value) {
+                                'draft' => __('Draft'),
+                                'published' => __('Published'),
+                                'unpublished' => __('Unpublished'),
+                                'archived' => __('Archived'),
+                                default => ucfirst($passport->status->value),
+                            };
+                        @endphp
+                        <x-badge :tone="$passport->status->value === 'draft' ? 'indigo' : ($passport->status->value === 'published' ? 'emerald' : 'slate')">{{ $passportStatusLabel }}</x-badge>
                     @else
                         <x-badge tone="gray">{{ __('Not created') }}</x-badge>
                     @endif
@@ -82,7 +164,7 @@
                         @endif
                         @if($passportReadiness)
                         <div>
-                            <dt class="text-xs text-slate-500">{{ __('Passport readiness') }}</dt>
+                            <dt class="text-xs text-slate-500">{{ __('Current draft readiness') }}</dt>
                             <dd class="mt-1">
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-bold @if($passportReadiness->score >= 80) text-emerald-700 @elseif($passportReadiness->score >= 50) text-amber-700 @else text-red-700 @endif">{{ $passportReadiness->score }}%</span>

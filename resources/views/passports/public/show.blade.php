@@ -125,7 +125,7 @@
     @if(!empty(array_filter($s, fn($v) => $v !== null && $v !== '')))
     <section class="passport-section">
         <h2>{{ $passport->sectionLabels['identity'] ?? 'Identity' }}</h2>
-        @if(!empty($s['public_name'])) <p class="text-slate-700">{{ $s['public_name'] }}</p> @endif
+        @if(!empty($s['public_name']) && $s['public_name'] !== $passport->productName) <p class="text-slate-700">{{ $s['public_name'] }}</p> @endif
         @if(!empty($s['public_description'])) <p class="text-slate-600 text-sm mt-1">{!! nl2br(e($s['public_description'])) !!}</p> @endif
     </section>
     @endif

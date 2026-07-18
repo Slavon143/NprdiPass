@@ -40,6 +40,7 @@ class ProductVariantController extends Controller
                 ->forCompany($company)
                 ->where('product_id', $product->getKey())
                 ->ordered()
+                ->withCount('media')
                 ->paginate(25),
             'canCreate' => $request->user()?->can('create', [ProductVariant::class, $product]) === true,
             'canUpdate' => $request->user()?->can(CompanyPermission::CatalogUpdate->value, $company) === true,

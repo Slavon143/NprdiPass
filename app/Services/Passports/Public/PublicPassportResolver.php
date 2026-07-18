@@ -46,7 +46,7 @@ class PublicPassportResolver
 
         $enabledLocales = $passport->enabled_languages ?? [$defaultLanguage];
         $effectiveLocale = $this->resolveEffectiveLocale($requestedLocale, $defaultLanguage, $enabledLocales);
-        $isFallback = $effectiveLocale !== $requestedLocale;
+        $isFallback = $requestedLocale !== null && $effectiveLocale !== $requestedLocale;
 
         $sectionData = $this->buildSectionData($enabledSections, $data, $translations, $defaultLanguage, $effectiveLocale);
         $sectionLabels = $this->buildSectionLabels($enabledSections);
@@ -163,10 +163,76 @@ class PublicPassportResolver
                 $merged[$key] = $value;
             }
 
+            $merged = $this->sanitizePublicSection($merged);
+
             $sectionData[$sectionKey] = $merged;
         }
 
         return $sectionData;
+    }
+
+    /**
+     * @param  array<string, mixed>  $section
+     * @return array<string, mixed>
+     */
+    private function sanitizePublicSection(array $section): array
+    {
+        foreach ($section as $key => $value) {
+            if (is_array($value)) {
+                $section[$key] = $this->sanitizePublicArray($value);
+
+                continue;
+            }
+
+            if (is_string($key) && str_ends_with($key, '_url') && is_string($value) && $this->isInternalUrl($value)) {
+                $section[$key] = null;
+            }
+
+            if (is_string($key) && str_ends_with($key, '_website') && is_string($value) && $this->isInternalUrl($value)) {
+                $section[$key] = null;
+            }
+        }
+
+        return $section;
+    }
+
+    /**
+     * @param  array<mixed>  $items
+     * @return array<mixed>
+     */
+    private function sanitizePublicArray(array $items): array
+    {
+        foreach ($items as $key => $value) {
+            if (is_array($value)) {
+                $items[$key] = $this->sanitizePublicArray($value);
+
+                continue;
+            }
+
+            if (is_string($key) && str_ends_with($key, '_url') && is_string($value) && $this->isInternalUrl($value)) {
+                $items[$key] = null;
+            }
+
+            if (is_string($key) && str_ends_with($key, '_website') && is_string($value) && $this->isInternalUrl($value)) {
+                $items[$key] = null;
+            }
+        }
+
+        return $items;
+    }
+
+    private function isInternalUrl(string $url): bool
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        $path = parse_url($url, PHP_URL_PATH);
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+
+        if (! is_string($host) || ! is_string($path) || ! is_string($appHost)) {
+            return false;
+        }
+
+        return strcasecmp($host, $appHost) === 0
+            && (str_starts_with($path, '/catalog/') || str_starts_with($path, '/settings/'));
     }
 
     /**

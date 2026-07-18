@@ -6,6 +6,7 @@ use App\Contracts\Passports\PassportReadinessRule;
 use App\Data\Passports\Readiness\ReadinessEvaluationContext;
 use App\Data\Passports\Readiness\ReadinessNavigationTarget;
 use App\Data\Passports\Readiness\ReadinessRuleResult;
+use App\Enums\Catalog\ProductVariantStatus;
 use App\Enums\Passports\Readiness\ReadinessRuleGroup;
 use App\Enums\Passports\Readiness\ReadinessRuleStatus;
 use App\Enums\Passports\Readiness\ReadinessSeverity;
@@ -29,9 +30,12 @@ class MediaVariantCoverage implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $variants = $context->product->variants ?? [];
+        $variants = $context->product->variants ?? collect();
+        $activeVariants = $variants->filter(
+            fn ($variant): bool => $variant->status === ProductVariantStatus::Active
+        );
 
-        if ($variants->count() === 0) {
+        if ($activeVariants->count() === 0) {
             return new ReadinessRuleResult(
                 code: $this->code(),
                 group: $this->group(),
@@ -39,17 +43,19 @@ class MediaVariantCoverage implements PassportReadinessRule
                 status: ReadinessRuleStatus::Passed,
                 titleKey: 'readiness.media.variant_coverage.title',
                 messageKey: 'readiness.media.variant_coverage.passed',
-                safeContext: ['has_variants' => false],
+                safeContext: ['active_variants' => 0],
             );
         }
 
         $variantsWithoutMedia = [];
         $totalVariants = 0;
+        $firstVariantWithoutMedia = null;
 
-        foreach ($variants as $variant) {
+        foreach ($activeVariants as $variant) {
             $totalVariants++;
             if ($variant->media()->count() === 0) {
                 $variantsWithoutMedia[] = $variant->uuid;
+                $firstVariantWithoutMedia ??= $variant->uuid;
             }
         }
 
@@ -66,13 +72,17 @@ class MediaVariantCoverage implements PassportReadinessRule
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'product_media',
                 section: null,
-                routeName: 'catalog.products.variants.index',
-                routeParameters: ['product' => $context->product->uuid ?? ''],
-                label: 'Variant images',
+                routeName: 'catalog.products.variants.media.index',
+                routeParameters: [
+                    'product' => $context->product->uuid ?? '',
+                    'variant' => $firstVariantWithoutMedia ?? '',
+                ],
+                label: 'Images for the first variant without images',
             ),
             safeContext: [
-                'total_variants' => $totalVariants,
+                'active_variants' => $totalVariants,
                 'variants_without_media' => count($variantsWithoutMedia),
+                'first_variant_without_media' => $firstVariantWithoutMedia,
             ],
         );
     }

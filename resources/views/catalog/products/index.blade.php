@@ -257,9 +257,9 @@
                         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                             <tr>
                                 <th class="px-5 py-3">{{ __('Product') }}</th>
-                                <th class="px-5 py-3">{{ __('Status') }}</th>
-                                <th class="px-5 py-3">{{ __('passports.label') }}</th>
-                                <th class="px-5 py-3">{{ __('readiness.label') }}</th>
+                                <th class="px-5 py-3">{{ __('Product status') }}</th>
+                                <th class="px-5 py-3">{{ __('Passport') }}</th>
+                                <th class="px-5 py-3">{{ __('Current Draft Readiness') }}</th>
                                 <th class="px-5 py-3">{{ __('Primary Category') }}</th>
                                 <th class="px-5 py-3">{{ __('Updated') }}</th>
                                 <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
@@ -324,6 +324,7 @@
                                             @endif
                                         @elseif ($summary['passport_status'] === 'published')
                                             <x-badge tone="emerald">{{ __('Published') }}</x-badge>
+                                            <p class="mt-1 text-xs text-slate-500">{{ __('Public version is live.') }}</p>
                                         @elseif ($summary['passport_status'] === 'unpublished')
                                             <x-badge tone="amber">{{ __('Unpublished') }}</x-badge>
                                         @elseif ($summary['passport_status'] === 'archived')
@@ -331,7 +332,12 @@
                                         @endif
                                     </td>
                                      <td class="px-5 py-4">
-                                        @php $score = is_array($summary) ? ($summary['score'] ?? null) : null; $blockers = is_array($summary) ? ((int) ($summary['blockers'] ?? 0)) : 0; $warnings = is_array($summary) ? ((int) ($summary['warnings'] ?? 0)) : 0; @endphp
+                                        @php
+                                            $score = is_array($summary) ? ($summary['score'] ?? null) : null;
+                                            $blockers = is_array($summary) ? ((int) ($summary['blockers'] ?? 0)) : 0;
+                                            $warnings = is_array($summary) ? ((int) ($summary['warnings'] ?? 0)) : 0;
+                                            $recommendations = is_array($summary) ? ((int) ($summary['recommendations'] ?? 0)) : 0;
+                                        @endphp
                                         @if (is_array($summary) && is_int($score) && $score > 0)
                                             <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="block group">
                                                 <div class="flex items-center gap-1.5">
@@ -353,8 +359,11 @@
                                                     <x-badge :tone="$readinessTone">{{ $readinessLabel }}</x-badge>
                                                 </div>
                                                 <p class="mt-1 text-xs text-slate-500 group-hover:text-indigo-600">
-                                                    {{ trans_choice(':count blocker|:count blockers', (int) $blockers, ['count' => (int) $blockers]) }} · {{ trans_choice(':count warning|:count warnings', (int) $warnings, ['count' => (int) $warnings]) }}
+                                                    {{ trans_choice(':count blocker|:count blockers', $blockers, ['count' => $blockers]) }} · {{ trans_choice(':count warning|:count warnings', $warnings, ['count' => $warnings]) }}@if($recommendations > 0) · {{ trans_choice(':count recommendation|:count recommendations', $recommendations, ['count' => $recommendations]) }}@endif
                                                 </p>
+                                                @if(($summary['passport_status'] ?? null) === 'published' && ($summary['readiness_status'] ?? null) !== 'ready')
+                                                    <p class="mt-1 text-xs text-slate-400">{{ __('Checks the current draft; the published version remains live.') }}</p>
+                                                @endif
                                             </a>
                                         @elseif (is_array($summary) && $score === 0)
                                             <div>
@@ -362,7 +371,10 @@
                                                     <span class="text-sm font-semibold text-slate-900">0%</span>
                                                     <x-badge tone="red">{{ __('Not ready') }}</x-badge>
                                                 </div>
-                                                <p class="mt-1 text-xs text-slate-500">{{ (int) $blockers }} {{ __('blockers') }} · {{ (int) $warnings }} {{ __('warnings') }}</p>
+                                                <p class="mt-1 text-xs text-slate-500">{{ $blockers }} {{ __('blockers') }} · {{ $warnings }} {{ __('warnings') }}@if($recommendations > 0) · {{ $recommendations }} {{ __('recommendations') }}@endif</p>
+                                                @if(($summary['passport_status'] ?? null) === 'published')
+                                                    <p class="mt-1 text-xs text-slate-400">{{ __('Checks the current draft; the published version remains live.') }}</p>
+                                                @endif
                                             </div>
                                         @else
                                             <div>
@@ -384,10 +396,10 @@
                                                 <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
                                             @endif
                                             @if ($canArchive && $product->status->value !== 'archived')
-                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Delete this product? It will be archived and kept for passport history.') }}')">
+                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
+                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Archive') }}</button>
                                                 </form>
                                             @endif
                                         </div>

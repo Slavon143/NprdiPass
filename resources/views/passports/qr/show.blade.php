@@ -27,32 +27,30 @@
 
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Public link</label>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input type="text" readonly
                                class="flex-1 border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
                                value="{{ $viewModel->publicUrl }}"
                                id="passport-public-url">
                         <button type="button"
+                                id="copy-public-link"
                                 class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm border"
-                                onclick="copyPublicLink('{{ $viewModel->publicUrl }}')"
                                 aria-label="Copy public link">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            Copy
+                            <span id="copy-public-link-label">Copy</span>
                         </button>
+                        @if($viewModel->isPublished)
+                            <a href="{{ $viewModel->publicUrl }}" target="_blank" rel="noopener noreferrer"
+                               class="rounded border border-blue-200 px-3 py-2 text-center text-sm font-medium text-blue-700 hover:bg-blue-50">
+                                Open
+                            </a>
+                        @endif
                     </div>
                     <div id="copy-feedback" class="text-sm text-green-600 mt-1 hidden" aria-live="polite">Public link copied</div>
+                    <div id="copy-fallback" class="text-sm text-amber-700 mt-1 hidden" aria-live="polite">Copy is blocked by the browser. The link is selected — press Ctrl+C.</div>
                 </div>
-
-                @if($viewModel->isPublished)
-                <div class="mb-6">
-                    <a href="{{ $viewModel->publicUrl }}" target="_blank" rel="noopener noreferrer"
-                       class="text-blue-600 hover:underline text-sm">
-                        Open public page &rarr;
-                    </a>
-                </div>
-                @endif
 
                 @if(!$viewModel->isPublished)
                 <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
@@ -110,41 +108,77 @@
 
 @push('scripts')
 <script>
-function copyPublicLink(url) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function() {
-            showCopyFeedback();
-        }).catch(function() {
-            fallbackCopy(url);
-        });
-    } else {
-        fallbackCopy(url);
-    }
-}
-
-function fallbackCopy(text) {
-    var input = document.createElement('textarea');
-    input.value = text;
-    input.style.position = 'fixed';
-    input.style.opacity = '0';
-    document.body.appendChild(input);
-    input.select();
-    try {
-        document.execCommand('copy');
-        showCopyFeedback();
-    } catch (e) {
-        // silently fail
-    }
-    document.body.removeChild(input);
-}
-
-function showCopyFeedback() {
+document.addEventListener('DOMContentLoaded', function () {
+    var copyButton = document.getElementById('copy-public-link');
+    var input = document.getElementById('passport-public-url');
     var feedback = document.getElementById('copy-feedback');
-    feedback.classList.remove('hidden');
-    setTimeout(function() {
-        feedback.classList.add('hidden');
-    }, 3000);
-}
+    var fallback = document.getElementById('copy-fallback');
+    var label = document.getElementById('copy-public-link-label');
+
+    if (!copyButton || !input) {
+        return;
+    }
+
+    copyButton.addEventListener('click', function () {
+        copyPublicLink(input.value);
+    });
+
+    function copyPublicLink(url) {
+        hideMessages();
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url).then(showCopied).catch(selectForManualCopy);
+            return;
+        }
+
+        selectForManualCopy();
+    }
+
+    function selectForManualCopy() {
+        input.focus();
+        input.select();
+
+        try {
+            if (document.execCommand('copy')) {
+                showCopied();
+                return;
+            }
+        } catch (e) {
+            // Browser blocked scripted copy; leave the input selected for Ctrl+C.
+        }
+
+        if (fallback) {
+            fallback.classList.remove('hidden');
+        }
+    }
+
+    function showCopied() {
+        if (feedback) {
+            feedback.classList.remove('hidden');
+        }
+
+        if (label) {
+            label.textContent = 'Copied';
+        }
+
+        window.setTimeout(function () {
+            hideMessages();
+            if (label) {
+                label.textContent = 'Copy';
+            }
+        }, 2500);
+    }
+
+    function hideMessages() {
+        if (feedback) {
+            feedback.classList.add('hidden');
+        }
+
+        if (fallback) {
+            fallback.classList.add('hidden');
+        }
+    }
+});
 </script>
 @endpush
 </x-app-layout>
