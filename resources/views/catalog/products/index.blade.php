@@ -24,9 +24,9 @@
         $attributeCriteriaByUuid = collect($criteria->attributeFilters)->keyBy('definitionUuid');
     ?>
 
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page">
+    <div id="catalog-products-page" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page">
         <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <form method="GET" action="{{ route('catalog.products.index') }}" class="space-y-5">
+            <form id="catalog-products-filter-form" method="GET" action="{{ route('catalog.products.index') }}" class="space-y-5" data-ajax-products-form>
                 <div class="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_12rem_12rem_10rem] lg:items-end">
                     <div>
                         <x-input-label for="q" :value="__('Search')" />
@@ -210,52 +210,87 @@
                 @endif
 
                 <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
-                    <div class="flex flex-wrap gap-2">
+                    <div id="catalog-products-active-chips" class="flex flex-wrap gap-2">
                         @foreach ($activeFilterChips as $chip)
                             <a href="{{ $chip['url'] }}" class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800">{{ $chip['label'] }} <span aria-hidden="true">x</span></a>
                         @endforeach
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Apply filters') }}</button>
-                        <a href="{{ route('catalog.products.index') }}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Clear all') }}</a>
+                        <a href="{{ route('catalog.products.index') }}" data-products-clear class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Clear all') }}</a>
                     </div>
                 </div>
             </form>
         </section>
 
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
-            <p>{{ trans_choice(':count product found|:count products found', $products->total(), ['count' => $products->total()]) }}</p>
-            @if ($criteria->hasFilters())
-                <p>{{ __('Filters are persisted in the URL.') }}</p>
-            @endif
-        </div>
-
-        @if ($products->isEmpty())
-            <section class="rounded-2xl border border-slate-200 bg-white px-6 py-20 shadow-sm text-center">
-                @if ($hasProducts)
-                    <p class="font-semibold text-slate-900">{{ __('No products match these filters.') }}</p>
-                    <p class="mt-2 text-sm text-slate-500">{{ __('Try adjusting your filter criteria or clear all filters to see all products.') }}</p>
-                @else
-                    <div class="mx-auto max-w-sm">
-                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-                            <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m6 4.125 2.25 2.25m0 0 2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                            </svg>
-                        </div>
-                        <p class="text-lg font-semibold text-slate-900">{{ __('No products yet') }}</p>
-                        <p class="mt-2 text-sm text-slate-500">{{ __('Get started by creating your first product.') }}</p>
-                        @if ($canCreate)
-                            <a href="{{ route('catalog.products.create') }}" class="mt-6 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Add your first product') }}</a>
-                        @endif
-                    </div>
+        <div id="catalog-products-results">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                <p>{{ trans_choice(':count product found|:count products found', $products->total(), ['count' => $products->total()]) }}</p>
+                @if ($criteria->hasFilters())
+                    <p>{{ __('Filters are persisted in the URL.') }}</p>
                 @endif
-            </section>
-        @else
+            </div>
+
+            @if ($products->isEmpty())
+                <section class="rounded-2xl border border-slate-200 bg-white px-6 py-20 shadow-sm text-center">
+                    @if ($hasProducts)
+                        <p class="font-semibold text-slate-900">{{ __('No products match these filters.') }}</p>
+                        <p class="mt-2 text-sm text-slate-500">{{ __('Try adjusting your filter criteria or clear all filters to see all products.') }}</p>
+                    @else
+                        <div class="mx-auto max-w-sm">
+                            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                                <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m6 4.125 2.25 2.25m0 0 2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                                </svg>
+                            </div>
+                            <p class="text-lg font-semibold text-slate-900">{{ __('No products yet') }}</p>
+                            <p class="mt-2 text-sm text-slate-500">{{ __('Get started by creating your first product.') }}</p>
+                            @if ($canCreate)
+                                <a href="{{ route('catalog.products.create') }}" class="mt-6 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Add your first product') }}</a>
+                            @endif
+                        </div>
+                    @endif
+                </section>
+            @else
+            @if($canPublish || $canArchive)
+                <form id="bulk-products-form" method="POST" action="{{ route('catalog.products.bulk-status', request()->query()) }}" class="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+                    @csrf
+                    @method('PATCH')
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900">{{ __('Bulk actions') }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Select products below, then choose what should happen to their lifecycle status.') }}</p>
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <div>
+                            <x-input-label for="bulk-operation" :value="__('Action')" />
+                            <select id="bulk-operation" name="operation" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-56" required>
+                                <option value="">{{ __('Choose action') }}</option>
+                                @if($canPublish)
+                                    <option value="activate">{{ __('Activate selected') }}</option>
+                                    <option value="draft">{{ __('Return selected to draft') }}</option>
+                                @endif
+                                @if($canArchive)
+                                    <option value="archive">{{ __('Archive selected') }}</option>
+                                    <option value="restore">{{ __('Restore selected to draft') }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <button type="submit" id="bulk-products-submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
+                            {{ __('Apply to selected') }}
+                        </button>
+                    </div>
+                </form>
+            @endif
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                             <tr>
+                                @if($canPublish || $canArchive)
+                                    <th class="px-5 py-3">
+                                        <input type="checkbox" id="bulk-products-select-all" class="rounded border-slate-300 text-indigo-600" aria-label="{{ __('Select all products on this page') }}">
+                                    </th>
+                                @endif
                                 <th class="px-5 py-3">{{ __('Product') }}</th>
                                 <th class="px-5 py-3">{{ __('Product status') }}</th>
                                 <th class="px-5 py-3">{{ __('Passport') }}</th>
@@ -272,6 +307,11 @@
                                     $summary = $passportSummaries[$product->uuid] ?? null;
                                 @endphp
                                 <tr @class(['bg-amber-50/40' => $product->status->value === 'archived'])>
+                                    @if($canPublish || $canArchive)
+                                        <td class="px-5 py-4 align-top">
+                                            <input type="checkbox" name="products[]" value="{{ $product->uuid }}" form="bulk-products-form" class="bulk-product-checkbox rounded border-slate-300 text-indigo-600" aria-label="{{ __('Select :product', ['product' => $product->name]) }}">
+                                        </td>
+                                    @endif
                                     <td class="px-5 py-4">
                                         <div class="flex items-center gap-3">
                                             @if ($product->primaryMedia)
@@ -396,7 +436,7 @@
                                                 <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
                                             @endif
                                             @if ($canArchive && $product->status->value !== 'archived')
-                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}')">
+                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" data-confirm-title="{{ __('Archive product') }}" data-confirm-message="{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}" data-confirm-action="{{ __('Archive') }}">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Archive') }}</button>
@@ -413,6 +453,423 @@
                     <div class="border-t border-slate-200 px-5 py-4">{{ $products->links() }}</div>
                 @endif
             </section>
-        @endif
+            @endif
+        </div>
     </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var ajaxController = null;
+                var debounceTimer = null;
+                var currentModalResolve = null;
+
+                function page() {
+                    return document.getElementById('catalog-products-page');
+                }
+
+                function filterForm() {
+                    return document.getElementById('catalog-products-filter-form');
+                }
+
+                function results() {
+                    return document.getElementById('catalog-products-results');
+                }
+
+                function activeChips() {
+                    return document.getElementById('catalog-products-active-chips');
+                }
+
+                function cleanFormData(form) {
+                    var data = new FormData(form);
+                    var params = new URLSearchParams();
+
+                    data.forEach(function (value, key) {
+                        if (typeof value === 'string' && value.trim() === '') {
+                            return;
+                        }
+
+                        params.append(key, value);
+                    });
+
+                    return params;
+                }
+
+                function urlFromForm(form) {
+                    var params = cleanFormData(form);
+                    var url = new URL(form.action, window.location.origin);
+                    url.search = params.toString();
+
+                    return url;
+                }
+
+                function setLoading(isLoading) {
+                    var container = results();
+
+                    if (!container) {
+                        return;
+                    }
+
+                    container.classList.toggle('opacity-60', isLoading);
+                    container.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                }
+
+                function fetchProducts(url, pushUrl) {
+                    if (ajaxController) {
+                        ajaxController.abort();
+                    }
+
+                    ajaxController = new AbortController();
+                    setLoading(true);
+
+                    return fetch(url.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html',
+                        },
+                        signal: ajaxController.signal,
+                    })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Request failed: ' + response.status);
+                            }
+
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            var parser = new DOMParser();
+                            var documentFragment = parser.parseFromString(html, 'text/html');
+                            var freshResults = documentFragment.getElementById('catalog-products-results');
+                            var currentResults = results();
+                            var freshChips = documentFragment.getElementById('catalog-products-active-chips');
+                            var currentChips = activeChips();
+
+                            if (!freshResults || !currentResults) {
+                                window.location.href = url.toString();
+                                return;
+                            }
+
+                            currentResults.innerHTML = freshResults.innerHTML;
+
+                            if (freshChips && currentChips) {
+                                currentChips.innerHTML = freshChips.innerHTML;
+                            }
+
+                            if (pushUrl) {
+                                window.history.pushState({ catalogProductsUrl: url.toString() }, '', url.toString());
+                            }
+
+                            bindResults();
+                        })
+                        .catch(function (error) {
+                            if (error.name === 'AbortError') {
+                                return;
+                            }
+
+                            window.location.href = url.toString();
+                        })
+                        .finally(function () {
+                            setLoading(false);
+                        });
+                }
+
+                function scheduleFetch(delay) {
+                    var form = filterForm();
+
+                    if (!form) {
+                        return;
+                    }
+
+                    window.clearTimeout(debounceTimer);
+                    debounceTimer = window.setTimeout(function () {
+                        fetchProducts(urlFromForm(form), true);
+                    }, delay);
+                }
+
+                function ensureConfirmModal() {
+                    var existing = document.getElementById('catalog-products-confirm-modal');
+
+                    if (existing) {
+                        return existing;
+                    }
+
+                    var modal = document.createElement('div');
+                    modal.id = 'catalog-products-confirm-modal';
+                    modal.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 px-4 py-6';
+                    modal.innerHTML = [
+                        '<div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/10">',
+                        '  <div class="flex items-start gap-4">',
+                        '    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">',
+                        '      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008Zm9-4.5a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>',
+                        '    </div>',
+                        '    <div class="min-w-0 flex-1">',
+                        '      <h2 class="text-lg font-semibold text-slate-900" data-confirm-title></h2>',
+                        '      <p class="mt-2 text-sm leading-6 text-slate-600" data-confirm-message></p>',
+                        '    </div>',
+                        '  </div>',
+                        '  <div class="mt-6 flex justify-end gap-2">',
+                        '    <button type="button" data-confirm-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Cancel') }}</button>',
+                        '    <button type="button" data-confirm-ok class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">{{ __('Archive') }}</button>',
+                        '  </div>',
+                        '</div>'
+                    ].join('');
+
+                    document.body.appendChild(modal);
+
+                    modal.addEventListener('click', function (event) {
+                        if (event.target === modal || event.target.closest('[data-confirm-cancel]')) {
+                            closeConfirmModal(false);
+                        }
+
+                        if (event.target.closest('[data-confirm-ok]')) {
+                            closeConfirmModal(true);
+                        }
+                    });
+
+                    document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                            closeConfirmModal(false);
+                        }
+                    });
+
+                    return modal;
+                }
+
+                function closeConfirmModal(result) {
+                    var modal = ensureConfirmModal();
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+
+                    if (currentModalResolve) {
+                        currentModalResolve(result);
+                        currentModalResolve = null;
+                    }
+                }
+
+                function confirmAction(options) {
+                    var modal = ensureConfirmModal();
+                    modal.querySelector('[data-confirm-title]').textContent = options.title || '{{ __('Confirm action') }}';
+                    modal.querySelector('[data-confirm-message]').textContent = options.message || '{{ __('Are you sure?') }}';
+                    modal.querySelector('[data-confirm-ok]').textContent = options.action || '{{ __('Continue') }}';
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    modal.querySelector('[data-confirm-cancel]').focus();
+
+                    return new Promise(function (resolve) {
+                        currentModalResolve = resolve;
+                    });
+                }
+
+                function bindBulkActions() {
+                    var form = document.getElementById('bulk-products-form');
+                    var selectAll = document.getElementById('bulk-products-select-all');
+                    var submit = document.getElementById('bulk-products-submit');
+                    var operation = document.getElementById('bulk-operation');
+                    var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.bulk-product-checkbox'));
+
+                    if (!form || !submit || !operation || checkboxes.length === 0) {
+                        return;
+                    }
+
+                    if (form.dataset.bulkActionsBound === '1') {
+                        return;
+                    }
+
+                    form.dataset.bulkActionsBound = '1';
+
+                    function selectedCount() {
+                        return checkboxes.filter(function (checkbox) {
+                            return checkbox.checked;
+                        }).length;
+                    }
+
+                    function syncBulkState() {
+                        var count = selectedCount();
+                        submit.disabled = count === 0 || !operation.value;
+                        submit.textContent = count > 0
+                            ? '{{ __('Apply to selected') }} (' + count + ')'
+                            : '{{ __('Apply to selected') }}';
+
+                        if (selectAll) {
+                            selectAll.checked = count === checkboxes.length;
+                            selectAll.indeterminate = count > 0 && count < checkboxes.length;
+                        }
+                    }
+
+                    if (selectAll) {
+                        selectAll.addEventListener('change', function () {
+                            checkboxes.forEach(function (checkbox) {
+                                checkbox.checked = selectAll.checked;
+                            });
+                            syncBulkState();
+                        });
+                    }
+
+                    checkboxes.forEach(function (checkbox) {
+                        checkbox.addEventListener('change', syncBulkState);
+                    });
+
+                    operation.addEventListener('change', syncBulkState);
+
+                    form.addEventListener('submit', function (event) {
+                        var count = selectedCount();
+
+                        if (count === 0 || !operation.value) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        if (operation.value !== 'archive' || form.dataset.confirmed === '1') {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        confirmAction({
+                            title: '{{ __('Archive selected products') }}',
+                            message: '{{ __('Archive selected products? They will be hidden from the working catalog but kept for history.') }}',
+                            action: '{{ __('Archive selected') }}',
+                        }).then(function (confirmed) {
+                            if (!confirmed) {
+                                return;
+                            }
+
+                            form.dataset.confirmed = '1';
+                            form.requestSubmit();
+                        });
+                    });
+
+                    syncBulkState();
+                }
+
+                function bindConfirmForms() {
+                    Array.prototype.slice.call(document.querySelectorAll('form[data-confirm-message]')).forEach(function (form) {
+                        if (form.dataset.confirmBound === '1') {
+                            return;
+                        }
+
+                        form.dataset.confirmBound = '1';
+
+                        form.addEventListener('submit', function (event) {
+                            if (form.dataset.confirmed === '1') {
+                                return;
+                            }
+
+                            event.preventDefault();
+
+                            confirmAction({
+                                title: form.dataset.confirmTitle,
+                                message: form.dataset.confirmMessage,
+                                action: form.dataset.confirmAction,
+                            }).then(function (confirmed) {
+                                if (!confirmed) {
+                                    return;
+                                }
+
+                                form.dataset.confirmed = '1';
+                                form.requestSubmit();
+                            });
+                        });
+                    });
+                }
+
+                function bindAjaxFilters() {
+                    var form = filterForm();
+
+                    if (!form) {
+                        return;
+                    }
+
+                    if (form.dataset.ajaxFiltersBound === '1') {
+                        return;
+                    }
+
+                    form.dataset.ajaxFiltersBound = '1';
+
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        fetchProducts(urlFromForm(form), true);
+                    });
+
+                    Array.prototype.slice.call(form.querySelectorAll('input, select')).forEach(function (field) {
+                        if (field.type === 'hidden') {
+                            return;
+                        }
+
+                        if (field.id === 'q' || field.matches('input[type="search"], input[type="text"], input[inputmode], input[type="date"]')) {
+                            field.addEventListener('input', function () {
+                                scheduleFetch(300);
+                            });
+
+                            return;
+                        }
+
+                        field.addEventListener('change', function () {
+                            scheduleFetch(50);
+                        });
+                    });
+                }
+
+                function bindAjaxLinks() {
+                    var container = page();
+
+                    if (!container) {
+                        return;
+                    }
+
+                    if (container.dataset.ajaxLinksBound === '1') {
+                        return;
+                    }
+
+                    container.dataset.ajaxLinksBound = '1';
+
+                    container.addEventListener('click', function (event) {
+                        var link = event.target.closest('a[href]');
+
+                        if (!link) {
+                            return;
+                        }
+
+                        var indexUrl = new URL('{{ route('catalog.products.index') }}', window.location.origin);
+                        var targetUrl = new URL(link.href, window.location.origin);
+
+                        if (targetUrl.origin !== window.location.origin || targetUrl.pathname !== indexUrl.pathname) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        if (link.matches('[data-products-clear]')) {
+                            var form = filterForm();
+                            if (form) {
+                                form.reset();
+                                Array.prototype.slice.call(form.querySelectorAll('select[multiple] option')).forEach(function (option) {
+                                    option.selected = false;
+                                });
+                            }
+                        }
+
+                        fetchProducts(targetUrl, true);
+                    });
+                }
+
+                function bindCatalogProductsPage() {
+                    bindAjaxFilters();
+                    bindAjaxLinks();
+                    bindResults();
+                }
+
+                function bindResults() {
+                    bindBulkActions();
+                    bindConfirmForms();
+                }
+
+                window.addEventListener('popstate', function () {
+                    fetchProducts(new URL(window.location.href), false);
+                });
+
+                bindCatalogProductsPage();
+            });
+        </script>
+    @endpush
 </x-app-layout>

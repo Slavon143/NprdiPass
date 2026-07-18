@@ -141,15 +141,12 @@
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4">
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <x-badge :tone="$membership->is_owner ? 'indigo' : 'slate'">{{ $membership->role->value }}</x-badge>
-                                            @if ($membership->is_owner)
-                                                <span class="text-xs font-semibold text-indigo-700">{{ __('Owner') }}</span>
-                                            @endif
+                                            <x-badge :tone="$membership->is_owner ? 'indigo' : 'slate'">{{ __(ucfirst($membership->role->value)) }}</x-badge>
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4">
                                         <x-badge :tone="match ($membership->user->status->value) { 'active' => 'emerald', 'suspended' => 'red', default => 'amber' }">
-                                            {{ $membership->user->status->value }}
+                                            {{ __(ucfirst($membership->user->status->value)) }}
                                         </x-badge>
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">

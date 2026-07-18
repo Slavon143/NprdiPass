@@ -99,7 +99,11 @@
             @else
                 <div class="divide-y divide-slate-100">
                     @foreach ($auditLogs as $auditLog)
-                        @php($changes = $auditLog->getProperty('changes', []))
+                        @php
+                            $eventLabel = $auditLog->eventLabel();
+                            $summary = trim($auditLog->summary());
+                            $showSummary = $summary !== '' && strcasecmp($summary, $eventLabel) !== 0;
+                        @endphp
                         <article class="grid gap-4 px-5 py-5 sm:px-6 lg:grid-cols-[11rem_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]">
                             <div>
                                 <time datetime="{{ $auditLog->created_at?->toAtomString() }}" class="text-sm font-semibold text-slate-900">{{ $auditLog->created_at?->format('Y-m-d H:i:s') }}</time>
@@ -107,9 +111,10 @@
                             </div>
 
                             <div class="min-w-0">
-                                <p class="font-semibold text-slate-900">{{ $auditLog->eventLabel() }}</p>
-                                <p class="mt-1 break-all font-mono text-xs text-indigo-700">{{ $auditLog->event }}</p>
-                                <p class="mt-2 text-sm text-slate-600">{{ $auditLog->summary() }}</p>
+                                <p class="font-semibold text-slate-900">{{ $eventLabel }}</p>
+                                @if ($showSummary)
+                                    <p class="mt-2 text-sm text-slate-600">{{ $summary }}</p>
+                                @endif
                             </div>
 
                             <div class="min-w-0">

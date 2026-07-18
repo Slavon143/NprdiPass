@@ -110,6 +110,7 @@ Route::middleware([
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::patch('/bulk-status', [ProductController::class, 'bulkStatus'])->name('bulk-status');
         Route::delete('/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::prefix('/{product}/variants')->whereUuid('product')->name('variants.')->group(function (): void {
             Route::get('/', [ProductVariantController::class, 'index'])->name('index');

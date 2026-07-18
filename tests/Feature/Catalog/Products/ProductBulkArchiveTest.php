@@ -103,6 +103,42 @@ test('bulk archive skips already archived products', function () {
         ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(1);
 });
 
+test('bulk status archives selected products', function () {
+    [$actor, $company] = bulkContext();
+    $p1 = bulkProduct($actor, $company, 'Bulk Status Alpha');
+    $p2 = bulkProduct($actor, $company, 'Bulk Status Beta');
+
+    $response = $this->patch(route('catalog.products.bulk-status'), [
+        'operation' => 'archive',
+        'products' => [$p1->uuid, $p2->uuid],
+    ]);
+
+    $response->assertRedirect(route('catalog.products.index'));
+    $response->assertSessionHas('success');
+
+    expect($p1->fresh()?->status)->toBe(ProductStatus::Archived)
+        ->and($p2->fresh()?->status)->toBe(ProductStatus::Archived);
+});
+
+test('bulk status restores archived products to draft', function () {
+    [$actor, $company] = bulkContext();
+    $p1 = bulkProduct($actor, $company, 'Restore Status Alpha');
+    $p2 = bulkProduct($actor, $company, 'Restore Status Beta');
+    $p1->forceFill(['status' => ProductStatus::Archived])->save();
+    $p2->forceFill(['status' => ProductStatus::Archived])->save();
+
+    $response = $this->patch(route('catalog.products.bulk-status'), [
+        'operation' => 'restore',
+        'products' => [$p1->uuid, $p2->uuid],
+    ]);
+
+    $response->assertRedirect(route('catalog.products.index'));
+    $response->assertSessionHas('success');
+
+    expect($p1->fresh()?->status)->toBe(ProductStatus::Draft)
+        ->and($p2->fresh()?->status)->toBe(ProductStatus::Draft);
+});
+
 test('bulk archive does not affect foreign company products', function () {
     [$actor, $company] = bulkContext();
     $owned = bulkProduct($actor, $company, 'Owned Product');

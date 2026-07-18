@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         if (app()->environment('local')) {
             $this->call(LocalDevelopmentSeeder::class);
-            $this->call(CatalogDemoSeeder::class);
+            $this->call(NordiPassShowcaseSeeder::class);
 
             return;
         }

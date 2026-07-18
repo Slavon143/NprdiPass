@@ -21,8 +21,6 @@ class NordiPassDemoSeed extends Command
 
         if ($this->option('reset')) {
             $this->call(NordiPassDemoReset::class);
-
-            return Command::SUCCESS;
         }
 
         $this->info('Seeding NordiPass showcase demo data...');

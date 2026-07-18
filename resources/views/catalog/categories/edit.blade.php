@@ -48,11 +48,26 @@
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 class="font-semibold text-slate-900">{{ __('Lifecycle') }}</h2>
                 @if ($category->status->value === 'active')
-                    @if ($activeChildrenCount > 0 || $activePrimaryProductsCount > 0)
+                    @if ($childrenCount > 0 || $primaryProductsCount > 0 || $assignedProductsCount > 0)
                         <div class="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
                             <p class="font-semibold">{{ __('Archive is currently blocked.') }}</p>
-                            @if ($activeChildrenCount > 0)<p class="mt-1">{{ trans_choice(':count active child|:count active children', $activeChildrenCount, ['count' => $activeChildrenCount]) }}</p>@endif
-                            @if ($activePrimaryProductsCount > 0)<p class="mt-1">{{ trans_choice('Primary for :count active product|Primary for :count active products', $activePrimaryProductsCount, ['count' => $activePrimaryProductsCount]) }}</p>@endif
+                            @if ($childrenCount > 0)
+                                <p class="mt-1">{{ trans_choice(':count child category|:count child categories', $childrenCount, ['count' => $childrenCount]) }}</p>
+                            @endif
+                            @if ($primaryProductsCount > 0)
+                                <p class="mt-1">
+                                    {{ trans_choice('Primary for :count product|Primary for :count products', $primaryProductsCount, ['count' => $primaryProductsCount]) }}
+                                    @if ($activePrimaryProductsCount !== $primaryProductsCount)
+                                        <span class="text-amber-700/75">({{ trans_choice(':count active|:count active', $activePrimaryProductsCount, ['count' => $activePrimaryProductsCount]) }})</span>
+                                    @endif
+                                </p>
+                            @endif
+                            @if ($assignedProductsCount > $primaryProductsCount)
+                                <p class="mt-1">{{ trans_choice('Also assigned to :count product|Also assigned to :count products', $assignedProductsCount - $primaryProductsCount, ['count' => $assignedProductsCount - $primaryProductsCount]) }}</p>
+                            @endif
+                            @if ($primaryProductsCount > 0 || $assignedProductsCount > 0)
+                                <a href="{{ route('catalog.products.index', ['category_uuids' => [$category->uuid], 'category_mode' => $primaryProductsCount > 0 ? 'primary' : 'any']) }}" class="mt-2 inline-block text-xs font-semibold text-indigo-700 hover:text-indigo-900">{{ __('View blocking products') }}</a>
+                            @endif
                         </div>
                     @else
                         <p class="mt-2 text-sm text-slate-500">{{ __('Archive hides this category without deleting it or changing product relations.') }}</p>

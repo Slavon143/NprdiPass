@@ -170,13 +170,14 @@ class DemoAssetProvider
         $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents {$streamObjNum} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\nendobj";
         $objects[] = "{$streamObjNum} 0 obj\n<< /Length ".strlen($content)." >>\nstream\n{$content}\nendstream\nendobj";
 
-        $xrefOffset = 9;
         $header = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
 
         $bodyText = '';
         foreach ($objects as $obj) {
             $bodyText .= $obj."\n";
         }
+
+        $xrefOffset = strlen($header.$bodyText);
 
         $xref = "xref\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
 

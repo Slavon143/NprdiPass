@@ -57,43 +57,100 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <tr><th class="px-5 py-3">{{ __('Category') }}</th><th class="px-5 py-3">{{ __('Parent') }}</th><th class="px-5 py-3">{{ __('Depth / order') }}</th><th class="px-5 py-3">{{ __('Status') }}</th><th class="px-5 py-3 text-right">{{ __('Actions') }}</th></tr>
+                            <tr>
+                                <th class="px-5 py-3">{{ __('Category') }}</th>
+                                <th class="px-5 py-3">{{ __('Parent') }}</th>
+                                <th class="px-5 py-3">{{ __('Level') }}</th>
+                                <th class="px-5 py-3">{{ __('Sort order') }}</th>
+                                <th class="px-5 py-3">{{ __('Status') }}</th>
+                                <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
+                            </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach ($categories as $category)
+                                @php
+                                    $depth = (int) $category->depth;
+                                    $indentRem = min($depth, 6) * 1.25;
+                                @endphp
                                 <tr>
                                     <td class="px-5 py-4">
-                                        <p class="font-semibold text-slate-900"><span class="text-slate-300" aria-hidden="true">{{ str_repeat('— ', $category->depth) }}</span>{{ $category->name }}</p>
-                                        <p class="mt-1 font-mono text-xs text-slate-500">{{ $category->slug }}</p>
+                                        <div style="padding-left: {{ $indentRem }}rem">
+                                            <p class="flex items-center gap-2 font-semibold text-slate-900">
+                                                @if($depth > 0)
+                                                    <span class="text-slate-400" aria-hidden="true">↳</span>
+                                                @endif
+                                                <span>{{ $category->name }}</span>
+                                            </p>
+                                            <p class="mt-1 font-mono text-xs text-slate-500">{{ $category->slug }}</p>
+                                        </div>
                                     </td>
-                                    <td class="px-5 py-4 text-slate-600">{{ $category->parent?->name ?? __('Root') }}</td>
-                                    <td class="px-5 py-4 text-slate-600">{{ $category->depth }} / {{ $category->sort_order }}</td>
                                     <td class="px-5 py-4">
-                                        <x-badge :tone="$category->status->value === 'active' ? 'emerald' : 'amber'">{{ $category->status->value }}</x-badge>
-                                        @if ($category->active_children_count > 0)<p class="mt-1 text-xs text-amber-700">{{ __('Has active children') }}</p>@endif
-                                        @if ($category->active_primary_products_count > 0)<p class="mt-1 text-xs text-amber-700">{{ __('Primary for active products') }}</p>@endif
+                                        @if($category->parent)
+                                            <p class="font-medium text-slate-700">{{ $category->parent->name }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">{{ __('Nested under this parent') }}</p>
+                                        @else
+                                            <x-badge tone="slate">{{ __('Root category') }}</x-badge>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        @if($depth === 0)
+                                            <x-badge tone="indigo">{{ __('Top level') }}</x-badge>
+                                        @else
+                                            <x-badge tone="slate">{{ __('Level :level', ['level' => $depth]) }}</x-badge>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <span class="font-mono text-sm font-semibold text-slate-700">{{ $category->sort_order }}</span>
+                                        <p class="mt-1 text-xs text-slate-500">{{ __('Lower numbers appear first under the same parent.') }}</p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <x-badge :tone="$category->status->value === 'active' ? 'emerald' : 'amber'">{{ ucfirst($category->status->value) }}</x-badge>
+                                        @if ($category->children_count > 0)
+                                            <p class="mt-1 text-xs text-amber-700">{{ trans_choice(':count child category|:count child categories', $category->children_count, ['count' => $category->children_count]) }}</p>
+                                        @endif
+                                        @if ($category->primary_products_count > 0)
+                                            <p class="mt-1 text-xs text-amber-700">
+                                                {{ trans_choice('Primary for :count product|Primary for :count products', $category->primary_products_count, ['count' => $category->primary_products_count]) }}
+                                                @if ($category->active_primary_products_count !== $category->primary_products_count)
+                                                    <span class="text-slate-500">({{ trans_choice(':count active|:count active', $category->active_primary_products_count, ['count' => $category->active_primary_products_count]) }})</span>
+                                                @endif
+                                            </p>
+                                        @endif
+                                        @if ($category->assigned_products_count > $category->primary_products_count)
+                                            <p class="mt-1 text-xs text-amber-700">
+                                                {{ trans_choice('Also assigned to :count product|Also assigned to :count products', $category->assigned_products_count - $category->primary_products_count, ['count' => $category->assigned_products_count - $category->primary_products_count]) }}
+                                            </p>
+                                        @endif
+                                        @if ($category->primary_products_count > 0 || $category->assigned_products_count > 0)
+                                            @php($categoryProductLink = $categoryProductLinks[$category->uuid] ?? null)
+                                            <a href="{{ $categoryProductLink['url'] ?? route('catalog.products.index', ['category_uuids' => [$category->uuid], 'category_mode' => $category->primary_products_count > 0 ? 'primary' : 'any']) }}" class="mt-1 inline-block text-xs font-semibold text-indigo-700 hover:text-indigo-900">{{ $categoryProductLink['label'] ?? __('View products') }}</a>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-4">
                                         @if ($canManage)
                                             <div class="flex items-center justify-end gap-2">
-                                                @foreach (['up' => '↑', 'down' => '↓'] as $direction => $symbol)
+                                                @foreach (['up' => __('Move up'), 'down' => __('Move down')] as $direction => $label)
                                                     @if ($reorderPayloads[$category->uuid][$direction] !== null)
                                                         <form method="POST" action="{{ route('catalog.categories.reorder') }}">
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="parent_uuid" value="{{ $reorderPayloads[$category->uuid]['parent_uuid'] }}">
                                                             @foreach ($reorderPayloads[$category->uuid][$direction] as $orderedUuid)<input type="hidden" name="ordered_uuids[]" value="{{ $orderedUuid }}">@endforeach
-                                                            <button type="submit" class="rounded border border-slate-300 px-2 py-1 font-semibold text-slate-600 hover:bg-slate-50" aria-label="{{ $direction === 'up' ? __('Move up') : __('Move down') }}">{{ $symbol }}</button>
+                                                            <button type="submit" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50" title="{{ __('Changes order only among categories with the same parent.') }}" aria-label="{{ $label }}">
+                                                                {{ $direction === 'up' ? '↑' : '↓' }}
+                                                                <span class="sr-only">{{ $label }}</span>
+                                                            </button>
                                                         </form>
                                                     @endif
                                                 @endforeach
                                                 <a href="{{ route('catalog.categories.edit', $category->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Edit') }}</a>
-                                                <form method="POST" action="{{ route('catalog.categories.destroy', $category->uuid) }}" onsubmit="return confirm('{{ __('Delete this category? This is only allowed when it has no children or product assignments.') }}')">
+                                                <form method="POST" action="{{ route('catalog.categories.destroy', $category->uuid) }}" onsubmit="return confirm('{{ __('Delete this category? This is only allowed when it has no child categories or product assignments.') }}')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
                                                 </form>
                                             </div>
+                                            <p class="mt-2 text-right text-xs text-slate-400">{{ __('Arrows change sibling order.') }}</p>
                                         @else
                                             <span class="block text-right text-xs text-slate-400">{{ __('View only') }}</span>
                                         @endif

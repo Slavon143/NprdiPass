@@ -133,6 +133,34 @@ test('single delete works for empty category', function () {
     expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
 });
 
+test('single delete ignores archived primary products', function () {
+    [$actor, $company] = catDelContext();
+    $cat = catDelCategory($actor, $company, 'Archived Primary Cat');
+    $product = catDelProduct($company, 'Archived Primary Product', $cat->id);
+    $product->forceFill(['status' => ProductStatus::Archived])->save();
+
+    $response = $this->delete(route('catalog.categories.destroy', $cat->uuid));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+    expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
+});
+
+test('bulk delete ignores archived assigned products', function () {
+    [$actor, $company] = catDelContext();
+    $cat = catDelCategory($actor, $company, 'Archived Assigned Cat');
+    $product = catDelProduct($company, 'Archived Assigned Product', $cat->id, [$cat->id]);
+    $product->forceFill(['status' => ProductStatus::Archived])->save();
+
+    $response = $this->delete(route('catalog.categories.bulk-destroy'), [
+        'categories' => [$cat->uuid],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+    expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
+});
+
 test('single delete blocks category with children', function () {
     [$actor, $company] = catDelContext();
     $parent = catDelCategory($actor, $company, 'Parent');

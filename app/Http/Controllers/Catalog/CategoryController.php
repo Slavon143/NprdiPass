@@ -14,6 +14,7 @@ use App\Http\Requests\Catalog\Categories\BulkDeleteCategoriesRequest;
 use App\Http\Requests\Catalog\Categories\StoreCategoryRequest;
 use App\Http\Requests\Catalog\Categories\UpdateCategoryRequest;
 use App\Models\Catalog\Category;
+use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CategoryHierarchyService;
@@ -39,9 +40,15 @@ class CategoryController extends Controller
             ->forCompany($company)
             ->with('parent:id,uuid,name')
             ->withCount([
+                'children as children_count',
                 'children as active_children_count' => fn (Builder $query): Builder => $query
                     ->where('status', CategoryStatus::Active->value),
+                'primaryProducts as primary_products_count' => fn (Builder $query): Builder => $query
+                    ->where('status', '!=', ProductStatus::Archived->value),
                 'primaryProducts as active_primary_products_count' => fn (Builder $query): Builder => $query->where('status', ProductStatus::Active->value),
+                'products as assigned_products_count' => fn (Builder $query): Builder => $query
+                    ->where('products.status', '!=', ProductStatus::Archived->value),
+                'products as active_assigned_products_count' => fn (Builder $query): Builder => $query->where('status', ProductStatus::Active->value),
             ]);
         $status = $filters['status'] ?? 'all';
 
@@ -75,12 +82,15 @@ class CategoryController extends Controller
             ->ordered()
             ->get();
 
+        $categories = $query->ordered()->paginate(50)->withQueryString();
+
         return view()->make('catalog.categories.index', [
             'company' => $company,
-            'categories' => $query->ordered()->paginate(50)->withQueryString(),
+            'categories' => $categories,
             'parentOptions' => $allCategories->where('status', CategoryStatus::Active),
             'canManage' => $request->user()?->can('create', [Category::class, $company]) === true,
             'reorderPayloads' => $this->reorderPayloads($allCategories),
+            'categoryProductLinks' => $this->categoryProductLinks($company, $categories->getCollection()),
             'filters' => ['status' => $status, 'parent' => $parentFilter, 'search' => $search],
         ]);
     }
@@ -134,10 +144,17 @@ class CategoryController extends Controller
             'parentOptions' => $allCategories
                 ->where('status', CategoryStatus::Active)
                 ->whereNotIn('id', $excludedIds),
+            'childrenCount' => $category->children()->count(),
             'activeChildrenCount' => $category->children()
                 ->where('status', CategoryStatus::Active->value)->count(),
+            'primaryProductsCount' => $category->primaryProducts()
+                ->where('status', '!=', ProductStatus::Archived->value)->count(),
             'activePrimaryProductsCount' => $category->primaryProducts()
                 ->where('status', ProductStatus::Active->value)->count(),
+            'assignedProductsCount' => $category->products()
+                ->where('products.status', '!=', ProductStatus::Archived->value)->count(),
+            'activeAssignedProductsCount' => $category->products()
+                ->where('products.status', ProductStatus::Active->value)->count(),
         ]);
     }
 
@@ -233,6 +250,54 @@ class CategoryController extends Controller
     {
         return Category::query()->forCompany($company)->active()->ordered()
             ->limit(CategoryHierarchyService::MAX_CATEGORIES_PER_COMPANY + 1)->get();
+    }
+
+    /**
+     * @param  Collection<int, Category>  $categories
+     * @return array<string, array{url: string, label: string}>
+     */
+    private function categoryProductLinks(Company $company, Collection $categories): array
+    {
+        $links = [];
+
+        foreach ($categories as $category) {
+            $primaryCount = (int) ($category->primary_products_count ?? 0);
+            $assignedCount = (int) ($category->assigned_products_count ?? 0);
+            $uuid = null;
+
+            if ($primaryCount === 1) {
+                $uuid = Product::query()
+                    ->forCompany($company)
+                    ->where('primary_category_id', $category->getKey())
+                    ->where('status', '!=', ProductStatus::Archived->value)
+                    ->value('uuid');
+            } elseif ($primaryCount === 0 && $assignedCount === 1) {
+                $uuid = $category->products()
+                    ->where('products.status', '!=', ProductStatus::Archived->value)
+                    ->value('products.uuid');
+            }
+
+            if (is_string($uuid) && $uuid !== '') {
+                $links[$category->uuid] = [
+                    'url' => route('catalog.products.show', $uuid),
+                    'label' => __('Open product'),
+                ];
+
+                continue;
+            }
+
+            if ($primaryCount > 0 || $assignedCount > 0) {
+                $links[$category->uuid] = [
+                    'url' => route('catalog.products.index', [
+                        'category_uuids' => [$category->uuid],
+                        'category_mode' => $primaryCount > 0 ? 'primary' : 'any',
+                    ]),
+                    'label' => __('View products'),
+                ];
+            }
+        }
+
+        return $links;
     }
 
     /**

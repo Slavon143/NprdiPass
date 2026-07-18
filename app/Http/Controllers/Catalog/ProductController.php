@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Lifecycle\ArchiveProductAction;
 use App\Actions\Catalog\Lifecycle\BulkArchiveProductsAction;
+use App\Actions\Catalog\Lifecycle\BulkUpdateProductStatusesAction;
 use App\Actions\Catalog\Products\CreateProductAction;
 use App\Actions\Catalog\Products\UpdateProductAction;
 use App\Data\Catalog\Search\CatalogProductSearchCriteria;
@@ -15,6 +16,7 @@ use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Products\BulkArchiveProductsRequest;
+use App\Http\Requests\Catalog\Products\BulkUpdateProductsStatusRequest;
 use App\Http\Requests\Catalog\Products\StoreProductRequest;
 use App\Http\Requests\Catalog\Products\UpdateProductRequest;
 use App\Http\Requests\Catalog\Search\SearchProductsRequest;
@@ -72,6 +74,7 @@ class ProductController extends Controller
             'canCreate' => $request->user()?->can('create', [Product::class, $company]) === true,
             'canUpdate' => $request->user()?->can(CompanyPermission::CatalogUpdate->value, $company) === true,
             'canArchive' => $request->user()?->can(CompanyPermission::CatalogArchive->value, $company) === true,
+            'canPublish' => $request->user()?->can(CompanyPermission::CatalogPublish->value, $company) === true,
             'canManagePassports' => $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true,
         ]);
     }
@@ -234,6 +237,52 @@ class ProductController extends Controller
             ->with('success', trans_choice(':count product archived.|:count products archived.', count($archived), [
                 'count' => count($archived),
             ]));
+    }
+
+    public function bulkStatus(
+        BulkUpdateProductsStatusRequest $request,
+        CurrentCompany $currentCompany,
+        BulkUpdateProductStatusesAction $action,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+        $validated = $request->validated();
+
+        $result = $action->execute(
+            $this->actor($request),
+            $company,
+            $validated['products'],
+            $validated['operation'],
+        );
+
+        $query = $request->query();
+        $operationLabel = match ($validated['operation']) {
+            'activate' => 'activated',
+            'draft' => 'returned to draft',
+            'archive' => 'archived',
+            'restore' => 'restored to draft',
+            default => 'updated',
+        };
+
+        $redirect = redirect()->route('catalog.products.index', $query);
+
+        if ($result['updated'] !== []) {
+            $redirect->with('success', trans_choice(
+                ':count product '.$operationLabel.'.|:count products '.$operationLabel.'.',
+                count($result['updated']),
+                ['count' => count($result['updated'])],
+            ));
+        }
+
+        $warnings = [...$result['skipped'], ...$result['failed']];
+        if ($warnings !== []) {
+            $redirect->with('warning', implode("\n", array_slice($warnings, 0, 10)));
+        }
+
+        if ($result['updated'] === [] && $warnings === []) {
+            $redirect->with('warning', __('No selected products were changed.'));
+        }
+
+        return $redirect;
     }
 
     public function destroy(

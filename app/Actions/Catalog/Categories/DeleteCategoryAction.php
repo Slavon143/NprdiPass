@@ -5,6 +5,7 @@ namespace App\Actions\Catalog\Categories;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
+use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Exceptions\Catalog\CategoryOperationException;
 use App\Models\Catalog\Category;
@@ -50,6 +51,13 @@ class DeleteCategoryAction
 
     private function assertNoChildren(Company $company, Category $category): void
     {
+        $children = Category::query()
+            ->forCompany($company)
+            ->where('parent_id', $category->getKey())
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->limit(4)
+            ->get(['name']);
         $count = Category::query()
             ->forCompany($company)
             ->where('parent_id', $category->getKey())
@@ -58,38 +66,82 @@ class DeleteCategoryAction
 
         if ($count > 0) {
             throw CategoryOperationException::archiveBlocked(
-                trans_choice('Category has :count child categor:|Category has :count child categories.', $count, ['count' => $count])
+                trans_choice('Category has :count child category.|Category has :count child categories.', $count, ['count' => $count])
+                .' '.$this->examples('Children', $children->pluck('name')->all())
+                .' Delete or move child categories first.'
             );
         }
     }
 
     private function assertNoPrimaryProducts(Company $company, Category $category): void
     {
+        $products = Product::query()
+            ->forCompany($company)
+            ->where('primary_category_id', $category->getKey())
+            ->where('status', '!=', ProductStatus::Archived->value)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->limit(4)
+            ->get(['name', 'status']);
         $count = Product::query()
             ->forCompany($company)
             ->where('primary_category_id', $category->getKey())
+            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereNull('deleted_at')
             ->count();
 
         if ($count > 0) {
             throw CategoryOperationException::archiveBlocked(
                 trans_choice('Category is primary for :count product.|Category is primary for :count products.', $count, ['count' => $count])
+                .' '.$this->examples('Products', $products->map(
+                    fn (Product $product): string => "{$product->name} ({$product->status->value})"
+                )->all())
+                .' Change the primary category on those products first.'
             );
         }
     }
 
     private function assertNoPivotProducts(Company $company, Category $category): void
     {
+        $products = Product::query()
+            ->forCompany($company)
+            ->whereNull('deleted_at')
+            ->where('status', '!=', ProductStatus::Archived->value)
+            ->whereHas('categories', fn ($q) => $q->where('category_id', $category->getKey()))
+            ->orderBy('name')
+            ->limit(4)
+            ->get(['name', 'status']);
         $count = Product::query()
             ->forCompany($company)
             ->whereNull('deleted_at')
+            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereHas('categories', fn ($q) => $q->where('category_id', $category->getKey()))
             ->count();
 
         if ($count > 0) {
             throw CategoryOperationException::archiveBlocked(
                 trans_choice('Category is assigned to :count product.|Category is assigned to :count products.', $count, ['count' => $count])
+                .' '.$this->examples('Products', $products->map(
+                    fn (Product $product): string => "{$product->name} ({$product->status->value})"
+                )->all())
+                .' Remove this category from those products first.'
             );
         }
+    }
+
+    /**
+     * @param  list<string>  $items
+     */
+    private function examples(string $label, array $items): string
+    {
+        $items = array_values(array_filter($items, fn (string $item): bool => trim($item) !== ''));
+
+        if ($items === []) {
+            return '';
+        }
+
+        $suffix = count($items) === 4 ? ', …' : '';
+
+        return "{$label}: ".implode(', ', array_slice($items, 0, 3)).$suffix.'.';
     }
 }
