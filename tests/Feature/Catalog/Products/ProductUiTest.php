@@ -276,8 +276,9 @@ test('product routes expose only the approved HTTP methods and names', function 
         ->and(route('catalog.products.store'))->toEndWith('/catalog/products')
         ->and(route('catalog.products.show', $product->uuid))->toEndWith('/catalog/products/'.$product->uuid)
         ->and(route('catalog.products.edit', $product->uuid))->toEndWith('/catalog/products/'.$product->uuid.'/edit')
-        ->and(route('catalog.products.update', $product->uuid))->toEndWith('/catalog/products/'.$product->uuid);
+        ->and(route('catalog.products.update', $product->uuid))->toEndWith('/catalog/products/'.$product->uuid)
+        ->and(route('catalog.products.destroy', $product->uuid))->toEndWith('/catalog/products/'.$product->uuid);
 
     $this->get('/catalog/products/'.$product->uuid.'/delete')->assertNotFound();
-    $this->delete(route('catalog.products.show', $product->uuid))->assertMethodNotAllowed();
+    $this->delete(route('catalog.products.destroy', $product->uuid))->assertRedirect(route('catalog.products.index'));
 });

@@ -92,9 +92,11 @@ Route::middleware([
         Route::get('/', [AttributeDefinitionController::class, 'index'])->name('index');
         Route::get('/create', [AttributeDefinitionController::class, 'create'])->name('create');
         Route::post('/', [AttributeDefinitionController::class, 'store'])->name('store');
+        Route::delete('/bulk-destroy', [AttributeDefinitionController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::get('/{attribute}', [AttributeDefinitionController::class, 'show'])->whereUuid('attribute')->name('show');
         Route::get('/{attribute}/edit', [AttributeDefinitionController::class, 'edit'])->whereUuid('attribute')->name('edit');
         Route::patch('/{attribute}', [AttributeDefinitionController::class, 'update'])->whereUuid('attribute')->name('update');
+        Route::delete('/{attribute}', [AttributeDefinitionController::class, 'destroy'])->whereUuid('attribute')->name('destroy');
         Route::post('/{attribute}/archive', [AttributeDefinitionController::class, 'archive'])->whereUuid('attribute')->name('archive');
         Route::post('/{attribute}/restore', [AttributeDefinitionController::class, 'restore'])->whereUuid('attribute')->name('restore');
         Route::post('/{attribute}/options', [AttributeOptionController::class, 'store'])->whereUuid('attribute')->name('options.store');
@@ -108,6 +110,7 @@ Route::middleware([
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::delete('/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::prefix('/{product}/variants')->whereUuid('product')->name('variants.')->group(function (): void {
             Route::get('/', [ProductVariantController::class, 'index'])->name('index');
             Route::get('/create', [ProductVariantController::class, 'create'])->name('create');
@@ -153,6 +156,7 @@ Route::middleware([
         Route::post('/{product}/return-to-draft', [ProductLifecycleController::class, 'returnToDraft'])->whereUuid('product')->name('return-to-draft');
         Route::post('/{product}/archive', [ProductLifecycleController::class, 'archive'])->whereUuid('product')->name('archive');
         Route::post('/{product}/restore', [ProductLifecycleController::class, 'restore'])->whereUuid('product')->name('restore');
+        Route::delete('/{product}', [ProductController::class, 'destroy'])->whereUuid('product')->name('destroy');
         Route::get('/{product}', [ProductController::class, 'show'])->whereUuid('product')->name('show');
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->whereUuid('product')->name('edit');
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
@@ -182,9 +186,11 @@ Route::middleware([
         Route::get('/', [CategoryController::class, 'index'])->name('index');
         Route::get('/create', [CategoryController::class, 'create'])->name('create');
         Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::delete('/bulk-destroy', [CategoryController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::patch('/reorder', CategoryReorderController::class)->name('reorder');
         Route::get('/{category}/edit', [CategoryController::class, 'edit'])->whereUuid('category')->name('edit');
         Route::patch('/{category}', [CategoryController::class, 'update'])->whereUuid('category')->name('update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->whereUuid('category')->name('destroy');
         Route::patch('/{category}/move', CategoryMoveController::class)->whereUuid('category')->name('move');
         Route::patch('/{category}/archive', CategoryArchiveController::class)->whereUuid('category')->name('archive');
         Route::patch('/{category}/restore', CategoryRestoreController::class)->whereUuid('category')->name('restore');

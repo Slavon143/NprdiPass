@@ -106,6 +106,18 @@ class BulkDeleteCategoriesAction
 
                     continue;
                 }
+            }
+
+            if ($blocked !== []) {
+                return ['deleted' => [], 'blocked' => $blocked];
+            }
+
+            foreach ($uuids as $uuid) {
+                $category = $all->get($uuid);
+
+                if (! $category instanceof Category) {
+                    continue;
+                }
 
                 $category->forceFill(['updated_by' => $actor->getKey()])->save();
                 $category->delete();

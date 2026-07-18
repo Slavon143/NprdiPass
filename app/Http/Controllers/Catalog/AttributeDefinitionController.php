@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Attributes\ArchiveAttributeDefinitionAction;
+use App\Actions\Catalog\Attributes\BulkDeleteAttributesAction;
 use App\Actions\Catalog\Attributes\CreateAttributeDefinitionAction;
+use App\Actions\Catalog\Attributes\DeleteAttributeAction;
 use App\Actions\Catalog\Attributes\RestoreAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\UpdateAttributeDefinitionAction;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeScope;
+use App\Exceptions\Catalog\AttributeOperationException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Catalog\Attributes\BulkDeleteAttributesRequest;
 use App\Http\Requests\Catalog\Attributes\StoreAttributeDefinitionRequest;
 use App\Http\Requests\Catalog\Attributes\UpdateAttributeDefinitionRequest;
 use App\Models\Catalog\AttributeDefinition;
@@ -104,6 +108,43 @@ class AttributeDefinitionController extends Controller
         return back()->with('success', 'Attribute restored.');
     }
 
+    public function destroy(Request $request, CurrentCompany $currentCompany, DeleteAttributeAction $action, string $attribute): RedirectResponse
+    {
+        $company = $currentCompany->require();
+        $definition = $this->resolveDefinition($company, $attribute);
+
+        try {
+            $action->execute($this->actor($request), $company, $definition);
+        } catch (AttributeOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('catalog.attributes.index')->with('success', 'Attribute deleted.');
+    }
+
+    public function bulkDestroy(
+        BulkDeleteAttributesRequest $request,
+        CurrentCompany $currentCompany,
+        BulkDeleteAttributesAction $action,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+
+        $result = $action->execute(
+            $this->actor($request),
+            $company,
+            $request->validated('attributes'),
+        );
+
+        if ($result['blocked'] !== []) {
+            return back()->with('error', $this->blockedMessage('Deletion blocked.', $result['blocked']));
+        }
+
+        return redirect()->route('catalog.attributes.index')
+            ->with('success', trans_choice(':count attribute deleted.|:count attributes deleted.', count($result['deleted']), [
+                'count' => count($result['deleted']),
+            ]));
+    }
+
     private function resolveDefinition(Company $company, string $uuid): AttributeDefinition
     {
         return AttributeDefinition::query()->forCompany($company)->where('uuid', $uuid)->firstOrFail();
@@ -121,5 +162,19 @@ class AttributeDefinitionController extends Controller
         abort_unless($actor instanceof User, 401);
 
         return $actor;
+    }
+
+    /**
+     * @param  list<array{uuid: string, name: string, reason: string}>  $blocked
+     */
+    private function blockedMessage(string $heading, array $blocked): string
+    {
+        $lines = [$heading];
+
+        foreach ($blocked as $item) {
+            $lines[] = "{$item['name']}: {$item['reason']}";
+        }
+
+        return implode("\n", $lines);
     }
 }

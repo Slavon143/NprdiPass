@@ -72,6 +72,19 @@ test('authorized user can bulk archive products', function () {
         ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(2);
 });
 
+test('authorized user can delete product through safe archive route', function () {
+    [$actor, $company] = bulkContext();
+    $product = bulkProduct($actor, $company, 'Single Delete Product');
+
+    $response = $this->delete(route('catalog.products.destroy', $product->uuid));
+
+    $response->assertRedirect(route('catalog.products.index'));
+    $response->assertSessionHas('success');
+
+    expect($product->fresh()?->status)->toBe(ProductStatus::Archived)
+        ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(1);
+});
+
 test('bulk archive skips already archived products', function () {
     [$actor, $company] = bulkContext();
     $p1 = bulkProduct($actor, $company, 'Active Product');
@@ -172,6 +185,25 @@ test('user without catalog archive permission gets 403 on bulk archive', functio
     $response = $this->delete(route('catalog.products.bulk-destroy'), [
         'products' => [$product->uuid],
     ]);
+
+    $response->assertForbidden();
+    expect($product->fresh()?->status)->toBe(ProductStatus::Draft);
+});
+
+test('user without catalog archive permission gets 403 on product delete', function () {
+    [$owner, $company] = bulkContext(CompanyRole::Owner);
+    $product = bulkProduct($owner, $company, 'Single Protected Product');
+
+    $viewer = User::factory()->create();
+    CompanyMembership::factory()->create([
+        'user_id' => $viewer,
+        'company_id' => $company,
+        'role' => CompanyRole::Viewer,
+    ]);
+    $this->actingAs($viewer);
+    app(CurrentCompany::class)->set($company);
+
+    $response = $this->delete(route('catalog.products.destroy', $product->uuid));
 
     $response->assertForbidden();
     expect($product->fresh()?->status)->toBe(ProductStatus::Draft);

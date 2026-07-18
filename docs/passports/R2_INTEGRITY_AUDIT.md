@@ -63,6 +63,47 @@ The public route resolves the passport by immutable `public_id` and serves the c
 3. Readiness/publish-confirm UI did not explain the weighted score. A shared score-breakdown partial now shows passed points, failed blocker/warning/recommendation points, and the first failed rules with navigation links.
 4. Readiness API now returns the same `score_breakdown` data for frontend/debug consumers.
 
+## Deletion and retention verification
+
+### Deletion policy
+
+| Entity | User Delete | Archive | Hard Delete | Restore | Published Retention |
+| --- | --- | --- | --- | --- | --- |
+| Category | Soft delete only when no children or product assignments exist | Supported | Not exposed to company users | Restore route exists | Published snapshots retain historical category label from payload/context |
+| Product | Delete UI maps to archive/bulk archive policy | Supported | Not exposed to company users | Supported | Published passport versions and immutable assets are retained |
+| Product Variant | Archive only; blocked for default variant and last available variant | Supported | Not exposed to company users | Supported | Published snapshots retain variant data |
+| Attribute Definition | Hard delete only when unused by product/variant values | Supported | Only unused definitions through guarded action | Restore route exists for archived attributes | Published snapshots retain copied/generated payload |
+| Media | Deletion removes catalog media; published passport assets use copied immutable `passport_assets` | N/A | Guarded by catalog media action | N/A | Published asset copies are retained |
+| Document | Archive/restore document records; versions are immutable | Supported | Not exposed | Supported | Published document asset copies are retained |
+
+### Dependency matrix
+
+| Entity | Dependency | Blocking/Cascade/Retain | Reason |
+| --- | --- | --- | --- |
+| Category | Child category | Block | Prevent invalid `parent_id` and accidental tree deletion |
+| Category | Primary product | Block | Product category reference must be reassigned first |
+| Category | Additional product assignment | Block | Pivot links are not silently removed |
+| Product | Variants / attributes / media / documents / passport | Retain via archive | Product deletion must not destroy editable or published passport history |
+| Variant | Default relation | Block archive | Prevent invalid `products.default_variant_id` |
+| Attribute | Active/draft Product values | Block | Avoid orphan or silently nulled values on visible catalog data |
+| Attribute | Active/draft Variant values | Block | Avoid orphan or silently nulled values on visible catalog data |
+| Attribute | Options | Cascade only after definition is proven unused | Options belong exclusively to the unused definition |
+| Media | Published snapshot | Retain copied asset | Public passport must not 404 because catalog media changed |
+| Document | Published snapshot | Retain copied asset | Public passport must not 404 because source document changed |
+
+### Implemented deletion fixes
+
+| Problem | Data-loss risk | Fix | Test |
+| --- | --- | --- | --- |
+| Category delete actions existed but routes/controllers were not connected | Users could not perform guarded delete consistently | Added single and bulk category delete routes/controllers | `CategoryDeleteTest` |
+| Category bulk delete allowed partial success | User could delete clean records while other requested records were blocked | Bulk category delete is now atomic | `CategoryDeleteTest` |
+| Attribute delete action called a missing exception factory | Blocking a used attribute could crash | Added `AttributeOperationException::blocked()` | `AttributeDeleteTest` |
+| Attribute delete actions existed but routes/controllers were not connected | Users could not perform guarded delete consistently | Added single and bulk attribute delete routes/controllers | `AttributeDeleteTest` |
+| Attribute bulk delete allowed partial success | User could delete clean records while other requested records were blocked | Bulk attribute delete is now atomic | `AttributeDeleteTest` |
+| Attribute delete counted values from archived Products | Users who deleted Products could still be blocked by hidden archived Product values | Attribute delete now blocks only active/draft Product and Variant usage; archived-only values are cleaned before delete | `AttributeDeleteTest` |
+| Product bulk-destroy route expected by tests was absent | Bulk product removal workflow unavailable | Added route/controller that archives products instead of hard deleting | `ProductBulkArchiveTest` |
+| Product single delete route/button was absent | Users could only archive from detail or bulk workflow | Added single row `DELETE /catalog/products/{product}` wired to safe archive action | `ProductBulkArchiveTest`, `ProductUiTest` |
+
 ## Verification
 
 Static verification completed:

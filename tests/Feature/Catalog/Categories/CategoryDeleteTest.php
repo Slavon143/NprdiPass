@@ -79,7 +79,7 @@ test('authorized user can bulk delete empty categories', function () {
         ->and(Category::withTrashed()->find($c2->id)?->trashed())->toBeTrue();
 });
 
-test('bulk delete does partial: deletes clean, blocks blocked', function () {
+test('bulk delete is atomic: clean category is not deleted when another category is blocked', function () {
     [$actor, $company] = catDelContext();
     $clean = catDelCategory($actor, $company, 'Clean Category');
     $parent = catDelCategory($actor, $company, 'Parent Category');
@@ -90,10 +90,9 @@ test('bulk delete does partial: deletes clean, blocks blocked', function () {
     ]);
 
     $response->assertRedirect();
-    $response->assertSessionHas('success');
     $response->assertSessionHas('error');
 
-    expect(Category::withTrashed()->find($clean->id)?->trashed())->toBeTrue()
+    expect(Category::find($clean->id))->not->toBeNull()
         ->and(Category::find($parent->id))->not->toBeNull();
 });
 

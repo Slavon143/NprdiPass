@@ -43,6 +43,11 @@ class AttributeOperationException extends DomainException
         return new self('attribute_field_immutable', $field, $message);
     }
 
+    public static function blocked(string $message): self
+    {
+        return new self('attribute_delete_blocked', 'attribute', $message);
+    }
+
     public function render(Request $request): Response
     {
         if ($request->expectsJson()) {

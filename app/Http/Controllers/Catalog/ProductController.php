@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Catalog;
 
+use App\Actions\Catalog\Lifecycle\ArchiveProductAction;
+use App\Actions\Catalog\Lifecycle\BulkArchiveProductsAction;
 use App\Actions\Catalog\Products\CreateProductAction;
 use App\Actions\Catalog\Products\UpdateProductAction;
 use App\Data\Catalog\Search\CatalogProductSearchCriteria;
@@ -12,6 +14,7 @@ use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Catalog\Products\BulkArchiveProductsRequest;
 use App\Http\Requests\Catalog\Products\StoreProductRequest;
 use App\Http\Requests\Catalog\Products\UpdateProductRequest;
 use App\Http\Requests\Catalog\Search\SearchProductsRequest;
@@ -68,6 +71,7 @@ class ProductController extends Controller
             'passportSummaries' => $passportSummaries,
             'canCreate' => $request->user()?->can('create', [Product::class, $company]) === true,
             'canUpdate' => $request->user()?->can(CompanyPermission::CatalogUpdate->value, $company) === true,
+            'canArchive' => $request->user()?->can(CompanyPermission::CatalogArchive->value, $company) === true,
             'canManagePassports' => $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true,
         ]);
     }
@@ -208,6 +212,44 @@ class ProductController extends Controller
 
         return redirect()->route('catalog.products.show', $updated->uuid)
             ->with('success', 'Product updated.');
+    }
+
+    public function bulkDestroy(
+        BulkArchiveProductsRequest $request,
+        CurrentCompany $currentCompany,
+        BulkArchiveProductsAction $action,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+
+        $archived = $action->execute(
+            $this->actor($request),
+            $company,
+            $request->validated('products'),
+        );
+
+        $query = $request->query();
+
+        return redirect()
+            ->route('catalog.products.index', $query)
+            ->with('success', trans_choice(':count product archived.|:count products archived.', count($archived), [
+                'count' => count($archived),
+            ]));
+    }
+
+    public function destroy(
+        Request $request,
+        CurrentCompany $currentCompany,
+        ArchiveProductAction $action,
+        string $product,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+        $product = $this->resolveProduct($company, $product);
+
+        $action->execute($this->actor($request), $company, $product);
+
+        return redirect()
+            ->route('catalog.products.index')
+            ->with('success', __('Product deleted.'));
     }
 
     private function resolveProduct(Company $company, string $uuid): Product

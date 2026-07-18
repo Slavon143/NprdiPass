@@ -88,6 +88,11 @@
                                                     @endif
                                                 @endforeach
                                                 <a href="{{ route('catalog.categories.edit', $category->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Edit') }}</a>
+                                                <form method="POST" action="{{ route('catalog.categories.destroy', $category->uuid) }}" onsubmit="return confirm('{{ __('Delete this category? This is only allowed when it has no children or product assignments.') }}')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
+                                                </form>
                                             </div>
                                         @else
                                             <span class="block text-right text-xs text-slate-400">{{ __('View only') }}</span>

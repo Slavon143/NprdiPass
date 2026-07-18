@@ -383,6 +383,13 @@
                                             @if ($canUpdate && $product->status->value !== 'archived')
                                                 <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
                                             @endif
+                                            @if ($canArchive && $product->status->value !== 'archived')
+                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" onsubmit="return confirm('{{ __('Delete this product? It will be archived and kept for passport history.') }}')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

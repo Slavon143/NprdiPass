@@ -86,7 +86,7 @@ test('authorized user can bulk delete unused attributes', function () {
         ->and(AttributeDefinition::find($a2->id))->toBeNull();
 });
 
-test('bulk delete does partial: deletes clean, blocks used', function () {
+test('bulk delete is atomic: clean attribute is not deleted when another attribute is blocked', function () {
     [$actor, $company] = attrDelContext();
     $clean = attrDelDefinition($actor, $company, 'Clean Attr', 'clean');
     $used = attrDelDefinition($actor, $company, 'Used Attr', 'used');
@@ -95,10 +95,9 @@ test('bulk delete does partial: deletes clean, blocks used', function () {
     $val->forceFill(['company_id' => $company->id, 'product_id' => $p->id, 'attribute_definition_id' => $used->id, 'value_text' => 'x'])->save();
 
     $this->delete(route('catalog.attributes.bulk-destroy'), ['attributes' => [$clean->uuid, $used->uuid]])
-        ->assertSessionHas('success')
         ->assertSessionHas('error');
 
-    expect(AttributeDefinition::find($clean->id))->toBeNull()
+    expect(AttributeDefinition::find($clean->id))->not->toBeNull()
         ->and(AttributeDefinition::find($used->id))->not->toBeNull();
 });
 
@@ -121,6 +120,21 @@ test('single delete blocks attribute with product values', function () {
     expect(AttributeDefinition::find($a->id))->not->toBeNull();
 });
 
+test('single delete allows attribute used only by archived products', function () {
+    [$actor, $company] = attrDelContext();
+    $a = attrDelDefinition($actor, $company, 'Archived Product Used', 'arch_prod');
+    $p = attrDelProduct($company, 'Archived P');
+    $p->forceFill(['status' => ProductStatus::Archived])->save();
+
+    $val = new ProductAttributeValue;
+    $val->forceFill(['company_id' => $company->id, 'product_id' => $p->id, 'attribute_definition_id' => $a->id, 'value_text' => 'x'])->save();
+
+    $this->delete(route('catalog.attributes.destroy', $a->uuid))->assertSessionHas('success');
+
+    expect(AttributeDefinition::find($a->id))->toBeNull()
+        ->and(ProductAttributeValue::query()->whereKey($val->id)->exists())->toBeFalse();
+});
+
 test('bulk delete blocks attribute with variant values', function () {
     [$actor, $company] = attrDelContext();
     $a = attrDelDefinition($actor, $company, 'Var Attr', 'var');
@@ -131,6 +145,24 @@ test('bulk delete blocks attribute with variant values', function () {
 
     $this->delete(route('catalog.attributes.bulk-destroy'), ['attributes' => [$a->uuid]])->assertSessionHas('error');
     expect(AttributeDefinition::find($a->id))->not->toBeNull();
+});
+
+test('bulk delete allows attribute used only by archived product variants', function () {
+    [$actor, $company] = attrDelContext();
+    $a = attrDelDefinition($actor, $company, 'Archived Variant Attr', 'arch_var');
+    $p = attrDelProduct($company, 'Archived VP');
+    $p->forceFill(['status' => ProductStatus::Archived])->save();
+    $v = attrDelVariant($company, $p, 'V1');
+
+    $val = new VariantAttributeValue;
+    $val->forceFill(['company_id' => $company->id, 'product_variant_id' => $v->id, 'attribute_definition_id' => $a->id, 'value_text' => 'x'])->save();
+
+    $this->delete(route('catalog.attributes.bulk-destroy'), ['attributes' => [$a->uuid]])
+        ->assertRedirect(route('catalog.attributes.index'))
+        ->assertSessionHas('success');
+
+    expect(AttributeDefinition::find($a->id))->toBeNull()
+        ->and(VariantAttributeValue::query()->whereKey($val->id)->exists())->toBeFalse();
 });
 
 test('validation rejects empty and invalid', function () {

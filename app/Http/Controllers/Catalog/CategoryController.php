@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Categories\CreateCategoryAction;
+use App\Actions\Catalog\Categories\BulkDeleteCategoriesAction;
+use App\Actions\Catalog\Categories\DeleteCategoryAction;
 use App\Actions\Catalog\Categories\UpdateCategoryAction;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
+use App\Exceptions\Catalog\CategoryOperationException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Catalog\Categories\BulkDeleteCategoriesRequest;
 use App\Http\Requests\Catalog\Categories\StoreCategoryRequest;
 use App\Http\Requests\Catalog\Categories\UpdateCategoryRequest;
 use App\Models\Catalog\Category;
@@ -151,6 +155,48 @@ class CategoryController extends Controller
             ->with('success', 'Category updated.');
     }
 
+    public function destroy(
+        Request $request,
+        CurrentCompany $currentCompany,
+        DeleteCategoryAction $action,
+        string $category,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+        $category = $this->resolveCategory($company, $category);
+
+        try {
+            $action->execute($this->actor($request), $company, $category);
+        } catch (CategoryOperationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('catalog.categories.index')
+            ->with('success', 'Category deleted.');
+    }
+
+    public function bulkDestroy(
+        BulkDeleteCategoriesRequest $request,
+        CurrentCompany $currentCompany,
+        BulkDeleteCategoriesAction $action,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+
+        $result = $action->execute(
+            $this->actor($request),
+            $company,
+            $request->validated('categories'),
+        );
+
+        if ($result['blocked'] !== []) {
+            return back()->with('error', $this->blockedMessage('Deletion blocked.', $result['blocked']));
+        }
+
+        return redirect()->route('catalog.categories.index')
+            ->with('success', trans_choice(':count category deleted.|:count categories deleted.', count($result['deleted']), [
+                'count' => count($result['deleted']),
+            ]));
+    }
+
     private function resolveCategory(Company $company, string $uuid): Category
     {
         return Category::query()->forCompany($company)->where('uuid', $uuid)->firstOrFail();
@@ -167,6 +213,20 @@ class CategoryController extends Controller
         abort_unless($actor instanceof User, 401);
 
         return $actor;
+    }
+
+    /**
+     * @param  list<array{uuid: string, name: string, reason: string}>  $blocked
+     */
+    private function blockedMessage(string $heading, array $blocked): string
+    {
+        $lines = [$heading];
+
+        foreach ($blocked as $item) {
+            $lines[] = "{$item['name']}: {$item['reason']}";
+        }
+
+        return implode("\n", $lines);
     }
 
     private function activeParents(Company $company)
