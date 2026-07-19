@@ -411,7 +411,10 @@ class SnapshotIntegrityTest extends TestCase
             $this->product,
             $passport,
             DppSectionKey::Identity->value,
-            ['public_name' => 'Version 2 Name'],
+            [
+                'public_name' => 'Version 2 Name',
+                'public_description' => 'Version 2 public description.',
+            ],
             $draftRev,
         );
 
@@ -440,7 +443,10 @@ class SnapshotIntegrityTest extends TestCase
             $this->product,
             $passport,
             DppSectionKey::Identity->value,
-            ['public_name' => 'Superseded Test Name'],
+            [
+                'public_name' => 'Superseded Test Name',
+                'public_description' => 'Superseded test public description.',
+            ],
             $draftRev,
         );
 

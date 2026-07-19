@@ -23,6 +23,8 @@ use App\Models\User;
 use App\Queries\Passports\ProductPassportEditorQuery;
 use App\Services\Passports\DppCatalogContextProvider;
 use App\Services\Passports\DppSchemaRegistry;
+use App\Services\Passports\PassportSnapshotBuilder;
+use App\Services\Passports\Public\PublicPassportResolver;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Tenancy\Contracts\CurrentCompany;
@@ -31,11 +33,54 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProductPassportController extends Controller
 {
+    public function preview(
+        Product $product,
+        CurrentCompany $currentCompany,
+        PassportSnapshotBuilder $snapshotBuilder,
+        PublicPassportResolver $resolver,
+        Request $request,
+    ): Response {
+        $company = $this->resolveCompany($currentCompany);
+        $this->assertProductBelongsToCompany($company, $product);
+
+        abort_unless(
+            $request->user()?->can(CompanyPermission::PassportsView->value, [$company]) === true,
+            403,
+        );
+
+        $passport = $this->resolvePassport($product);
+        $passport->loadMissing('currentDraftVersion', 'product');
+        $draft = $passport->currentDraftVersion;
+
+        if ($draft === null) {
+            throw new NotFoundHttpException('No passport draft found.');
+        }
+
+        $payload = $snapshotBuilder->build($draft->payload, $product);
+        $viewModel = $resolver->resolvePreview($passport, $payload, $request->query('lang'));
+
+        return response(
+            view('passports.public.show', [
+                'passport' => $viewModel,
+                'isPreview' => true,
+                'previewProductUuid' => $product->uuid,
+            ])->render(),
+            200,
+            [
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Pragma' => 'no-cache',
+                'X-Content-Type-Options' => 'nosniff',
+                'X-Robots-Tag' => 'noindex, nofollow',
+            ],
+        );
+    }
+
     public function show(
         Product $product,
         CurrentCompany $currentCompany,

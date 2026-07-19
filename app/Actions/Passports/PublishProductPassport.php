@@ -51,6 +51,7 @@ class PublishProductPassport
         private readonly PassportReadinessEvaluator $readinessEvaluator,
         private readonly CanonicalJsonEncoder $canonicalJsonEncoder,
         private readonly PublicationAssetStager $assetStager,
+        private readonly RecordPassportValidationRun $recordValidationRun,
     ) {}
 
     public function handle(
@@ -94,6 +95,12 @@ class PublishProductPassport
                 ->whereKey($passport->getKey())
                 ->lockForUpdate()
                 ->first();
+
+            $product = Product::query()
+                ->forCompany($freshCompany)
+                ->whereKey($product->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
             $draft = $passport->currentDraftVersion;
 
@@ -147,6 +154,31 @@ class PublishProductPassport
                 );
             }
 
+            $validationRun = $this->recordValidationRun->handle(
+                $freshCompany,
+                $passport,
+                $draft,
+                $readinessResult,
+                $actor,
+            );
+
+            $readinessEvidence = [
+                'validation_run_uuid' => $validationRun->uuid,
+                'profile' => $validationRun->profile,
+                'profile_version' => $validationRun->profile_version,
+                'schema_version' => $validationRun->schema_version,
+                'rule_set_version' => $validationRun->rule_set_version,
+                'score_algorithm_version' => $validationRun->score_algorithm_version,
+                'weights' => $validationRun->weights_snapshot,
+                'earned_points' => $validationRun->earned_points,
+                'applicable_points' => $validationRun->applicable_points,
+                'score' => $validationRun->score,
+                'status' => $validationRun->status,
+                'draft_revision' => $validationRun->draft_revision,
+                'source_checksum' => $validationRun->source_checksum,
+                'validated_at' => $validationRun->validated_at->toISOString(),
+            ];
+
             $oldPayload = $draft->payload;
             $oldSchemaVersion = $draft->schema_version;
             $oldRevision = $draft->draft_revision;
@@ -186,6 +218,8 @@ class PublishProductPassport
                 $draft->setAttribute('version_number', $versionNumber);
                 $draft->setAttribute('payload', $snapshot);
                 $draft->setAttribute('content_checksum', $checksum);
+                $draft->setAttribute('validation_run_id', $validationRun->getKey());
+                $draft->setAttribute('readiness_evidence', $readinessEvidence);
                 $draft->setAttribute('published_at', now());
                 $draft->setAttribute('published_by', $actor->getKey());
                 $draft->save();

@@ -6,6 +6,7 @@ readonly class PublicPassportDocument
 {
     public function __construct(
         public string $assetUuid,
+        public string $documentUuid,
         public string $title,
         public string $documentType,
         public string $language,

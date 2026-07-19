@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class NordiPassDemoSeed extends Command
 {
-    protected $signature = 'nordipass:demo:seed {--reset : Remove existing demo data before seeding}';
+    protected $signature = 'nordipass:demo:seed {--reset : Remove existing demo data without seeding}';
 
     protected $description = 'Seed the NordiPass showcase demo dataset (local/testing only)';
 
@@ -20,7 +20,7 @@ class NordiPassDemoSeed extends Command
         }
 
         if ($this->option('reset')) {
-            $this->call(NordiPassDemoReset::class);
+            return $this->call(NordiPassDemoReset::class);
         }
 
         $this->info('Seeding NordiPass showcase demo data...');

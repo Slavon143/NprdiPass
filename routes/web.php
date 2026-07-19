@@ -163,6 +163,7 @@ Route::middleware([
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
 
         Route::get('/{product}/passport/readiness', [PassportReadinessController::class, 'show'])->whereUuid('product')->name('passport.readiness');
+        Route::get('/{product}/passport/preview', [ProductPassportController::class, 'preview'])->whereUuid('product')->name('passport.preview');
         Route::get('/{product}/passport/publish-confirm', [PassportPublicationController::class, 'publishConfirm'])->whereUuid('product')->name('passport.publish-confirm');
         Route::post('/{product}/passport/publish', [PassportPublicationController::class, 'publish'])->whereUuid('product')->name('passport.publish');
         Route::post('/{product}/passport/unpublish', [PassportPublicationController::class, 'unpublish'])->whereUuid('product')->name('passport.unpublish');

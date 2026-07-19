@@ -25,10 +25,6 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE category_product ADD CONSTRAINT category_product_company_product_foreign FOREIGN KEY (company_id, product_id) REFERENCES products(company_id, id) ON DELETE CASCADE');
         DB::statement('ALTER TABLE category_product ADD CONSTRAINT category_product_company_category_foreign FOREIGN KEY (company_id, category_id) REFERENCES categories(company_id, id) ON DELETE CASCADE');
     }

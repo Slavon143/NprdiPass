@@ -38,15 +38,16 @@ class BulkUpdateProductStatusesAction
             'failed' => [],
         ];
 
+        if ($products->count() !== count($uuids)) {
+            $result['failed'][] = 'One or more selected products are unavailable.';
+
+            return $result;
+        }
+
         foreach ($uuids as $uuid) {
             $product = $products->get($uuid);
 
-            if (! $product instanceof Product) {
-                $result['failed'][] = "Unknown product {$uuid}.";
-
-                continue;
-            }
-
+            /** @var Product $product */
             $this->apply($actor, $company, $product, $operation, $result);
         }
 

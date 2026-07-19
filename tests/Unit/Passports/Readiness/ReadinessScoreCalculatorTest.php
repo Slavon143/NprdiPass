@@ -7,6 +7,7 @@ use App\Enums\Passports\Readiness\ReadinessRuleGroup;
 use App\Enums\Passports\Readiness\ReadinessRuleStatus;
 use App\Enums\Passports\Readiness\ReadinessSeverity;
 use App\Services\Passports\Readiness\ReadinessScoreCalculator;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class ReadinessScoreCalculatorTest extends TestCase
@@ -175,5 +176,42 @@ class ReadinessScoreCalculatorTest extends TestCase
 
         $this->assertSame($expected, $score);
         $this->assertSame(77, $score);
+    }
+
+    public function test_score_and_breakdown_are_independent_of_rule_order(): void
+    {
+        $rules = [
+            $this->makeRule('a', ReadinessRuleGroup::Catalog, ReadinessSeverity::Blocker, ReadinessRuleStatus::Passed),
+            $this->makeRule('b', ReadinessRuleGroup::Safety, ReadinessSeverity::Warning, ReadinessRuleStatus::Failed),
+            $this->makeRule('c', ReadinessRuleGroup::Support, ReadinessSeverity::Recommendation, ReadinessRuleStatus::NotApplicable),
+        ];
+
+        $forward = $this->calculator->breakdown($rules);
+        $reverse = $this->calculator->breakdown(array_reverse($rules));
+
+        $this->assertSame($forward->toArray(), $reverse->toArray());
+        $this->assertSame(10, $forward->earnedPoints);
+        $this->assertSame(13, $forward->applicablePoints);
+    }
+
+    public function test_duplicate_rule_codes_are_rejected_instead_of_counted_twice(): void
+    {
+        $rule = $this->makeRule('duplicate', ReadinessRuleGroup::Catalog, ReadinessSeverity::Blocker, ReadinessRuleStatus::Passed);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Duplicate readiness rule code: duplicate.');
+
+        $this->calculator->calculate([$rule, $rule]);
+    }
+
+    public function test_missing_or_invalid_weight_is_rejected(): void
+    {
+        config()->set('passport_readiness.score_weights.warning', 0);
+        $rule = $this->makeRule('warning', ReadinessRuleGroup::Safety, ReadinessSeverity::Warning, ReadinessRuleStatus::Passed);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Readiness score weight for warning must be a positive integer.');
+
+        $this->calculator->calculate([$rule]);
     }
 }

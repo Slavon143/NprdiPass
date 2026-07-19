@@ -61,6 +61,41 @@ test('show page has back button', function () {
         ->assertSee('Back to products', false);
 });
 
+test('product list open and edit links carry the current filter context', function () {
+    [$actor, $company] = backContext();
+    $product = backProduct($actor, $company);
+    $returnUrl = route('catalog.products.index', [
+        'q' => 'Back Test',
+        'sort' => 'name',
+        'direction' => 'asc',
+    ]);
+
+    $html = html_entity_decode($this->get($returnUrl)->assertOk()->getContent());
+
+    foreach (['catalog.products.show', 'catalog.products.edit'] as $routeName) {
+        $targetUrl = route($routeName, $product->uuid);
+        $matched = preg_match(
+            '/href="'.preg_quote($targetUrl, '/').'\?([^\"]+)"/',
+            $html,
+            $matches,
+        );
+
+        expect($matched)->toBe(1);
+        parse_str($matches[1], $targetQuery);
+        expect($targetQuery)->toHaveKey('return');
+
+        $actualReturn = parse_url((string) $targetQuery['return']);
+        $expectedReturn = parse_url($returnUrl);
+        parse_str((string) ($actualReturn['query'] ?? ''), $actualQuery);
+        parse_str((string) ($expectedReturn['query'] ?? ''), $expectedQuery);
+        ksort($actualQuery);
+        ksort($expectedQuery);
+
+        expect($actualReturn['path'] ?? null)->toBe($expectedReturn['path'] ?? null)
+            ->and($actualQuery)->toBe($expectedQuery);
+    }
+});
+
 test('edit page has back button', function () {
     [$actor, $company] = backContext();
     $product = backProduct($actor, $company);

@@ -11,6 +11,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BulkArchiveProductsAction
 {
@@ -34,6 +35,12 @@ class BulkArchiveProductsAction
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('uuid');
+
+            if ($locked->count() !== count($uuids)) {
+                throw ValidationException::withMessages([
+                    'products' => [__('One or more selected products are unavailable.')],
+                ]);
+            }
 
             $archivedUuids = [];
 

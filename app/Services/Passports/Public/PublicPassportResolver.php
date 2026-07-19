@@ -34,7 +34,50 @@ class PublicPassportResolver
             throw new NotFoundHttpException('No published version found.');
         }
 
-        $payload = $version->payload;
+        return $this->resolvePayload(
+            passport: $passport,
+            payload: $version->payload,
+            requestedLocale: $requestedLocale,
+            versionNumber: $version->version_number ?? 0,
+            publishedAt: $version->published_at?->toIso8601ZuluString() ?? '',
+            snapshotChecksum: $version->content_checksum ?? '',
+        );
+    }
+
+    /**
+     * Build the public representation from the current mutable draft without
+     * making it publicly addressable or creating publication assets.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function resolvePreview(
+        ProductPassport $passport,
+        array $payload,
+        ?string $requestedLocale = null,
+    ): PublicPassportViewModel {
+        $passport->loadMissing('product');
+
+        return $this->resolvePayload(
+            passport: $passport,
+            payload: $payload,
+            requestedLocale: $requestedLocale,
+            versionNumber: 0,
+            publishedAt: '',
+            snapshotChecksum: hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR)),
+            preview: true,
+        );
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    private function resolvePayload(
+        ProductPassport $passport,
+        array $payload,
+        ?string $requestedLocale,
+        int $versionNumber,
+        string $publishedAt,
+        string $snapshotChecksum,
+        bool $preview = false,
+    ): PublicPassportViewModel {
 
         $catalogContext = $payload['_catalog_context'] ?? [];
         $product = $catalogContext['product'] ?? [];
@@ -59,12 +102,14 @@ class PublicPassportResolver
             : 'Product Passport';
         $metaDescription = $this->buildMetaDescription($sectionData, $product);
 
-        $canonicalUrl = url("p/{$publicId}");
+        $canonicalUrl = $preview
+            ? route('catalog.products.passport.preview', ['product' => $passport->product->uuid])
+            : url("p/{$passport->public_id}");
         $localizedUrl = $canonicalUrl.($effectiveLocale !== $defaultLanguage ? "?lang={$effectiveLocale}" : '');
         $ogImageUrl = null;
 
-        if ($media !== []) {
-            $ogImageUrl = url("p/{$publicId}/media/{$media[0]->mediaUuid}");
+        if ($media !== [] && ! $preview) {
+            $ogImageUrl = url("p/{$passport->public_id}/media/{$media[0]->mediaUuid}");
         }
 
         $jsonLd = $this->buildJsonLd(
@@ -89,10 +134,10 @@ class PublicPassportResolver
 
         return new PublicPassportViewModel(
             passportPublicId: $passport->public_id,
-            versionNumber: $version->version_number ?? 0,
-            publishedAt: $version->published_at?->toIso8601ZuluString() ?? '',
+            versionNumber: $versionNumber,
+            publishedAt: $publishedAt,
             defaultLanguage: $defaultLanguage,
-            snapshotChecksum: $version->content_checksum ?? '',
+            snapshotChecksum: $snapshotChecksum,
             productName: $productName,
             productBrand: $product['brand'] ?? null,
             productManufacturer: $product['manufacturer'] ?? null,
@@ -184,11 +229,9 @@ class PublicPassportResolver
                 continue;
             }
 
-            if (is_string($key) && str_ends_with($key, '_url') && is_string($value) && $this->isInternalUrl($value)) {
-                $section[$key] = null;
-            }
-
-            if (is_string($key) && str_ends_with($key, '_website') && is_string($value) && $this->isInternalUrl($value)) {
+            if ((str_ends_with($key, '_url') || str_ends_with($key, '_website'))
+                && is_string($value)
+                && $this->isInternalUrl($value)) {
                 $section[$key] = null;
             }
         }
@@ -296,6 +339,7 @@ class PublicPassportResolver
 
             $documents[] = new PublicPassportDocument(
                 assetUuid: $item['asset_uuid'] ?? $item['version_uuid'] ?? '',
+                documentUuid: $item['document_uuid'] ?? '',
                 title: $item['title'] ?? '',
                 documentType: $item['document_type'] ?? '',
                 language: $item['language'] ?? '',

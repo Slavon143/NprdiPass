@@ -28,10 +28,6 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE attribute_options ADD CONSTRAINT attr_options_company_definition_foreign FOREIGN KEY (company_id, attribute_definition_id) REFERENCES attribute_definitions(company_id, id) ON DELETE CASCADE');
         DB::statement("ALTER TABLE attribute_options ADD CONSTRAINT attr_options_status_check CHECK (status IN ('active', 'archived'))");
         DB::statement('ALTER TABLE attribute_options ADD CONSTRAINT attr_options_sort_order_check CHECK (sort_order >= 0)');

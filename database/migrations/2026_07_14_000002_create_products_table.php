@@ -49,10 +49,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE products ADD CONSTRAINT products_status_check CHECK (status IN ('draft', 'active', 'archived'))");
     }
 

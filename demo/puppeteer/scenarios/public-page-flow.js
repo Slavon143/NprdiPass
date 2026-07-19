@@ -50,7 +50,7 @@ export async function verifyPublicPage(page, publicUrl, report, recordStep) {
     }
 
     const hasDocuments = await page.$(
-      'a[href*="pdf"], a[href*="document"], .document-list, [class*="document"]'
+      'a[href*="/documents/"], a[href*="pdf"], .document-list, [class*="document"]'
     );
     if (hasDocuments) {
       contentFound.push('documents');
@@ -66,7 +66,8 @@ export async function verifyPublicPage(page, publicUrl, report, recordStep) {
       throw new Error('Public page requires authentication');
     }
 
-    const verified = contentFound.length >= 3;
+    const requiredContent = ['name', 'image', 'description', 'manufacturer', 'no_admin_elements', 'documents'];
+    const verified = requiredContent.every((item) => contentFound.includes(item));
 
     await recordStep(report, 'Verify public passport page', verified ? 'passed' : 'failed', {
       verified,
@@ -74,6 +75,10 @@ export async function verifyPublicPage(page, publicUrl, report, recordStep) {
       publicUrl,
       requiresAuth,
     });
+
+    if (!verified) {
+      throw new Error(`Public passport verification found only: ${contentFound.join(', ')}`);
+    }
 
     return { verified, contentFound };
   } catch (error) {

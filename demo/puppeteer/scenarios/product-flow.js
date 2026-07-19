@@ -10,6 +10,8 @@ export async function createProduct(page, report, recordStep) {
     await navigateToUrl(page, '/catalog/products/create');
     await waitForPageReady(page);
     await fillField(page, '#name', productData.name);
+    const slug = await page.$('#slug');
+    if (slug) await fillField(page, '#slug', `nordisafe-work-jacket-pro-${RUN_ID.toLowerCase()}`);
     await fillField(page, '#short_description', productData.shortDescription);
 
     const desc = await page.$('#description');
@@ -34,7 +36,12 @@ export async function createProduct(page, report, recordStep) {
     console.log(`  Product URL: ${url}`);
     const m = url.match(/\/products\/([^/?#]+)/);
     const uuid = m ? m[1] : null;
-    if (!uuid) throw new Error(`No UUID in URL: ${url}`);
+    if (!uuid || uuid === 'create') {
+      const errors = await page.$$eval('[role="alert"], .text-red-600, .text-red-700', (elements) =>
+        elements.map((element) => element.textContent.trim()).filter(Boolean)
+      );
+      throw new Error(`Product creation did not leave the create form: ${errors.join(' | ') || url}`);
+    }
 
     recordStep(report, 'Create product', 'passed', { createdItem: 'product', productName: productData.name, productUuid: uuid });
     return { productUuid: uuid, productName: productData.name };

@@ -145,7 +145,7 @@
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4">
-                                        <x-badge :tone="match ($membership->user->status->value) { 'active' => 'emerald', 'suspended' => 'red', default => 'amber' }">
+                                        <x-badge :tone="match ($membership->user->status->value) { 'active' => 'emerald', 'suspended' => 'red', default => 'amber' }" data-user-status="{{ $membership->user->status->value }}">
                                             {{ __(ucfirst($membership->user->status->value)) }}
                                         </x-badge>
                                     </td>

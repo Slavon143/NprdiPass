@@ -38,6 +38,10 @@ class BulkArchiveCategoriesAction
                 ->get()
                 ->keyBy('uuid');
 
+            if ($allCategories->count() !== count($uuids)) {
+                throw CategoryOperationException::archiveBlocked('One or more selected categories are unavailable.');
+            }
+
             $categoryIds = $allCategories->pluck('id')->all();
 
             $activeChildren = Category::query()

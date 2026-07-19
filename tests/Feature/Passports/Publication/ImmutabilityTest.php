@@ -18,10 +18,12 @@ use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\CompanyMembership;
+use App\Models\Passports\PassportValidationRun;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Passports\Readiness\PassportReadinessRuleRegistry;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -314,5 +316,49 @@ class ImmutabilityTest extends TestCase
         );
 
         $this->assertNotNull($version->superseded_at);
+    }
+
+    public function test_published_version_carries_reproducible_readiness_evidence(): void
+    {
+        $version = $this->publishedVersion->fresh(['validationRun.results']);
+
+        $this->assertNotNull($version->validationRun);
+        $this->assertSame($version->validation_run_id, $version->validationRun->getKey());
+        $this->assertSame($version->readiness_evidence['validation_run_uuid'], $version->validationRun->uuid);
+        $this->assertSame($version->draft_revision, $version->validationRun->draft_revision);
+        $this->assertSame($version->readiness_evidence['score'], $version->validationRun->score);
+        $this->assertSame(64, strlen($version->validationRun->source_checksum));
+        $this->assertCount(count(app(PassportReadinessRuleRegistry::class)->all()), $version->validationRun->results);
+    }
+
+    public function test_validation_run_and_results_are_database_immutable(): void
+    {
+        $run = PassportValidationRun::query()->findOrFail($this->publishedVersion->validation_run_id);
+
+        try {
+            DB::table('passport_validation_runs')->where('id', $run->getKey())->update(['score' => 0]);
+            $this->fail('Validation run update should have been rejected.');
+        } catch (QueryException) {
+            $this->assertSame($run->score, $run->fresh()->score);
+        }
+
+        $this->expectException(QueryException::class);
+        DB::table('passport_validation_results')
+            ->where('validation_run_id', $run->getKey())
+            ->limit(1)
+            ->update(['status' => 'failed']);
+    }
+
+    public function test_published_readiness_evidence_cannot_be_changed_during_supersede(): void
+    {
+        $this->expectException(QueryException::class);
+
+        DB::table('product_passport_versions')
+            ->where('id', $this->publishedVersion->getKey())
+            ->update([
+                'status' => ProductPassportVersionStatus::Superseded->value,
+                'superseded_at' => now(),
+                'readiness_evidence' => json_encode(['tampered' => true], JSON_THROW_ON_ERROR),
+            ]);
     }
 }

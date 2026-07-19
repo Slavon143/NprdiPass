@@ -45,10 +45,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE categories ADD CONSTRAINT categories_company_parent_foreign FOREIGN KEY (company_id, parent_id) REFERENCES categories(company_id, id) ON DELETE RESTRICT');
         DB::statement('ALTER TABLE categories ADD CONSTRAINT categories_depth_check CHECK (depth >= 0 AND depth <= 5)');
         DB::statement("ALTER TABLE categories ADD CONSTRAINT categories_status_check CHECK (status IN ('active', 'archived'))");
@@ -77,10 +73,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::unprepared('DROP TRIGGER IF EXISTS categories_prevent_self_parent_update');
-            DB::unprepared('DROP TRIGGER IF EXISTS categories_prevent_self_parent_insert');
-        }
+        DB::unprepared('DROP TRIGGER IF EXISTS categories_prevent_self_parent_update');
+        DB::unprepared('DROP TRIGGER IF EXISTS categories_prevent_self_parent_insert');
 
         Schema::dropIfExists('categories');
     }

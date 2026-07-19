@@ -209,7 +209,7 @@ class ProductIndexPassportOverviewQueryTest extends TestCase
             'product_id' => $product->getKey(),
             'status' => ProductPassportStatus::Draft,
             'default_language' => 'sv',
-            'enabled_languages' => json_encode(['sv', 'en']),
+            'enabled_languages' => ['sv', 'en'],
             'created_by' => $this->owner->getKey(),
             'created_at' => now(),
             'updated_at' => now(),

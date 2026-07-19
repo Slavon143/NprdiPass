@@ -307,7 +307,10 @@ class PublicPassportSnapshotIsolationTest extends TestCase
             $this->product,
             $passport,
             DppSectionKey::Identity->value,
-            ['public_name' => 'Version 2 Name'],
+            [
+                'public_name' => 'Version 2 Name',
+                'public_description' => 'V2 description.',
+            ],
             $draftRev,
         );
 

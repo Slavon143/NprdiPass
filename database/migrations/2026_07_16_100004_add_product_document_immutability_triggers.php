@@ -7,10 +7,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::unprepared('
             CREATE TRIGGER product_documents_prevent_identity_update
             BEFORE UPDATE ON product_documents
@@ -49,10 +45,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::unprepared('DROP TRIGGER IF EXISTS product_documents_prevent_identity_update');
         DB::unprepared('DROP TRIGGER IF EXISTS product_document_versions_prevent_update');
         DB::unprepared('DROP TRIGGER IF EXISTS product_document_versions_prevent_delete');

@@ -36,7 +36,7 @@ class ProductPassportFactory extends Factory
             ])->id,
             'status' => ProductPassportStatus::Draft,
             'default_language' => 'sv',
-            'enabled_languages' => json_encode(['sv', 'en']),
+            'enabled_languages' => ['sv', 'en'],
             'created_by' => User::factory(),
         ];
     }

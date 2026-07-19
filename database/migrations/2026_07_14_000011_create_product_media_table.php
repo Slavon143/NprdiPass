@@ -49,10 +49,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE product_media ADD CONSTRAINT media_company_product_foreign FOREIGN KEY (company_id, product_id) REFERENCES products(company_id, id) ON DELETE CASCADE');
         DB::statement('ALTER TABLE product_media ADD CONSTRAINT media_company_product_variant_foreign FOREIGN KEY (company_id, product_id, product_variant_id) REFERENCES product_variants(company_id, product_id, id) ON DELETE RESTRICT');
         DB::statement('ALTER TABLE product_media ADD CONSTRAINT media_size_check CHECK (size_bytes >= 0)');

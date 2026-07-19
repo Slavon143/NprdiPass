@@ -5,8 +5,6 @@ namespace App\Actions\Catalog\Attributes;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
-use App\Enums\Catalog\ProductStatus;
-use App\Enums\Catalog\ProductVariantStatus;
 use App\Enums\CompanyPermission;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Models\Catalog\AttributeDefinition;
@@ -63,7 +61,6 @@ class DeleteAttributeAction
             })
             ->where('values.company_id', $company->getKey())
             ->where('values.attribute_definition_id', $definition->getKey())
-            ->where('products.status', '!=', ProductStatus::Archived->value)
             ->distinct()
             ->count('products.id');
 
@@ -78,8 +75,6 @@ class DeleteAttributeAction
             })
             ->where('values.company_id', $company->getKey())
             ->where('values.attribute_definition_id', $definition->getKey())
-            ->where('variants.status', '!=', ProductVariantStatus::Archived->value)
-            ->where('products.status', '!=', ProductStatus::Archived->value)
             ->distinct()
             ->count('variants.id');
 
@@ -87,11 +82,11 @@ class DeleteAttributeAction
             $parts = [];
 
             if ($productCount > 0) {
-                $parts[] = trans_choice(':count active product|:count active products', $productCount, ['count' => $productCount]);
+                $parts[] = trans_choice(':count product|:count products', $productCount, ['count' => $productCount]);
             }
 
             if ($variantCount > 0) {
-                $parts[] = trans_choice(':count active variant|:count active variants', $variantCount, ['count' => $variantCount]);
+                $parts[] = trans_choice(':count variant|:count variants', $variantCount, ['count' => $variantCount]);
             }
 
             throw AttributeOperationException::blocked(

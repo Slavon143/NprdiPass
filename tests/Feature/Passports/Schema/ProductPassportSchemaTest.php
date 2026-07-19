@@ -73,6 +73,18 @@ test('all passport unique constraints exist', function () {
     );
 });
 
+test('enabled languages must be a non-empty JSON array containing the default language', function () {
+    $checks = collect(DB::select(<<<'SQL'
+        SELECT CONSTRAINT_NAME
+        FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'product_passports'
+          AND CONSTRAINT_TYPE = 'CHECK'
+        SQL))->pluck('CONSTRAINT_NAME');
+
+    expect($checks)->toContain('product_passports_enabled_languages_check');
+});
+
 test('all version unique constraints exist', function () {
     $indexes = DB::select('SHOW INDEX FROM product_passport_versions');
 

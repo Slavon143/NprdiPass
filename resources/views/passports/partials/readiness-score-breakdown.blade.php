@@ -1,35 +1,13 @@
 @props(['readiness'])
 
 @php
-    $weights = config('passport_readiness.score_weights', []);
-    $passedPoints = 0;
-    $failedPointsBySeverity = [
-        'blocker' => 0,
-        'warning' => 0,
-        'recommendation' => 0,
-    ];
+    $breakdown = app(\App\Services\Passports\Readiness\ReadinessScoreCalculator::class)->breakdown($readiness->rules);
     $rulePresenter = app(\App\Support\Passports\ReadinessRulePresenter::class);
     $failedRules = [];
 
     foreach ($readiness->rules as $rule) {
-        if ($rule->status->value === 'not_applicable') {
-            continue;
-        }
-
-        $weight = (int) ($weights[$rule->severity->value] ?? 0);
-
-        if ($rule->status->value === 'passed') {
-            $passedPoints += $weight;
-
-            continue;
-        }
-
-        $failedPointsBySeverity[$rule->severity->value] = ($failedPointsBySeverity[$rule->severity->value] ?? 0) + $weight;
-        $failedRules[] = $rule;
+        if ($rule->status->value === 'failed') $failedRules[] = $rule;
     }
-
-    $failedPoints = array_sum($failedPointsBySeverity);
-    $totalPoints = $passedPoints + $failedPoints;
 @endphp
 
 <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
@@ -37,28 +15,32 @@
 
     <p class="mt-1 text-slate-600">
         Score is weighted readiness, not a simple rule count:
-        <span class="font-mono">{{ $passedPoints }}</span> passed points /
-        <span class="font-mono">{{ $totalPoints }}</span> applicable points =
+        <span class="font-mono">{{ $breakdown->earnedPoints }}</span> earned points /
+        <span class="font-mono">{{ $breakdown->applicablePoints }}</span> applicable points =
         <span class="font-semibold">{{ $readiness->score }}%</span>.
         Not applicable rules are excluded.
     </p>
 
     <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded border border-green-200 bg-green-50 px-3 py-2">
-            <div class="text-xs font-semibold uppercase text-green-700">Passed</div>
-            <div class="font-mono text-green-900">{{ $passedPoints }}</div>
+            <div class="text-xs font-semibold uppercase text-green-700">Passed rules / readiness points earned</div>
+            <div class="text-xs text-green-800">{{ $readiness->counts->passed }} passed rules</div>
+            <div class="font-mono text-green-900">{{ $breakdown->earnedPoints }}</div>
         </div>
         <div class="rounded border border-red-200 bg-red-50 px-3 py-2">
-            <div class="text-xs font-semibold uppercase text-red-700">Blockers (red)</div>
-            <div class="font-mono text-red-900">{{ $failedPointsBySeverity['blocker'] ?? 0 }}</div>
+            <div class="text-xs font-semibold uppercase text-red-700">Failed blocker rules / lost points</div>
+            <div class="text-xs text-red-800">{{ $readiness->counts->blockers }} failed rules</div>
+            <div class="font-mono text-red-900">{{ $breakdown->failedPointsBySeverity['blocker'] }}</div>
         </div>
         <div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
-            <div class="text-xs font-semibold uppercase text-amber-700">Warnings (yellow)</div>
-            <div class="font-mono text-amber-900">{{ $failedPointsBySeverity['warning'] ?? 0 }}</div>
+            <div class="text-xs font-semibold uppercase text-amber-700">Failed warning rules / lost points</div>
+            <div class="text-xs text-amber-800">{{ $readiness->counts->warnings }} failed rules</div>
+            <div class="font-mono text-amber-900">{{ $breakdown->failedPointsBySeverity['warning'] }}</div>
         </div>
         <div class="rounded border border-blue-200 bg-blue-50 px-3 py-2">
-            <div class="text-xs font-semibold uppercase text-blue-700">Recommendations (blue)</div>
-            <div class="font-mono text-blue-900">{{ $failedPointsBySeverity['recommendation'] ?? 0 }}</div>
+            <div class="text-xs font-semibold uppercase text-blue-700">Failed recommendation rules / lost points</div>
+            <div class="text-xs text-blue-800">{{ $readiness->counts->recommendations }} failed rules</div>
+            <div class="font-mono text-blue-900">{{ $breakdown->failedPointsBySeverity['recommendation'] }}</div>
         </div>
     </div>
 

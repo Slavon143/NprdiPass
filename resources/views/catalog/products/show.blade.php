@@ -7,6 +7,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div><p class="text-sm font-medium text-indigo-600">{{ __('Catalog') }}</p><h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ $product->name }}</h1><p class="mt-1 font-mono text-xs text-slate-500">{{ $product->slug }}</p></div>
             <div class="flex items-center gap-3">
+                <a href="{{ $productIndexReturnUrl }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Back to products') }}</a>
                 @php
                     $statusTone = match ($productStatus) {
                         'active' => 'emerald',
@@ -16,7 +17,7 @@
                 @endphp
                 <x-badge :tone="$statusTone">{{ ucfirst($productStatus) }}</x-badge>
                 @if ($canUpdate)
-                    <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit product') }}</a>
+                    <a href="{{ route('catalog.products.edit', ['product' => $product->uuid, 'return' => $productIndexReturnUrl]) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Edit product') }}</a>
                 @endif
             </div>
         </div>
@@ -69,7 +70,7 @@
                         };
                     };
                 ?>
-                @if($productStatus === 'draft' && $readiness->blockers !== [])
+                @if($readiness->blockers !== [])
                     <div class="mt-5">
                         <h3 class="text-sm font-semibold text-red-800">{{ __('Blockers') }}</h3>
                         <ul class="mt-2 space-y-2">
@@ -81,7 +82,7 @@
                         </ul>
                     </div>
                 @endif
-                @if($productStatus === 'draft' && $readiness->warnings !== [])
+                @if($readiness->warnings !== [])
                     <div class="mt-5">
                         <h3 class="text-sm font-semibold text-amber-800">{{ __('Warnings') }}</h3>
                         <ul class="mt-2 space-y-2">

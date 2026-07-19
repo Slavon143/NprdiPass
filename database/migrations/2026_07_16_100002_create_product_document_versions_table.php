@@ -41,10 +41,6 @@ return new class extends Migration
             $table->foreign('created_by_user_id')->references('id')->on('users')->onDelete('restrict');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE product_document_versions ADD CONSTRAINT product_document_versions_company_document_fk FOREIGN KEY (company_id, document_id) REFERENCES product_documents(company_id, id) ON DELETE RESTRICT');
 
         DB::statement("ALTER TABLE product_document_versions ADD CONSTRAINT product_document_versions_type_check CHECK (document_type IN ('instruction','declaration_of_conformity','certificate','safety_data_sheet','warranty','technical_data_sheet','recycling_guide','other'))");

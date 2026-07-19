@@ -156,6 +156,12 @@
                     </div>
 
                     <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
+                        @if($currentDraft)
+                            <a href="{{ route('catalog.products.passport.preview', $product->uuid) }}" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-amber-400 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50">
+                                {{ __('Preview draft') }}
+                            </a>
+                        @endif
+
                         @if($canManage)
                             <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
                                 {{ __('Edit draft') }}

@@ -48,7 +48,7 @@ function makeTestPassport(): ProductPassport
         'product_id' => $product->id,
         'status' => ProductPassportStatus::Draft,
         'default_language' => 'sv',
-        'enabled_languages' => json_encode(['sv', 'en']),
+        'enabled_languages' => ['sv', 'en'],
         'created_by' => User::factory()->create()->id,
         'created_at' => now(),
         'updated_at' => now(),

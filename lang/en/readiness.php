@@ -417,10 +417,10 @@ return [
         'failed' => 'Some certificates have no expiration date. Add an expiry date when the certificate has one.',
     ],
     'certificates.declaration_present' => [
-        'title' => 'Declaration of Conformity',
+        'title' => 'Declaration of Conformity present',
         'message' => 'A Declaration of Conformity has been linked.',
         'passed' => 'A Declaration of Conformity has been linked.',
-        'failed' => 'No Declaration of Conformity document is linked. Upload or mark the correct document type in Product Documents.',
+        'failed' => 'No Declaration of Conformity has been linked. Upload or mark the correct document type in Product Documents.',
     ],
 
     // ──────────────────────────────────────────────

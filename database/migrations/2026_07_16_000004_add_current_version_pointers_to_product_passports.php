@@ -14,10 +14,6 @@ return new class extends Migration
             $table->unsignedBigInteger('current_published_version_id')->nullable()->after('current_draft_version_id');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE product_passports ADD INDEX product_passports_published_version_pointer_index (company_id, id, current_published_version_id)');
         DB::statement('ALTER TABLE product_passports ADD INDEX product_passports_draft_version_pointer_index (company_id, id, current_draft_version_id)');
 
@@ -29,22 +25,15 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement('ALTER TABLE product_passports DROP CHECK product_passports_pointers_distinct_check');
+        DB::statement('ALTER TABLE product_passports DROP CHECK product_passports_pointers_distinct_check');
 
-            Schema::table('product_passports', function (Blueprint $table): void {
-                $table->dropForeign('product_passports_published_version_pointer_foreign');
-                $table->dropForeign('product_passports_draft_version_pointer_foreign');
-                $table->dropIndex('product_passports_published_version_pointer_index');
-                $table->dropIndex('product_passports_draft_version_pointer_index');
-                $table->dropColumn('current_published_version_id');
-                $table->dropColumn('current_draft_version_id');
-            });
-        } else {
-            Schema::table('product_passports', function (Blueprint $table): void {
-                $table->dropColumn('current_published_version_id');
-                $table->dropColumn('current_draft_version_id');
-            });
-        }
+        Schema::table('product_passports', function (Blueprint $table): void {
+            $table->dropForeign('product_passports_published_version_pointer_foreign');
+            $table->dropForeign('product_passports_draft_version_pointer_foreign');
+            $table->dropIndex('product_passports_published_version_pointer_index');
+            $table->dropIndex('product_passports_draft_version_pointer_index');
+            $table->dropColumn('current_published_version_id');
+            $table->dropColumn('current_draft_version_id');
+        });
     }
 };

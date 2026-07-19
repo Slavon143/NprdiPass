@@ -111,7 +111,7 @@ async function main() {
       recordStep(report, 'documents', 'passed', docResult);
 
       await showCaption(CAPTIONS.PUBLISH);
-      const pubResult = await publishProduct(page, productUuid, report, recordStep);
+      const pubResult = await publishProduct(page, productUuid, docResult.documents, report, recordStep);
       recordStep(report, 'publishing', 'passed', pubResult);
 
       if (pubResult.publicUrl) {
@@ -120,7 +120,7 @@ async function main() {
         const incognitoPage = await incognitoContext.newPage();
         const publicResult = await verifyPublicPage(incognitoPage, pubResult.publicUrl, report, recordStep);
         await incognitoContext.close();
-        recordStep(report, 'publicPage', 'passed', publicResult);
+        recordStep(report, 'publicPage', publicResult.verified ? 'passed' : 'failed', publicResult);
       }
 
       console.log('\n  Checking audit log...');
@@ -184,6 +184,10 @@ async function main() {
     process.exitCode = 1;
   } finally {
     await finalizeReport(report, './output');
+
+    if (report.steps.some((step) => step.status === 'failed')) {
+      process.exitCode = 1;
+    }
 
     if (browser) {
       await closeBrowser(browser);

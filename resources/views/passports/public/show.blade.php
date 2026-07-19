@@ -9,7 +9,7 @@
         @endphp
         <div class="md:col-span-1">
             @if($primaryMedia !== null)
-                <img src="{{ route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $primaryMedia->mediaUuid]) }}"
+                <img src="{{ ($isPreview ?? false) ? route('catalog.media.content', $primaryMedia->mediaUuid) : route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $primaryMedia->mediaUuid]) }}"
                      alt="{{ $primaryMedia->altText ?? $passport->productName }}"
                      class="w-full rounded-lg object-cover aspect-square"
                      loading="eager"
@@ -50,7 +50,9 @@
         @foreach($passport->enabledLocales as $locale)
             @php
                 $isActive = ($passport->requestedLocale ?? $passport->defaultLanguage) === $locale;
-                $localeUrl = url('p/'.$passport->passportPublicId.($locale !== $passport->defaultLanguage ? '?lang='.$locale : ''));
+                $localeUrl = ($isPreview ?? false)
+                    ? route('catalog.products.passport.preview', ['product' => $previewProductUuid, 'lang' => $locale])
+                    : url('p/'.$passport->passportPublicId.($locale !== $passport->defaultLanguage ? '?lang='.$locale : ''));
             @endphp
             <a href="{{ $localeUrl }}"
                @class([
@@ -80,10 +82,10 @@
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             @foreach($passport->media as $index => $mediaItem)
                 @if($index === 0) @continue @endif
-                <a href="{{ route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $mediaItem->mediaUuid]) }}"
+                <a href="{{ ($isPreview ?? false) ? route('catalog.media.content', $mediaItem->mediaUuid) : route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $mediaItem->mediaUuid]) }}"
                    target="_blank" rel="noopener"
                    class="block">
-                    <img src="{{ route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $mediaItem->mediaUuid]) }}"
+                    <img src="{{ ($isPreview ?? false) ? route('catalog.media.content', $mediaItem->mediaUuid) : route('public.passports.media.show', ['publicId' => $passport->passportPublicId, 'asset' => $mediaItem->mediaUuid]) }}"
                          alt="{{ $mediaItem->altText ?? $passport->productName }}"
                          class="w-full rounded-lg object-cover aspect-square"
                          loading="lazy">
@@ -109,7 +111,7 @@
         @if($passport->manufacturerDisplayName !== null)
             <div class="quick-fact"><dt>Manufacturer</dt><dd>{{ $passport->manufacturerDisplayName }}</dd></div>
         @endif
-        <div class="quick-fact"><dt>Passport Version</dt><dd>Version {{ $passport->versionNumber }}</dd></div>
+        <div class="quick-fact"><dt>Passport Version</dt><dd>{{ ($isPreview ?? false) ? 'Draft preview' : 'Version '.$passport->versionNumber }}</dd></div>
         @if($passport->publishedAt !== '')
             @php
                 $pubDate = \Carbon\CarbonImmutable::parse($passport->publishedAt);

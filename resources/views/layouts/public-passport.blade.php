@@ -9,7 +9,9 @@
     <meta name="description" content="{{ $passport->metaDescription }}">
     @endif
 
+    @unless($isPreview ?? false)
     <link rel="canonical" href="{{ $passport->canonicalUrl }}">
+    @endunless
 
     <meta property="og:title" content="{{ $passport->pageTitle }}">
     @if($passport->metaDescription !== '')
@@ -27,16 +29,18 @@
     <meta name="twitter:description" content="{{ $passport->metaDescription }}">
     @endif
 
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ ($isPreview ?? false) ? 'noindex, nofollow' : 'index, follow' }}">
 
-    @if(isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
+    @if(!($isPreview ?? false) && isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
         @foreach($passport->enabledLocales as $locale)
             <link rel="alternate" hreflang="{{ $locale }}" href="{{ url('p/'.$passport->passportPublicId.'?lang='.$locale) }}">
         @endforeach
         <link rel="alternate" hreflang="x-default" href="{{ url('p/'.$passport->passportPublicId) }}">
     @endif
 
+    @unless($isPreview ?? false)
     <script type="application/ld+json">{!! $passport->jsonLd !!}</script>
+    @endunless
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
@@ -73,6 +77,12 @@
     </header>
 
     <main id="main-content" class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 pb-16">
+        @if($isPreview ?? false)
+            <div class="mb-6 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+                <div class="font-semibold">Draft preview — not public</div>
+                <div>This is generated from the current mutable draft. Publishing will create an immutable version after a fresh readiness check.</div>
+            </div>
+        @endif
         @yield('content')
     </main>
 

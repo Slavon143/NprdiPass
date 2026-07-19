@@ -133,7 +133,7 @@ test('single delete works for empty category', function () {
     expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
 });
 
-test('single delete ignores archived primary products', function () {
+test('single delete blocks archived primary products to preserve restore integrity', function () {
     [$actor, $company] = catDelContext();
     $cat = catDelCategory($actor, $company, 'Archived Primary Cat');
     $product = catDelProduct($company, 'Archived Primary Product', $cat->id);
@@ -142,11 +142,11 @@ test('single delete ignores archived primary products', function () {
     $response = $this->delete(route('catalog.categories.destroy', $cat->uuid));
 
     $response->assertRedirect();
-    $response->assertSessionHas('success');
-    expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
+    $response->assertSessionHas('error');
+    expect(Category::find($cat->id))->not->toBeNull();
 });
 
-test('bulk delete ignores archived assigned products', function () {
+test('bulk delete blocks archived assigned products to preserve restore integrity', function () {
     [$actor, $company] = catDelContext();
     $cat = catDelCategory($actor, $company, 'Archived Assigned Cat');
     $product = catDelProduct($company, 'Archived Assigned Product', $cat->id, [$cat->id]);
@@ -157,8 +157,8 @@ test('bulk delete ignores archived assigned products', function () {
     ]);
 
     $response->assertRedirect();
-    $response->assertSessionHas('success');
-    expect(Category::withTrashed()->find($cat->id)?->trashed())->toBeTrue();
+    $response->assertSessionHas('error');
+    expect(Category::find($cat->id))->not->toBeNull();
 });
 
 test('single delete blocks category with children', function () {
@@ -206,9 +206,10 @@ test('foreign company categories not deleted', function () {
     $foreign = catDelCategory($actor, $foreignCompany, 'Foreign');
     app(CurrentCompany::class)->set($company);
 
-    $this->delete(route('catalog.categories.bulk-destroy'), ['categories' => [$owned->uuid, $foreign->uuid]]);
+    $this->delete(route('catalog.categories.bulk-destroy'), ['categories' => [$owned->uuid, $foreign->uuid]])
+        ->assertSessionHas('error');
 
-    expect(Category::withTrashed()->find($owned->id)?->trashed())->toBeTrue()
+    expect(Category::find($owned->id))->not->toBeNull()
         ->and(Category::find($foreign->id))->not->toBeNull();
 });
 

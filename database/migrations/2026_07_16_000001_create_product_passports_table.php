@@ -36,10 +36,6 @@ return new class extends Migration
             $table->index(['company_id', 'created_at'], 'product_passports_company_created_index');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE product_passports ADD CONSTRAINT product_passports_status_check CHECK (status IN ('draft', 'published', 'unpublished', 'archived'))");
         DB::statement("ALTER TABLE product_passports ADD CONSTRAINT product_passports_default_language_check CHECK (default_language REGEXP '^[a-z]{2}$')");
         DB::statement("ALTER TABLE product_passports ADD CONSTRAINT product_passports_public_id_format_check CHECK (public_id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')");
@@ -68,9 +64,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::unprepared('DROP TRIGGER IF EXISTS product_passports_prevent_identity_update');
-        }
+        DB::unprepared('DROP TRIGGER IF EXISTS product_passports_prevent_identity_update');
 
         Schema::dropIfExists('product_passports');
     }

@@ -11,9 +11,9 @@
   ],
   "images": ["product-front.jpg", "product-back.jpg", "product-detail.jpg", "product-packaging.jpg"],
   "documents": [
-    { "title": "Product manual", "type": "manual", "language": "en", "visibility": "passport_public", "file": "product-manual.pdf" },
-    { "title": "Declaration of conformity", "type": "compliance", "language": "en", "visibility": "passport_public", "file": "declaration-of-conformity.pdf" },
-    { "title": "Care instructions", "type": "instructions", "language": "en", "visibility": "passport_public", "file": "care-instructions.pdf" }
+    { "title": "Product manual", "type": "technical_data_sheet", "language": "en", "visibility": "passport_public", "file": "product-manual.pdf" },
+    { "title": "Declaration of conformity", "type": "declaration_of_conformity", "language": "en", "visibility": "passport_public", "issuerName": "NordiSafe AB", "issueDate": "2026-07-01", "expiresAt": "2029-07-01", "file": "declaration-of-conformity.pdf" },
+    { "title": "Care instructions", "type": "instruction", "language": "en", "visibility": "passport_public", "file": "care-instructions.pdf" }
   ],
   "passport": {
     "manufacturer": "NordiSafe AB",

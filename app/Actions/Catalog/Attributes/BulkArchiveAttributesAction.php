@@ -11,6 +11,7 @@ use App\Models\Catalog\AttributeDefinition;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BulkArchiveAttributesAction
 {
@@ -34,6 +35,12 @@ class BulkArchiveAttributesAction
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('uuid');
+
+            if ($locked->count() !== count($uuids)) {
+                throw ValidationException::withMessages([
+                    'attributes' => ['One or more selected attributes are unavailable.'],
+                ]);
+            }
 
             $archivedUuids = [];
 

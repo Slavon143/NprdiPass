@@ -6,18 +6,21 @@
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ __('Edit product') }}</h1>
                 <p class="mt-1 text-sm text-slate-500">{{ $product->name }}</p>
             </div>
-            @php($statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' })
-            <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
+            <div class="flex items-center gap-3">
+                <a href="{{ $productIndexReturnUrl }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Back to products') }}</a>
+                @php($statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' })
+                <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
+            </div>
         </div>
     </x-slot>
 
     <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:px-8">
-        <form method="POST" action="{{ route('catalog.products.update', $product->uuid) }}" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <form method="POST" action="{{ route('catalog.products.update', ['product' => $product->uuid, 'return' => $productIndexReturnUrl]) }}" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             @csrf
             @method('PATCH')
             @include('catalog.products._form')
             <div class="flex items-center justify-end gap-3 border-t border-slate-200 pt-5">
-                <a href="{{ route('catalog.products.show', $product->uuid) }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900">{{ __('Cancel') }}</a>
+                <a href="{{ route('catalog.products.show', ['product' => $product->uuid, 'return' => $productIndexReturnUrl]) }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900">{{ __('Cancel') }}</a>
                 <x-primary-button>{{ __('Save product') }}</x-primary-button>
             </div>
         </form>

@@ -128,6 +128,44 @@ class DppWebTest extends TestCase
             ->assertOk();
     }
 
+    public function test_authenticated_draft_preview_is_rendered_without_publishing(): void
+    {
+        $passport = $this->createDraftPassport($this->product);
+
+        $response = $this->get(route('catalog.products.passport.preview', ['product' => $this->product->uuid]));
+
+        $response
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertSee('Draft preview — not public')
+            ->assertSee($this->product->name);
+
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+
+        $this->get(route('public.passports.show', ['publicId' => $passport->public_id]))
+            ->assertNotFound();
+    }
+
+    public function test_draft_preview_is_company_scoped(): void
+    {
+        $foreignCompany = Company::factory()->create(['status' => CompanyStatus::Active]);
+        $foreignProduct = new Product;
+        $foreignProduct->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $foreignCompany->getKey(),
+            'name' => 'Foreign preview product',
+            'slug' => 'foreign-preview-product',
+            'slug_normalized' => 'foreign-preview-product',
+            'status' => ProductStatus::Active,
+            'created_by' => $this->actor->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $this->get(route('catalog.products.passport.preview', ['product' => $foreignProduct->uuid]))
+            ->assertNotFound();
+    }
+
     public function test_owner_can_access_editor(): void
     {
         $this->createDraftPassport($this->product);

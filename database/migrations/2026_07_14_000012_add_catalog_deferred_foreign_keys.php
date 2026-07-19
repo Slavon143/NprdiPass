@@ -8,10 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         Schema::table('products', function (Blueprint $table): void {
             $table->index(
                 ['company_id', 'id', 'default_variant_id'],
@@ -42,10 +38,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         Schema::table('product_variants', function (Blueprint $table): void {
             $table->dropForeign('variants_primary_media_foreign');
             $table->dropIndex('variants_company_product_id_primary_media_index');

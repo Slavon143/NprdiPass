@@ -36,6 +36,7 @@ use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ProductIndexReadinessProvider;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Support\Catalog\AttributeValueFormatter;
+use App\Support\Catalog\ProductIndexReturnUrl;
 use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
@@ -115,6 +116,7 @@ class ProductController extends Controller
         ProductActivationReadinessService $readinessService,
         ReadinessContextBuilder $passportContextBuilder,
         PassportReadinessEvaluator $passportEvaluator,
+        ProductIndexReturnUrl $productIndexReturnUrl,
         string $product,
     ): View {
         $company = $currentCompany->require();
@@ -174,11 +176,16 @@ class ProductController extends Controller
             'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),
             'attributeFormatter' => $attributeFormatter,
+            'productIndexReturnUrl' => $productIndexReturnUrl->resolve($request->query('return')),
         ]);
     }
 
-    public function edit(Request $request, CurrentCompany $currentCompany, string $product): View
-    {
+    public function edit(
+        Request $request,
+        CurrentCompany $currentCompany,
+        ProductIndexReturnUrl $productIndexReturnUrl,
+        string $product,
+    ): View {
         $company = $currentCompany->require();
         $product = $this->resolveProduct($company, $product);
         $this->authorize('update', $product);
@@ -192,6 +199,7 @@ class ProductController extends Controller
                 ->reject(fn (Category $category): bool => $category->is($product->primaryCategory))
                 ->pluck('uuid')
                 ->all(),
+            'productIndexReturnUrl' => $productIndexReturnUrl->resolve($request->query('return')),
         ]);
     }
 
@@ -199,6 +207,7 @@ class ProductController extends Controller
         UpdateProductRequest $request,
         CurrentCompany $currentCompany,
         UpdateProductAction $action,
+        ProductIndexReturnUrl $productIndexReturnUrl,
         string $product,
     ): RedirectResponse {
         $company = $currentCompany->require();
@@ -213,7 +222,13 @@ class ProductController extends Controller
             $this->categoryUuids($validated),
         );
 
-        return redirect()->route('catalog.products.show', $updated->uuid)
+        $routeParameters = ['product' => $updated->uuid];
+
+        if (is_string($request->query('return')) && $request->query('return') !== '') {
+            $routeParameters['return'] = $productIndexReturnUrl->resolve($request->query('return'));
+        }
+
+        return redirect()->route('catalog.products.show', $routeParameters)
             ->with('success', 'Product updated.');
     }
 

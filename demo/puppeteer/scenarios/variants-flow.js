@@ -22,6 +22,20 @@ export async function createVariants(page, productUuid, report, recordStep) {
       if (skuEl) await fillField(page, '#sku', `NS-WJ-DEMO-${v.size}-${RUN_ID}`);
 
       await submitForm(page);
+
+      if (created.length === 0) {
+        const setDefaultBtn = await page.$('button::-p-text("Set as default")');
+        if (!setDefaultBtn) {
+          throw new Error('The first created variant cannot be selected as the default variant');
+        }
+
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}),
+          setDefaultBtn.click(),
+        ]);
+        await waitForPageReady(page);
+      }
+
       created.push({ name: v.name, size: v.size });
       recordStep(report, `Create variant "${v.size}"`, 'passed', {
         createdItem: 'variant', variantName: v.name, variantSize: v.size,

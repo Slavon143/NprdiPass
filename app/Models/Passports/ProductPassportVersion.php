@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $schema_version
  * @property array $payload
  * @property string|null $content_checksum
+ * @property int|null $validation_run_id
+ * @property array|null $readiness_evidence
  * @property CarbonImmutable|null $published_at
  * @property int|null $published_by
  * @property CarbonImmutable|null $superseded_at
@@ -40,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read User|null $publisher
  * @property-read User|null $creator
  * @property-read User|null $updater
+ * @property-read PassportValidationRun|null $validationRun
  */
 class ProductPassportVersion extends Model
 {
@@ -71,6 +74,7 @@ class ProductPassportVersion extends Model
             'version_number' => 'integer',
             'draft_revision' => 'integer',
             'payload' => 'array',
+            'readiness_evidence' => 'array',
             'published_at' => 'immutable_datetime',
             'superseded_at' => 'immutable_datetime',
             'withdrawn_at' => 'immutable_datetime',
@@ -90,6 +94,11 @@ class ProductPassportVersion extends Model
     public function assets(): HasMany
     {
         return $this->hasMany(ProductPassportAsset::class, 'version_id');
+    }
+
+    public function validationRun(): BelongsTo
+    {
+        return $this->belongsTo(PassportValidationRun::class, 'validation_run_id');
     }
 
     public function publisher(): BelongsTo

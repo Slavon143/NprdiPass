@@ -66,11 +66,12 @@ use App\Services\Passports\Readiness\Rules\PassportPayloadValid;
 use App\Services\Passports\Readiness\Rules\PassportRevisionValid;
 use App\Services\Passports\Readiness\Rules\PassportSchemaSupported;
 use App\Services\Passports\Readiness\Rules\PassportStatusEditable;
-use App\Services\Passports\Readiness\Rules\PassportTranslationCompletenessRule;
 
 return [
     'profile' => 'nordipass-pilot',
     'profile_version' => 1,
+    'rule_set_version' => 1,
+    'score_algorithm_version' => 1,
 
     'score_weights' => [
         'blocker' => 10,

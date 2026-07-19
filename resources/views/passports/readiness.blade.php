@@ -68,17 +68,18 @@
         </div>
 
         {{-- Profile & Passport Info --}}
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold mb-4">Profile &amp; Version Info</h2>
-            <div class="grid grid-cols-2 gap-4 text-sm">
+        <details class="rounded-lg bg-white shadow">
+            <summary class="cursor-pointer p-6 text-lg font-semibold">Technical details</summary>
+            <div class="grid grid-cols-1 gap-4 border-t border-slate-100 px-6 pb-6 pt-4 text-sm sm:grid-cols-2">
                 <div><strong>Profile:</strong> {{ $readiness->profile }}</div>
                 <div><strong>Profile Version:</strong> {{ $readiness->profileVersion }}</div>
                 <div><strong>Schema Version:</strong> {{ $readiness->schemaVersion }}</div>
                 <div><strong>Passport UUID:</strong> {{ $readiness->passportUuid }}</div>
                 <div><strong>Draft Version UUID:</strong> {{ $readiness->draftVersionUuid ?? 'N/A' }}</div>
                 <div><strong>Passport Revision:</strong> {{ $readiness->passportRevision }}</div>
+                <div><strong>Evaluated at:</strong> {{ $readiness->evaluatedAt->toISOString() }}</div>
             </div>
-        </div>
+        </details>
 
         {{-- Counts Summary --}}
         <div class="bg-white shadow rounded-lg p-6">
@@ -99,10 +100,30 @@
             foreach ($readiness->rules as $rule) {
                 $rulesByGroup[$rule->group->value][] = $rule;
             }
+
+            $ruleSections = [
+                ['title' => 'Needs attention', 'status' => 'failed', 'count' => $readiness->counts->blockers + $readiness->counts->warnings + $readiness->counts->recommendations, 'open' => true],
+                ['title' => 'Passed', 'status' => 'passed', 'count' => $readiness->counts->passed, 'open' => false],
+                ['title' => 'Not applicable', 'status' => 'not_applicable', 'count' => $readiness->counts->notApplicable, 'open' => false],
+            ];
         @endphp
 
-        @foreach ($rulesByGroup as $group => $rules)
+        @foreach ($ruleSections as $ruleSection)
+        <details class="rounded-lg border border-slate-200 bg-white shadow" @if($ruleSection['open']) open @endif>
+            <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg p-5 hover:bg-slate-50">
+                <h2 class="text-lg font-semibold text-slate-900">{{ $ruleSection['title'] }}</h2>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">{{ $ruleSection['count'] }} rules</span>
+            </summary>
+            <div class="space-y-3 border-t border-slate-100 p-4">
+        @foreach ($rulesByGroup as $group => $allGroupRules)
         @php
+            $rules = array_values(array_filter(
+                $allGroupRules,
+                fn ($rule) => $rule->status->value === $ruleSection['status'],
+            ));
+
+            if ($rules === []) continue;
+
             $groupCounts = [
                 'blocker' => 0,
                 'warning' => 0,
@@ -121,7 +142,7 @@
                 }
             }
         @endphp
-        <details class="group rounded-lg bg-white shadow" open>
+        <details class="group rounded-lg border border-slate-200 bg-white" @if($ruleSection['status'] === 'failed') open @endif>
             <summary class="flex cursor-pointer list-none flex-col gap-3 rounded-lg p-4 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-base font-semibold text-slate-900">{{ $rulePresenter->groupLabel($group) }}</h2>
@@ -145,11 +166,15 @@
                 <div class="rounded-lg border p-3 {{ $rulePresenter->cardTone($rule) }}">
                     <div class="flex items-start justify-between gap-2">
                         <p class="text-sm font-semibold leading-5 text-slate-900">{{ $titleText }}</p>
-                        <span title="{{ $rulePresenter->statusHelp($rule) }}" class="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $rulePresenter->statusTone($rule) }}">
-                            {{ $rulePresenter->statusLabel($rule) }}
-                        </span>
+                        <span title="{{ $rulePresenter->statusHelp($rule) }}" class="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $rulePresenter->statusTone($rule) }}">{{ $rulePresenter->resultLabel($rule) }}</span>
                     </div>
                     <p class="mt-1 text-xs leading-5 text-slate-600">{{ $msgText }}</p>
+                    <dl class="mt-2 grid gap-1 text-[11px] text-slate-600">
+                        <div><dt class="inline font-semibold">{{ __('Source:') }}</dt> <dd class="inline">{{ $rulePresenter->groupLabel($rule->group) }}</dd></div>
+                        <div><dt class="inline font-semibold">{{ __('Current:') }}</dt> <dd class="inline">{{ $msgText }}</dd></div>
+                        <div><dt class="inline font-semibold">{{ __('Result:') }}</dt> <dd class="inline">{{ $rulePresenter->resultLabel($rule) }}</dd></div>
+                        <div><dt class="inline font-semibold">{{ __('Requirement level:') }}</dt> <dd class="inline">{{ $rulePresenter->requirementLabel($rule) }}</dd></div>
+                    </dl>
 
                     @if ($rule->status->value !== 'passed')
                         <p class="mt-1 text-[11px] leading-4 text-slate-500">{{ $rulePresenter->statusHelp($rule) }}</p>
@@ -162,21 +187,27 @@
                         </a>
                     </div>
                     @endif
+                    @if(config('app.debug'))
+                        <details class="mt-2 text-[11px] text-slate-500">
+                            <summary class="cursor-pointer font-semibold">{{ __('Technical details') }}</summary>
+                            <div class="mt-1 font-mono">{{ $rule->code }}</div>
+                            @if($rule->safeContext !== [])<pre class="mt-1 overflow-auto whitespace-pre-wrap">{{ json_encode($rule->safeContext, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>@endif
+                        </details>
+                    @endif
                 </div>
                 @endforeach
+            </div>
+        </details>
+        @endforeach
             </div>
         </details>
         @endforeach
 
         {{-- Legal Disclaimer --}}
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-500">
-            Readiness is operational validation and not legal certification.
+            This is an internal NordiPass readiness score. It is not an official EU score, legal certification, or proof of regulatory compliance.
         </div>
 
-        {{-- Evaluated At --}}
-        <div class="text-xs text-gray-400">
-            Evaluated at: {{ $readiness->evaluatedAt->toISOString() }}
-        </div>
     </div>
 </div>
 </x-app-layout>

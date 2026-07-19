@@ -39,10 +39,6 @@ return new class extends Migration
             $table->unique(['company_id', 'passport_id', 'id'], 'product_passport_versions_company_passport_id_unique');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE product_passport_versions ADD CONSTRAINT product_passport_versions_status_check CHECK (status IN ('draft', 'published', 'superseded', 'withdrawn'))");
         DB::statement('ALTER TABLE product_passport_versions ADD CONSTRAINT product_passport_versions_version_number_check CHECK (version_number IS NULL OR version_number > 0)');
         DB::statement('ALTER TABLE product_passport_versions ADD CONSTRAINT product_passport_versions_draft_revision_check CHECK (draft_revision >= 1)');
@@ -92,10 +88,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::unprepared('DROP TRIGGER IF EXISTS product_passport_versions_prevent_published_delete');
-            DB::unprepared('DROP TRIGGER IF EXISTS product_passport_versions_prevent_published_update');
-        }
+        DB::unprepared('DROP TRIGGER IF EXISTS product_passport_versions_prevent_published_delete');
+        DB::unprepared('DROP TRIGGER IF EXISTS product_passport_versions_prevent_published_update');
 
         Schema::dropIfExists('product_passport_versions');
     }

@@ -55,7 +55,10 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Edit Product Passport: {{ $product->name }}</h1>
-        <a href="{{ route('catalog.products.passport.show', $product->uuid) }}" class="text-blue-600 hover:underline">View Passport</a>
+        <div class="flex items-center gap-4">
+            <a href="{{ route('catalog.products.passport.preview', $product->uuid) }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-amber-700 hover:underline">Preview Draft</a>
+            <a href="{{ route('catalog.products.passport.show', $product->uuid) }}" class="text-blue-600 hover:underline">View Passport</a>
+        </div>
     </div>
 
     {{-- Publication Section --}}

@@ -37,10 +37,6 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE variant_attribute_values ADD CONSTRAINT variant_attr_values_company_variant_foreign FOREIGN KEY (company_id, product_variant_id) REFERENCES product_variants(company_id, id) ON DELETE CASCADE');
         DB::statement('ALTER TABLE variant_attribute_values ADD CONSTRAINT variant_attr_values_company_def_foreign FOREIGN KEY (company_id, attribute_definition_id) REFERENCES attribute_definitions(company_id, id) ON DELETE CASCADE');
         DB::statement('ALTER TABLE variant_attribute_values ADD CONSTRAINT variant_attr_values_company_def_option_foreign FOREIGN KEY (company_id, attribute_definition_id, value_option_id) REFERENCES attribute_options(company_id, attribute_definition_id, id) ON DELETE RESTRICT');

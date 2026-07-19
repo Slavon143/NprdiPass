@@ -305,7 +305,10 @@ class ConcurrencyTest extends TestCase
             $this->product,
             $passport,
             DppSectionKey::Identity->value,
-            ['public_name' => 'Version 2'],
+            [
+                'public_name' => 'Version 2',
+                'public_description' => 'Concurrency test version 2.',
+            ],
             $passport->currentDraftVersion->draft_revision,
         );
 
@@ -323,7 +326,10 @@ class ConcurrencyTest extends TestCase
             $this->product,
             $passport,
             DppSectionKey::Identity->value,
-            ['public_name' => 'Version 3'],
+            [
+                'public_name' => 'Version 3',
+                'public_description' => 'Concurrency test version 3.',
+            ],
             $passport->currentDraftVersion->draft_revision,
         );
 

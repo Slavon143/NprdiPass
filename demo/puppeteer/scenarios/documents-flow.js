@@ -30,6 +30,10 @@ export async function uploadDocuments(page, productUuid, report, recordStep) {
       const vs = await page.$('#visibility');
       if (vs) { try { await page.select('#visibility', doc.visibility); } catch { const o = await page.$$eval('#visibility option', (x) => x.map((y) => y.value)); const p = o.find((y) => y.includes('public')); if (p) await page.select('#visibility', p); } }
 
+      if (doc.issuerName) await fillField(page, '#issuer_name', doc.issuerName);
+      if (doc.issueDate) await fillField(page, '#issue_date', doc.issueDate);
+      if (doc.expiresAt) await fillField(page, '#expires_at', doc.expiresAt);
+
       let fp = path.resolve('./demo/puppeteer/fixtures/documents', doc.file);
       if (!fs.existsSync(fp)) { fp = path.resolve('./demo/puppeteer/output/downloads', doc.file); fs.mkdirSync(path.dirname(fp), { recursive: true }); fs.writeFileSync(fp, MIN_PDF); }
 
@@ -37,8 +41,17 @@ export async function uploadDocuments(page, productUuid, report, recordStep) {
       await inp.uploadFile(fp);
       await submitForm(page);
 
-      uploaded.push({ title: doc.title, type: doc.type });
-      recordStep(report, `Upload document: ${doc.title}`, 'passed', { createdItem: 'document', documentTitle: doc.title });
+      const documentUuid = page.url().match(/\/documents\/([0-9a-f-]{36})(?:$|[/?#])/i)?.[1];
+      if (!documentUuid) {
+        throw new Error(`Document UUID was not present in the post-upload URL: ${page.url()}`);
+      }
+
+      uploaded.push({ title: doc.title, type: doc.type, uuid: documentUuid });
+      recordStep(report, `Upload document: ${doc.title}`, 'passed', {
+        createdItem: 'document',
+        documentTitle: doc.title,
+        documentUuid,
+      });
     } catch (error) {
       console.error(`Document "${doc.title}" failed: ${error.message}`);
       recordStep(report, `Upload document: ${doc.title}`, 'failed', { error: error.message });

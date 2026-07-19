@@ -154,9 +154,30 @@ test('bulk archive does not affect foreign company products', function () {
     ]);
 
     $response->assertRedirect();
+    $response->assertSessionHasErrors('products');
 
-    expect($owned->fresh()?->status)->toBe(ProductStatus::Archived)
+    expect($owned->fresh()?->status)->toBe(ProductStatus::Draft)
         ->and($foreign->fresh()?->status)->toBe(ProductStatus::Draft);
+});
+
+test('bulk status is atomic for a mixed company selection', function () {
+    [$actor, $company] = bulkContext();
+    $owned = bulkProduct($actor, $company, 'Owned Status Product');
+
+    $foreignCompany = Company::factory()->create();
+    CompanyMembership::factory()->owner()->create(['company_id' => $foreignCompany, 'user_id' => $actor]);
+    app(CurrentCompany::class)->set($foreignCompany);
+    $foreign = bulkProduct($actor, $foreignCompany, 'Foreign Status Product');
+    app(CurrentCompany::class)->set($company);
+
+    $this->patch(route('catalog.products.bulk-status'), [
+        'operation' => 'archive',
+        'products' => [$owned->uuid, $foreign->uuid],
+    ])->assertSessionHas('warning', 'One or more selected products are unavailable.');
+
+    expect($owned->fresh()?->status)->toBe(ProductStatus::Draft)
+        ->and($foreign->fresh()?->status)->toBe(ProductStatus::Draft)
+        ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(0);
 });
 
 test('bulk archive fails with empty products array', function () {
@@ -264,10 +285,11 @@ test('bulk archive operation handles nonexistent UUIDs safely', function () {
     ]);
 
     $response->assertRedirect();
+    $response->assertSessionHasErrors('products');
 
-    expect($p1->fresh()?->status)->toBe(ProductStatus::Archived)
-        ->and($p2->fresh()?->status)->toBe(ProductStatus::Archived)
-        ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(2);
+    expect($p1->fresh()?->status)->toBe(ProductStatus::Draft)
+        ->and($p2->fresh()?->status)->toBe(ProductStatus::Draft)
+        ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductArchived->value)->count())->toBe(0);
 });
 
 test('bulk archive preserves filters in redirect', function () {

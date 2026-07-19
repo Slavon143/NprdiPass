@@ -22,11 +22,11 @@ class ReadinessRuleRegistryTest extends TestCase
         $this->registry = new PassportReadinessRuleRegistry;
     }
 
-    public function test_all_64_rules_registered(): void
+    public function test_all_66_rules_registered(): void
     {
         $rules = $this->registry->all();
 
-        $this->assertCount(65, $rules);
+        $this->assertCount(66, $rules);
     }
 
     public function test_all_rule_codes_are_unique(): void
@@ -34,7 +34,7 @@ class ReadinessRuleRegistryTest extends TestCase
         $rules = $this->registry->all();
         $codes = array_map(fn (PassportReadinessRule $rule) => $rule->code(), $rules);
 
-        $this->assertCount(65, $codes, 'Should have 65 rule codes');
+        $this->assertCount(66, $codes, 'Should have 66 rule codes');
         $this->assertSameSize($rules, array_unique($codes), 'All rule codes must be unique');
     }
 
@@ -120,7 +120,7 @@ class ReadinessRuleRegistryTest extends TestCase
         $this->assertArrayHasKey('technical', $groupCounts);
 
         $totalFromGroups = array_sum($groupCounts);
-        $this->assertSame(65, $totalFromGroups);
+        $this->assertSame(66, $totalFromGroups);
     }
 
     public function test_registry_returns_array(): void

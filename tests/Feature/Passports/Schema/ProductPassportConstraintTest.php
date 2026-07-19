@@ -45,7 +45,7 @@ function createTestPassport(Company $company, ?Product $product = null): Product
         'product_id' => $product->id,
         'status' => ProductPassportStatus::Draft,
         'default_language' => 'sv',
-        'enabled_languages' => json_encode(['sv', 'en']),
+        'enabled_languages' => ['sv', 'en'],
         'created_by' => User::factory()->create()->id,
         'created_at' => now(),
         'updated_at' => now(),
@@ -125,6 +125,26 @@ test('invalid passport status rejected', function () {
         'status' => 'invalid_status',
         'default_language' => 'sv',
         'enabled_languages' => json_encode(['sv', 'en']),
+        'created_by' => User::factory()->create()->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+});
+
+test('enabled languages rejects a JSON encoded string instead of an array', function () {
+    $company = Company::factory()->create();
+    $product = createTestProduct($company);
+
+    $this->expectException(QueryException::class);
+
+    DB::table('product_passports')->insert([
+        'uuid' => Uuid::uuid7()->toString(),
+        'public_id' => Uuid::uuid7()->toString(),
+        'company_id' => $company->id,
+        'product_id' => $product->id,
+        'status' => 'draft',
+        'default_language' => 'sv',
+        'enabled_languages' => json_encode(json_encode(['sv', 'en'])),
         'created_by' => User::factory()->create()->id,
         'created_at' => now(),
         'updated_at' => now(),
@@ -418,7 +438,7 @@ test('public_id format — invalid UUID rejected', function () {
         'product_id' => $product->id,
         'status' => ProductPassportStatus::Draft->value,
         'default_language' => 'sv',
-        'enabled_languages' => json_encode(['sv', 'en']),
+        'enabled_languages' => ['sv', 'en'],
         'created_by' => User::factory()->create()->id,
         'created_at' => now(),
         'updated_at' => now(),

@@ -42,6 +42,7 @@ class PassportStatusEditable implements PassportReadinessRule
         }
 
         $passed = $context->passport->status === ProductPassportStatus::Draft
+            || $context->passport->status === ProductPassportStatus::Published
             || $context->passport->status === ProductPassportStatus::Unpublished;
 
         return new ReadinessRuleResult(

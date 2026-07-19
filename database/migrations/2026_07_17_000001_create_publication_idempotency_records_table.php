@@ -38,10 +38,6 @@ return new class extends Migration
             $table->index('expires_at', 'publ_idempotency_expires_index');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE publication_idempotency_records ADD CONSTRAINT publ_idempotency_status_check CHECK (status IN ('processing', 'completed', 'failed'))");
         DB::statement("ALTER TABLE publication_idempotency_records ADD CONSTRAINT publ_idempotency_fingerprint_check CHECK (request_fingerprint REGEXP '^[0-9a-fA-F]{64}$')");
     }

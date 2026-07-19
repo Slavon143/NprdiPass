@@ -49,10 +49,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement('ALTER TABLE product_variants ADD CONSTRAINT variants_company_product_foreign FOREIGN KEY (company_id, product_id) REFERENCES products(company_id, id) ON DELETE CASCADE');
         DB::statement("ALTER TABLE product_variants ADD CONSTRAINT variants_gtin_format_check CHECK (gtin IS NULL OR (gtin REGEXP '^[0-9]+$' AND CHAR_LENGTH(gtin) IN (8, 12, 13, 14)))");
         DB::statement("ALTER TABLE product_variants ADD CONSTRAINT variants_status_check CHECK (status IN ('draft', 'active', 'archived'))");

@@ -5,7 +5,6 @@ namespace App\Actions\Catalog\Categories;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
-use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
@@ -39,6 +38,17 @@ class BulkDeleteCategoriesAction
 
             $ids = $all->pluck('id')->all();
 
+            if ($all->count() !== count($uuids)) {
+                return [
+                    'deleted' => [],
+                    'blocked' => [[
+                        'uuid' => '',
+                        'name' => __('Unavailable selection'),
+                        'reason' => __('One or more selected categories are unavailable.'),
+                    ]],
+                ];
+            }
+
             $childrenByParent = Category::query()
                 ->forCompany($company)
                 ->whereIn('parent_id', $ids)
@@ -50,7 +60,6 @@ class BulkDeleteCategoriesAction
             $primaryProductCounts = Product::query()
                 ->forCompany($company)
                 ->whereIn('primary_category_id', $ids)
-                ->where('status', '!=', ProductStatus::Archived->value)
                 ->whereNull('deleted_at')
                 ->get(['id', 'primary_category_id'])
                 ->groupBy('primary_category_id')
@@ -60,7 +69,6 @@ class BulkDeleteCategoriesAction
                 ->join('products', 'category_product.product_id', '=', 'products.id')
                 ->where('category_product.company_id', $company->getKey())
                 ->whereIn('category_product.category_id', $ids)
-                ->where('products.status', '!=', ProductStatus::Archived->value)
                 ->whereNull('products.deleted_at')
                 ->get(['category_product.category_id'])
                 ->groupBy('category_id')

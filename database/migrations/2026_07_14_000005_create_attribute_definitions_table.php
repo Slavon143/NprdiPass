@@ -47,10 +47,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE attribute_definitions ADD CONSTRAINT attr_defs_type_check CHECK (type IN ('text', 'integer', 'decimal', 'boolean', 'date', 'select', 'multiselect'))");
         DB::statement("ALTER TABLE attribute_definitions ADD CONSTRAINT attr_defs_scope_check CHECK (scope IN ('product', 'variant', 'both'))");
         DB::statement("ALTER TABLE attribute_definitions ADD CONSTRAINT attr_defs_status_check CHECK (status IN ('active', 'archived'))");

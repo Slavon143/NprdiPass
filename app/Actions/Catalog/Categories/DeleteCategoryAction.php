@@ -5,7 +5,6 @@ namespace App\Actions\Catalog\Categories;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
-use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyPermission;
 use App\Exceptions\Catalog\CategoryOperationException;
 use App\Models\Catalog\Category;
@@ -78,7 +77,6 @@ class DeleteCategoryAction
         $products = Product::query()
             ->forCompany($company)
             ->where('primary_category_id', $category->getKey())
-            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereNull('deleted_at')
             ->orderBy('name')
             ->limit(4)
@@ -86,7 +84,6 @@ class DeleteCategoryAction
         $count = Product::query()
             ->forCompany($company)
             ->where('primary_category_id', $category->getKey())
-            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereNull('deleted_at')
             ->count();
 
@@ -106,7 +103,6 @@ class DeleteCategoryAction
         $products = Product::query()
             ->forCompany($company)
             ->whereNull('deleted_at')
-            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereHas('categories', fn ($q) => $q->where('category_id', $category->getKey()))
             ->orderBy('name')
             ->limit(4)
@@ -114,7 +110,6 @@ class DeleteCategoryAction
         $count = Product::query()
             ->forCompany($company)
             ->whereNull('deleted_at')
-            ->where('status', '!=', ProductStatus::Archived->value)
             ->whereHas('categories', fn ($q) => $q->where('category_id', $category->getKey()))
             ->count();
 

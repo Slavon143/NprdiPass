@@ -1,62 +1,17 @@
 {
-  "status": "failed",
-  "startedAt": "2026-07-18T07:32:21.141Z",
-  "finishedAt": "2026-07-18T07:34:40.338Z",
-  "runId": "DEMO-20260718-093220",
+  "status": "passed",
+  "startedAt": "2026-07-19T08:43:51.299Z",
+  "finishedAt": "2026-07-19T08:45:37.115Z",
+  "runId": "DEMO-20260719-104351",
   "company": "NordiPass Demo AB",
-  "productName": null,
+  "productName": "NordiSafe Work Jacket Pro (7250f792-fa54-4038-9451-e7c7e5dabcbf)",
   "steps": [
     {
       "name": "login",
       "status": "passed",
       "details": {
-        "email": "admin@nordipass.local"
+        "email": "demo.owner@nordipass.test"
       }
-    },
-    {
-      "name": "Menu: Dashboard",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Company settings",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Products",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Categories",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Attributes",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Members",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: Audit",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu: API tokens",
-      "status": "passed",
-      "details": null
-    },
-    {
-      "name": "Menu Tour",
-      "status": "passed",
-      "details": null
     },
     {
       "name": "Create root category \"Workwear\"",
@@ -64,7 +19,7 @@
       "details": {
         "createdItem": "category",
         "categoryName": "Workwear",
-        "categorySlug": "workwear-demo-demo-20260718-093220"
+        "categorySlug": "workwear-demo-demo-20260719-104351"
       }
     },
     {
@@ -73,7 +28,7 @@
       "details": {
         "createdItem": "category",
         "categoryName": "Protective Clothing",
-        "categorySlug": "protective-clothing-demo-demo-20260718-093220"
+        "categorySlug": "protective-clothing-demo-demo-20260719-104351"
       }
     },
     {
@@ -82,11 +37,11 @@
       "details": {
         "rootCategory": {
           "name": "Workwear",
-          "slug": "workwear-demo-demo-20260718-093220"
+          "slug": "workwear-demo-demo-20260719-104351"
         },
         "childCategory": {
           "name": "Protective Clothing",
-          "slug": "protective-clothing-demo-demo-20260718-093220"
+          "slug": "protective-clothing-demo-demo-20260719-104351"
         }
       }
     },
@@ -96,7 +51,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Material",
-        "attributeCode": "material_demo_20260718_093220"
+        "attributeCode": "material_demo_20260719_104351"
       }
     },
     {
@@ -105,7 +60,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Size",
-        "attributeCode": "size_demo_20260718_093220"
+        "attributeCode": "size_demo_20260719_104351"
       }
     },
     {
@@ -114,7 +69,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Primary color",
-        "attributeCode": "primary_color_demo_20260718_093220"
+        "attributeCode": "primary_color_demo_20260719_104351"
       }
     },
     {
@@ -123,7 +78,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Water resistance",
-        "attributeCode": "water_resistance_demo_20260718_093220"
+        "attributeCode": "water_resistance_demo_20260719_104351"
       }
     },
     {
@@ -132,7 +87,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Recyclable packaging",
-        "attributeCode": "recyclable_packaging_demo_20260718_093220"
+        "attributeCode": "recyclable_packaging_demo_20260719_104351"
       }
     },
     {
@@ -141,7 +96,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Country of manufacture",
-        "attributeCode": "country_of_manufacture_demo_20260718_093220"
+        "attributeCode": "country_of_manufacture_demo_20260719_104351"
       }
     },
     {
@@ -150,7 +105,7 @@
       "details": {
         "createdItem": "attribute",
         "attributeName": "Warranty",
-        "attributeCode": "warranty_demo_20260718_093220"
+        "attributeCode": "warranty_demo_20260719_104351"
       }
     },
     {
@@ -161,31 +116,31 @@
         "attributes": [
           {
             "name": "Material",
-            "code": "material_demo_20260718_093220"
+            "code": "material_demo_20260719_104351"
           },
           {
             "name": "Size",
-            "code": "size_demo_20260718_093220"
+            "code": "size_demo_20260719_104351"
           },
           {
             "name": "Primary color",
-            "code": "primary_color_demo_20260718_093220"
+            "code": "primary_color_demo_20260719_104351"
           },
           {
             "name": "Water resistance",
-            "code": "water_resistance_demo_20260718_093220"
+            "code": "water_resistance_demo_20260719_104351"
           },
           {
             "name": "Recyclable packaging",
-            "code": "recyclable_packaging_demo_20260718_093220"
+            "code": "recyclable_packaging_demo_20260719_104351"
           },
           {
             "name": "Country of manufacture",
-            "code": "country_of_manufacture_demo_20260718_093220"
+            "code": "country_of_manufacture_demo_20260719_104351"
           },
           {
             "name": "Warranty",
-            "code": "warranty_demo_20260718_093220"
+            "code": "warranty_demo_20260719_104351"
           }
         ]
       }
@@ -196,14 +151,14 @@
       "details": {
         "createdItem": "product",
         "productName": "NordiSafe Work Jacket Pro",
-        "productUuid": "create"
+        "productUuid": "7250f792-fa54-4038-9451-e7c7e5dabcbf"
       }
     },
     {
       "name": "product",
       "status": "passed",
       "details": {
-        "productUuid": "create",
+        "productUuid": "7250f792-fa54-4038-9451-e7c7e5dabcbf",
         "productName": "NordiSafe Work Jacket Pro"
       }
     },
@@ -218,128 +173,231 @@
     },
     {
       "name": "Create variant \"L\"",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Waiting for selector `#name` failed"
+        "createdItem": "variant",
+        "variantName": "NordiSafe Work Jacket Pro — L",
+        "variantSize": "L"
       }
     },
     {
       "name": "Create variant \"XL\"",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "variant",
+        "variantName": "NordiSafe Work Jacket Pro — XL",
+        "variantSize": "XL"
       }
     },
     {
       "name": "variants",
       "status": "passed",
       "details": {
-        "count": 1,
+        "count": 3,
         "variants": [
           {
             "name": "NordiSafe Work Jacket Pro — M",
             "size": "M"
+          },
+          {
+            "name": "NordiSafe Work Jacket Pro — L",
+            "size": "L"
+          },
+          {
+            "name": "NordiSafe Work Jacket Pro — XL",
+            "size": "XL"
           }
         ]
       }
     },
     {
       "name": "Upload image 1/4",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "image",
+        "filename": "product-front.jpg"
       }
     },
     {
       "name": "Upload image 2/4",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "image",
+        "filename": "product-back.jpg"
       }
     },
     {
       "name": "Upload image 3/4",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "image",
+        "filename": "product-detail.jpg"
       }
     },
     {
       "name": "Upload image 4/4",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "image",
+        "filename": "product-packaging.jpg"
       }
     },
     {
       "name": "Set primary image",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "primaryImage": "product-front.jpg"
       }
     },
     {
       "name": "images",
       "status": "passed",
       "details": {
-        "count": 0
+        "count": 4,
+        "primaryImage": "product-front.jpg"
       }
     },
     {
       "name": "Upload document: Product manual",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "document",
+        "documentTitle": "Product manual",
+        "documentUuid": "7a4a3d04-1775-4a32-b873-7dcc6638c8a8"
       }
     },
     {
       "name": "Upload document: Declaration of conformity",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "document",
+        "documentTitle": "Declaration of conformity",
+        "documentUuid": "b26a87bc-a5b1-4b7f-ace8-0f0b8efcc48b"
       }
     },
     {
       "name": "Upload document: Care instructions",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "createdItem": "document",
+        "documentTitle": "Care instructions",
+        "documentUuid": "8b203857-d724-40bd-ace6-4464326fecaf"
       }
     },
     {
       "name": "documents",
       "status": "passed",
       "details": {
-        "count": 0,
-        "documents": []
+        "count": 3,
+        "documents": [
+          {
+            "title": "Product manual",
+            "type": "technical_data_sheet",
+            "uuid": "7a4a3d04-1775-4a32-b873-7dcc6638c8a8"
+          },
+          {
+            "title": "Declaration of conformity",
+            "type": "declaration_of_conformity",
+            "uuid": "b26a87bc-a5b1-4b7f-ace8-0f0b8efcc48b"
+          },
+          {
+            "title": "Care instructions",
+            "type": "instruction",
+            "uuid": "8b203857-d724-40bd-ace6-4464326fecaf"
+          }
+        ]
       }
     },
     {
       "name": "Create passport",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "action": "passport_created"
       }
     },
     {
-      "name": "Fill passport sections",
-      "status": "failed",
+      "name": "Fill section: identity",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "section": "identity"
+      }
+    },
+    {
+      "name": "Fill section: manufacturer_and_operator",
+      "status": "passed",
+      "details": {
+        "section": "manufacturer_and_operator"
+      }
+    },
+    {
+      "name": "Fill section: origin_and_traceability",
+      "status": "passed",
+      "details": {
+        "section": "origin_and_traceability"
+      }
+    },
+    {
+      "name": "Fill section: materials_and_composition",
+      "status": "passed",
+      "details": {
+        "section": "materials_and_composition"
+      }
+    },
+    {
+      "name": "Fill section: safety",
+      "status": "passed",
+      "details": {
+        "section": "safety"
+      }
+    },
+    {
+      "name": "Fill section: repair_and_spare_parts",
+      "status": "passed",
+      "details": {
+        "section": "repair_and_spare_parts"
+      }
+    },
+    {
+      "name": "Fill section: recycling_and_disposal",
+      "status": "passed",
+      "details": {
+        "section": "recycling_and_disposal"
+      }
+    },
+    {
+      "name": "Fill section: certifications_and_documents",
+      "status": "passed",
+      "details": {
+        "section": "certifications_and_documents"
+      }
+    },
+    {
+      "name": "Fill section: support_and_contact",
+      "status": "passed",
+      "details": {
+        "section": "support_and_contact"
+      }
+    },
+    {
+      "name": "Attach documents to passport",
+      "status": "passed",
+      "details": {
+        "count": 3,
+        "draftRevision": 11
       }
     },
     {
       "name": "Publish passport",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "published": true
       }
     },
     {
       "name": "QR code and public URL",
-      "status": "failed",
+      "status": "passed",
       "details": {
-        "error": "Attempted to use detached Frame '21ADCB56A12EA146FBA2D88CFE4917AC'."
+        "publicUrl": "http://127.0.0.1:8766/p/019f798c-b1aa-7121-9e3c-3c84513859b2"
       }
     },
     {
@@ -347,21 +405,60 @@
       "status": "passed",
       "details": {
         "published": true,
-        "publicUrl": "",
-        "publicId": "create"
+        "publicUrl": "http://127.0.0.1:8766/p/019f798c-b1aa-7121-9e3c-3c84513859b2",
+        "publicId": "7250f792-fa54-4038-9451-e7c7e5dabcbf"
+      }
+    },
+    {
+      "name": "Verify public passport page",
+      "status": "passed",
+      "details": {
+        "verified": true,
+        "contentFound": [
+          "name",
+          "image",
+          "description",
+          "manufacturer",
+          "no_admin_elements",
+          "documents"
+        ],
+        "publicUrl": "http://127.0.0.1:8766/p/019f798c-b1aa-7121-9e3c-3c84513859b2",
+        "requiresAuth": false
+      }
+    },
+    {
+      "name": "publicPage",
+      "status": "passed",
+      "details": {
+        "verified": true,
+        "contentFound": [
+          "name",
+          "image",
+          "description",
+          "manufacturer",
+          "no_admin_elements",
+          "documents"
+        ]
+      }
+    },
+    {
+      "name": "auditLog",
+      "status": "passed",
+      "details": {
+        "checked": true
       }
     }
   ],
   "counts": {
-    "total": 42,
-    "passed": 28,
-    "failed": 14,
+    "total": 45,
+    "passed": 45,
+    "failed": 0,
     "skipped": 0,
     "categories": 2,
     "attributes": 7,
     "products": 1,
-    "variants": 1,
-    "images": 0,
-    "documents": 0
+    "variants": 3,
+    "images": 4,
+    "documents": 3
   }
 }

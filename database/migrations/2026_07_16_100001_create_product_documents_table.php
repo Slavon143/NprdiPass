@@ -29,10 +29,6 @@ return new class extends Migration
             $table->foreign('updated_by_user_id')->references('id')->on('users')->onDelete('set null');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE product_documents ADD CONSTRAINT product_documents_status_check CHECK (status IN ('active','archived'))");
 
         DB::statement('ALTER TABLE product_documents ADD CONSTRAINT product_documents_company_product_fk FOREIGN KEY (company_id, product_id) REFERENCES products(company_id, id) ON DELETE RESTRICT');

@@ -37,10 +37,6 @@ return new class extends Migration
             $table->index(['company_id', 'checksum_sha256'], 'product_passport_assets_company_checksum_index');
         });
 
-        if (DB::getDriverName() !== 'mysql') {
-            return;
-        }
-
         DB::statement("ALTER TABLE product_passport_assets ADD CONSTRAINT product_passport_assets_kind_check CHECK (kind IN ('product_media', 'variant_media', 'document'))");
         DB::statement('ALTER TABLE product_passport_assets ADD CONSTRAINT product_passport_assets_size_check CHECK (size_bytes > 0)');
         DB::statement("ALTER TABLE product_passport_assets ADD CONSTRAINT product_passport_assets_checksum_format_check CHECK (checksum_sha256 REGEXP '^[0-9a-fA-F]{64}$')");
@@ -84,10 +80,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::unprepared('DROP TRIGGER IF EXISTS product_passport_assets_prevent_published_delete');
-            DB::unprepared('DROP TRIGGER IF EXISTS product_passport_assets_prevent_update');
-        }
+        DB::unprepared('DROP TRIGGER IF EXISTS product_passport_assets_prevent_published_delete');
+        DB::unprepared('DROP TRIGGER IF EXISTS product_passport_assets_prevent_update');
 
         Schema::dropIfExists('product_passport_assets');
     }

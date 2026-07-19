@@ -5,8 +5,6 @@ namespace App\Actions\Catalog\Attributes;
 use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
-use App\Enums\Catalog\ProductStatus;
-use App\Enums\Catalog\ProductVariantStatus;
 use App\Enums\CompanyPermission;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Company;
@@ -38,6 +36,17 @@ class BulkDeleteAttributesAction
 
             $ids = $all->pluck('id')->all();
 
+            if ($all->count() !== count($uuids)) {
+                return [
+                    'deleted' => [],
+                    'blocked' => [[
+                        'uuid' => '',
+                        'name' => __('Unavailable selection'),
+                        'reason' => __('One or more selected attributes are unavailable.'),
+                    ]],
+                ];
+            }
+
             $productCounts = DB::table('product_attribute_values')
                 ->join('products', function ($join): void {
                     $join->on('products.company_id', '=', 'product_attribute_values.company_id')
@@ -45,10 +54,8 @@ class BulkDeleteAttributesAction
                 })
                 ->where('product_attribute_values.company_id', $company->getKey())
                 ->whereIn('product_attribute_values.attribute_definition_id', $ids)
-                ->where('products.status', '!=', ProductStatus::Archived->value)
                 ->select('product_attribute_values.attribute_definition_id', DB::raw('count(distinct products.id) as aggregate'))
                 ->groupBy('product_attribute_values.attribute_definition_id')
-                ->get()
                 ->pluck('aggregate', 'attribute_definition_id');
 
             $variantCounts = DB::table('variant_attribute_values')
@@ -62,11 +69,8 @@ class BulkDeleteAttributesAction
                 })
                 ->where('variant_attribute_values.company_id', $company->getKey())
                 ->whereIn('variant_attribute_values.attribute_definition_id', $ids)
-                ->where('variants.status', '!=', ProductVariantStatus::Archived->value)
-                ->where('products.status', '!=', ProductStatus::Archived->value)
                 ->select('variant_attribute_values.attribute_definition_id', DB::raw('count(distinct variants.id) as aggregate'))
                 ->groupBy('variant_attribute_values.attribute_definition_id')
-                ->get()
                 ->pluck('aggregate', 'attribute_definition_id');
 
             $deleted = [];
@@ -86,11 +90,11 @@ class BulkDeleteAttributesAction
                     $parts = [];
 
                     if ($productCount > 0) {
-                        $parts[] = trans_choice(':count active product|:count active products', $productCount, ['count' => $productCount]);
+                        $parts[] = trans_choice(':count product|:count products', $productCount, ['count' => $productCount]);
                     }
 
                     if ($variantCount > 0) {
-                        $parts[] = trans_choice(':count active variant|:count active variants', $variantCount, ['count' => $variantCount]);
+                        $parts[] = trans_choice(':count variant|:count variants', $variantCount, ['count' => $variantCount]);
                     }
 
                     $blocked[] = [

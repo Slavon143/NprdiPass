@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Catalog;
 
+use App\Actions\Passports\RecordPassportValidationRun;
+use App\Enums\CompanyPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Catalog\Product;
 use App\Models\User;
@@ -20,6 +22,7 @@ class PassportReadinessController extends Controller
         CurrentCompany $currentCompany,
         ReadinessContextBuilder $builder,
         PassportReadinessEvaluator $evaluator,
+        RecordPassportValidationRun $recordValidationRun,
     ): View {
         $company = $currentCompany->require();
 
@@ -29,9 +32,14 @@ class PassportReadinessController extends Controller
 
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        $this->authorize(CompanyPermission::PassportsView->value, $company);
 
         $context = $builder->build($company, $product);
         $result = $evaluator->evaluate($context);
+
+        if ($context->passport !== null && $context->currentDraft !== null) {
+            $recordValidationRun->handle($company, $context->passport, $context->currentDraft, $result, $actor);
+        }
 
         return view('passports.readiness', [
             'readiness' => $result,

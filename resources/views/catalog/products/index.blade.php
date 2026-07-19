@@ -22,6 +22,7 @@
         $selectedPassportStatuses = $criteria->passportStatuses;
         $needsAttention = $criteria->needsAttention;
         $attributeCriteriaByUuid = collect($criteria->attributeFilters)->keyBy('definitionUuid');
+        $productListReturnUrl = request()->fullUrl();
     ?>
 
     <div id="catalog-products-page" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page">
@@ -431,9 +432,9 @@
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="flex justify-end gap-2">
-                                            <a href="{{ route('catalog.products.show', $product->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Open') }}</a>
+                                            <a href="{{ route('catalog.products.show', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Open') }}</a>
                                             @if ($canUpdate && $product->status->value !== 'archived')
-                                                <a href="{{ route('catalog.products.edit', $product->uuid) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
+                                                <a href="{{ route('catalog.products.edit', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
                                             @endif
                                             @if ($canArchive && $product->status->value !== 'archived')
                                                 <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" data-confirm-title="{{ __('Archive product') }}" data-confirm-message="{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}" data-confirm-action="{{ __('Archive') }}">

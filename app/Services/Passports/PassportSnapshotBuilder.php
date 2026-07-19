@@ -2,6 +2,7 @@
 
 namespace App\Services\Passports;
 
+use App\Enums\Documents\ProductDocumentStatus;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
@@ -110,7 +111,7 @@ class PassportSnapshotBuilder
                         $query
                             ->where('company_id', $product->company_id)
                             ->where('product_id', $product->getKey())
-                            ->active();
+                            ->where('status', ProductDocumentStatus::Active->value);
                     })
                     ->with('document')
                     ->get()

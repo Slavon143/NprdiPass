@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Factories\Passports\ProductPassportFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,7 @@ use Ramsey\Uuid\Uuid;
  * @property-read ProductPassportVersion|null $currentDraftVersion
  * @property-read ProductPassportVersion|null $currentPublishedVersion
  * @property-read Collection<ProductPassportAsset> $assets
+ * @property-read Collection<PassportValidationRun> $validationRuns
  * @property-read User $creator
  * @property-read User|null $updater
  */
@@ -67,12 +69,38 @@ class ProductPassport extends Model
     {
         return [
             'status' => ProductPassportStatus::class,
-            'enabled_languages' => 'array',
             'first_published_at' => 'immutable_datetime',
             'last_published_at' => 'immutable_datetime',
             'unpublished_at' => 'immutable_datetime',
             'archived_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Keep the domain value array-shaped even when reading legacy rows that
+     * accidentally stored a JSON-encoded string inside the JSON column.
+     */
+    protected function enabledLanguages(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value): array {
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+                if (is_string($decoded)) {
+                    $decoded = json_decode($decoded, true);
+                }
+
+                if (! is_array($decoded)) {
+                    return [];
+                }
+
+                return array_values(array_filter($decoded, 'is_string'));
+            },
+            set: fn (mixed $value): string => json_encode(
+                is_array($value) ? array_values($value) : [],
+                JSON_THROW_ON_ERROR,
+            ),
+        );
     }
 
     public function company(): BelongsTo
@@ -103,6 +131,11 @@ class ProductPassport extends Model
     public function assets(): HasMany
     {
         return $this->hasMany(ProductPassportAsset::class, 'passport_id');
+    }
+
+    public function validationRuns(): HasMany
+    {
+        return $this->hasMany(PassportValidationRun::class, 'passport_id');
     }
 
     public function creator(): BelongsTo

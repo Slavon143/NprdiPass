@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Catalog;
 
-use App\Actions\Catalog\Categories\CreateCategoryAction;
 use App\Actions\Catalog\Categories\BulkDeleteCategoriesAction;
+use App\Actions\Catalog\Categories\CreateCategoryAction;
 use App\Actions\Catalog\Categories\DeleteCategoryAction;
 use App\Actions\Catalog\Categories\UpdateCategoryAction;
 use App\Enums\Catalog\CategoryStatus;

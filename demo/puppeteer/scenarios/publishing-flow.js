@@ -4,7 +4,7 @@ import { assertNoError } from '../helpers/assertions.js';
 import { APP_URL, TIMEOUTS } from '../config/demo.config.js';
 import productData from '../fixtures/product.json' with { type: 'json' };
 
-export async function publishProduct(page, productUuid, report, recordStep) {
+export async function publishProduct(page, productUuid, documents, report, recordStep) {
   const passport = productData.passport;
 
   // ── Part A: Create passport if needed ──
@@ -51,6 +51,7 @@ export async function publishProduct(page, productUuid, report, recordStep) {
         fields: {
           manufacturer_display_name: passport.manufacturer,
           manufacturer_country: 'SE',
+          manufacturer_email: 'compliance@nordisafe.example',
         },
       },
       {
@@ -64,6 +65,13 @@ export async function publishProduct(page, productUuid, report, recordStep) {
         sectionKey: 'materials_and_composition',
         fields: {
           composition_notes: passport.materialComposition,
+        },
+      },
+      {
+        sectionKey: 'safety',
+        fields: {
+          storage_instructions: 'Store dry, away from open flame and direct heat.',
+          emergency_instructions: 'Remove the garment and seek medical advice if irritation occurs.',
         },
       },
       {
@@ -117,7 +125,9 @@ export async function publishProduct(page, productUuid, report, recordStep) {
 
           const fieldType = await input.evaluate((el) => el.dataset.fieldType || el.type || 'text');
 
-          if (fieldType === 'boolean' || input.evaluate((el) => el.type === 'checkbox')) {
+          const isCheckbox = await input.evaluate((el) => el.type === 'checkbox');
+
+          if (fieldType === 'boolean' || isCheckbox) {
             const isChecked = await input.evaluate((el) => el.checked);
             if (value && !isChecked) {
               await input.click();
@@ -161,6 +171,40 @@ export async function publishProduct(page, productUuid, report, recordStep) {
         recordStep(report, `Fill section: ${sectionKey}`, 'failed', { error: sectionErr.message });
       }
     }
+
+    if (documents.length > 0) {
+      const syncResult = await page.evaluate(async ({ targetProductUuid, documentReferences }) => {
+        const csrfToken = document.querySelector('#csrfToken')?.value;
+        const expectedRevision = Number.parseInt(document.querySelector('#draftRevision')?.textContent || '', 10);
+        const response = await fetch(`/catalog/products/${targetProductUuid}/passport/documents`, {
+          method: 'PUT',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+          },
+          body: JSON.stringify({
+            document_references: documentReferences.map((item, index) => ({
+              document_uuid: item.uuid,
+              role: 'other',
+              display_order: index,
+            })),
+            expected_revision: expectedRevision,
+          }),
+        });
+
+        return { status: response.status, body: await response.json() };
+      }, { targetProductUuid: productUuid, documentReferences: documents });
+
+      if (syncResult.status !== 200 || syncResult.body.payload?.document_references?.length !== documents.length) {
+        throw new Error(`Passport document sync failed with HTTP ${syncResult.status}`);
+      }
+
+      recordStep(report, 'Attach documents to passport', 'passed', {
+        count: documents.length,
+        draftRevision: syncResult.body.draft_revision,
+      });
+    }
   } catch (error) {
     console.error(`Failed filling passport: ${error.message}`);
     recordStep(report, 'Fill passport sections', 'failed', { error: error.message });
@@ -173,31 +217,37 @@ export async function publishProduct(page, productUuid, report, recordStep) {
     await waitForPageReady(page);
 
     const publishBtn = await page.$('button::-p-text("Publish Passport"), button::-p-text("Publish")');
-    if (publishBtn) {
-      const warnCheckbox = await page.$('input[name="acknowledge_warnings"]');
-      if (warnCheckbox) {
-        await warnCheckbox.click();
-      }
-
-      await highlightElement(page, publishBtn);
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: TIMEOUTS.navigation }).catch(() => {}),
-        publishBtn.click(),
-      ]);
-      await waitForPageReady(page);
+    if (!publishBtn) {
+      throw new Error('Publish action is unavailable because the passport is not ready');
     }
 
+    const warnCheckbox = await page.$('input[name="acknowledge_warnings"]');
+    if (warnCheckbox) {
+      await warnCheckbox.click();
+    }
+
+    await highlightElement(page, publishBtn);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: TIMEOUTS.navigation }).catch(() => {}),
+      publishBtn.click(),
+    ]);
+    await waitForPageReady(page);
+
     const pageText = await page.evaluate(() => document.body.textContent || '');
-    const isPublished =
-      pageText.toLowerCase().includes('published') ||
-      pageText.toLowerCase().includes('version');
+    const isPublished = pageText.toLowerCase().includes('published') &&
+      !pageText.toLowerCase().includes('resolve blockers before publishing');
 
     recordStep(report, 'Publish passport', isPublished ? 'passed' : 'failed', {
       published: isPublished,
     });
+
+    if (!isPublished) {
+      throw new Error('Passport publication was not confirmed by the resulting page');
+    }
   } catch (error) {
     console.error(`Publish failed: ${error.message}`);
     recordStep(report, 'Publish passport', 'failed', { error: error.message });
+    throw error;
   }
 
   // ── Part D: QR code and public URL ──
@@ -238,7 +288,7 @@ export async function publishProduct(page, productUuid, report, recordStep) {
     recordStep(report, 'QR code and public URL', 'failed', { error: error.message });
   }
 
-  return { published: true, publicUrl, publicId: productUuid };
+  return { published: publicUrl !== '', publicUrl, publicId: productUuid };
 }
 
 

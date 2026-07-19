@@ -1,7 +1,9 @@
 import { CI_MODE } from '../config/demo.config.js';
 
-export async function highlightElement(page, selector) {
-  const element = await page.$(selector);
+export async function highlightElement(page, selectorOrElement) {
+  const element = typeof selectorOrElement === 'string'
+    ? await page.$(selectorOrElement)
+    : selectorOrElement;
   if (!element) {
     return null;
   }

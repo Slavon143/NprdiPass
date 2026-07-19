@@ -5,6 +5,7 @@ namespace App\Support\Passports;
 use App\Data\Passports\Readiness\ReadinessRuleResult;
 use App\Enums\Passports\Readiness\ReadinessRuleGroup;
 use App\Enums\Passports\Readiness\ReadinessRuleStatus;
+use App\Enums\Passports\Readiness\ReadinessSeverity;
 use App\Models\Catalog\Product;
 use Illuminate\Support\Str;
 
@@ -139,47 +140,71 @@ class ReadinessRulePresenter
 
     public function statusLabel(ReadinessRuleResult $rule): string
     {
-        return match (true) {
-            $rule->status === ReadinessRuleStatus::Passed => __('Passed'),
-            $rule->status === ReadinessRuleStatus::NotApplicable => __('Not applicable'),
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'blocker' => __('Blocker'),
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'warning' => __('Warning'),
-            $rule->status === ReadinessRuleStatus::Failed => __('Recommendation'),
-            default => Str::headline($rule->status->value),
+        return match ($rule->status) {
+            ReadinessRuleStatus::Passed => __('Passed'),
+            ReadinessRuleStatus::NotApplicable => __('Not applicable'),
+            ReadinessRuleStatus::Failed => match ($rule->severity) {
+                ReadinessSeverity::Blocker => __('Blocker'),
+                ReadinessSeverity::Warning => __('Warning'),
+                ReadinessSeverity::Recommendation => __('Recommendation'),
+            },
+        };
+    }
+
+    public function resultLabel(ReadinessRuleResult $rule): string
+    {
+        return match ($rule->status) {
+            ReadinessRuleStatus::Passed => __('Completed'),
+            ReadinessRuleStatus::Failed => __('Missing'),
+            ReadinessRuleStatus::NotApplicable => __('Not applicable'),
+        };
+    }
+
+    public function requirementLabel(ReadinessRuleResult $rule): string
+    {
+        return match ($rule->severity) {
+            ReadinessSeverity::Blocker => __('Required before publication'),
+            ReadinessSeverity::Warning => __('Important warning'),
+            ReadinessSeverity::Recommendation => __('Recommended improvement'),
         };
     }
 
     public function statusHelp(ReadinessRuleResult $rule): string
     {
-        return match (true) {
-            $rule->status === ReadinessRuleStatus::Passed => __('Complete right now. If the underlying product data changes, this check may change too.'),
-            $rule->status === ReadinessRuleStatus::NotApplicable => __('Not required for this product or disabled passport section.'),
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'blocker' => __('Must be fixed before the passport can be published.'),
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'warning' => __('Does not block activation, but lowers readiness and should be fixed before publishing.'),
-            $rule->status === ReadinessRuleStatus::Failed => __('Recommended improvement. It does not block publishing.'),
-            default => __('Readiness check status.'),
+        return match ($rule->status) {
+            ReadinessRuleStatus::Passed => __('Complete right now. If the underlying product data changes, this check may change too.'),
+            ReadinessRuleStatus::NotApplicable => __('Not required for this product or disabled passport section.'),
+            ReadinessRuleStatus::Failed => match ($rule->severity) {
+                ReadinessSeverity::Blocker => __('Must be fixed before the passport can be published.'),
+                ReadinessSeverity::Warning => __('Does not block activation, but lowers readiness and should be fixed before publishing.'),
+                ReadinessSeverity::Recommendation => __('Recommended improvement. It does not block publishing.'),
+            },
         };
     }
 
     public function statusTone(ReadinessRuleResult $rule): string
     {
-        return match (true) {
-            $rule->status === ReadinessRuleStatus::Passed => 'bg-green-100 text-green-800 border-green-200',
-            $rule->status === ReadinessRuleStatus::NotApplicable => 'bg-slate-100 text-slate-600 border-slate-200',
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'blocker' => 'bg-red-100 text-red-800 border-red-200',
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'warning' => 'bg-amber-100 text-amber-800 border-amber-200',
-            default => 'bg-blue-100 text-blue-800 border-blue-200',
+        return match ($rule->status) {
+            ReadinessRuleStatus::Passed => 'bg-green-100 text-green-800 border-green-200',
+            ReadinessRuleStatus::NotApplicable => 'bg-slate-100 text-slate-600 border-slate-200',
+            ReadinessRuleStatus::Failed => match ($rule->severity) {
+                ReadinessSeverity::Blocker => 'bg-red-100 text-red-800 border-red-200',
+                ReadinessSeverity::Warning => 'bg-amber-100 text-amber-800 border-amber-200',
+                ReadinessSeverity::Recommendation => 'bg-blue-100 text-blue-800 border-blue-200',
+            },
         };
     }
 
     public function cardTone(ReadinessRuleResult $rule): string
     {
-        return match (true) {
-            $rule->status === ReadinessRuleStatus::Passed => 'border-green-200 bg-green-50/60',
-            $rule->status === ReadinessRuleStatus::NotApplicable => 'border-slate-200 bg-slate-50',
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'blocker' => 'border-red-200 bg-red-50/80',
-            $rule->status === ReadinessRuleStatus::Failed && $rule->severity->value === 'warning' => 'border-amber-200 bg-amber-50/80',
-            default => 'border-blue-200 bg-blue-50/80',
+        return match ($rule->status) {
+            ReadinessRuleStatus::Passed => 'border-green-200 bg-green-50/60',
+            ReadinessRuleStatus::NotApplicable => 'border-slate-200 bg-slate-50',
+            ReadinessRuleStatus::Failed => match ($rule->severity) {
+                ReadinessSeverity::Blocker => 'border-red-200 bg-red-50/80',
+                ReadinessSeverity::Warning => 'border-amber-200 bg-amber-50/80',
+                ReadinessSeverity::Recommendation => 'border-blue-200 bg-blue-50/80',
+            },
         };
     }
 
@@ -188,7 +213,7 @@ class ReadinessRulePresenter
         return preg_replace('/^Open\s+/i', '', $label) ?? $label;
     }
 
-    private function fallbackUrl(Product $product, ReadinessRuleResult $rule): ?string
+    private function fallbackUrl(Product $product, ReadinessRuleResult $rule): string
     {
         return match (true) {
             $rule->code === 'passport.exists' => route('catalog.products.show', $product->uuid).'#passport',
@@ -204,7 +229,7 @@ class ReadinessRulePresenter
             $rule->group === ReadinessRuleGroup::Catalog => route('catalog.products.show', $product->uuid),
             $rule->group === ReadinessRuleGroup::Media => route('catalog.products.media.index', $product->uuid).'#product-image-management',
             $rule->group === ReadinessRuleGroup::Documents,
-                $rule->group === ReadinessRuleGroup::Certificates => route('catalog.products.documents.index', $product->uuid).'#product-documents',
+            $rule->group === ReadinessRuleGroup::Certificates => route('catalog.products.documents.index', $product->uuid).'#product-documents',
             $rule->section !== null => $this->passportEditorUrl($product, $rule),
             str_starts_with($rule->code, 'passport.') => $this->passportEditorUrl($product),
             default => $this->passportEditorUrl($product),
@@ -333,7 +358,7 @@ class ReadinessRulePresenter
     {
         if (! array_key_exists($locale, $this->readinessLinesCache)) {
             $loaded = trans()->getLoader()->load($locale, 'readiness', '*');
-            $this->readinessLinesCache[$locale] = is_array($loaded) ? $loaded : [];
+            $this->readinessLinesCache[$locale] = $loaded;
         }
 
         return $this->readinessLinesCache[$locale];
@@ -343,7 +368,7 @@ class ReadinessRulePresenter
     {
         $locale = app()->getLocale();
 
-        return is_string($locale) && $locale !== '' ? $locale : null;
+        return $locale !== '' ? $locale : null;
     }
 
     private function fallbackLocale(): ?string
