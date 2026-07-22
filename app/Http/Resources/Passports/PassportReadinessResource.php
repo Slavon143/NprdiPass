@@ -3,7 +3,6 @@
 namespace App\Http\Resources\Passports;
 
 use App\Data\Passports\Readiness\PassportReadinessResult;
-use App\Services\Passports\Readiness\ReadinessScoreCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,12 +16,16 @@ class PassportReadinessResource extends JsonResource
             'profile' => $this->profile,
             'profile_version' => $this->profileVersion,
             'schema_version' => $this->schemaVersion,
+            'rule_set_version' => $this->ruleSetVersion,
+            'score_algorithm' => $this->scoreAlgorithm,
+            'score_algorithm_version' => $this->scoreAlgorithmVersion,
+            'rule_set_fingerprint' => $this->ruleSetFingerprint,
             'passport_uuid' => $this->passportUuid,
             'draft_version_uuid' => $this->draftVersionUuid,
             'passport_revision' => $this->passportRevision,
             'status' => $this->status->value,
             'score' => $this->score,
-            'score_breakdown' => $this->scoreBreakdown(),
+            'score_breakdown' => $this->scoreBreakdown->toArray(),
             'counts' => [
                 'passed' => $this->counts->passed,
                 'blockers' => $this->counts->blockers,
@@ -33,11 +36,5 @@ class PassportReadinessResource extends JsonResource
             'rules' => ReadinessRuleResource::collection($this->rules),
             'evaluated_at' => $this->evaluatedAt->toISOString(),
         ];
-    }
-
-    /** @return array<string, mixed> */
-    private function scoreBreakdown(): array
-    {
-        return app(ReadinessScoreCalculator::class)->breakdown($this->rules)->toArray();
     }
 }

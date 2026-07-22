@@ -10,13 +10,11 @@ use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\CanonicalJsonEncoder;
-use App\Services\Passports\Readiness\ReadinessScoreCalculator;
 use Illuminate\Support\Facades\DB;
 
 class RecordPassportValidationRun
 {
     public function __construct(
-        private readonly ReadinessScoreCalculator $scoreCalculator,
         private readonly CanonicalJsonEncoder $canonicalJsonEncoder,
     ) {}
 
@@ -28,12 +26,19 @@ class RecordPassportValidationRun
         ?User $actor,
     ): PassportValidationRun {
         return DB::transaction(function () use ($company, $passport, $draft, $result, $actor): PassportValidationRun {
-            $breakdown = $this->scoreCalculator->breakdown($result->rules);
+            $breakdown = $result->scoreBreakdown;
             $sourceChecksum = $this->canonicalJsonEncoder->hash([
                 'passport_uuid' => $passport->uuid,
                 'draft_version_uuid' => $draft->uuid,
                 'draft_revision' => $draft->draft_revision,
                 'schema_version' => $draft->schema_version,
+                'profile' => $result->profile,
+                'profile_version' => $result->profileVersion,
+                'rule_set_version' => $result->ruleSetVersion,
+                'rule_set_fingerprint' => $result->ruleSetFingerprint,
+                'score_algorithm' => $result->scoreAlgorithm,
+                'score_algorithm_version' => $result->scoreAlgorithmVersion,
+                'weights' => $breakdown->weights,
                 'payload' => $draft->payload,
                 'rules' => array_map(fn ($rule): array => [
                     'code' => $rule->code,
@@ -53,9 +58,20 @@ class RecordPassportValidationRun
                 'profile' => $result->profile,
                 'profile_version' => $result->profileVersion,
                 'schema_version' => (string) $result->schemaVersion,
-                'rule_set_version' => config('passport_readiness.rule_set_version'),
-                'score_algorithm_version' => config('passport_readiness.score_algorithm_version'),
+                'rule_set_version' => $result->ruleSetVersion,
+                'score_algorithm' => $result->scoreAlgorithm,
+                'score_algorithm_version' => $result->scoreAlgorithmVersion,
+                'rule_set_fingerprint' => $result->ruleSetFingerprint,
                 'weights_snapshot' => $breakdown->weights,
+                'profile_snapshot' => [
+                    'profile' => $result->profile,
+                    'profile_version' => $result->profileVersion,
+                    'rule_set_version' => $result->ruleSetVersion,
+                    'score_algorithm' => $result->scoreAlgorithm,
+                    'score_algorithm_version' => $result->scoreAlgorithmVersion,
+                    'rule_set_fingerprint' => $result->ruleSetFingerprint,
+                    'weights' => $breakdown->weights,
+                ],
                 'earned_points' => $breakdown->earnedPoints,
                 'applicable_points' => $breakdown->applicablePoints,
                 'score' => $breakdown->score,
@@ -78,11 +94,21 @@ class RecordPassportValidationRun
                     'code' => $rule->code,
                     'rule_group' => $rule->group->value,
                     'severity' => $rule->severity->value,
+                    'configured_weight' => $breakdown->weights[$rule->severity->value],
                     'status' => $rule->status->value,
                     'title_key' => $rule->titleKey,
                     'message_key' => $rule->messageKey,
                     'section' => $rule->section?->value,
                     'field' => $rule->field,
+                    'source_type' => $rule->group->value,
+                    'source_field' => $rule->field,
+                    'fix_action_snapshot' => $rule->navigationTarget === null ? null : [
+                        'type' => $rule->navigationTarget->type,
+                        'section' => $rule->navigationTarget->section,
+                        'route_name' => $rule->navigationTarget->routeName,
+                        'route_parameters' => $rule->navigationTarget->routeParameters,
+                        'label' => $rule->navigationTarget->label,
+                    ],
                     'safe_context' => $rule->safeContext,
                 ])->save();
             }

@@ -17,15 +17,19 @@ class PassportReadinessEvaluator
 
     private ReadinessScoreCalculator $scoreCalculator;
 
-    public function __construct(PassportReadinessRuleRegistry $registry, ReadinessScoreCalculator $scoreCalculator)
-    {
+    public function __construct(
+        PassportReadinessRuleRegistry $registry,
+        ReadinessScoreCalculator $scoreCalculator,
+        private readonly ReadinessProfileRepository $profileRepository,
+    ) {
         $this->registry = $registry;
         $this->scoreCalculator = $scoreCalculator;
     }
 
     public function evaluate(ReadinessEvaluationContext $context): PassportReadinessResult
     {
-        $rules = $this->registry->all();
+        $profile = $context->readinessProfile ?? $this->profileRepository->active();
+        $rules = $this->registry->all($profile);
         $ruleResults = [];
 
         foreach ($rules as $rule) {
@@ -33,18 +37,23 @@ class PassportReadinessEvaluator
         }
 
         $counts = $this->buildSummary($ruleResults);
-        $score = $this->scoreCalculator->calculate($ruleResults);
+        $breakdown = $this->scoreCalculator->breakdown($ruleResults, $profile->weights);
         $status = self::determineStatus($ruleResults);
 
         return new PassportReadinessResult(
-            profile: $context->config['profile'] ?? 'nordipass-pilot',
-            profileVersion: $context->config['profile_version'] ?? 1,
+            profile: $profile->code,
+            profileVersion: $profile->version,
             schemaVersion: $context->currentDraft !== null ? (int) $context->currentDraft->schema_version : 1,
             passportUuid: $context->passport !== null ? $context->passport->uuid : '',
             draftVersionUuid: $context->currentDraft !== null ? $context->currentDraft->uuid : null,
             passportRevision: $context->currentDraft !== null ? $context->currentDraft->draft_revision : 0,
+            ruleSetVersion: $profile->ruleSetVersion,
+            scoreAlgorithm: $profile->scoreAlgorithm,
+            scoreAlgorithmVersion: $profile->scoreAlgorithmVersion,
+            ruleSetFingerprint: $profile->fingerprint,
             status: $status,
-            score: $score,
+            score: $breakdown->score,
+            scoreBreakdown: $breakdown,
             counts: $counts,
             rules: $ruleResults,
             evaluatedAt: new CarbonImmutable,

@@ -17,7 +17,11 @@ class PassportValidationResult extends Model
 
     protected function casts(): array
     {
-        return ['safe_context' => 'array'];
+        return [
+            'configured_weight' => 'integer',
+            'fix_action_snapshot' => 'array',
+            'safe_context' => 'array',
+        ];
     }
 
     public function company(): BelongsTo

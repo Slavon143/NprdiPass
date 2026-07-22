@@ -2046,13 +2046,19 @@ components:
       type: object
       properties:
         profile: { type: string }
-        profile_version: { type: string }
-        schema_version: { type: string }
+        profile_version: { type: integer }
+        schema_version: { type: integer }
+        rule_set_version: { type: integer }
+        score_algorithm: { type: string }
+        score_algorithm_version: { type: integer }
+        rule_set_fingerprint: { type: string, pattern: "^[0-9a-f]{64}$" }
         passport_uuid: { type: string, format: uuid }
         draft_version_uuid: { type: string, format: uuid }
         passport_revision: { type: integer }
         status: { type: string }
         score: { type: integer }
+        score_breakdown:
+          $ref: "#/components/schemas/ReadinessScoreBreakdown"
         counts:
           $ref: "#/components/schemas/ReadinessCounts"
         rules:
@@ -2069,6 +2075,22 @@ components:
         warnings: { type: integer }
         recommendations: { type: integer }
         not_applicable: { type: integer }
+
+    ReadinessScoreBreakdown:
+      type: object
+      properties:
+        weights:
+          type: object
+          additionalProperties: { type: integer }
+        earned_points: { type: integer }
+        passed_points: { type: integer }
+        failed_points: { type: integer }
+        failed_points_by_severity:
+          type: object
+          additionalProperties: { type: integer }
+        applicable_points: { type: integer }
+        score: { type: integer }
+        not_applicable_rules_excluded: { type: integer }
 
     ReadinessRuleItem:
       type: object

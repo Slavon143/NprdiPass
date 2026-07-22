@@ -148,7 +148,7 @@ class ReadinessScoreCalculatorTest extends TestCase
 
     public function test_weight_config_defaults_are_used(): void
     {
-        // Depends on config passport_readiness.score_weights: blocker=10, warning=3, recommendation=1
+        // Depends on active readiness profile v1 weights: blocker=10, warning=3, recommendation=1
         $rules = [
             $this->makeRule('blocker.passed', ReadinessRuleGroup::Catalog, ReadinessSeverity::Blocker, ReadinessRuleStatus::Passed),
             $this->makeRule('blocker.failed', ReadinessRuleGroup::Safety, ReadinessSeverity::Blocker, ReadinessRuleStatus::Failed),
@@ -206,7 +206,7 @@ class ReadinessScoreCalculatorTest extends TestCase
 
     public function test_missing_or_invalid_weight_is_rejected(): void
     {
-        config()->set('passport_readiness.score_weights.warning', 0);
+        config()->set('passport_readiness.profiles.nordipass-pilot.versions.1.weights.warning', 0);
         $rule = $this->makeRule('warning', ReadinessRuleGroup::Safety, ReadinessSeverity::Warning, ReadinessRuleStatus::Passed);
 
         $this->expectException(InvalidArgumentException::class);

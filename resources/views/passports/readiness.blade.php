@@ -74,6 +74,9 @@
                 <div><strong>Profile:</strong> {{ $readiness->profile }}</div>
                 <div><strong>Profile Version:</strong> {{ $readiness->profileVersion }}</div>
                 <div><strong>Schema Version:</strong> {{ $readiness->schemaVersion }}</div>
+                <div><strong>Rule Set Version:</strong> {{ $readiness->ruleSetVersion }}</div>
+                <div><strong>Score Algorithm:</strong> {{ $readiness->scoreAlgorithm }} v{{ $readiness->scoreAlgorithmVersion }}</div>
+                <div class="sm:col-span-2"><strong>Rule Set Fingerprint:</strong> <span class="font-mono break-all">{{ $readiness->ruleSetFingerprint }}</span></div>
                 <div><strong>Passport UUID:</strong> {{ $readiness->passportUuid }}</div>
                 <div><strong>Draft Version UUID:</strong> {{ $readiness->draftVersionUuid ?? 'N/A' }}</div>
                 <div><strong>Passport Revision:</strong> {{ $readiness->passportRevision }}</div>

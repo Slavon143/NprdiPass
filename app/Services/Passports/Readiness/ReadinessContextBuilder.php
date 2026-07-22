@@ -16,8 +16,10 @@ class ReadinessContextBuilder
 {
     private DppPayloadNormalizer $normalizer;
 
-    public function __construct(DppPayloadNormalizer $normalizer)
-    {
+    public function __construct(
+        DppPayloadNormalizer $normalizer,
+        private readonly ReadinessProfileRepository $profileRepository,
+    ) {
         $this->normalizer = $normalizer;
     }
 
@@ -86,6 +88,12 @@ class ReadinessContextBuilder
             }
         }
 
+        $profile = $currentDraft instanceof ProductPassportVersion
+            && is_string($currentDraft->readiness_profile ?? null)
+            && is_int($currentDraft->readiness_profile_version ?? null)
+                ? $this->profileRepository->for($currentDraft->readiness_profile, $currentDraft->readiness_profile_version)
+                : $this->profileRepository->active();
+
         return new ReadinessEvaluationContext(
             company: $company,
             product: $product,
@@ -95,6 +103,7 @@ class ReadinessContextBuilder
             referencedDocuments: $referencedDocuments,
             storageExistenceResults: $storageExistenceResults,
             evaluationDate: $evaluationDate ?? new CarbonImmutable,
+            readinessProfile: $profile,
             config: config('passport_readiness'),
         );
     }

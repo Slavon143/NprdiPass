@@ -26,6 +26,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $schema_version
  * @property array $payload
  * @property string|null $content_checksum
+ * @property string|null $readiness_profile
+ * @property int|null $readiness_profile_version
+ * @property string|null $readiness_rule_set_fingerprint
  * @property int|null $validation_run_id
  * @property array|null $readiness_evidence
  * @property CarbonImmutable|null $published_at
@@ -74,6 +77,7 @@ class ProductPassportVersion extends Model
             'version_number' => 'integer',
             'draft_revision' => 'integer',
             'payload' => 'array',
+            'readiness_profile_version' => 'integer',
             'readiness_evidence' => 'array',
             'published_at' => 'immutable_datetime',
             'superseded_at' => 'immutable_datetime',

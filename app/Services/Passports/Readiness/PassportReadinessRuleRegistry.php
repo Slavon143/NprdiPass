@@ -3,15 +3,20 @@
 namespace App\Services\Passports\Readiness;
 
 use App\Contracts\Passports\PassportReadinessRule;
+use App\Data\Passports\Readiness\ReadinessProfileDefinition;
 
 class PassportReadinessRuleRegistry
 {
     /**
      * @return PassportReadinessRule[]
      */
-    public function all(): array
+    public function all(?ReadinessProfileDefinition $profile = null): array
     {
-        $ruleClasses = config('passport_readiness.rules', []);
+        if ($profile === null) {
+            $profile = app(ReadinessProfileRepository::class)->active();
+        }
+
+        $ruleClasses = $profile->ruleClasses;
 
         $rules = [];
 

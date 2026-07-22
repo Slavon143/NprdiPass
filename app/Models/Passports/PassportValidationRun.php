@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $company_id
  * @property int $passport_id
  * @property int $draft_version_id
+ * @property string $score_algorithm
+ * @property string|null $rule_set_fingerprint
  * @property array $weights_snapshot
  * @property int $earned_points
  * @property int $applicable_points
@@ -36,6 +38,7 @@ class PassportValidationRun extends Model
     {
         return [
             'weights_snapshot' => 'array',
+            'profile_snapshot' => 'array',
             'validated_at' => 'immutable_datetime',
             'profile_version' => 'integer',
             'rule_set_version' => 'integer',

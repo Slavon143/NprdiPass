@@ -13,17 +13,17 @@ class ReadinessScoreCalculator
     /**
      * @param  ReadinessRuleResult[]  $ruleResults
      */
-    public function calculate(array $ruleResults): int
+    public function calculate(array $ruleResults, ?array $weights = null): int
     {
-        return $this->breakdown($ruleResults)->score;
+        return $this->breakdown($ruleResults, $weights)->score;
     }
 
     /**
      * @param  ReadinessRuleResult[]  $ruleResults
      */
-    public function breakdown(array $ruleResults): ReadinessScoreBreakdown
+    public function breakdown(array $ruleResults, ?array $weights = null): ReadinessScoreBreakdown
     {
-        $weights = $this->weights();
+        $weights = $this->weights($weights);
         $applicablePoints = 0;
         $earnedPoints = 0;
         $notApplicableRules = 0;
@@ -72,13 +72,13 @@ class ReadinessScoreCalculator
     }
 
     /** @return array{blocker: int, warning: int, recommendation: int} */
-    private function weights(): array
+    private function weights(?array $configured = null): array
     {
-        $configured = config('passport_readiness.score_weights');
+        $configured ??= app(ReadinessProfileRepository::class)->active()->weights;
         $weights = [];
 
         foreach (ReadinessSeverity::cases() as $severity) {
-            $weight = is_array($configured) ? ($configured[$severity->value] ?? null) : null;
+            $weight = $configured[$severity->value] ?? null;
 
             if (! is_int($weight) || $weight <= 0) {
                 throw new InvalidArgumentException(

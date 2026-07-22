@@ -26,6 +26,7 @@ readonly class ReadinessEvaluationContext
         public array $referencedDocuments,
         public array $storageExistenceResults,
         public CarbonImmutable $evaluationDate,
+        public ?ReadinessProfileDefinition $readinessProfile = null,
         public array $config = [],
     ) {}
 }

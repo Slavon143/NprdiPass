@@ -28,6 +28,7 @@ use App\Services\Passports\PassportVersionNumberAllocator;
 use App\Services\Passports\Publication\PublicationAssetStager;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
+use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,7 @@ class PublishProductPassport
         private readonly CanonicalJsonEncoder $canonicalJsonEncoder,
         private readonly PublicationAssetStager $assetStager,
         private readonly RecordPassportValidationRun $recordValidationRun,
+        private readonly ReadinessProfileRepository $profileRepository,
     ) {}
 
     public function handle(
@@ -168,6 +170,8 @@ class PublishProductPassport
                 'profile_version' => $validationRun->profile_version,
                 'schema_version' => $validationRun->schema_version,
                 'rule_set_version' => $validationRun->rule_set_version,
+                'rule_set_fingerprint' => $validationRun->rule_set_fingerprint,
+                'score_algorithm' => $validationRun->score_algorithm,
                 'score_algorithm_version' => $validationRun->score_algorithm_version,
                 'weights' => $validationRun->weights_snapshot,
                 'earned_points' => $validationRun->earned_points,
@@ -218,6 +222,9 @@ class PublishProductPassport
                 $draft->setAttribute('version_number', $versionNumber);
                 $draft->setAttribute('payload', $snapshot);
                 $draft->setAttribute('content_checksum', $checksum);
+                $draft->setAttribute('readiness_profile', $readinessResult->profile);
+                $draft->setAttribute('readiness_profile_version', $readinessResult->profileVersion);
+                $draft->setAttribute('readiness_rule_set_fingerprint', $readinessResult->ruleSetFingerprint);
                 $draft->setAttribute('validation_run_id', $validationRun->getKey());
                 $draft->setAttribute('readiness_evidence', $readinessEvidence);
                 $draft->setAttribute('published_at', now());
@@ -245,6 +252,10 @@ class PublishProductPassport
                 $newDraft->setAttribute('draft_revision', $oldRevision + 1);
                 $newDraft->setAttribute('schema_version', $oldSchemaVersion);
                 $newDraft->setAttribute('payload', $oldPayload);
+                $activeProfile = $this->profileRepository->active();
+                $newDraft->setAttribute('readiness_profile', $activeProfile->code);
+                $newDraft->setAttribute('readiness_profile_version', $activeProfile->version);
+                $newDraft->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);
                 $newDraft->setAttribute('created_by', $actor->getKey());
                 $newDraft->save();
 

@@ -327,7 +327,11 @@ class ImmutabilityTest extends TestCase
         $this->assertSame($version->readiness_evidence['validation_run_uuid'], $version->validationRun->uuid);
         $this->assertSame($version->draft_revision, $version->validationRun->draft_revision);
         $this->assertSame($version->readiness_evidence['score'], $version->validationRun->score);
+        $this->assertSame('weighted_ratio', $version->readiness_evidence['score_algorithm']);
+        $this->assertSame($version->readiness_evidence['rule_set_fingerprint'], $version->validationRun->rule_set_fingerprint);
+        $this->assertSame($version->readiness_rule_set_fingerprint, $version->validationRun->rule_set_fingerprint);
         $this->assertSame(64, strlen($version->validationRun->source_checksum));
+        $this->assertSame(64, strlen($version->validationRun->rule_set_fingerprint));
         $this->assertCount(count(app(PassportReadinessRuleRegistry::class)->all()), $version->validationRun->results);
     }
 

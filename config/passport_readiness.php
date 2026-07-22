@@ -71,12 +71,39 @@ return [
     'profile' => 'nordipass-pilot',
     'profile_version' => 1,
     'rule_set_version' => 1,
+    'score_algorithm' => 'weighted_ratio',
     'score_algorithm_version' => 1,
 
     'score_weights' => [
         'blocker' => 10,
         'warning' => 3,
         'recommendation' => 1,
+    ],
+
+    'profiles' => [
+        'nordipass-pilot' => [
+            'name' => 'NordiPass Pilot Readiness',
+            'description' => 'Internal operational readiness profile for the NordiPass pilot. This is not a legal certification or official EU DPP score.',
+            'scope' => 'system',
+            'status' => 'active',
+            'versions' => [
+                1 => [
+                    'status' => 'active',
+                    'rule_set_version' => 1,
+                    'score_algorithm' => 'weighted_ratio',
+                    'score_algorithm_version' => 1,
+                    'weights' => [
+                        'blocker' => 10,
+                        'warning' => 3,
+                        'recommendation' => 1,
+                    ],
+                    'metadata' => [
+                        'migration_source' => 'R2/R3.1 config passport_readiness.score_weights',
+                        'legal_disclaimer' => 'Operational readiness only; not legal certification.',
+                    ],
+                ],
+            ],
+        ],
     ],
 
     'expiry_warning_days' => (int) env('READINESS_EXPIRY_WARNING_DAYS', 30),

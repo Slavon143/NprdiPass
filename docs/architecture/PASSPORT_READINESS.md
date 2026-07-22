@@ -17,6 +17,8 @@ The authoritative profile is `config/passport_readiness.php`:
 
 Every validation run persists those identifiers. Changing rules, weights, grouping, or scoring requires incrementing the appropriate version; historical evidence must not be reinterpreted using new configuration.
 
+R3.2 adds an immutable rule-set fingerprint to the evaluated result. The fingerprint is calculated from the pinned profile code/version, rule-set version, score algorithm name/version, severity weights, and the registered PHP rule codes/classes/groups/severities. Runtime scoring uses the resolved profile definition, not the mutable top-level compatibility weights.
+
 ## Scoring
 
 Weights are blocker `10`, warning `3`, and recommendation `1`.
@@ -53,7 +55,7 @@ Warnings and the single recommendation reduce the score but do not block publica
 
 ## Evidence model
 
-`passport_validation_runs` records company, product, passport, draft UUID/revision, prospective passport version, profile/version, schema, rule-set/algorithm versions, weights, earned/applicable points, score, counts, evaluator identity, and evaluation time.
+`passport_validation_runs` records company, product, passport, draft UUID/revision, prospective passport version, profile/version, schema, rule-set version, rule-set fingerprint, score algorithm name/version, weights, earned/applicable points, score, counts, evaluator identity, and evaluation time.
 
 `passport_validation_results` records the immutable per-rule result linked to its run. MySQL triggers reject update/delete operations on evidence rows. Evidence is append-only; a later draft evaluation creates a new run.
 

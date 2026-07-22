@@ -40,6 +40,7 @@ use App\Services\Passports\CanonicalJsonEncoder;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Services\Passports\DppSchemaRegistry;
 use App\Services\Passports\PassportSnapshotBuilder;
+use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Database\DemoAssets\DemoAssetProvider;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -916,6 +917,7 @@ class NordiPassShowcaseSeeder extends Seeder
         array $documentReferences = [],
     ): ProductPassportVersion {
         $payload = $this->makePayload($sectionData, $documentReferences);
+        $profile = app(ReadinessProfileRepository::class)->active();
         $versionUuid = (string) Str::uuid();
         $assetRows = [];
 
@@ -947,6 +949,9 @@ class NordiPassShowcaseSeeder extends Seeder
             'draft_revision' => $versionNumber,
             'schema_version' => '1',
             'payload' => $payload,
+            'readiness_profile' => $profile->code,
+            'readiness_profile_version' => $profile->version,
+            'readiness_rule_set_fingerprint' => $profile->fingerprint,
             'created_by' => $owner->getKey(),
         ];
 

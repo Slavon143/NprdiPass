@@ -1,7 +1,7 @@
 @props(['readiness'])
 
 @php
-    $breakdown = app(\App\Services\Passports\Readiness\ReadinessScoreCalculator::class)->breakdown($readiness->rules);
+    $breakdown = $readiness->scoreBreakdown;
     $rulePresenter = app(\App\Support\Passports\ReadinessRulePresenter::class);
     $failedRules = [];
 

@@ -159,6 +159,16 @@ class PassportReadinessApiTest extends TestCase
         $this->assertIsInt($data['profile_version']);
     }
 
+    public function test_response_has_profile_fingerprint_and_score_algorithm(): void
+    {
+        $data = $this->readinessData();
+
+        $this->assertSame('weighted_ratio', $data['score_algorithm']);
+        $this->assertSame(1, $data['score_algorithm_version']);
+        $this->assertSame(1, $data['rule_set_version']);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $data['rule_set_fingerprint']);
+    }
+
     public function test_response_has_status(): void
     {
         $data = $this->readinessData();
