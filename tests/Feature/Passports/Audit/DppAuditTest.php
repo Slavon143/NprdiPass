@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
@@ -114,6 +115,118 @@ class DppAuditTest extends TestCase
             ->count();
 
         $this->assertSame($countBefore + 1, $countAfter);
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    #[DataProvider('advancedSectionAuditProvider')]
+    public function test_advanced_section_updates_record_canonical_changed_sections_metadata(
+        DppSectionKey $section,
+        array $payload,
+    ): void {
+        app(UpdateProductPassportSectionAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $this->passport,
+            $section->value,
+            $payload,
+            $this->currentDraftRevision(),
+        );
+
+        $log = AuditLog::query()
+            ->where('event', AuditEvent::PassportDraftUpdated->value)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $properties = $log->properties->toArray();
+
+        $this->assertSame($section->value, $properties['section_key']);
+        $this->assertSame([$section->value], $properties['changed_sections']);
+        $this->assertSame($this->product->uuid, $properties['product_uuid']);
+        $this->assertSame($this->passport->uuid, $properties['passport_uuid']);
+        $this->assertArrayHasKey('draft_version_uuid', $properties);
+        $this->assertArrayHasKey('old_revision', $properties);
+        $this->assertArrayHasKey('new_revision', $properties);
+        $this->assertArrayNotHasKey('payload', $properties);
+        $this->assertArrayNotHasKey('section_data', $properties);
+    }
+
+    /** @return array<string, array{0:DppSectionKey,1:array<string,mixed>}> */
+    public static function advancedSectionAuditProvider(): array
+    {
+        return [
+            'materials' => [
+                DppSectionKey::MaterialsAndComposition,
+                [
+                    'materials' => [
+                        [
+                            'name' => 'Steel',
+                            'percentage' => '60',
+                            'recycled_content_percentage' => '20',
+                            'hazardous' => false,
+                        ],
+                    ],
+                ],
+            ],
+            'environment' => [
+                DppSectionKey::EnvironmentalInformation,
+                [
+                    'environmental_metrics' => [
+                        ['metric_code' => 'energy_use', 'value' => '12', 'unit' => 'kwh'],
+                    ],
+                    'environmental_claim_records' => [
+                        ['claim_text' => 'Manufacturer provided claim', 'review_state' => 'provided'],
+                    ],
+                ],
+            ],
+            'usage_care' => [
+                DppSectionKey::UsageAndCare,
+                ['usage_instructions' => 'Use safely.', 'care_instructions' => 'Clean gently.'],
+            ],
+            'repair' => [
+                DppSectionKey::RepairAndSpareParts,
+                [
+                    'repairable' => true,
+                    'repairability_declaration' => 'Manufacturer-provided repair information',
+                    'spare_parts' => [['name' => 'Reflector kit']],
+                ],
+            ],
+            'recycling' => [
+                DppSectionKey::RecyclingAndDisposal,
+                [
+                    'recycling_instructions' => 'Recycle locally.',
+                    'take_back_program_available' => true,
+                    'take_back_program_url' => 'https://takeback.example.com',
+                ],
+            ],
+            'warranty_support' => [
+                DppSectionKey::SupportAndContact,
+                [
+                    'support_email' => 'support@example.com',
+                    'support_channels' => [['type' => 'email', 'value' => 'support@example.com']],
+                    'warranty_available' => true,
+                ],
+            ],
+            'responsible_operator' => [
+                DppSectionKey::ManufacturerAndOperator,
+                [
+                    'responsible_operator_display_name' => 'Operator AB',
+                    'responsible_operator_email' => 'operator@example.com',
+                    'responsible_operator_country' => 'SE',
+                    'responsible_operator_role' => 'manufacturer',
+                ],
+            ],
+            'compliance_metadata' => [
+                DppSectionKey::CertificationsAndDocuments,
+                [
+                    'compliance_summary' => 'Metadata only.',
+                    'compliance_metadata' => [
+                        ['topic_code' => 'general_safety', 'statement' => 'Provided by manufacturer'],
+                    ],
+                ],
+            ],
+        ];
     }
 
     public function test_passport_draft_updated_event_fired_on_settings_update(): void

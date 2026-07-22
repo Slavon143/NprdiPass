@@ -108,6 +108,7 @@ class UpdateProductPassportSettingsAction
                     'passport_uuid' => $passport->getAttribute('uuid'),
                     'draft_version_uuid' => $draft->getAttribute('uuid'),
                     'section_key' => 'settings',
+                    'changed_sections' => array_values($normalized['enabled_sections'] ?? []),
                     'old_revision' => $oldRevision,
                     'new_revision' => $newRevision,
                 ],

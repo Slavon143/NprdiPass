@@ -57,3 +57,16 @@ R2 DPP has 11 sections with flat field definitions in `DppSchemaRegistry`. R3 ad
 - Category template changes do NOT retroactively affect published passports
 - New schema version = new `DppSchemaRegistry` entries
 - Published snapshots are fully self-contained
+
+## R3.3 implementation addendum
+
+R3.3 keeps these accepted broad section codes as the stable technical identifiers. Advanced user-facing concepts such as recycled content, environmental metrics, environmental claims, repairability, spare parts, take-back, warranty, support channels, responsible operator, and compliance metadata are represented as additive fields inside the existing owner sections rather than new independent storage tables or a second public/API contract.
+
+This preserves:
+
+- `nordipass-pilot` v1 readiness rule mapping;
+- historical R2/R3.2 payload compatibility;
+- one draft/revision/publication pipeline;
+- immutable published snapshots containing resolved field values.
+
+R3.3 also preserves the existing generic Passport draft audit event. Section-specific advanced changes are represented by `passport.draft.updated` plus `section_key` and `changed_sections` metadata. Separate `passport.materials.updated`, `passport.environment.updated`, or similar duplicate events are intentionally not introduced.

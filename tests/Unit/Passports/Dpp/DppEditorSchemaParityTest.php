@@ -101,6 +101,10 @@ class DppEditorSchemaParityTest extends TestCase
                 'responsible_operator_website' => 'https://operator.example.com',
                 'manufacturer_country' => 'se',
                 'responsible_operator_country' => 'de',
+                'responsible_operator_role' => 'manufacturer',
+                'responsible_operator_phone' => '+461234567',
+                'responsible_operator_registration_id' => 'SE-5566778899',
+                'responsible_operator_source' => 'company',
             ],
             'origin_and_traceability' => [
                 'country_of_origin' => 'se',
@@ -114,23 +118,48 @@ class DppEditorSchemaParityTest extends TestCase
             ],
             'repair_and_spare_parts' => [
                 'repairable' => false,
+                'repairability_declaration' => 'Manufacturer-provided repair information',
+                'repair_skill_level' => 'basic',
+                'estimated_repair_time_minutes' => 30,
                 'spare_parts_available' => false,
                 'spare_parts_url' => 'https://spares.example.com',
+                'spare_parts' => [
+                    ['name' => 'Reflector kit', 'availability_status' => 'available'],
+                ],
             ],
             'recycling_and_disposal' => [
+                'take_back_program_available' => true,
+                'take_back_program_url' => 'https://takeback.example.com',
+                'waste_material_codes' => ['PET'],
                 'recycling_codes' => ['PET', 'PP'],
             ],
             'environmental_information' => [
                 'carbon_footprint_kg_co2e' => 0,
                 'recycled_content_percentage' => 50.5,
+                'recycled_content_calculation_method' => 'declared',
+                'recycled_content_source' => 'supplier',
                 'expected_lifetime_years' => 0,
                 'energy_consumption_kwh' => 0,
+                'environmental_metrics' => [
+                    ['metric_code' => 'energy_use', 'value' => '12', 'unit' => 'kwh'],
+                ],
             ],
             'support_and_contact' => [
                 'support_email' => 'support@example.com',
                 'support_phone' => '123456789',
                 'support_url' => 'https://support.example.com',
+                'support_channels' => [
+                    ['type' => 'email', 'value' => 'support@example.com'],
+                ],
+                'warranty_available' => true,
+                'warranty_duration' => 24,
+                'warranty_duration_unit' => 'months',
                 'warranty_url' => 'https://warranty.example.com',
+            ],
+            'certifications_and_documents' => [
+                'compliance_metadata' => [
+                    ['topic_code' => 'general_safety', 'statement' => 'Provided by manufacturer'],
+                ],
             ],
         ];
 
@@ -144,6 +173,7 @@ class DppEditorSchemaParityTest extends TestCase
                     'manufacturer_display_name' => 'ACME AB',
                     'responsible_operator_display_name' => 'Operator AB',
                     'contact_notes' => 'Kontaktinfo',
+                    'responsible_operator_address' => 'Storgatan 1',
                 ],
                 'origin_and_traceability' => [
                     'traceability_notes' => 'Spårbarhetsnoteringar',
@@ -162,11 +192,16 @@ class DppEditorSchemaParityTest extends TestCase
                 ],
                 'usage_and_care' => [
                     'usage_instructions' => 'Användningsinstruktioner',
+                    'usage_steps' => ['Steg 1'],
+                    'usage_warnings' => ['Varning'],
                     'care_instructions' => 'Skötselråd',
+                    'care_steps' => ['Tvätta varsamt'],
+                    'care_warnings' => ['Använd inte blekmedel'],
                     'maintenance_instructions' => 'Underhållsinstruktioner',
                     'storage_recommendations' => 'Förvaringsrekommendationer',
                 ],
                 'repair_and_spare_parts' => [
+                    'required_tools' => ['Skruvmejsel'],
                     'repair_instructions' => 'Reparationsinstruktioner',
                     'disassembly_instructions' => 'Demonteringsinstruktioner',
                     'spare_parts_notes' => 'Reservdelsinfo',
@@ -176,9 +211,16 @@ class DppEditorSchemaParityTest extends TestCase
                     'recycling_instructions' => 'Återvinningsinstruktioner',
                     'disposal_instructions' => 'Avfallshanteringsinstruktioner',
                     'take_back_program' => 'Returprogram',
+                    'take_back_program_scope' => 'EU',
+                    'disassembly_guidance' => 'Demontera innan sortering',
+                    'sorting_guidance' => 'Sortera enligt lokala regler',
+                    'hazard_notes' => 'Inga kända faror',
                 ],
                 'environmental_information' => [
                     'environmental_claims' => ['Miljöpåstående 1'],
+                    'environmental_claim_records' => [
+                        ['claim_text' => 'Tillverkardeklarerat', 'review_state' => 'provided'],
+                    ],
                     'environmental_notes' => 'Miljönoteringar',
                 ],
                 'certifications_and_documents' => [
@@ -187,6 +229,9 @@ class DppEditorSchemaParityTest extends TestCase
                 ],
                 'support_and_contact' => [
                     'warranty_summary' => 'Garantisammanfattning',
+                    'warranty_conditions' => 'Villkor',
+                    'warranty_exclusions' => 'Undantag',
+                    'warranty_claim_instructions' => 'Kontakta support',
                     'support_notes' => 'Supportnoteringar',
                 ],
             ],
@@ -219,7 +264,7 @@ class DppEditorSchemaParityTest extends TestCase
         $this->assertSame('Steel', $data['materials_and_composition']['materials'][0]['name']);
         $this->assertSame('https://spares.example.com/', $data['repair_and_spare_parts']['spare_parts_url']);
         $this->assertSame(['PET', 'PP'], $data['recycling_and_disposal']['recycling_codes']);
-        $this->assertSame(50.5, $data['environmental_information']['recycled_content_percentage']);
+        $this->assertSame('50.5', $data['environmental_information']['recycled_content_percentage']);
         $this->assertSame('support@example.com', $data['support_and_contact']['support_email']);
         $this->assertSame('123456789', $data['support_and_contact']['support_phone']);
     }
@@ -237,6 +282,7 @@ class DppEditorSchemaParityTest extends TestCase
         $this->assertSame('Förvaringsinstruktioner', $translations['safety']['storage_instructions']);
         $this->assertSame('18+', $translations['safety']['age_restrictions']);
         $this->assertSame('Användningsinstruktioner', $translations['usage_and_care']['usage_instructions']);
+        $this->assertSame(['Steg 1'], $translations['usage_and_care']['usage_steps']);
         $this->assertSame('Skötselråd', $translations['usage_and_care']['care_instructions']);
         $this->assertSame('Reparationsinstruktioner', $translations['repair_and_spare_parts']['repair_instructions']);
         $this->assertSame('Reservdelsinfo', $translations['repair_and_spare_parts']['spare_parts_notes']);
@@ -258,9 +304,9 @@ class DppEditorSchemaParityTest extends TestCase
 
     private function assertZeroNumericValuesPreserved(array $data): void
     {
-        $this->assertSame(0.0, $data['environmental_information']['carbon_footprint_kg_co2e']);
-        $this->assertSame(0.0, $data['environmental_information']['expected_lifetime_years']);
-        $this->assertSame(0.0, $data['environmental_information']['energy_consumption_kwh']);
+        $this->assertSame('0', $data['environmental_information']['carbon_footprint_kg_co2e']);
+        $this->assertSame('0', $data['environmental_information']['expected_lifetime_years']);
+        $this->assertSame('0', $data['environmental_information']['energy_consumption_kwh']);
     }
 
     private function assertNoFieldsAreLost(array $normalized): void

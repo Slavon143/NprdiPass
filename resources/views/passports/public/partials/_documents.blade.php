@@ -42,4 +42,19 @@
             <p class="text-slate-600 text-sm">{!! nl2br(e($fields['compliance_summary'])) !!}</p>
         </div>
     @endif
+
+    @if(!empty($fields['compliance_metadata']) && is_array($fields['compliance_metadata']))
+        <div class="mt-3">
+            <h3 class="text-sm font-semibold text-slate-700 mb-1">Compliance Metadata</h3>
+            <ul class="text-sm text-slate-600 space-y-1">
+                @foreach($fields['compliance_metadata'] as $item)
+                    <li>
+                        <span class="font-medium">{{ $item['topic_code'] ?? 'topic' }}</span>
+                        @if(!empty($item['statement'])) <span> - {{ $item['statement'] }}</span> @endif
+                        @if(!empty($item['market_region'])) <span class="text-slate-400">({{ $item['market_region'] }})</span> @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 </div>

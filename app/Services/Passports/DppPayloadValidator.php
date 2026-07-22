@@ -25,6 +25,10 @@ class DppPayloadValidator
 
     public const MAX_ENCODED_SIZE = 1_048_576; // 1 MiB
 
+    public const MAX_LOCALE_COUNT = 20;
+
+    public const MAX_JSON_LIST_STRING_LENGTH = 2000;
+
     /**
      * @param  array<string, mixed>  $payload
      *
@@ -39,7 +43,11 @@ class DppPayloadValidator
         $this->validateDocumentReferences($payload['document_references'] ?? [], $company, $passport, $errors);
 
         if ($passport !== null && isset($payload['translations'])) {
-            $this->validateTranslations($payload['translations'], $payload['enabled_sections'] ?? [], $passport->default_language, $errors);
+            $this->validateTranslations(
+                $payload['translations'],
+                $payload['enabled_sections'] ?? [],
+                $errors,
+            );
         }
 
         if ($errors !== []) {
@@ -256,8 +264,12 @@ class DppPayloadValidator
      * @param  string[]  $enabledSections
      * @param  array<string, string[]>  $errors
      */
-    private function validateTranslations(array $translations, array $enabledSections, string $defaultLanguage, array &$errors): void
+    private function validateTranslations(array $translations, array $enabledSections, array &$errors): void
     {
+        if (count($translations) > self::MAX_LOCALE_COUNT) {
+            $errors['translations'][] = 'Translations must not exceed '.self::MAX_LOCALE_COUNT.' locales.';
+        }
+
         foreach ($translations as $locale => $localeData) {
             if (! is_string($locale) || ! $this->isValidLocale($locale)) {
                 $errors['translations'][] = "Invalid locale format: {$locale}.";
@@ -440,6 +452,7 @@ class DppPayloadValidator
             DppFieldType::CountryCode => $this->validateCountryCodeField($fieldKey, $value, $errors),
             DppFieldType::StringList => $this->validateStringListField($fieldKey, $value, $def, $errors),
             DppFieldType::MaterialList => $this->validateMaterialListField($fieldKey, $value, $def, $errors),
+            DppFieldType::JsonList => $this->validateJsonListField($fieldKey, $value, $def, $errors),
         };
     }
 
@@ -494,19 +507,25 @@ class DppPayloadValidator
      */
     private function validateDecimalField(string $fieldKey, mixed $value, DppFieldDefinition $def, array &$errors): void
     {
-        if (! is_int($value) && ! is_float($value)) {
-            $errors[$fieldKey][] = "Field '{$fieldKey}' must be a number.";
+        if (! is_int($value) && ! is_float($value) && ! is_string($value)) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must be a decimal string or number.";
 
             return;
         }
 
-        $numeric = (float) $value;
+        $decimal = trim((string) $value);
 
-        if ($def->min !== null && $numeric < $def->min) {
+        if (! preg_match('/^-?\d+(?:\.\d+)?$/', $decimal)) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must be a decimal string or number.";
+
+            return;
+        }
+
+        if ($def->min !== null && $this->compareDecimal($decimal, (string) $def->min) < 0) {
             $errors[$fieldKey][] = "Field '{$fieldKey}' must be at least {$def->min}.";
         }
 
-        if ($def->max !== null && $numeric > $def->max) {
+        if ($def->max !== null && $this->compareDecimal($decimal, (string) $def->max) > 0) {
             $errors[$fieldKey][] = "Field '{$fieldKey}' must be at most {$def->max}.";
         }
     }
@@ -570,6 +589,10 @@ class DppPayloadValidator
             $errors[$fieldKey][] = 'Enter a valid http:// or https:// URL.';
 
             return;
+        }
+
+        if (! isset($parsed['host']) || $this->isUnsafeHost((string) $parsed['host'])) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must use a public http:// or https:// host.";
         }
 
         if (isset($parsed['user']) || isset($parsed['pass'])) {
@@ -641,7 +664,7 @@ class DppPayloadValidator
         }
 
         $seenNames = [];
-        $totalPercentage = 0.0;
+        $totalPercentage = '0';
 
         foreach ($value as $index => $item) {
             if (! is_array($item)) {
@@ -666,29 +689,34 @@ class DppPayloadValidator
             $seenNames[$normalizedName] = true;
 
             if (isset($item['percentage'])) {
-                if (! is_numeric($item['percentage'])) {
+                if (! $this->isDecimal($item['percentage'])) {
                     $errors[$fieldKey][] = "Material 'percentage' at index {$index} must be a number.";
                 } else {
-                    $pct = (float) $item['percentage'];
+                    $pct = (string) $item['percentage'];
 
-                    if ($pct < 0 || $pct > 100) {
+                    if ($this->compareDecimal($pct, '0') < 0 || $this->compareDecimal($pct, '100') > 0) {
                         $errors[$fieldKey][] = "Material 'percentage' at index {$index} must be between 0 and 100.";
                     } else {
-                        $totalPercentage += $pct;
+                        $totalPercentage = $this->addDecimal($totalPercentage, $pct);
                     }
                 }
             }
 
             if (isset($item['recycled_content_percentage'])) {
-                if (! is_numeric($item['recycled_content_percentage'])) {
+                if (! $this->isDecimal($item['recycled_content_percentage'])) {
                     $errors[$fieldKey][] = "Material 'recycled_content_percentage' at index {$index} must be a number.";
                 } else {
-                    $pct = (float) $item['recycled_content_percentage'];
+                    $pct = (string) $item['recycled_content_percentage'];
 
-                    if ($pct < 0 || $pct > 100) {
+                    if ($this->compareDecimal($pct, '0') < 0 || $this->compareDecimal($pct, '100') > 0) {
                         $errors[$fieldKey][] = "Material 'recycled_content_percentage' at index {$index} must be between 0 and 100.";
                     }
+
                 }
+            }
+
+            if (isset($item['renewable_content_percentage']) && ! $this->isBoundedPercentage($item['renewable_content_percentage'])) {
+                $errors[$fieldKey][] = "Material 'renewable_content_percentage' at index {$index} must be between 0 and 100.";
             }
 
             if (isset($item['hazardous']) && ! is_bool($item['hazardous'])) {
@@ -704,8 +732,71 @@ class DppPayloadValidator
             }
         }
 
-        if ($totalPercentage > 100.0) {
+        if ($this->compareDecimal($totalPercentage, '100') > 0) {
             $errors[$fieldKey][] = "Material percentages sum ({$totalPercentage}%) exceeds 100%.";
+        }
+    }
+
+    /**
+     * @param  array<string, string[]>  $errors
+     */
+    private function validateJsonListField(string $fieldKey, mixed $value, DppFieldDefinition $def, array &$errors): void
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (! is_array($decoded)) {
+                $errors[$fieldKey][] = "Field '{$fieldKey}' must be a JSON array.";
+
+                return;
+            }
+
+            $value = $decoded;
+        }
+
+        if (! is_array($value)) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must be an array.";
+
+            return;
+        }
+
+        if ($def->maxItems !== null && count($value) > $def->maxItems) {
+            $errors[$fieldKey][] = "Field '{$fieldKey}' must have at most {$def->maxItems} items.";
+        }
+
+        $required = $def->bounds['required'] ?? [];
+        $controlled = $def->bounds['controlled'] ?? [];
+
+        foreach ($value as $index => $item) {
+            if (! is_array($item)) {
+                $errors[$fieldKey][] = "Item at index {$index} in '{$fieldKey}' must be an object.";
+
+                continue;
+            }
+
+            foreach ($required as $requiredField) {
+                if (! isset($item[$requiredField]) || trim((string) $item[$requiredField]) === '') {
+                    $errors[$fieldKey][] = "Item at index {$index} in '{$fieldKey}' is missing '{$requiredField}'.";
+                }
+            }
+
+            foreach ($item as $key => $itemValue) {
+                if (! is_string($key)) {
+                    continue;
+                }
+
+                if ((str_ends_with($key, '_url') || $key === 'url' || $key === 'website') && is_string($itemValue)) {
+                    $this->validateUrlField("{$fieldKey}.{$index}.{$key}", $itemValue, $def, $errors);
+                }
+
+                if (is_string($itemValue) && mb_strlen($itemValue) > self::MAX_JSON_LIST_STRING_LENGTH) {
+                    $errors["{$fieldKey}.{$index}.{$key}"][] = "Field '{$fieldKey}.{$index}.{$key}' must be at most ".self::MAX_JSON_LIST_STRING_LENGTH.' characters.';
+                }
+
+                if (isset($controlled[$key]) && ! in_array((string) $itemValue, $controlled[$key], true)) {
+                    $errors[$fieldKey][] = "Item at index {$index} in '{$fieldKey}' has unsupported '{$key}'.";
+                }
+            }
         }
     }
 
@@ -731,5 +822,94 @@ class DppPayloadValidator
     private function isValidLocale(string $locale): bool
     {
         return (bool) preg_match('/^[a-z]{2}$/', $locale);
+    }
+
+    private function isDecimal(mixed $value): bool
+    {
+        return (is_int($value) || is_float($value) || is_string($value))
+            && preg_match('/^-?\d+(?:\.\d+)?$/', trim((string) $value)) === 1;
+    }
+
+    private function isBoundedPercentage(mixed $value): bool
+    {
+        return $this->isDecimal($value)
+            && $this->compareDecimal((string) $value, '0') >= 0
+            && $this->compareDecimal((string) $value, '100') <= 0;
+    }
+
+    private function compareDecimal(string $left, string $right): int
+    {
+        [$leftSign, $leftInt, $leftFrac] = $this->splitDecimal($left);
+        [$rightSign, $rightInt, $rightFrac] = $this->splitDecimal($right);
+
+        if ($leftSign !== $rightSign) {
+            return $leftSign <=> $rightSign;
+        }
+
+        $intCompare = strlen($leftInt) <=> strlen($rightInt);
+        if ($intCompare === 0) {
+            $intCompare = strcmp($leftInt, $rightInt);
+        }
+
+        if ($intCompare !== 0) {
+            return $leftSign > 0 ? $intCompare : -$intCompare;
+        }
+
+        $maxFrac = max(strlen($leftFrac), strlen($rightFrac));
+        $fracCompare = strcmp(str_pad($leftFrac, $maxFrac, '0'), str_pad($rightFrac, $maxFrac, '0'));
+
+        return $leftSign > 0 ? $fracCompare <=> 0 : 0 <=> $fracCompare;
+    }
+
+    private function addDecimal(string $left, string $right): string
+    {
+        [$leftSign, $leftInt, $leftFrac] = $this->splitDecimal($left);
+        [$rightSign, $rightInt, $rightFrac] = $this->splitDecimal($right);
+
+        $scale = max(strlen($leftFrac), strlen($rightFrac));
+        $leftWhole = ($leftSign < 0 ? '-' : '').$leftInt.str_pad($leftFrac, $scale, '0');
+        $rightWhole = ($rightSign < 0 ? '-' : '').$rightInt.str_pad($rightFrac, $scale, '0');
+        $sum = (string) ((int) $leftWhole + (int) $rightWhole);
+
+        if ($scale === 0) {
+            return $sum;
+        }
+
+        $negative = str_starts_with($sum, '-');
+        $sum = ltrim($sum, '-');
+        $sum = str_pad($sum, $scale + 1, '0', STR_PAD_LEFT);
+        $integer = substr($sum, 0, -$scale);
+        $fraction = rtrim(substr($sum, -$scale), '0');
+        $result = $fraction === '' ? $integer : "{$integer}.{$fraction}";
+
+        return $negative && $result !== '0' ? "-{$result}" : $result;
+    }
+
+    /** @return array{0:int,1:string,2:string} */
+    private function splitDecimal(string $value): array
+    {
+        $value = trim($value);
+        $sign = str_starts_with($value, '-') ? -1 : 1;
+        $value = ltrim($value, '+-');
+        [$integer, $fraction] = array_pad(explode('.', $value, 2), 2, '');
+        $integer = ltrim($integer, '0');
+
+        return [$sign, $integer === '' ? '0' : $integer, rtrim($fraction, '0')];
+    }
+
+    private function isUnsafeHost(string $host): bool
+    {
+        $host = strtolower(trim($host, "[] \t\n\r\0\x0B"));
+
+        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
+            return true;
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
+            && filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return true;
+        }
+
+        return false;
     }
 }

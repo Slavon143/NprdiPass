@@ -15,4 +15,5 @@ enum DppFieldType: string
     case CountryCode = 'country_code';
     case StringList = 'string_list';
     case MaterialList = 'material_list';
+    case JsonList = 'json_list';
 }

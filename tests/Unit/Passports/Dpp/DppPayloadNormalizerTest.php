@@ -321,8 +321,8 @@ class DppPayloadNormalizerTest extends TestCase
 
         $material = $materials[0];
         $this->assertSame('Steel', $material['name']);
-        $this->assertSame(70.0, $material['percentage']);
-        $this->assertSame(30.0, $material['recycled_content_percentage']);
+        $this->assertSame('70', $material['percentage']);
+        $this->assertSame('30', $material['recycled_content_percentage']);
         $this->assertFalse($material['hazardous']);
         $this->assertSame('SE', $material['country_of_origin']);
     }

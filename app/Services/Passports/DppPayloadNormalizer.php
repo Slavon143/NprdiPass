@@ -282,6 +282,7 @@ class DppPayloadNormalizer
             DppFieldType::CountryCode => $this->normalizeCountryCode($value, $def),
             DppFieldType::StringList => $this->normalizeStringList($value, $def),
             DppFieldType::MaterialList => $this->normalizeMaterialList($value, $def),
+            DppFieldType::JsonList => $this->normalizeJsonList($value, $def),
         };
     }
 
@@ -323,17 +324,23 @@ class DppPayloadNormalizer
         return (int) $value;
     }
 
-    private function normalizeDecimal(mixed $value, DppFieldDefinition $def): ?float
+    private function normalizeDecimal(mixed $value, DppFieldDefinition $def): ?string
     {
         if ($value === null && $def->nullable) {
             return null;
         }
 
-        if (! is_numeric($value)) {
+        if (! is_int($value) && ! is_float($value) && ! is_string($value)) {
             return null;
         }
 
-        return (float) $value;
+        $decimal = trim((string) $value);
+
+        if (! preg_match('/^-?\d+(?:\.\d+)?$/', $decimal)) {
+            return null;
+        }
+
+        return $this->canonicalDecimal($decimal);
     }
 
     private function normalizeDate(mixed $value, DppFieldDefinition $def): ?string
@@ -384,13 +391,17 @@ class DppPayloadNormalizer
 
         $parsed = parse_url($str);
 
-        if ($parsed === false || ! isset($parsed['scheme'])) {
+        if ($parsed === false || ! isset($parsed['scheme'], $parsed['host'])) {
             return null;
         }
 
         $scheme = mb_strtolower($parsed['scheme']);
 
         if (! in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
+
+        if ($this->isUnsafeHost((string) $parsed['host'])) {
             return null;
         }
 
@@ -495,11 +506,19 @@ class DppPayloadNormalizer
             }
 
             $material = [
+                'code' => $this->normalizeShortText($item['code'] ?? null, new DppFieldDefinition('code', DppFieldType::ShortText, false, true, DppSectionKey::MaterialsAndComposition, maxLength: 120)),
+                'type' => $this->normalizeShortText($item['type'] ?? null, new DppFieldDefinition('type', DppFieldType::ShortText, false, true, DppSectionKey::MaterialsAndComposition, maxLength: 120)),
                 'name' => $name,
+                'display_name' => $this->normalizeShortText($item['display_name'] ?? null, new DppFieldDefinition('display_name', DppFieldType::ShortText, true, true, DppSectionKey::MaterialsAndComposition, maxLength: 500)),
                 'percentage' => $this->normalizeDecimal($item['percentage'] ?? null, new DppFieldDefinition('percentage', DppFieldType::Decimal, false, true, DppSectionKey::MaterialsAndComposition, min: 0, max: 100)),
+                'basis' => $this->normalizeShortText($item['basis'] ?? null, new DppFieldDefinition('basis', DppFieldType::ShortText, false, true, DppSectionKey::MaterialsAndComposition, maxLength: 80)),
                 'recycled_content_percentage' => $this->normalizeDecimal($item['recycled_content_percentage'] ?? null, new DppFieldDefinition('recycled_content_percentage', DppFieldType::Decimal, false, true, DppSectionKey::MaterialsAndComposition, min: 0, max: 100)),
+                'renewable_content_percentage' => $this->normalizeDecimal($item['renewable_content_percentage'] ?? null, new DppFieldDefinition('renewable_content_percentage', DppFieldType::Decimal, false, true, DppSectionKey::MaterialsAndComposition, min: 0, max: 100)),
                 'hazardous' => $this->normalizeBoolean($item['hazardous'] ?? null, new DppFieldDefinition('hazardous', DppFieldType::Boolean, false, false, DppSectionKey::MaterialsAndComposition)),
                 'country_of_origin' => $this->normalizeCountryCode($item['country_of_origin'] ?? null, new DppFieldDefinition('country_of_origin', DppFieldType::CountryCode, false, true, DppSectionKey::MaterialsAndComposition)),
+                'source' => $this->normalizeShortText($item['source'] ?? null, new DppFieldDefinition('source', DppFieldType::ShortText, false, true, DppSectionKey::MaterialsAndComposition, maxLength: 500)),
+                'notes' => $this->normalizeLongText($item['notes'] ?? null, new DppFieldDefinition('notes', DppFieldType::LongText, true, true, DppSectionKey::MaterialsAndComposition, maxLength: 2000)),
+                'sort_order' => $this->normalizeInteger($item['sort_order'] ?? null, new DppFieldDefinition('sort_order', DppFieldType::Integer, false, true, DppSectionKey::MaterialsAndComposition, min: 0)),
             ];
 
             $material = array_filter($material, fn ($v) => $v !== null)
@@ -508,7 +527,84 @@ class DppPayloadNormalizer
             $items[] = $material;
         }
 
+        usort($items, function (array $a, array $b): int {
+            $order = ((int) ($a['sort_order'] ?? 0)) <=> ((int) ($b['sort_order'] ?? 0));
+
+            return $order !== 0 ? $order : strcmp((string) $a['name'], (string) $b['name']);
+        });
+
         return $items;
+    }
+
+    /** @return array<int, array<string, mixed>>|null */
+    private function normalizeJsonList(mixed $value, DppFieldDefinition $def): ?array
+    {
+        if ($value === null && $def->nullable) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (! is_array($decoded)) {
+                return null;
+            }
+
+            $value = $decoded;
+        }
+
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $result = [];
+        $stringFields = $def->bounds['string_fields'] ?? [];
+
+        foreach (array_values($value) as $index => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $normalized = [];
+            foreach ($item as $key => $raw) {
+                if (! is_string($key)) {
+                    continue;
+                }
+
+                if (is_string($raw)) {
+                    $raw = trim($raw);
+                }
+
+                if ($raw === null || $raw === '') {
+                    continue;
+                }
+
+                if (str_ends_with($key, '_url') || $key === 'url' || $key === 'website') {
+                    $url = $this->normalizeUrl($raw, new DppFieldDefinition($key, DppFieldType::Url, false, true, $def->section));
+                    if ($url !== null) {
+                        $normalized[$key] = $url;
+                    }
+
+                    continue;
+                }
+
+                $normalized[$key] = in_array($key, $stringFields, true) ? (string) $raw : $raw;
+            }
+
+            if ($normalized !== []) {
+                $normalized['sort_order'] = isset($normalized['sort_order']) ? (int) $normalized['sort_order'] : $index;
+                ksort($normalized);
+                $result[] = $normalized;
+            }
+        }
+
+        usort($result, function (array $a, array $b): int {
+            $order = ((int) $a['sort_order']) <=> ((int) $b['sort_order']);
+
+            return $order !== 0 ? $order : json_encode($a) <=> json_encode($b);
+        });
+
+        return $result;
     }
 
     /**
@@ -551,5 +647,35 @@ class DppPayloadNormalizer
     private function isValidLocale(string $locale): bool
     {
         return (bool) preg_match('/^[a-z]{2}$/', $locale);
+    }
+
+    private function canonicalDecimal(string $decimal): string
+    {
+        $negative = str_starts_with($decimal, '-');
+        $decimal = ltrim($decimal, '-');
+        [$integer, $fraction] = array_pad(explode('.', $decimal, 2), 2, '');
+        $integer = ltrim($integer, '0');
+        $integer = $integer === '' ? '0' : $integer;
+        $fraction = rtrim($fraction, '0');
+
+        $canonical = $fraction === '' ? $integer : "{$integer}.{$fraction}";
+
+        return $negative && $canonical !== '0' ? "-{$canonical}" : $canonical;
+    }
+
+    private function isUnsafeHost(string $host): bool
+    {
+        $host = mb_strtolower(trim($host, "[] \t\n\r\0\x0B"));
+
+        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
+            return true;
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
+            && filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return true;
+        }
+
+        return false;
     }
 }

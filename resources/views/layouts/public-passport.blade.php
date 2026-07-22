@@ -42,9 +42,6 @@
     <script type="application/ld+json">{!! $passport->jsonLd !!}</script>
     @endunless
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
-
     @vite(['resources/css/app.css'])
     <style>
         .passport-section { margin-bottom: 2rem; }

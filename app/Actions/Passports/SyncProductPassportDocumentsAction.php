@@ -88,6 +88,7 @@ class SyncProductPassportDocumentsAction
                     'passport_uuid' => $passport->getAttribute('uuid'),
                     'draft_version_uuid' => $draft->getAttribute('uuid'),
                     'section_key' => 'certifications_and_documents',
+                    'changed_sections' => ['certifications_and_documents'],
                     'old_revision' => $oldRevision,
                     'new_revision' => $newRevision,
                 ],

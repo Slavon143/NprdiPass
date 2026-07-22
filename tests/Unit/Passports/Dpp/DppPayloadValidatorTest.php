@@ -231,6 +231,31 @@ class DppPayloadValidatorTest extends TestCase
         );
     }
 
+    public function test_rejects_translation_locale_count_over_limit(): void
+    {
+        $company = $this->createCompany();
+        $product = $this->createProduct($company);
+        $passport = $this->createPassport($company, $product);
+
+        $payload = $this->validPayload();
+        $payload['translations'] = [];
+
+        foreach (range('a', 'z') as $letter) {
+            $payload['translations']["a{$letter}"] = [
+                'identity' => ['public_name' => "Name {$letter}"],
+            ];
+
+            if (count($payload['translations']) > DppPayloadValidator::MAX_LOCALE_COUNT) {
+                break;
+            }
+        }
+
+        $this->expectValidationError(
+            fn () => $this->validator->validateFullPayload($payload, $company, $passport),
+            'translations',
+        );
+    }
+
     public function test_validates_document_belongs_to_product_when_passport_provided(): void
     {
         $company = $this->createCompany();
@@ -530,6 +555,107 @@ class DppPayloadValidatorTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result['materials']);
+    }
+
+    public function test_validate_section_payload_accepts_decimal_strings_without_float_requirement(): void
+    {
+        $result = $this->validator->validateSectionPayload(
+            'environmental_information',
+            ['recycled_content_percentage' => '50.125'],
+            false,
+        );
+
+        $this->assertSame('50.125', $result['recycled_content_percentage']);
+    }
+
+    public function test_validate_section_payload_accepts_recycled_percentage_as_share_of_material(): void
+    {
+        $result = $this->validator->validateSectionPayload(
+            'materials_and_composition',
+            [
+                'materials' => [
+                    ['name' => 'Steel', 'percentage' => '20', 'recycled_content_percentage' => '30', 'hazardous' => false],
+                ],
+            ],
+            false,
+        );
+
+        $this->assertSame('30', $result['materials'][0]['recycled_content_percentage']);
+    }
+
+    public function test_validate_section_payload_accepts_structured_environmental_metrics(): void
+    {
+        $result = $this->validator->validateSectionPayload(
+            'environmental_information',
+            [
+                'environmental_metrics' => [
+                    [
+                        'metric_code' => 'energy_use',
+                        'label' => 'Energy use',
+                        'value' => '12.5',
+                        'unit' => 'kwh',
+                        'scope' => 'use_phase',
+                        'verification_status' => 'provided',
+                    ],
+                ],
+            ],
+            false,
+        );
+
+        $this->assertSame('energy_use', $result['environmental_metrics'][0]['metric_code']);
+    }
+
+    public function test_validate_section_payload_rejects_overlong_structured_list_string(): void
+    {
+        $this->expectValidationError(
+            fn () => $this->validator->validateSectionPayload(
+                'environmental_information',
+                [
+                    'environmental_metrics' => [
+                        [
+                            'metric_code' => 'energy_use',
+                            'label' => str_repeat('x', DppPayloadValidator::MAX_JSON_LIST_STRING_LENGTH + 1),
+                            'value' => '12.5',
+                            'unit' => 'kwh',
+                        ],
+                    ],
+                ],
+                false,
+            ),
+            'environmental_metrics.0.label',
+        );
+    }
+
+    public function test_validate_section_payload_rejects_unsupported_environmental_metric_unit(): void
+    {
+        $this->expectValidationError(
+            fn () => $this->validator->validateSectionPayload(
+                'environmental_information',
+                [
+                    'environmental_metrics' => [
+                        ['metric_code' => 'energy_use', 'value' => '12.5', 'unit' => 'bananas'],
+                    ],
+                ],
+                false,
+            ),
+            'environmental_metrics',
+        );
+    }
+
+    public function test_validate_section_payload_rejects_unsafe_urls_inside_structured_lists(): void
+    {
+        $this->expectValidationError(
+            fn () => $this->validator->validateSectionPayload(
+                'support_and_contact',
+                [
+                    'support_channels' => [
+                        ['type' => 'web', 'value' => 'https://support.example.com', 'url' => 'https://localhost/catalog/products'],
+                    ],
+                ],
+                false,
+            ),
+            'support_channels.0.url',
+        );
     }
 
     public function test_validate_section_payload_rejects_string_list_non_string_item(): void

@@ -107,11 +107,11 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertSame(5000, $descField->maxLength);
     }
 
-    public function test_manufacturer_and_operator_has_9_fields(): void
+    public function test_manufacturer_and_operator_has_14_fields(): void
     {
         $section = $this->registry->sections()['manufacturer_and_operator'];
 
-        $this->assertCount(9, $section->fields);
+        $this->assertCount(14, $section->fields);
     }
 
     public function test_manufacturer_and_operator_translatable_split(): void
@@ -121,8 +121,8 @@ class DppSchemaRegistryTest extends TestCase
         $translatable = array_filter($section->fields, fn (DppFieldDefinition $f) => $f->translatable);
         $nonTranslatable = array_filter($section->fields, fn (DppFieldDefinition $f) => ! $f->translatable);
 
-        $this->assertCount(3, $translatable);
-        $this->assertCount(6, $nonTranslatable);
+        $this->assertCount(4, $translatable);
+        $this->assertCount(10, $nonTranslatable);
 
         $translatableKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $translatable);
         $this->assertContains('manufacturer_display_name', $translatableKeys);
@@ -171,24 +171,22 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertSame($expected, $fieldKeys);
     }
 
-    public function test_usage_and_care_has_4_long_text_translatable_fields(): void
+    public function test_usage_and_care_has_8_translatable_fields(): void
     {
         $section = $this->registry->sections()['usage_and_care'];
 
-        $this->assertCount(4, $section->fields);
+        $this->assertCount(8, $section->fields);
 
         foreach ($section->fields as $field) {
-            $this->assertSame(DppFieldType::LongText, $field->type);
             $this->assertTrue($field->translatable);
-            $this->assertSame(5000, $field->maxLength);
         }
     }
 
-    public function test_repair_and_spare_parts_has_7_fields(): void
+    public function test_repair_and_spare_parts_has_12_fields(): void
     {
         $section = $this->registry->sections()['repair_and_spare_parts'];
 
-        $this->assertCount(7, $section->fields);
+        $this->assertCount(12, $section->fields);
     }
 
     public function test_repair_and_spare_parts_translatable_split(): void
@@ -198,8 +196,8 @@ class DppSchemaRegistryTest extends TestCase
         $translatable = array_filter($section->fields, fn (DppFieldDefinition $f) => $f->translatable);
         $nonTranslatable = array_filter($section->fields, fn (DppFieldDefinition $f) => ! $f->translatable);
 
-        $this->assertCount(4, $translatable);
-        $this->assertCount(3, $nonTranslatable);
+        $this->assertCount(5, $translatable);
+        $this->assertCount(7, $nonTranslatable);
 
         $nonTranslatableKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $nonTranslatable);
         $this->assertContains('repairable', $nonTranslatableKeys);
@@ -207,11 +205,11 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertContains('spare_parts_url', $nonTranslatableKeys);
     }
 
-    public function test_recycling_and_disposal_has_4_fields(): void
+    public function test_recycling_and_disposal_has_11_fields(): void
     {
         $section = $this->registry->sections()['recycling_and_disposal'];
 
-        $this->assertCount(4, $section->fields);
+        $this->assertCount(11, $section->fields);
 
         $fieldKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $section->fields);
         $this->assertContains('recycling_instructions', $fieldKeys);
@@ -220,11 +218,11 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertContains('recycling_codes', $fieldKeys);
     }
 
-    public function test_environmental_information_has_6_fields(): void
+    public function test_environmental_information_has_10_fields(): void
     {
         $section = $this->registry->sections()['environmental_information'];
 
-        $this->assertCount(6, $section->fields);
+        $this->assertCount(10, $section->fields);
     }
 
     public function test_environmental_information_carbon_footprint_bounds(): void
@@ -249,24 +247,38 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertSame(100.0, $field->max);
     }
 
-    public function test_certifications_and_documents_has_2_fields(): void
+    public function test_certifications_and_documents_has_3_fields(): void
     {
         $section = $this->registry->sections()['certifications_and_documents'];
 
-        $this->assertCount(2, $section->fields);
+        $this->assertCount(3, $section->fields);
 
         $this->assertSame('certification_notes', $section->fields[0]->key);
         $this->assertSame('compliance_summary', $section->fields[1]->key);
     }
 
-    public function test_support_and_contact_has_6_fields(): void
+    public function test_support_and_contact_has_13_fields(): void
     {
         $section = $this->registry->sections()['support_and_contact'];
 
-        $this->assertCount(6, $section->fields);
+        $this->assertCount(13, $section->fields);
 
         $fieldKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $section->fields);
-        $expected = ['support_email', 'support_phone', 'support_url', 'warranty_url', 'warranty_summary', 'support_notes'];
+        $expected = [
+            'support_email',
+            'support_phone',
+            'support_url',
+            'support_channels',
+            'warranty_available',
+            'warranty_duration',
+            'warranty_duration_unit',
+            'warranty_url',
+            'warranty_summary',
+            'warranty_conditions',
+            'warranty_exclusions',
+            'warranty_claim_instructions',
+            'support_notes',
+        ];
         $this->assertSame($expected, $fieldKeys);
     }
 

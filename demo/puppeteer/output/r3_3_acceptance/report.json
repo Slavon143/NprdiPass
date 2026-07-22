@@ -1,0 +1,477 @@
+{
+  "startedAt": "2026-07-22T15:08:01.482Z",
+  "appUrl": "http://127.0.0.1:8765",
+  "productName": "Industrial LED Work Lamp 40 W",
+  "productUuid": "b054841c-7a5b-4167-b52b-c0260cfc936e",
+  "pages": [
+    {
+      "page": "Advanced DPP editor",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/edit",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-advanced-editor.png",
+      "h1": "Edit Product Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Readiness page",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/readiness",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-readiness.png",
+      "h1": "Passport Readiness: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Preview",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/preview",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-preview.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Publish confirmation",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/publish-confirm",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-publish-confirmation.png",
+      "h1": "Publish Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Published Passport version",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/versions/4f3109ea-9bc4-4fad-95e2-b28e5080555c",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-published-version.png",
+      "h1": "Version 2: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Public Passport",
+      "viewport": "375x667",
+      "url": "http://127.0.0.1:8765/p/019f8a5d-aeac-7333-b24a-bcc0e15bb535",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 375,
+        "clientWidth": 375
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\mobile-public-passport.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Advanced DPP editor",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/edit",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-advanced-editor.png",
+      "h1": "Edit Product Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Readiness page",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/readiness",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-readiness.png",
+      "h1": "Passport Readiness: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Preview",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/preview",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-preview.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Publish confirmation",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/publish-confirm",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-publish-confirmation.png",
+      "h1": "Publish Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Published Passport version",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/versions/4f3109ea-9bc4-4fad-95e2-b28e5080555c",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-published-version.png",
+      "h1": "Version 2: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Public Passport",
+      "viewport": "768x1024",
+      "url": "http://127.0.0.1:8765/p/019f8a5d-aeac-7333-b24a-bcc0e15bb535",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\tablet-public-passport.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Advanced DPP editor",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/edit",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-advanced-editor.png",
+      "h1": "Edit Product Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Readiness page",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/readiness",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-readiness.png",
+      "h1": "Passport Readiness: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Preview",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/preview",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-preview.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Publish confirmation",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/publish-confirm",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-publish-confirmation.png",
+      "h1": "Publish Passport: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Published Passport version",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/catalog/products/b054841c-7a5b-4167-b52b-c0260cfc936e/passport/versions/4f3109ea-9bc4-4fad-95e2-b28e5080555c",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-published-version.png",
+      "h1": "Version 2: Industrial LED Work Lamp 40 W"
+    },
+    {
+      "page": "Public Passport",
+      "viewport": "1280x720",
+      "url": "http://127.0.0.1:8765/p/019f8a5d-aeac-7333-b24a-bcc0e15bb535",
+      "expected": "Page renders without critical console errors, failed requests, or horizontal overflow.",
+      "actual": "Rendered",
+      "consoleWarnings": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "horizontalOverflow": false,
+      "overflowDetail": {
+        "horizontal": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "screenshot": "D:\\laravel\\nordipass\\demo\\puppeteer\\output\\r3_3_acceptance\\desktop-public-passport.png",
+      "h1": "Industrial LED Work Lamp 40 W"
+    }
+  ],
+  "accessibility": {
+    "labelsMissing": [],
+    "tabOrder": [
+      {
+        "tag": "A",
+        "text": "NordiPass",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Dashboard",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Company settings",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Products",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Categories",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Attributes",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Members",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Audit",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "API tokens",
+        "visibleFocus": true
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Demo Owner",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Preview Draft",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "View Passport",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "View Published Version",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Version History",
+        "visibleFocus": true
+      },
+      {
+        "tag": "A",
+        "text": "Open Public Page",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "public_name",
+        "visibleFocus": true
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "public_description",
+        "visibleFocus": true
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Save Section",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "manufacturer_display_name",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "responsible_operator_display_name",
+        "visibleFocus": true
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "contact_notes",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "manufacturer_email",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "manufacturer_website",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "responsible_operator_email",
+        "visibleFocus": true
+      },
+      {
+        "tag": "INPUT",
+        "text": "responsible_operator_website",
+        "visibleFocus": true
+      }
+    ],
+    "dynamicRows": {
+      "addFocus": "New material name",
+      "removeLabel": "Remove new material row",
+      "removeFocus": "Material 4 name"
+    },
+    "errorSummary": {
+      "focused": true,
+      "text": "Please correct the following fields:\n\nMaterials: Material 'percentage' at index 0 must be between 0 and 100.",
+      "links": [
+        "#field-materials_and_composition-materials"
+      ],
+      "invalidCount": 1
+    }
+  },
+  "status": "passed",
+  "finishedAt": "2026-07-22T15:08:43.759Z"
+}

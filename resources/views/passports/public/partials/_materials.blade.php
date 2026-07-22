@@ -11,6 +11,9 @@
             @endphp
             <div class="flex items-center gap-2 text-sm">
                 <span class="font-medium text-slate-700">{{ $material['name'] ?? 'Unknown' }}</span>
+                @if(!empty($material['code']))
+                    <span class="text-slate-400 text-xs">{{ $material['code'] }}</span>
+                @endif
                 @if($percentage !== null)
                     <span class="text-slate-500">&mdash; {{ rtrim(rtrim(number_format($percentage, 1, '.', ''), '0'), '.') }}%</span>
                 @endif
@@ -21,6 +24,14 @@
                     <span class="text-red-600 text-xs font-semibold">&#9888; Hazardous</span>
                 @endif
             </div>
+            @if(!empty($material['basis']) || !empty($material['source']) || !empty($material['country_of_origin']) || !empty($material['notes']))
+                <div class="ml-1 text-xs text-slate-500">
+                    @if(!empty($material['basis'])) Basis: {{ $material['basis'] }} @endif
+                    @if(!empty($material['country_of_origin'])) Origin: {{ $material['country_of_origin'] }} @endif
+                    @if(!empty($material['source'])) Source: {{ $material['source'] }} @endif
+                    @if(!empty($material['notes'])) <div>{{ $material['notes'] }}</div> @endif
+                </div>
+            @endif
         @endforeach
     </div>
 @endif

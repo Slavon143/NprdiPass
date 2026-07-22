@@ -1960,7 +1960,7 @@ components:
       type: object
       properties:
         key: { type: string }
-        type: { type: string, enum: [short_text, long_text, boolean, integer, decimal, date, email, url, country_code, string_list, material_list] }
+        type: { type: string, enum: [short_text, long_text, boolean, integer, decimal, date, email, url, country_code, string_list, material_list, json_list] }
         translatable: { type: boolean }
         nullable: { type: boolean }
         max_length: { type: integer, nullable: true }

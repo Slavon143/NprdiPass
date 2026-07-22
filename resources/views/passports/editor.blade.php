@@ -258,40 +258,40 @@
                                                                 $materialHazardous = is_array($material) && ($material['hazardous'] ?? false);
                                                             @endphp
                                                             <div class="material-row grid gap-2 rounded border border-white bg-white p-3 md:grid-cols-12">
-                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" value="{{ $materialName }}" {{ $canManage ? '' : 'disabled' }}>
-                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" value="{{ $materialPercentage }}" {{ $canManage ? '' : 'disabled' }}>
-                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" value="{{ $materialRecycled }}" {{ $canManage ? '' : 'disabled' }}>
-                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" aria-label="Material {{ $loop->iteration }} name" value="{{ $materialName }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" aria-label="Material {{ $loop->iteration }} percentage of product" value="{{ $materialPercentage }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" aria-label="Material {{ $loop->iteration }} recycled content percentage" value="{{ $materialRecycled }}" {{ $canManage ? '' : 'disabled' }}>
+                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" aria-label="Material {{ $loop->iteration }} country of origin" {{ $canManage ? '' : 'disabled' }}>
                                                                     <option value="">Country</option>
                                                                     @foreach($countryOptions as $code => $label)
                                                                         <option value="{{ $code }}" @selected($materialCountry === $code)>{{ $label }} ({{ $code }})</option>
                                                                     @endforeach
                                                                 </select>
                                                                 <label class="md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600">
-                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" @checked($materialHazardous) {{ $canManage ? '' : 'disabled' }}>
+                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" aria-label="Material {{ $loop->iteration }} hazardous" @checked($materialHazardous) {{ $canManage ? '' : 'disabled' }}>
                                                                     Hazardous
                                                                 </label>
                                                                 @if($canManage)
-                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline">Remove</button>
+                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline" aria-label="Remove material {{ $loop->iteration }}{{ $materialName !== '' ? ': '.$materialName : '' }}">Remove</button>
                                                                 @endif
                                                             </div>
                                                         @empty
                                                             <div class="material-row grid gap-2 rounded border border-white bg-white p-3 md:grid-cols-12">
-                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" {{ $canManage ? '' : 'disabled' }}>
-                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" {{ $canManage ? '' : 'disabled' }}>
-                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" {{ $canManage ? '' : 'disabled' }}>
-                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="text" class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="name" placeholder="Material name" aria-label="Material 1 name" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="percentage" placeholder="% of product" min="0" max="100" step="any" aria-label="Material 1 percentage of product" {{ $canManage ? '' : 'disabled' }}>
+                                                                <input type="number" class="material-input md:col-span-2 border rounded px-3 py-2" data-material-field="recycled_content_percentage" placeholder="Recycled %" min="0" max="100" step="any" aria-label="Material 1 recycled content percentage" {{ $canManage ? '' : 'disabled' }}>
+                                                                <select class="material-input md:col-span-3 border rounded px-3 py-2" data-material-field="country_of_origin" aria-label="Material 1 country of origin" {{ $canManage ? '' : 'disabled' }}>
                                                                     <option value="">Country</option>
                                                                     @foreach($countryOptions as $code => $label)
                                                                         <option value="{{ $code }}">{{ $label }} ({{ $code }})</option>
                                                                     @endforeach
                                                                 </select>
                                                                 <label class="md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600">
-                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" {{ $canManage ? '' : 'disabled' }}>
+                                                                    <input type="checkbox" class="material-input rounded border-gray-300" data-material-field="hazardous" aria-label="Material 1 hazardous" {{ $canManage ? '' : 'disabled' }}>
                                                                     Hazardous
                                                                 </label>
                                                                 @if($canManage)
-                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline">Remove</button>
+                                                                    <button type="button" class="remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline" aria-label="Remove material 1">Remove</button>
                                                                 @endif
                                                             </div>
                                                         @endforelse
@@ -305,6 +305,23 @@
                                                         Add one material per row. Percentages should not exceed 100 total. Countries are saved as ISO 3166-1 alpha-2 codes.
                                                     </p>
                                                 </div>
+                                            @elseif($field->type->value === 'json_list')
+                                                @php
+                                                    $jsonListValue = is_array($value)
+                                                        ? json_encode(array_values($value), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+                                                        : '';
+                                                @endphp
+                                                <textarea name="{{ $field->key }}" rows="6"
+                                                          id="{{ $fieldId }}"
+                                                          class="section-input mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
+                                                          data-field="{{ $field->key }}"
+                                                          data-field-type="{{ $field->type->value }}"
+                                                          aria-invalid="false"
+                                                          aria-describedby="{{ $errorId }}"
+                                                          {{ $canManage ? '' : 'disabled' }}>{{ $jsonListValue }}</textarea>
+                                                <p class="mt-2 text-xs text-slate-500">
+                                                    Enter a JSON array of objects. Validation runs server-side and unsafe URLs are rejected.
+                                                </p>
                                             @else
                                                 <input type="{{ $inputType }}"
                                                        name="{{ $field->key }}"
@@ -554,7 +571,12 @@
         });
 
         var summary = container.querySelector('.section-error-summary');
-        if (summary) summary.classList.add('hidden');
+        if (summary) {
+            summary.classList.add('hidden');
+            summary.removeAttribute('tabindex');
+            var summaryBody = summary.querySelector('div');
+            if (summaryBody) summaryBody.innerHTML = '';
+        }
     }
 
     function showFieldErrors(sectionKey, errors) {
@@ -563,6 +585,19 @@
 
         var errorCount = 0;
         var firstErrorInput = null;
+        var summaryItems = [];
+
+        function addSummaryItem(fieldKey, message) {
+            if (!message) return;
+            var fieldId = 'field-' + sectionKey + '-' + fieldKey;
+            var fieldLabel = container.querySelector('label[for="' + fieldId + '"]');
+            var label = fieldLabel ? fieldLabel.textContent.trim().replace(/\s+/g, ' ') : fieldKey.replace(/_/g, ' ');
+            summaryItems.push({
+                href: '#' + fieldId,
+                label: label,
+                message: message
+            });
+        }
 
         Object.keys(errors).forEach(function(fieldKey) {
             var messages = errors[fieldKey];
@@ -577,6 +612,7 @@
                         input.setAttribute('aria-invalid', 'true');
                         input.classList.add('border-red-500');
                         errorCount++;
+                        addSummaryItem(input.dataset.field || '', msg);
                         if (!firstErrorInput) firstErrorInput = input;
                     });
                 });
@@ -596,10 +632,34 @@
                 errorEl.textContent = messages[0];
                 errorEl.classList.remove('hidden');
                 errorCount++;
+                addSummaryItem(fieldKey, messages[0]);
             }
         });
 
-        if (firstErrorInput) {
+        var summary = container.querySelector('.section-error-summary');
+        var summaryBody = summary ? summary.querySelector('div') : null;
+        if (summary && summaryBody && summaryItems.length > 0) {
+            summaryBody.innerHTML = '<p class="font-semibold">Please correct the following fields:</p><ul class="mt-2 list-disc space-y-1 pl-5"></ul>';
+            var list = summaryBody.querySelector('ul');
+            summaryItems.forEach(function(item) {
+                var li = document.createElement('li');
+                var link = document.createElement('a');
+                link.href = item.href;
+                link.className = 'font-semibold underline';
+                link.textContent = item.label;
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var target = document.querySelector(item.href);
+                    if (target) target.focus({ preventScroll: false });
+                });
+                li.appendChild(link);
+                li.appendChild(document.createTextNode(': ' + item.message));
+                list.appendChild(li);
+            });
+            summary.classList.remove('hidden');
+            summary.setAttribute('tabindex', '-1');
+            summary.focus({ preventScroll: false });
+        } else if (firstErrorInput) {
             firstErrorInput.focus({ preventScroll: false });
         }
 
@@ -618,6 +678,7 @@
         var select = document.createElement('select');
         select.className = 'material-input md:col-span-3 border rounded px-3 py-2';
         select.dataset.materialField = 'country_of_origin';
+        select.setAttribute('aria-label', 'New material country of origin');
 
         var emptyOption = document.createElement('option');
         emptyOption.value = '';
@@ -649,6 +710,7 @@
         name.className = 'material-input md:col-span-3 border rounded px-3 py-2';
         name.dataset.materialField = 'name';
         name.placeholder = 'Material name';
+        name.setAttribute('aria-label', 'New material name');
 
         var percentage = document.createElement('input');
         percentage.type = 'number';
@@ -658,6 +720,7 @@
         percentage.min = '0';
         percentage.max = '100';
         percentage.step = 'any';
+        percentage.setAttribute('aria-label', 'New material percentage of product');
 
         var recycled = document.createElement('input');
         recycled.type = 'number';
@@ -667,6 +730,7 @@
         recycled.min = '0';
         recycled.max = '100';
         recycled.step = 'any';
+        recycled.setAttribute('aria-label', 'New material recycled content percentage');
 
         var label = document.createElement('label');
         label.className = 'md:col-span-1 inline-flex items-center gap-2 text-sm text-slate-600';
@@ -674,6 +738,7 @@
         hazardous.type = 'checkbox';
         hazardous.className = 'material-input rounded border-gray-300';
         hazardous.dataset.materialField = 'hazardous';
+        hazardous.setAttribute('aria-label', 'New material hazardous');
         label.appendChild(hazardous);
         label.appendChild(document.createTextNode('Hazardous'));
 
@@ -681,6 +746,7 @@
         remove.type = 'button';
         remove.className = 'remove-material-row md:col-span-1 text-sm font-semibold text-red-600 hover:underline';
         remove.textContent = 'Remove';
+        remove.setAttribute('aria-label', 'Remove new material row');
 
         row.appendChild(name);
         row.appendChild(percentage);
@@ -700,6 +766,7 @@
         if (!wrapper || !row) return;
 
         var rows = wrapper.querySelectorAll('.material-row');
+        var focusTarget = row.nextElementSibling || row.previousElementSibling || wrapper.querySelector('.add-material-row');
         if (rows.length <= 1) {
             row.querySelectorAll('.material-input').forEach(function(input) {
                 if (input.type === 'checkbox') {
@@ -708,8 +775,16 @@
                     input.value = '';
                 }
             });
+            focusTarget = row.querySelector('.material-input');
         } else {
             row.remove();
+        }
+
+        if (focusTarget) {
+            var targetInput = focusTarget.matches && focusTarget.matches('.material-input, .add-material-row')
+                ? focusTarget
+                : focusTarget.querySelector('.material-input, .remove-material-row');
+            if (targetInput) targetInput.focus({ preventScroll: false });
         }
 
         onFieldChange(wrapper);
@@ -758,6 +833,18 @@
         return materials;
     }
 
+    function collectJsonList(input) {
+        var raw = (input.value || '').trim();
+        if (raw === '') return [];
+
+        try {
+            var parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : raw;
+        } catch (e) {
+            return raw;
+        }
+    }
+
     function updateReadiness(readiness) {
         var el = document.getElementById('readinessSummary');
         if (!el) return;
@@ -801,6 +888,8 @@
                 payload[fieldKey] = input.checked;
             } else if (fieldType === 'material_list') {
                 payload[fieldKey] = collectMaterialList(input);
+            } else if (fieldType === 'json_list') {
+                payload[fieldKey] = collectJsonList(input);
             } else if (fieldType === 'string_list') {
                 payload[fieldKey] = input.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
             } else if (fieldType === 'decimal' || fieldType === 'integer') {
@@ -808,7 +897,7 @@
                 if (val === '') {
                     payload[fieldKey] = null;
                 } else {
-                    payload[fieldKey] = fieldType === 'integer' ? parseInt(val, 10) : parseFloat(val);
+                    payload[fieldKey] = fieldType === 'integer' ? parseInt(val, 10) : val;
                 }
             } else {
                 payload[fieldKey] = input.value;

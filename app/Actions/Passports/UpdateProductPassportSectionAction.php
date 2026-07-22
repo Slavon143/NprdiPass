@@ -123,6 +123,7 @@ class UpdateProductPassportSectionAction
                     'passport_uuid' => $passport->getAttribute('uuid'),
                     'draft_version_uuid' => $draft->getAttribute('uuid'),
                     'section_key' => $sectionKey,
+                    'changed_sections' => [$sectionKey],
                     'locale' => $targetLocale,
                     'old_revision' => $oldRevision,
                     'new_revision' => $newRevision,
