@@ -8,10 +8,13 @@ use App\Models\Company;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Database\Factories\Catalog\ProductDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -36,6 +39,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ProductDocument extends Model
 {
     use HasCompanyScope, HasUuid;
+
+    /** @use HasFactory<ProductDocumentFactory> */
+    use HasFactory;
 
     protected $fillable = ['status'];
 
@@ -73,6 +79,18 @@ class ProductDocument extends Model
     public function versions(): HasMany
     {
         return $this->hasMany(ProductDocumentVersion::class, 'document_id')->orderBy('version_number');
+    }
+
+    public function reviewDecisions(): HasMany
+    {
+        return $this->hasMany(ProductDocumentReviewDecision::class, 'document_id')->orderBy('decided_at');
+    }
+
+    public function variants(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductVariant::class, 'product_document_variant', 'document_id', 'product_variant_id')
+            ->withPivot(['company_id', 'public_inclusion', 'required', 'sort_order', 'metadata'])
+            ->withTimestamps();
     }
 
     public function creator(): BelongsTo

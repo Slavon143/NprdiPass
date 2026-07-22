@@ -1,0 +1,12 @@
+PHP Warning:  Module "curl" is already loaded in Unknown on line 0
+PHP Warning:  Module "fileinfo" is already loaded in Unknown on line 0
+PHP Warning:  Module "gd" is already loaded in Unknown on line 0
+PHP Warning:  Module "mbstring" is already loaded in Unknown on line 0
+PHP Warning:  Module "openssl" is already loaded in Unknown on line 0
+PHP Warning:  Module "pdo_mysql" is already loaded in Unknown on line 0
+PHP Warning:  Module "sodium" is already loaded in Unknown on line 0
+{
+    "advisories": [],
+    "abandoned": [],
+    "filter": []
+}

@@ -148,6 +148,10 @@ Route::middleware([
             Route::get('/{document}', [ProductDocumentController::class, 'show'])->whereUuid('document')->name('show');
             Route::post('/{document}/versions', [ProductDocumentController::class, 'addVersion'])->whereUuid('document')->name('versions.store');
             Route::get('/{document}/versions/{version}/download', [ProductDocumentController::class, 'downloadVersion'])->whereUuid('document')->whereUuid('version')->name('versions.download');
+            Route::post('/{document}/versions/{version}/submit-review', [ProductDocumentController::class, 'submitReview'])->whereUuid('document')->whereUuid('version')->name('versions.submit-review');
+            Route::post('/{document}/versions/{version}/cancel-review', [ProductDocumentController::class, 'cancelReview'])->whereUuid('document')->whereUuid('version')->name('versions.cancel-review');
+            Route::post('/{document}/versions/{version}/approve', [ProductDocumentController::class, 'approveVersion'])->whereUuid('document')->whereUuid('version')->name('versions.approve');
+            Route::post('/{document}/versions/{version}/reject', [ProductDocumentController::class, 'rejectVersion'])->whereUuid('document')->whereUuid('version')->name('versions.reject');
             Route::post('/{document}/archive', [ProductDocumentController::class, 'archive'])->whereUuid('document')->name('archive');
             Route::post('/{document}/restore', [ProductDocumentController::class, 'restore'])->whereUuid('document')->name('restore');
         });

@@ -57,6 +57,19 @@ class PdfDocumentValidator
             throw DocumentOperationException::invalid('document', 'The file must have a name.', 'missing_filename');
         }
 
+        $normalizedFilename = str_replace('\\', '/', (string) $originalFilename);
+        if (str_contains($normalizedFilename, '/') || str_contains($normalizedFilename, '../')) {
+            throw DocumentOperationException::invalid('document', 'The filename is not allowed.', 'unsafe_filename');
+        }
+
+        $basename = strtolower(pathinfo($normalizedFilename, PATHINFO_FILENAME));
+        $dangerousExtensions = ['php', 'phtml', 'phar', 'js', 'html', 'htm', 'svg', 'exe', 'bat', 'cmd', 'ps1', 'sh'];
+        foreach ($dangerousExtensions as $dangerousExtension) {
+            if (str_ends_with($basename, '.'.$dangerousExtension)) {
+                throw DocumentOperationException::invalid('document', 'Double-extension filenames are not allowed.', 'unsafe_double_extension');
+            }
+        }
+
         return new ValidatedPdf(
             temporaryPath: $temporaryPath,
             originalFilename: (string) $originalFilename,

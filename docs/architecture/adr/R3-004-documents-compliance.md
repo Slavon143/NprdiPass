@@ -1,60 +1,41 @@
 # ADR-R3-004 — Documents and Compliance Workflow
 
 **Status:** ACCEPTED
-**Date:** 2026-07-19
-**Stage:** R3.1
+**Date:** 2026-07-22
+**Stage:** R3.4
 **Supersedes:** None (extends R2 documents model)
 
 ---
 
 ## Context
 
-R2 has `product_documents` and `product_document_versions` with basic metadata (type, title, visibility, issuer, dates) and immutable version storage. R3 adds compliance workflow: certificate metadata, declarations of conformity, review/approval, expiration tracking, and public visibility control.
+R2/R3.3 has `product_documents` and immutable `product_document_versions` with private PDF storage and immutable Passport asset promotion. R3.4 keeps that source of truth and adds document-scoped compliance workflow: canonical type registry, certificate/declaration/evidence metadata, review/approval decisions, deterministic expiry state, approved-current-version resolution, public/private publication filtering, and variant-safe associations.
 
 ## Decision
 
 ### Document Type Model
-R2 document types are extended with compliance-specific metadata:
-
-```php
-// app/Enums/Documents/ProductDocumentType.php
-enum ProductDocumentType: string {
-    case Instruction = 'instruction';
-    case DeclarationOfConformity = 'declaration_of_conformity'; // R3: enhanced
-    case Certificate = 'certificate';                           // R3: enhanced
-    case SafetyDataSheet = 'safety_data_sheet';
-    case Warranty = 'warranty';
-    case TechnicalDataSheet = 'technical_data_sheet';
-    case RecyclingGuide = 'recycling_guide';
-    case Other = 'other';
-}
-```
+`ProductDocumentType` remains the canonical technical identifier and is expanded additively with R3.4 types such as `general_document`, `manual`, `technical_specification`, `test_report`, `environmental_evidence`, and `compliance_evidence`. `config/documents.php` defines registry metadata: required/allowed metadata, default visibility, expiry support, review/approval requirements, and readiness mappings.
 
 ### Certificate as Document Subtype
-Certificates are NOT a separate entity. A document with `type = certificate` has additional metadata:
-- Certificate standard/reference
-- Certifying body name
-- Certificate number
-- Scope description
-
-These are stored as JSON in a new `certificate_metadata` column on `product_document_versions`.
+Certificates, declarations, test reports, and compliance evidence are NOT separate entities. They are document versions with typed metadata columns and optional JSON metadata. This preserves one document source of truth and one immutable file/version model.
 
 ### Review and Approval
-- Two new company roles: `Compliance Manager`, `Publisher` (R3.10)
-- Approval is a state on the document (`status`: active → pending_review → approved → active)
-- Review decisions are audit-logged
-- Only approved documents can be associated with publications
+- No custom role UI or generic workflow builder is introduced.
+- Existing company permissions are extended with document review/approval capabilities.
+- Version content remains immutable; only review/approval fields may change after creation.
+- Every transition writes `product_document_review_decisions` and tenant audit events.
+- Self-approval is blocked by default via `documents.creator_self_approval_allowed=false`.
 
 ### Expiration
-- `expires_at` on `product_document_versions` drives notification events
-- `DocumentExpiring` event fires N days before expiry (configurable: default 30, 14, 7)
-- `DocumentExpired` event fires on expiry date
-- Expired documents are still visible in published passports (snapshot remains immutable)
+- Server-side expiry state is deterministic: `not_applicable`, `not_yet_valid`, `valid`, `expiring_soon`, `expired`, `unknown`.
+- `valid_from` / `valid_until` are preferred, with `issue_date` / `expires_at` preserved for compatibility.
+- Published historical snapshots remain immutable; source expiry changes do not rewrite old payloads.
 
 ### Public Visibility
 - `visibility` enum: `internal`, `passport_public`
 - `passport_public` documents appear on public passport page for download
-- Blob storage for public documents must be accessible without authentication
+- Public documents are promoted into immutable `passport_assets` records during publication.
+- Source storage paths are never public and are removed from the published payload after asset promotion.
 
 ### Source Deletion and Published Passports
 - Published passport assets are immutable copies (R2 design)
@@ -68,7 +49,8 @@ These are stored as JSON in a new `certificate_metadata` column on `product_docu
 
 ## Consequences
 
-- Documents table gains `reviewed_by`, `reviewed_at`, `approved_by`, `approved_at` columns
-- Document versions table gains `certificate_metadata` JSON column (nullable)
-- New events: `DocumentSubmittedForReview`, `DocumentApproved`, `DocumentRejected`, `DocumentExpiring`, `DocumentExpired`
-- Notifications triggered for expiry, review requests, approval decisions
+- `product_document_versions` gains review, approval, metadata, validity, and publication bookkeeping fields.
+- `product_document_review_decisions` records structured decisions.
+- `product_document_variant` records tenant-safe variant associations.
+- Readiness and publication use `ProductDocumentCurrentVersionResolver`.
+- No R3.14 notification center or broad workflow platform is introduced.

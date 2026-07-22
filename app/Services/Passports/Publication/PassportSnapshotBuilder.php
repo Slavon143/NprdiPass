@@ -11,6 +11,7 @@ use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
+use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
 use App\Services\Passports\DppPayloadNormalizer;
 use Carbon\CarbonImmutable;
 
@@ -18,9 +19,14 @@ class PassportSnapshotBuilder
 {
     private DppPayloadNormalizer $normalizer;
 
-    public function __construct(DppPayloadNormalizer $normalizer)
-    {
+    private ProductDocumentCurrentVersionResolver $documentVersionResolver;
+
+    public function __construct(
+        DppPayloadNormalizer $normalizer,
+        ProductDocumentCurrentVersionResolver $documentVersionResolver,
+    ) {
         $this->normalizer = $normalizer;
+        $this->documentVersionResolver = $documentVersionResolver;
     }
 
     /**
@@ -184,7 +190,7 @@ class PassportSnapshotBuilder
             }
 
             /** @var ProductDocumentVersion|null $version */
-            $version = $doc->currentVersion;
+            $version = $this->documentVersionResolver->resolve($doc, true);
 
             if ($version === null) {
                 continue;

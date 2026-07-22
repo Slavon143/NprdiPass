@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-07-22T23:54:28.7220672+02:00",
+  "status": "passed",
+  "steps": [
+    {
+      "command": "composer validate --strict",
+      "exit_code": 0,
+      "duration_seconds": 1.2,
+      "log": "docs\\testing\\evidence\\r3_4_final_composer_validate.log"
+    },
+    {
+      "command": "composer check-platform-reqs",
+      "exit_code": 0,
+      "duration_seconds": 0.9,
+      "log": "docs\\testing\\evidence\\r3_4_final_composer_platform.log"
+    },
+    {
+      "command": "vendor\\bin\\pint --test",
+      "exit_code": 0,
+      "duration_seconds": 2.18,
+      "log": "docs\\testing\\evidence\\r3_4_final_pint.log"
+    },
+    {
+      "command": "vendor\\bin\\phpstan analyse",
+      "exit_code": 0,
+      "duration_seconds": 36.69,
+      "log": "docs\\testing\\evidence\\r3_4_final_phpstan.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "duration_seconds": 4.02,
+      "log": "docs\\testing\\evidence\\r3_4_final_npm_build.log"
+    },
+    {
+      "command": "npm run acceptance:r3_4",
+      "exit_code": 0,
+      "duration_seconds": 66.89,
+      "log": "docs\\testing\\evidence\\r3_4_final_acceptance_r3_4.log"
+    },
+    {
+      "command": "vendor\\bin\\pest",
+      "exit_code": 0,
+      "duration_seconds": 493.35,
+      "log": "docs\\testing\\evidence\\r3_4_final_pest.log"
+    },
+    {
+      "command": "php artisan route:list --json --env=testing",
+      "exit_code": 0,
+      "duration_seconds": 1.44,
+      "log": "docs\\testing\\evidence\\r3_4_final_route_list.json"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "duration_seconds": 0.17,
+      "log": "docs\\testing\\evidence\\r3_4_final_git_diff_check.log"
+    }
+  ],
+  "acceptance_server_port_8766_listening_after_run": false,
+  "env_acceptance_ignored": true
+}

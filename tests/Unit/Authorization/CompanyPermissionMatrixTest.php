@@ -19,6 +19,7 @@ foreach (CompanyRole::cases() as $role) {
                 CompanyPermission::CatalogManageMedia,
                 CompanyPermission::CatalogViewDocuments,
                 CompanyPermission::CatalogManageDocuments,
+                CompanyPermission::CatalogSubmitDocumentReview,
                 CompanyPermission::PassportsView,
                 CompanyPermission::PassportsManage,
             ], true),

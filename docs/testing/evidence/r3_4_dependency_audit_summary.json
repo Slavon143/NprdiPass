@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-07-22T23:42:58.3831730+02:00",
+  "scope": "R3.4 approved dependency audit metadata only; raw command outputs retained locally.",
+  "composer": {
+    "command": "composer audit --format=json",
+    "exit_code": 0,
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0,
+    "parsed_json": "docs/testing/evidence/r3_4_composer_audit.parsed.json",
+    "raw_output": "docs/testing/evidence/r3_4_composer_audit.json"
+  },
+  "npm": {
+    "command": "npm audit --json",
+    "exit_code": 0,
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0,
+    "parsed_json": "docs/testing/evidence/r3_4_npm_audit.parsed.json",
+    "raw_output": "docs/testing/evidence/r3_4_npm_audit.json"
+  },
+  "production_impact": "No advisories found; no dependency updates required."
+}

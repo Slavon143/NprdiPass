@@ -1,0 +1,663 @@
+{
+  "startedAt": "2026-07-22T21:45:06.353Z",
+  "appUrl": "http://127.0.0.1:8766",
+  "productUuid": "00000000-0000-4000-8000-000000003401",
+  "productName": "R3.4 Documents Compliance Acceptance",
+  "status": "passed",
+  "commands": [
+    {
+      "command": "php -r echo PHP_BINARY;",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:06.355Z",
+      "finishedAt": "2026-07-22T21:45:06.609Z",
+      "outputExcerpt": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe --version",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:06.610Z",
+      "finishedAt": "2026-07-22T21:45:06.737Z",
+      "outputExcerpt": "PHP 8.5.2 (cli) (built: Jan 13 2026 21:54:57) (ZTS Visual C++ 2022 x64)\nCopyright (c) The PHP Group\nBuilt by The PHP Group\nZend Engine v4.5.2, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.2, Copyright (c), by Zend Technologies\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe --ini",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:06.737Z",
+      "finishedAt": "2026-07-22T21:45:06.873Z",
+      "outputExcerpt": "Configuration File (php.ini) Path: \"\"\nLoaded Configuration File:         (none)\nScan for additional .ini files in: \"C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli;C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\conf.d;\"\nAdditional .ini files parsed:      C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\php.ini\n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe -r echo extension_loaded('pdo_mysql') ? 'pdo_mysql=yes' : 'pdo_mysql=no';",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:06.873Z",
+      "finishedAt": "2026-07-22T21:45:07.007Z",
+      "outputExcerpt": "pdo_mysql=yes",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe -r echo extension_loaded('openssl') ? 'openssl=yes' : 'openssl=no';",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:07.007Z",
+      "finishedAt": "2026-07-22T21:45:07.147Z",
+      "outputExcerpt": "openssl=yes",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan migrate:fresh --env=acceptance --force",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:07.147Z",
+      "finishedAt": "2026-07-22T21:45:29.652Z",
+      "outputExcerpt": " 2026_07_14_000009_create_product_attribute_value_options_table .. 305.90ms DONE\n 2026_07_14_000010_create_variant_attribute_value_options_table .. 295.79ms DONE\n 2026_07_14_000011_create_product_media_table .. 1s DONE\n 2026_07_14_000012_add_catalog_deferred_foreign_keys .. 732.55ms DONE\n 2026_07_16_000001_create_product_passports_table .. 814.50ms DONE\n 2026_07_16_000002_create_product_passport_versions_table .. 1s DONE\n 2026_07_16_000003_create_product_passport_assets_table .. 833.35ms DONE\n 2026_07_16_000004_add_current_version_pointers_to_product_passports .. 520.96ms DONE\n 2026_07_16_100001_create_product_documents_table .. 430.93ms DONE\n 2026_07_16_100002_create_product_document_versions_table .. 1s DONE\n 2026_07_16_100003_add_current_version_pointer_to_product_documents .. 84.78ms DONE\n 2026_07_16_100004_add_product_document_immutability_triggers .. 22.31ms DONE\n 2026_07_17_000001_create_publication_idempotency_records_table .. 441.17ms DONE\n 2026_07_18_000001_allow_document_passport_asset_kind .. 101.57ms DONE\n 2026_07_18_000002_create_passport_validation_evidence .. 1s DONE\n 2026_07_19_000001_enforce_passport_enabled_languages_array .. 111.96ms DONE\n 2026_07_22_000001_expand_readiness_profile_evidence .. 1s DONE\n 2026_07_22_100001_expand_product_document_compliance_workflow .. 3s DONE\n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan db:seed --class=R34DocumentsComplianceAcceptanceSeeder --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:29.652Z",
+      "finishedAt": "2026-07-22T21:45:32.921Z",
+      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 177 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 2,068 ms DONE \n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan db:seed --class=R34DocumentsComplianceAcceptanceSeeder --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:32.921Z",
+      "finishedAt": "2026-07-22T21:45:35.784Z",
+      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 101 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 1,783 ms DONE \n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan optimize:clear --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:35.784Z",
+      "finishedAt": "2026-07-22T21:45:36.313Z",
+      "outputExcerpt": "\n INFO Clearing cached bootstrap files. \n\n config .. 1.44ms DONE\n cache .. 9.14ms DONE\n compiled .. 2.27ms DONE\n events .. 0.94ms DONE\n routes .. 0.79ms DONE\n views .. 12.41ms DONE\n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan cache:clear --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:36.313Z",
+      "finishedAt": "2026-07-22T21:45:36.830Z",
+      "outputExcerpt": "\n INFO Application cache cleared successfully. \n\n",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "fetch /ready",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:39.563Z",
+      "finishedAt": "2026-07-22T21:45:39.624Z",
+      "outputExcerpt": "HTTP 200",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "fetch /login",
+      "exitCode": 0,
+      "startedAt": "2026-07-22T21:45:39.624Z",
+      "finishedAt": "2026-07-22T21:45:39.665Z",
+      "outputExcerpt": "HTTP 200",
+      "errorExcerpt": ""
+    },
+    {
+      "command": "taskkill.exe /PID 20080 /T /F",
+      "exitCode": 1,
+      "startedAt": "2026-07-22T21:46:09.622Z",
+      "finishedAt": "2026-07-22T21:46:09.683Z",
+      "outputExcerpt": "",
+      "errorExcerpt": "ERROR: Access denied\r\n"
+    }
+  ],
+  "server": {
+    "phpBinary": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
+    "port": 8766,
+    "pid": 20080,
+    "readyStatus": 200,
+    "loginStatus": 200,
+    "pidPath": "D:\\laravel\\nordipass\\storage\\framework\\r3_4_acceptance_server.pid",
+    "stdout": "D:\\laravel\\nordipass\\storage\\framework\\r3_4_acceptance_server.out",
+    "stderr": "D:\\laravel\\nordipass\\storage\\framework\\r3_4_acceptance_server.err"
+  },
+  "browser": {
+    "pages": [
+      {
+        "step": "Document list",
+        "page": "Document list",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Documents",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-document-list.png",
+        "result": "passed"
+      },
+      {
+        "step": "Document detail and version history",
+        "page": "Document detail and version history",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Certificate",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-document-detail-and-version-history.png",
+        "result": "passed"
+      },
+      {
+        "step": "Upload form",
+        "page": "Upload form",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/create",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Add document",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-upload-form.png",
+        "result": "passed"
+      },
+      {
+        "step": "Readiness",
+        "page": "Readiness",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-readiness.png",
+        "result": "passed"
+      },
+      {
+        "step": "Preview",
+        "page": "Preview",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/preview",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-preview.png",
+        "result": "passed"
+      },
+      {
+        "step": "Publish confirmation",
+        "page": "Publish confirmation",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/publish-confirm",
+        "viewport": "375x667",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Publish Passport: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\mobile-publish-confirmation.png",
+        "result": "passed"
+      },
+      {
+        "step": "Document list",
+        "page": "Document list",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Documents",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-document-list.png",
+        "result": "passed"
+      },
+      {
+        "step": "Document detail and version history",
+        "page": "Document detail and version history",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Certificate",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-document-detail-and-version-history.png",
+        "result": "passed"
+      },
+      {
+        "step": "Upload form",
+        "page": "Upload form",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/create",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Add document",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-upload-form.png",
+        "result": "passed"
+      },
+      {
+        "step": "Readiness",
+        "page": "Readiness",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-readiness.png",
+        "result": "passed"
+      },
+      {
+        "step": "Preview",
+        "page": "Preview",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/preview",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-preview.png",
+        "result": "passed"
+      },
+      {
+        "step": "Publish confirmation",
+        "page": "Publish confirmation",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/publish-confirm",
+        "viewport": "768x1024",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Publish Passport: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\tablet-publish-confirmation.png",
+        "result": "passed"
+      },
+      {
+        "step": "Document list",
+        "page": "Document list",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Documents",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-document-list.png",
+        "result": "passed"
+      },
+      {
+        "step": "Document detail and version history",
+        "page": "Document detail and version history",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Certificate",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-document-detail-and-version-history.png",
+        "result": "passed"
+      },
+      {
+        "step": "Upload form",
+        "page": "Upload form",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/create",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Add document",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-upload-form.png",
+        "result": "passed"
+      },
+      {
+        "step": "Readiness",
+        "page": "Readiness",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-readiness.png",
+        "result": "passed"
+      },
+      {
+        "step": "Preview",
+        "page": "Preview",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/preview",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-preview.png",
+        "result": "passed"
+      },
+      {
+        "step": "Publish confirmation",
+        "page": "Publish confirmation",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/publish-confirm",
+        "viewport": "1280x720",
+        "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
+        "actual": "HTTP 200; h1=Publish Passport: R3.4 Documents Compliance Acceptance",
+        "httpResult": 200,
+        "consoleWarnings": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "horizontalOverflow": false,
+        "overflowDetail": {
+          "horizontal": false,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "accessibilityNotes": [],
+        "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_4_browser_acceptance\\desktop-publish-confirmation.png",
+        "result": "passed"
+      }
+    ],
+    "workflow": [
+      {
+        "step": "Authentication and company context",
+        "result": "passed",
+        "expected": "Owner and editor can authenticate into the seeded acceptance company.",
+        "actual": "owner=http://127.0.0.1:8766/dashboard; editor=http://127.0.0.1:8766/dashboard",
+        "recordedAt": "2026-07-22T21:45:48.870Z"
+      },
+      {
+        "step": "Readiness publish gate",
+        "result": "passed",
+        "expected": "Publish form is available when readiness is not not_ready.",
+        "actual": "Publish form available.",
+        "recordedAt": "2026-07-22T21:46:02.765Z"
+      },
+      {
+        "step": "Publish Version 1 browser smoke",
+        "result": "passed",
+        "expected": "Version 1 is published.",
+        "actual": "Version 1 text visible.",
+        "publicUrl": null,
+        "recordedAt": "2026-07-22T21:46:03.718Z"
+      },
+      {
+        "step": "Upload PDF document through browser form",
+        "result": "passed",
+        "expected": "Uploaded PDF is shown as the current document version.",
+        "actual": "Uploaded title visible on detail page.",
+        "documentUuid": "150b662f-8e27-49d1-9381-ee68b4c68f96",
+        "versionUuid": "1006ec64-4155-45b1-9e94-4d9137b92bbb",
+        "title": "R3.4 Browser Upload 1784756763718",
+        "recordedAt": "2026-07-22T21:46:04.453Z"
+      },
+      {
+        "step": "Submit document review",
+        "result": "passed",
+        "expected": "Review state becomes Pending Review.",
+        "actual": "Pending Review",
+        "recordedAt": "2026-07-22T21:46:04.942Z"
+      },
+      {
+        "step": "Direct unauthorized approval request",
+        "result": "passed",
+        "expected": "403",
+        "actual": "403",
+        "exposure": "No approval granted.",
+        "recordedAt": "2026-07-22T21:46:05.035Z"
+      },
+      {
+        "step": "Cancel document review",
+        "result": "passed",
+        "expected": "Review state becomes Cancelled.",
+        "actual": "Cancelled visible.",
+        "recordedAt": "2026-07-22T21:46:05.698Z"
+      },
+      {
+        "step": "Submit document review after cancellation",
+        "result": "passed",
+        "expected": "Cancelled version can be resubmitted.",
+        "actual": "Pending Review visible.",
+        "recordedAt": "2026-07-22T21:46:06.055Z"
+      },
+      {
+        "step": "Approve document review with separate actor",
+        "result": "passed",
+        "expected": "Review and approval states become Approved.",
+        "actual": "Approved visible.",
+        "recordedAt": "2026-07-22T21:46:06.854Z"
+      },
+      {
+        "step": "Create replacement version",
+        "result": "passed",
+        "expected": "Replacement version appears in version history.",
+        "actual": "2\tR3.4 Browser Upload 1784756763718 Replacement\t2026-07-22 21:46\tDraft\tDownload",
+        "versionUuid": "a7ffefb2-70a8-4725-8d42-bc52d522a176",
+        "recordedAt": "2026-07-22T21:46:07.524Z"
+      },
+      {
+        "step": "Reject replacement version",
+        "result": "passed",
+        "expected": "Replacement can be submitted and rejected with a reason.",
+        "actual": "submit=0; reject=0",
+        "note": "The replacement review action is posted from the browser context because the current detail page only renders review controls for the current version.",
+        "recordedAt": "2026-07-22T21:46:07.912Z"
+      }
+    ]
+  },
+  "accessibility": [
+    {
+      "check": "Keyboard, focus, form labels, status text semantics",
+      "component": "Document create form and document list",
+      "result": "passed",
+      "defectOrFix": "No release-blocking issue found in automated accessibility smoke pass.",
+      "details": {
+        "labelFailures": [],
+        "keyboardFailures": [],
+        "statusTexts": [
+          "R3.4 Browser Upload 1784756763718\tCertificate\tEN\tActive Expired\t2001-02-20\t2",
+          "R3.4 General\tGeneral Document\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Declaration\tDeclaration Of Conformity\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Certificate\tCertificate\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Test Report\tTest Report\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Environmental\tEnvironmental Evidence\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Private\tCompliance Evidence\tEN\tActive\t2027-06-01\t1",
+          "R3.4 Expired Certificate\tCertificate\tEN\tActive Expired\t2026-01-31\t1",
+          "R3.4 Expiring Certificate\tCertificate\tEN\tActive Expiring Soon\t2026-08-10\t1"
+        ]
+      }
+    }
+  ],
+  "security": [
+    {
+      "scenario": "Arbitrary document UUID substitution",
+      "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/00000000-0000-4000-8000-999999999999",
+      "expectedStatus": "404",
+      "actualStatus": "404",
+      "exposure": "No tenant or storage detail exposed.",
+      "result": "passed"
+    },
+    {
+      "scenario": "Arbitrary version UUID substitution",
+      "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/150b662f-8e27-49d1-9381-ee68b4c68f96/versions/00000000-0000-4000-8000-999999999999/download",
+      "expectedStatus": "404",
+      "actualStatus": "404",
+      "exposure": "No tenant or storage detail exposed.",
+      "result": "passed"
+    },
+    {
+      "scenario": "Direct storage path is not web-served",
+      "url": "http://127.0.0.1:8766/storage/framework/testing/disks/product_documents/not-real.pdf",
+      "expectedStatus": "403 or 404",
+      "actualStatus": "403",
+      "exposure": "No tenant or storage detail exposed.",
+      "result": "passed"
+    }
+  ],
+  "residualRisks": [],
+  "phpBinary": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
+  "phpVersion": "PHP 8.5.2 (cli) (built: Jan 13 2026 21:54:57) (ZTS Visual C++ 2022 x64)",
+  "phpIni": "Configuration File (php.ini) Path: \"\"\nLoaded Configuration File:         (none)\nScan for additional .ini files in: \"C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli;C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\conf.d;\"\nAdditional .ini files parsed:      C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\php.ini\n\n",
+  "finishedAt": "2026-07-22T21:46:08.762Z"
+}

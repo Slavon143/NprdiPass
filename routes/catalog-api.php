@@ -222,6 +222,18 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::get('/products/{product}/documents/{document}/versions/{version}/content', [ProductDocumentController::class, 'versionContent'])
         ->middleware(['throttle:documents-api-media', 'api.ability:'.ApiTokenAbility::DocumentsMedia->value])
         ->name('products.documents.versions.content');
+    Route::post('/products/{product}/documents/{document}/versions/{version}/submit-review', [ProductDocumentController::class, 'submitReview'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.versions.submit-review');
+    Route::post('/products/{product}/documents/{document}/versions/{version}/cancel-review', [ProductDocumentController::class, 'cancelReview'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.versions.cancel-review');
+    Route::post('/products/{product}/documents/{document}/versions/{version}/approve', [ProductDocumentController::class, 'approveVersion'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.versions.approve');
+    Route::post('/products/{product}/documents/{document}/versions/{version}/reject', [ProductDocumentController::class, 'rejectVersion'])
+        ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
+        ->name('products.documents.versions.reject');
     Route::post('/products/{product}/documents/{document}/archive', [ProductDocumentController::class, 'archive'])
         ->middleware(['throttle:documents-api-write', 'api.ability:'.ApiTokenAbility::DocumentsWrite->value])
         ->name('products.documents.archive');

@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api\V1\Catalog;
 
 use App\Actions\Catalog\Documents\AddProductDocumentVersionAction;
+use App\Actions\Catalog\Documents\ApproveProductDocumentVersionAction;
 use App\Actions\Catalog\Documents\ArchiveProductDocumentAction;
+use App\Actions\Catalog\Documents\CancelProductDocumentReviewAction;
 use App\Actions\Catalog\Documents\CreateProductDocumentAction;
+use App\Actions\Catalog\Documents\RejectProductDocumentVersionAction;
 use App\Actions\Catalog\Documents\RestoreProductDocumentAction;
+use App\Actions\Catalog\Documents\SubmitProductDocumentVersionForReviewAction;
 use App\Enums\Documents\ProductDocumentType;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Api\V1\Catalog\Concerns\AuthorizesCatalogApi;
@@ -69,7 +73,7 @@ class ProductDocumentController extends Controller
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
 
-        $document = $this->resolveDocument($company, $document);
+        $document = $this->resolveDocument($company, $document, $product->getKey());
         $document->load(['currentVersion', 'versions', 'creator']);
         $document->loadCount('versions');
 
@@ -89,7 +93,7 @@ class ProductDocumentController extends Controller
     ): JsonResponse {
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
-        $document = $this->resolveDocument($company, $document);
+        $document = $this->resolveDocument($company, $document, $product->getKey());
 
         $this->authorizeDocumentView($document);
 
@@ -127,8 +131,19 @@ class ProductDocumentController extends Controller
             'language' => ['required', 'string', 'max:10', 'regex:/^[a-z]{2,3}(-[A-Z]{2,3})?$/'],
             'visibility' => ['required', 'string', 'in:internal,passport_public'],
             'issuer_name' => ['nullable', 'string', 'max:500'],
+            'certificate_number' => ['nullable', 'string', 'max:120'],
+            'issuing_body' => ['nullable', 'string', 'max:255'],
+            'declaration_identifier' => ['nullable', 'string', 'max:120'],
+            'evidence_type' => ['nullable', 'string', 'max:120'],
+            'topic_code' => ['nullable', 'string', 'max:120'],
+            'standard_reference' => ['nullable', 'string', 'max:255'],
+            'applicable_market' => ['nullable', 'string', 'max:120'],
+            'reference_url' => ['nullable', 'url', 'max:1000'],
             'issue_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'valid_from' => ['nullable', 'date'],
+            'valid_until' => ['nullable', 'date', 'after_or_equal:valid_from'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:issue_date'],
+            'metadata' => ['nullable', 'array'],
             'file' => ['required', 'file', 'max:'.(int) config('documents.max_size_kb', 25600)],
         ];
 
@@ -157,7 +172,7 @@ class ProductDocumentController extends Controller
     ): JsonResponse {
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
-        $document = $this->resolveDocument($company, $document);
+        $document = $this->resolveDocument($company, $document, $product->getKey());
 
         $this->authorizeDocumentManage($document);
 
@@ -173,8 +188,19 @@ class ProductDocumentController extends Controller
             'language' => ['required', 'string', 'max:10', 'regex:/^[a-z]{2,3}(-[A-Z]{2,3})?$/'],
             'visibility' => ['required', 'string', 'in:internal,passport_public'],
             'issuer_name' => ['nullable', 'string', 'max:500'],
+            'certificate_number' => ['nullable', 'string', 'max:120'],
+            'issuing_body' => ['nullable', 'string', 'max:255'],
+            'declaration_identifier' => ['nullable', 'string', 'max:120'],
+            'evidence_type' => ['nullable', 'string', 'max:120'],
+            'topic_code' => ['nullable', 'string', 'max:120'],
+            'standard_reference' => ['nullable', 'string', 'max:255'],
+            'applicable_market' => ['nullable', 'string', 'max:120'],
+            'reference_url' => ['nullable', 'url', 'max:1000'],
             'issue_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'valid_from' => ['nullable', 'date'],
+            'valid_until' => ['nullable', 'date', 'after_or_equal:valid_from'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:issue_date'],
+            'metadata' => ['nullable', 'array'],
             'file' => ['required', 'file', 'max:'.(int) config('documents.max_size_kb', 25600)],
         ]);
 
@@ -202,7 +228,7 @@ class ProductDocumentController extends Controller
     ): StreamedResponse {
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
-        $documentModel = $this->resolveDocument($company, $document);
+        $documentModel = $this->resolveDocument($company, $document, $product->getKey());
 
         $this->authorizeDocumentDownload($documentModel);
 
@@ -229,6 +255,82 @@ class ProductDocumentController extends Controller
         );
     }
 
+    public function submitReview(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        SubmitProductDocumentVersionForReviewAction $action,
+        ApiResponse $response,
+        string $product,
+        string $document,
+        string $version,
+    ): JsonResponse {
+        [$company, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('submitReview', $documentModel);
+
+        $validated = $request->validate(['comment' => ['nullable', 'string', 'max:2000']]);
+
+        $versionModel = $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return $response->success((new ProductDocumentVersionResource($versionModel))->resolve($request));
+    }
+
+    public function cancelReview(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        CancelProductDocumentReviewAction $action,
+        ApiResponse $response,
+        string $product,
+        string $document,
+        string $version,
+    ): JsonResponse {
+        [$company, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('submitReview', $documentModel);
+
+        $validated = $request->validate(['comment' => ['nullable', 'string', 'max:2000']]);
+
+        $versionModel = $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return $response->success((new ProductDocumentVersionResource($versionModel))->resolve($request));
+    }
+
+    public function approveVersion(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        ApproveProductDocumentVersionAction $action,
+        ApiResponse $response,
+        string $product,
+        string $document,
+        string $version,
+    ): JsonResponse {
+        [$company, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('approve', $documentModel);
+
+        $validated = $request->validate(['comment' => ['nullable', 'string', 'max:2000']]);
+
+        $versionModel = $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return $response->success((new ProductDocumentVersionResource($versionModel))->resolve($request));
+    }
+
+    public function rejectVersion(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        RejectProductDocumentVersionAction $action,
+        ApiResponse $response,
+        string $product,
+        string $document,
+        string $version,
+    ): JsonResponse {
+        [$company, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('reject', $documentModel);
+
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:2000']]);
+
+        $versionModel = $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['reason']);
+
+        return $response->success((new ProductDocumentVersionResource($versionModel))->resolve($request));
+    }
+
     public function archive(
         Request $request,
         TokenCurrentCompany $currentCompany,
@@ -239,7 +341,7 @@ class ProductDocumentController extends Controller
     ): JsonResponse {
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
-        $document = $this->resolveDocument($company, $document);
+        $document = $this->resolveDocument($company, $document, $product->getKey());
 
         $this->authorizeDocumentManage($document);
 
@@ -260,7 +362,7 @@ class ProductDocumentController extends Controller
     ): JsonResponse {
         $company = $this->currentCompany($currentCompany);
         $product = $this->resolveProduct($company, $product);
-        $document = $this->resolveDocument($company, $document);
+        $document = $this->resolveDocument($company, $document, $product->getKey());
 
         $this->authorizeDocumentManage($document);
 
@@ -271,14 +373,36 @@ class ProductDocumentController extends Controller
         );
     }
 
-    private function resolveDocument(Company $company, string $uuid): ProductDocument
+    private function resolveDocument(Company $company, string $uuid, ?int $productId = null): ProductDocument
     {
-        $document = ProductDocument::query()
+        $query = ProductDocument::query()
             ->forCompany($company)
-            ->where('uuid', $uuid)
-            ->first();
+            ->where('uuid', $uuid);
+
+        if ($productId !== null) {
+            $query->where('product_id', $productId);
+        }
+
+        $document = $query->first();
 
         return $document instanceof ProductDocument ? $document : throw new ModelNotFoundException;
+    }
+
+    /**
+     * @return array{0: Company, 1: ProductDocument, 2: ProductDocumentVersion}
+     */
+    private function resolveDocumentVersionScope(TokenCurrentCompany $currentCompany, string $product, string $document, string $version): array
+    {
+        $company = $this->currentCompany($currentCompany);
+        $productModel = $this->resolveProduct($company, $product);
+        $documentModel = $this->resolveDocument($company, $document, $productModel->getKey());
+        $versionModel = ProductDocumentVersion::query()
+            ->forCompany($company)
+            ->where('document_id', $documentModel->getKey())
+            ->where('uuid', $version)
+            ->firstOrFail();
+
+        return [$company, $documentModel, $versionModel];
     }
 
     private function actor(Request $request): User

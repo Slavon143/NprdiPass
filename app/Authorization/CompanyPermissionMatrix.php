@@ -20,6 +20,7 @@ class CompanyPermissionMatrix
                 CompanyPermission::CatalogManageMedia,
                 CompanyPermission::CatalogViewDocuments,
                 CompanyPermission::CatalogManageDocuments,
+                CompanyPermission::CatalogSubmitDocumentReview,
                 CompanyPermission::PassportsView,
                 CompanyPermission::PassportsManage,
             ], true),

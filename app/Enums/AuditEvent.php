@@ -57,6 +57,10 @@ enum AuditEvent: string
     case CatalogMediaDeleted = 'catalog.media.deleted';
     case CatalogDocumentCreated = 'catalog.document.created';
     case CatalogDocumentVersionAdded = 'catalog.document.version_added';
+    case CatalogDocumentReviewSubmitted = 'catalog.document.review_submitted';
+    case CatalogDocumentReviewCancelled = 'catalog.document.review_cancelled';
+    case CatalogDocumentApproved = 'catalog.document.approved';
+    case CatalogDocumentRejected = 'catalog.document.rejected';
     case CatalogDocumentArchived = 'catalog.document.archived';
     case CatalogDocumentRestored = 'catalog.document.restored';
     case PassportCreated = 'passport.created';
@@ -122,6 +126,10 @@ enum AuditEvent: string
             self::CatalogMediaDeleted => 'Catalog media deleted',
             self::CatalogDocumentCreated => 'Catalog document created',
             self::CatalogDocumentVersionAdded => 'Catalog document version added',
+            self::CatalogDocumentReviewSubmitted => 'Catalog document review submitted',
+            self::CatalogDocumentReviewCancelled => 'Catalog document review cancelled',
+            self::CatalogDocumentApproved => 'Catalog document approved',
+            self::CatalogDocumentRejected => 'Catalog document rejected',
             self::CatalogDocumentArchived => 'Catalog document archived',
             self::CatalogDocumentRestored => 'Catalog document restored',
             self::PassportCreated => 'Passport created',

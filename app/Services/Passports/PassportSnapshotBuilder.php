@@ -2,17 +2,22 @@
 
 namespace App\Services\Passports;
 
+use App\Enums\Documents\ProductDocumentApprovalStatus;
+use App\Enums\Documents\ProductDocumentReviewStatus;
 use App\Enums\Documents\ProductDocumentStatus;
+use App\Enums\Documents\ProductDocumentVisibility;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
+use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
 
 class PassportSnapshotBuilder
 {
     public function __construct(
         private readonly DppPayloadNormalizer $normalizer,
+        private readonly ProductDocumentCurrentVersionResolver $documentVersionResolver,
     ) {}
 
     public function build(array $draftPayload, ?Product $product = null): array
@@ -62,8 +67,9 @@ class PassportSnapshotBuilder
             $versionUuid = $ref['document_version_uuid'] ?? null;
 
             if (! is_string($versionUuid) || $versionUuid === '') {
-                if ($document->currentVersion !== null) {
-                    $ref['document_version_uuid'] = $document->currentVersion->uuid;
+                $resolvedVersion = $this->documentVersionResolver->resolve($document, true);
+                if ($resolvedVersion !== null) {
+                    $ref['document_version_uuid'] = $resolvedVersion->uuid;
                 }
 
                 continue;
@@ -73,6 +79,10 @@ class PassportSnapshotBuilder
                 ->where('company_id', $product->company_id)
                 ->where('document_id', $document->getKey())
                 ->where('uuid', $versionUuid)
+                ->where('visibility', ProductDocumentVisibility::PassportPublic->value)
+                ->where('review_status', ProductDocumentReviewStatus::Approved->value)
+                ->where('approval_status', ProductDocumentApprovalStatus::Approved->value)
+                ->where('file_available', true)
                 ->exists();
 
             if (! $versionBelongsToDocument) {

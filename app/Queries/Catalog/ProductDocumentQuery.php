@@ -50,6 +50,18 @@ class ProductDocumentQuery
             });
         }
 
+        if (! empty($filters['review_status'])) {
+            $query->whereHas('versions', function (Builder $q) use ($filters): void {
+                $q->where('review_status', $filters['review_status']);
+            });
+        }
+
+        if (! empty($filters['approval_status'])) {
+            $query->whereHas('versions', function (Builder $q) use ($filters): void {
+                $q->where('approval_status', $filters['approval_status']);
+            });
+        }
+
         $expired = ! empty($filters['expired']);
         $expiring = ! empty($filters['expiring']);
 
@@ -57,14 +69,26 @@ class ProductDocumentQuery
             $query->whereHas('currentVersion', function (Builder $q) use ($expired, $expiring): void {
                 if ($expired) {
                     $q->whereNotNull('expires_at')
-                        ->where('expires_at', '<', now()->startOfDay());
+                        ->where(function (Builder $dateQuery): void {
+                            $dateQuery->where('expires_at', '<', now()->startOfDay())
+                                ->orWhere('valid_until', '<', now()->startOfDay());
+                        });
                 }
                 if ($expiring) {
                     $days = (int) config('documents.expiry_warning_days', 30);
                     $now = now()->startOfDay();
-                    $q->whereNotNull('expires_at')
-                        ->where('expires_at', '>=', $now)
-                        ->where('expires_at', '<=', $now->copy()->addDays($days));
+                    $deadline = $now->copy()->addDays($days);
+                    $q->where(function (Builder $dateQuery) use ($now, $deadline): void {
+                        $dateQuery->where(function (Builder $expiresAtQuery) use ($now, $deadline): void {
+                            $expiresAtQuery->whereNotNull('expires_at')
+                                ->where('expires_at', '>=', $now)
+                                ->where('expires_at', '<=', $deadline);
+                        })->orWhere(function (Builder $validUntilQuery) use ($now, $deadline): void {
+                            $validUntilQuery->whereNotNull('valid_until')
+                                ->where('valid_until', '>=', $now)
+                                ->where('valid_until', '<=', $deadline);
+                        });
+                    });
                 }
             });
         }

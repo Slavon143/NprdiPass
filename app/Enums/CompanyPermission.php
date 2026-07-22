@@ -25,6 +25,10 @@ enum CompanyPermission: string
     case CatalogManageDocuments = 'catalog.manage_documents';
     case CatalogViewDocuments = 'catalog.view_documents';
     case CatalogArchiveDocuments = 'catalog.archive_documents';
+    case CatalogSubmitDocumentReview = 'catalog.submit_document_review';
+    case CatalogReviewDocuments = 'catalog.review_documents';
+    case CatalogApproveDocuments = 'catalog.approve_documents';
+    case CatalogRejectDocuments = 'catalog.reject_documents';
     case PassportsView = 'passports.view';
     case PassportsManage = 'passports.manage';
     case PassportsPublish = 'passports.publish';

@@ -6,7 +6,10 @@ use App\Audit\AuditLogger;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\AuditEvent;
 use App\Enums\CompanyPermission;
+use App\Enums\Documents\ProductDocumentApprovalStatus;
+use App\Enums\Documents\ProductDocumentReviewStatus;
 use App\Enums\Documents\ProductDocumentStatus;
+use App\Enums\Documents\ProductDocumentType;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
@@ -65,6 +68,11 @@ class AddProductDocumentVersionAction extends DocumentAction
 
                 $nextVersion = $maxVersion + 1;
 
+                $type = ProductDocumentType::from($data['document_type']);
+                $autoApproved = (bool) config('documents.auto_approve_new_versions', false) || ! $type->requiresReview();
+                $reviewStatus = $autoApproved ? ProductDocumentReviewStatus::Approved : ProductDocumentReviewStatus::Draft;
+                $approvalStatus = $autoApproved ? ProductDocumentApprovalStatus::Approved : ProductDocumentApprovalStatus::Pending;
+
                 $version = new ProductDocumentVersion;
                 $version->forceFill([
                     'uuid' => $versionUuid,
@@ -76,22 +84,41 @@ class AddProductDocumentVersionAction extends DocumentAction
                     'description' => $data['description'] ?? null,
                     'language' => $data['language'],
                     'visibility' => $data['visibility'],
+                    'metadata' => $data['metadata'] ?? null,
+                    'review_status' => $reviewStatus->value,
+                    'approval_status' => $approvalStatus->value,
                     'issuer_name' => $data['issuer_name'] ?? null,
+                    'certificate_number' => $this->normalizeCertificateNumber($data['certificate_number'] ?? null),
+                    'issuing_body' => $data['issuing_body'] ?? null,
+                    'declaration_identifier' => $data['declaration_identifier'] ?? null,
+                    'evidence_type' => $data['evidence_type'] ?? null,
+                    'topic_code' => $data['topic_code'] ?? null,
+                    'standard_reference' => $data['standard_reference'] ?? null,
+                    'applicable_market' => $data['applicable_market'] ?? null,
+                    'reference_url' => $data['reference_url'] ?? null,
                     'issue_date' => $data['issue_date'] ?? null,
+                    'valid_from' => $data['valid_from'] ?? ($data['issue_date'] ?? null),
+                    'valid_until' => $data['valid_until'] ?? ($data['expires_at'] ?? null),
                     'expires_at' => $data['expires_at'] ?? null,
                     'original_filename' => $pdf->originalFilename,
+                    'safe_display_filename' => $this->safeDisplayFilename($pdf->originalFilename),
                     'mime_type' => $pdf->mimeType,
                     'file_extension' => $pdf->extension,
                     'size_bytes' => $pdf->sizeBytes,
                     'checksum_sha256' => $pdf->checksum,
                     'storage_key' => $storageKey,
+                    'file_available' => true,
+                    'approved_at' => $autoApproved ? now() : null,
+                    'approved_by_user_id' => $autoApproved ? $actor->getKey() : null,
                     'created_by_user_id' => $actor->getKey(),
                 ])->save();
 
-                $lockedDocument->forceFill([
-                    'current_version_id' => $version->getKey(),
-                    'updated_by_user_id' => $actor->getKey(),
-                ])->save();
+                if ($autoApproved) {
+                    $lockedDocument->forceFill([
+                        'current_version_id' => $version->getKey(),
+                        'updated_by_user_id' => $actor->getKey(),
+                    ])->save();
+                }
 
                 $this->auditLogger->logTenant(
                     $company,
@@ -117,6 +144,24 @@ class AddProductDocumentVersionAction extends DocumentAction
             }
             throw $e;
         }
+    }
+
+    private function safeDisplayFilename(string $filename): string
+    {
+        $safe = preg_replace('/[^a-zA-Z0-9._\-\s]/u', '', $filename);
+
+        return mb_substr(trim($safe ?: 'document.pdf'), 0, 255);
+    }
+
+    private function normalizeCertificateNumber(mixed $certificateNumber): ?string
+    {
+        if (! is_string($certificateNumber)) {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/', ' ', trim($certificateNumber));
+
+        return $normalized === '' ? null : mb_substr($normalized, 0, 120);
     }
 
     private function assertDocumentActive(ProductDocument $document): void

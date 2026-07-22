@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\Documents\AddProductDocumentVersionAction;
+use App\Actions\Catalog\Documents\ApproveProductDocumentVersionAction;
 use App\Actions\Catalog\Documents\ArchiveProductDocumentAction;
+use App\Actions\Catalog\Documents\CancelProductDocumentReviewAction;
 use App\Actions\Catalog\Documents\CreateProductDocumentAction;
+use App\Actions\Catalog\Documents\RejectProductDocumentVersionAction;
 use App\Actions\Catalog\Documents\RestoreProductDocumentAction;
+use App\Actions\Catalog\Documents\SubmitProductDocumentVersionForReviewAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Documents\AddDocumentVersionRequest;
 use App\Http\Requests\Catalog\Documents\StoreDocumentRequest;
@@ -84,6 +88,7 @@ class ProductDocumentController extends Controller
 
         $document = ProductDocument::query()
             ->forCompany($company)
+            ->where('product_id', $product->getKey())
             ->where('uuid', $document)
             ->with(['currentVersion', 'versions', 'creator'])
             ->firstOrFail();
@@ -105,6 +110,7 @@ class ProductDocumentController extends Controller
 
         $document = ProductDocument::query()
             ->forCompany($company)
+            ->where('product_id', $product->getKey())
             ->where('uuid', $document)
             ->firstOrFail();
 
@@ -139,6 +145,7 @@ class ProductDocumentController extends Controller
 
         $document = ProductDocument::query()
             ->forCompany($company)
+            ->where('product_id', $product->getKey())
             ->where('uuid', $document)
             ->firstOrFail();
 
@@ -157,6 +164,70 @@ class ProductDocumentController extends Controller
             ->with('success', 'New version added.');
     }
 
+    public function submitReview(Request $request, CurrentCompany $currentCompany, SubmitProductDocumentVersionForReviewAction $action, string $product, string $document, string $version): RedirectResponse
+    {
+        [$company, $productModel, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('submitReview', $documentModel);
+
+        $validated = $request->validate([
+            'comment' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return redirect()
+            ->route('catalog.products.documents.show', ['product' => $productModel->uuid, 'document' => $documentModel->uuid])
+            ->with('success', 'Document version submitted for review.');
+    }
+
+    public function cancelReview(Request $request, CurrentCompany $currentCompany, CancelProductDocumentReviewAction $action, string $product, string $document, string $version): RedirectResponse
+    {
+        [$company, $productModel, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('submitReview', $documentModel);
+
+        $validated = $request->validate([
+            'comment' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return redirect()
+            ->route('catalog.products.documents.show', ['product' => $productModel->uuid, 'document' => $documentModel->uuid])
+            ->with('success', 'Document review cancelled.');
+    }
+
+    public function approveVersion(Request $request, CurrentCompany $currentCompany, ApproveProductDocumentVersionAction $action, string $product, string $document, string $version): RedirectResponse
+    {
+        [$company, $productModel, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('approve', $documentModel);
+
+        $validated = $request->validate([
+            'comment' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['comment'] ?? null);
+
+        return redirect()
+            ->route('catalog.products.documents.show', ['product' => $productModel->uuid, 'document' => $documentModel->uuid])
+            ->with('success', 'Document version approved.');
+    }
+
+    public function rejectVersion(Request $request, CurrentCompany $currentCompany, RejectProductDocumentVersionAction $action, string $product, string $document, string $version): RedirectResponse
+    {
+        [$company, $productModel, $documentModel, $versionModel] = $this->resolveDocumentVersionScope($currentCompany, $product, $document, $version);
+        $this->authorize('reject', $documentModel);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $action->execute($this->actor($request), $company, $documentModel, $versionModel, $validated['reason']);
+
+        return redirect()
+            ->route('catalog.products.documents.show', ['product' => $productModel->uuid, 'document' => $documentModel->uuid])
+            ->with('success', 'Document version rejected.');
+    }
+
     public function archive(Request $request, CurrentCompany $currentCompany, ArchiveProductDocumentAction $action, string $product, string $document): RedirectResponse
     {
         $company = $currentCompany->require();
@@ -164,6 +235,7 @@ class ProductDocumentController extends Controller
 
         $document = ProductDocument::query()
             ->forCompany($company)
+            ->where('product_id', $product->getKey())
             ->where('uuid', $document)
             ->firstOrFail();
 
@@ -181,6 +253,7 @@ class ProductDocumentController extends Controller
 
         $document = ProductDocument::query()
             ->forCompany($company)
+            ->where('product_id', $product->getKey())
             ->where('uuid', $document)
             ->firstOrFail();
 
@@ -202,6 +275,27 @@ class ProductDocumentController extends Controller
         abort_unless($actor instanceof User, 401);
 
         return $actor;
+    }
+
+    /**
+     * @return array{0: Company, 1: Product, 2: ProductDocument, 3: ProductDocumentVersion}
+     */
+    private function resolveDocumentVersionScope(CurrentCompany $currentCompany, string $product, string $document, string $version): array
+    {
+        $company = $currentCompany->require();
+        $productModel = $this->resolveProduct($company, $product);
+        $documentModel = ProductDocument::query()
+            ->forCompany($company)
+            ->where('product_id', $productModel->getKey())
+            ->where('uuid', $document)
+            ->firstOrFail();
+        $versionModel = ProductDocumentVersion::query()
+            ->forCompany($company)
+            ->where('document_id', $documentModel->getKey())
+            ->where('uuid', $version)
+            ->firstOrFail();
+
+        return [$company, $productModel, $documentModel, $versionModel];
     }
 
     private function sanitizeFilename(string $title): string

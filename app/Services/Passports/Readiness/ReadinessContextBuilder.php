@@ -8,6 +8,7 @@ use App\Models\Catalog\ProductDocument;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
+use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
 use App\Services\Passports\DppPayloadNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class ReadinessContextBuilder
 
     public function __construct(
         DppPayloadNormalizer $normalizer,
+        private readonly ProductDocumentCurrentVersionResolver $documentVersionResolver,
         private readonly ReadinessProfileRepository $profileRepository,
     ) {
         $this->normalizer = $normalizer;
@@ -69,7 +71,12 @@ class ReadinessContextBuilder
                             ->keyBy('uuid');
 
                         foreach ($documentUuids as $uuid) {
-                            $referencedDocuments[] = $documents[$uuid] ?? null;
+                            $doc = $documents[$uuid] ?? null;
+                            if ($doc !== null) {
+                                $doc->setRelation('currentVersion', $this->documentVersionResolver->resolve($doc, false, $evaluationDate));
+                            }
+
+                            $referencedDocuments[] = $doc;
                         }
 
                         foreach ($referencedDocuments as $doc) {

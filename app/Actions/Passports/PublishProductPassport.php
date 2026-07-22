@@ -16,6 +16,7 @@ use App\Enums\Passports\Readiness\ReadinessRuleStatus;
 use App\Enums\Passports\Readiness\ReadinessSeverity;
 use App\Events\Passports\ProductPassportPublished;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportAsset;
@@ -213,6 +214,7 @@ class PublishProductPassport
                     $snapshot,
                     $promotedPaths,
                 );
+                $this->markDocumentVersionsPublished($snapshot);
 
                 $snapshot = $this->updateSnapshotAssets($snapshot, $assetUuidMap);
 
@@ -506,6 +508,30 @@ class PublishProductPassport
         }
 
         return $snapshot;
+    }
+
+    /**
+     * @param  array<string, mixed>  $snapshot
+     */
+    private function markDocumentVersionsPublished(array $snapshot): void
+    {
+        $versionUuids = [];
+
+        foreach (($snapshot['_catalog_context']['documents'] ?? []) as $docItem) {
+            if (isset($docItem['version_uuid']) && is_string($docItem['version_uuid'])) {
+                $versionUuids[] = $docItem['version_uuid'];
+            }
+        }
+
+        if ($versionUuids === []) {
+            return;
+        }
+
+        ProductDocumentVersion::query()
+            ->whereIn('uuid', array_values(array_unique($versionUuids)))
+            ->increment('published_snapshot_count', 1, [
+                'published_at' => now(),
+            ]);
     }
 
     private function computeFingerprint(

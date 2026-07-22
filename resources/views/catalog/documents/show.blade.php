@@ -37,7 +37,11 @@
                 <div><dt class="text-sm text-slate-500">{{ __('Type') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->document_type->label() }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('Language') }}</dt><dd class="font-semibold text-slate-900">{{ strtoupper($document->currentVersion->language) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('Visibility') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->visibility->value }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Review') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->review_status->label() }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Approval') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->approval_status->label() }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Expiry state') }}</dt><dd class="font-semibold text-slate-900">{{ str_replace('_', ' ', $document->currentVersion->expiryState()->value) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('File') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->original_filename }} ({{ number_format($document->currentVersion->size_bytes / 1024, 1) }} KB)</dd></div>
+                @if($document->currentVersion->certificate_number)<div><dt class="text-sm text-slate-500">{{ __('Certificate number') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->certificate_number }}</dd></div>@endif
                 @if($document->currentVersion->issuer_name)<div><dt class="text-sm text-slate-500">{{ __('Issuer') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->issuer_name }}</dd></div>@endif
                 @if($document->currentVersion->issue_date)<div><dt class="text-sm text-slate-500">{{ __('Issue date') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->issue_date->format('Y-m-d') }}</dd></div>@endif
                 @if($document->currentVersion->expires_at)
@@ -54,6 +58,62 @@
             </dl>
             <div class="mt-4 border-t border-slate-200 pt-4">
                 <a href="{{ route('catalog.products.documents.versions.download', [$product->uuid, $document->uuid, $document->currentVersion->uuid]) }}" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Download') }}</a>
+            </div>
+        </div>
+        @endif
+
+        @if($document->currentVersion && !$document->isArchived())
+        @php
+            $currentVersion = $document->currentVersion;
+            $reviewStatus = $currentVersion->review_status->value;
+            $canSubmitReview = auth()->user()?->can('submitReview', $document) === true;
+            $canApproveDocument = auth()->user()?->can('approve', $document) === true;
+            $canRejectDocument = auth()->user()?->can('reject', $document) === true;
+            $canSubmitCurrent = in_array($reviewStatus, ['draft', 'rejected', 'cancelled'], true);
+            $canCancelCurrent = $reviewStatus === 'pending_review';
+            $canApproveCurrent = in_array($reviewStatus, ['draft', 'pending_review'], true);
+            $canRejectCurrent = $reviewStatus === 'pending_review';
+        @endphp
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-slate-900">{{ __('Review decision') }}</h2>
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+                @if($canSubmitReview && $canSubmitCurrent)
+                <form method="POST" action="{{ route('catalog.products.documents.versions.submit-review', [$product->uuid, $document->uuid, $document->currentVersion->uuid]) }}" class="space-y-3">
+                    @csrf
+                    <x-input-label for="review_comment" :value="__('Review comment')" />
+                    <textarea id="review_comment" name="comment" rows="3" maxlength="2000" class="block w-full rounded-lg border-slate-300 text-sm"></textarea>
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Submit for review') }}</button>
+                </form>
+                @elseif($canSubmitReview && $canCancelCurrent)
+                <form method="POST" action="{{ route('catalog.products.documents.versions.cancel-review', [$product->uuid, $document->uuid, $document->currentVersion->uuid]) }}" class="space-y-3">
+                    @csrf
+                    <x-input-label for="cancel_review_comment" :value="__('Cancel review comment')" />
+                    <textarea id="cancel_review_comment" name="comment" rows="3" maxlength="2000" class="block w-full rounded-lg border-slate-300 text-sm"></textarea>
+                    <button type="submit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Cancel review') }}</button>
+                </form>
+                @else
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    {{ __('No review submission action is available for the current version state.') }}
+                </div>
+                @endif
+                <div class="space-y-3">
+                    @if($canApproveDocument && $canApproveCurrent)
+                    <form method="POST" action="{{ route('catalog.products.documents.versions.approve', [$product->uuid, $document->uuid, $document->currentVersion->uuid]) }}" class="flex flex-col gap-2">
+                        @csrf
+                        <label for="approval_comment" class="text-sm font-medium text-slate-700">{{ __('Approval comment') }}</label>
+                        <input id="approval_comment" name="comment" type="text" maxlength="2000" class="rounded-lg border-slate-300 text-sm" />
+                        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">{{ __('Approve') }}</button>
+                    </form>
+                    @endif
+                    @if($canRejectDocument && $canRejectCurrent)
+                    <form method="POST" action="{{ route('catalog.products.documents.versions.reject', [$product->uuid, $document->uuid, $document->currentVersion->uuid]) }}" class="flex flex-col gap-2">
+                        @csrf
+                        <label for="rejection_reason" class="text-sm font-medium text-slate-700">{{ __('Rejection reason') }}</label>
+                        <input id="rejection_reason" name="reason" type="text" maxlength="2000" required class="rounded-lg border-slate-300 text-sm" />
+                        <button type="submit" class="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">{{ __('Reject') }}</button>
+                    </form>
+                    @endif
+                </div>
             </div>
         </div>
         @endif
@@ -116,6 +176,7 @@
                             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-500">#</th>
                             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-500">{{ __('Title') }}</th>
                             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-500">{{ __('Uploaded') }}</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-500">{{ __('Review') }}</th>
                             <th class="px-4 py-2 text-right text-xs font-semibold uppercase text-slate-500">{{ __('Download') }}</th>
                         </tr>
                     </thead>
@@ -125,6 +186,7 @@
                             <td class="px-4 py-2 text-sm font-mono text-slate-600">{{ $version->version_number }}</td>
                             <td class="px-4 py-2 text-sm text-slate-900">{{ $version->title }}</td>
                             <td class="px-4 py-2 text-sm text-slate-500">{{ $version->created_at->format('Y-m-d H:i') }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-500">{{ $version->review_status->label() }}</td>
                             <td class="px-4 py-2 text-right">
                                 <a href="{{ route('catalog.products.documents.versions.download', [$product->uuid, $document->uuid, $version->uuid]) }}" class="text-xs font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Download') }}</a>
                             </td>

@@ -13,7 +13,8 @@
         "demo:business": "node demo/puppeteer/run-demo.js --business-only",
         "demo:headless": "node demo/puppeteer/run-demo.js --headless",
         "demo:keep-data": "node demo/puppeteer/run-demo.js --keep-data",
-        "demo:cleanup": "node demo/puppeteer/run-demo.js --cleanup"
+        "demo:cleanup": "node demo/puppeteer/run-demo.js --cleanup",
+        "acceptance:r3_4": "node demo/puppeteer/r3_4_acceptance.js"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

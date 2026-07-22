@@ -29,6 +29,29 @@ class ProductDocumentPolicy extends CatalogPolicy
         return $this->allowsModel($user, $document, CompanyPermission::CatalogManageDocuments);
     }
 
+    public function submitReview(User $user, ProductDocument $document): bool
+    {
+        return $this->allowsModel($user, $document, CompanyPermission::CatalogSubmitDocumentReview)
+            || $this->allowsModel($user, $document, CompanyPermission::CatalogManageDocuments);
+    }
+
+    public function review(User $user, ProductDocument $document): bool
+    {
+        return $this->allowsModel($user, $document, CompanyPermission::CatalogReviewDocuments)
+            || $this->allowsModel($user, $document, CompanyPermission::CatalogApproveDocuments);
+    }
+
+    public function approve(User $user, ProductDocument $document): bool
+    {
+        return $this->allowsModel($user, $document, CompanyPermission::CatalogApproveDocuments);
+    }
+
+    public function reject(User $user, ProductDocument $document): bool
+    {
+        return $this->allowsModel($user, $document, CompanyPermission::CatalogRejectDocuments)
+            || $this->allowsModel($user, $document, CompanyPermission::CatalogApproveDocuments);
+    }
+
     public function archive(User $user, ProductDocument $document): bool
     {
         return $this->allowsModel($user, $document, CompanyPermission::CatalogArchiveDocuments);
