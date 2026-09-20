@@ -47,6 +47,11 @@ Schedule::command('analytics:prune')
     ->withoutOverlapping(60)
     ->appendOutputTo(storage_path('logs/scheduler-analytics-prune.log'));
 
+Schedule::command('privacy:purge')
+    ->dailyAt('03:30')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/scheduler-privacy-purge.log'));
+
 Schedule::command('nordipass:backup')
     ->dailyAt('02:00')
     ->withoutOverlapping(180)

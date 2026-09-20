@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application for product catalogues and Digital Product Passports. **R3.13 PUBLIC API AND WEBHOOKS FOUNDATION IS IMPLEMENTED.** The current baseline includes tenant-aware catalogues, versioned Passport readiness, advanced DPP sections, document compliance workflows, immutable publication evidence, public Passport rendering, production import/export, the Fortnox integration foundation, Stripe billing with webhook inbox, analytics, QR label management, and outbound webhooks with signed delivery logs. Production promotion still requires environment-specific Stripe sandbox verification, staging, backup/restore, and deployment approvals described in the release gates.
+NordiPass is a Laravel application for product catalogues and Digital Product Passports. **R3.16 SECURITY AND PRIVACY HARDENING IS IMPLEMENTED.** The current baseline includes tenant-aware catalogues, versioned Passport readiness, advanced DPP sections, document compliance workflows, immutable publication evidence, public Passport rendering, production import/export, the Fortnox integration foundation, Stripe billing with webhook inbox, analytics, QR label management, outbound webhooks with signed delivery logs, platform operations, and GDPR export/erasure workflows with CSP enforcement. Production promotion still requires environment-specific Stripe sandbox verification, staging, backup/restore, and deployment approvals described in the release gates.
 
 ## Current R3 Documents
 
@@ -13,6 +13,11 @@ NordiPass is a Laravel application for product catalogues and Digital Product Pa
 - [R3.13 Public API and Webhooks](docs/releases/R3_13_PUBLIC_API_AND_WEBHOOKS.md)
 - [R3.14 Notifications and Job Center](docs/releases/R3_14_NOTIFICATIONS_AND_JOB_CENTER.md)
 - [R3.15 Platform Operations](docs/releases/R3_15_PLATFORM_OPERATIONS.md)
+- [R3.16 Security and Privacy Hardening](docs/releases/R3_16_SECURITY_AND_PRIVACY_HARDENING.md)
+- [R3.16 DPA and Processor Inventory](docs/architecture/DPA_AND_PROCESSORS.md)
+- [R3.16 Security Runbooks](docs/security/runbooks/INCIDENT_RESPONSE.md)
+- [R3.16 Permission Matrix Review](docs/architecture/R3_PERMISSION_MATRIX.md)
+- [R3.16 Security Test Evidence](docs/testing/R3_16_SECURITY_TEST_EVIDENCE.md)
 - [R3.7 Fortnox Test Evidence](docs/testing/R3_7_FORTNOX_TEST_EVIDENCE.md)
 - [R3.4.1 Release Hardening](docs/releases/R3_4_1_RELEASE_HARDENING.md)
 - [Readiness Editor Audit](docs/testing/R3_4_1_READINESS_EDITOR_AUDIT.md)

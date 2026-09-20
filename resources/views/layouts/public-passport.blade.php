@@ -40,7 +40,7 @@
     @endif
 
     @unless($isPreview ?? false)
-    <script type="application/ld+json">{!! $passport->jsonLd !!}</script>
+    <script type="application/ld+json" nonce="@cspNonce">{!! $passport->jsonLd !!}</script>
     @endunless
 
     @vite(['resources/css/app.css'])

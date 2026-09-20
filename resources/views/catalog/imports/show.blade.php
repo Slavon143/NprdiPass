@@ -39,7 +39,7 @@
 
 @if($templates->isNotEmpty())
     @push('scripts')
-        <script>
+        <script nonce="@cspNonce">
             (() => {
                 const templates = {{ Illuminate\Support\Js::from($templates->mapWithKeys(fn($template) => [$template->uuid => $template->mapping])) }};
                 document.getElementById('mapping_template')?.addEventListener('change', (event) => {

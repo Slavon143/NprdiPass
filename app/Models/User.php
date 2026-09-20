@@ -7,11 +7,13 @@ use App\Models\Concerns\HasUuid;
 use App\Models\Jobs\JobStatus;
 use App\Models\Notifications\Notification;
 use App\Models\Notifications\NotificationPreference;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -20,6 +22,8 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property UserStatus $status
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $last_login_at
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -83,18 +87,37 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(CompanyInvitation::class, 'invited_by');
     }
 
+    /**
+     * @return HasMany<Notification, $this>
+     */
     public function tenantNotifications(): HasMany
     {
         return $this->hasMany(Notification::class);
     }
 
+    /**
+     * @return HasMany<NotificationPreference, $this>
+     */
     public function notificationPreferences(): HasMany
     {
         return $this->hasMany(NotificationPreference::class);
     }
 
+    /**
+     * @return HasMany<JobStatus, $this>
+     */
     public function jobStatuses(): HasMany
     {
         return $this->hasMany(JobStatus::class);
+    }
+
+    /**
+     * Audit log entries where this user was the actor.
+     *
+     * @return MorphMany<AuditLog, $this>
+     */
+    public function actions(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'causer');
     }
 }

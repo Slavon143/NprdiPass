@@ -15,6 +15,7 @@ use App\Tenancy\SessionCurrentCompany;
 use App\Tenancy\TokenCurrentCompany;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -55,6 +56,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        Blade::directive('cspNonce', function (): string {
+            return "<?php echo e((string) request()->attributes->get('csp_nonce', '')); ?>";
+        });
 
         RateLimiter::for('invitations.manage', function (Request $request): Limit {
             $company = $request->attributes->get('currentCompany');

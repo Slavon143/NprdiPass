@@ -141,7 +141,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="@cspNonce">
 document.addEventListener('DOMContentLoaded', function () {
     var copyButton = document.getElementById('copy-public-link');
     var input = document.getElementById('passport-public-url');

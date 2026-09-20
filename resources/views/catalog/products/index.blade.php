@@ -479,7 +479,7 @@
     </div>
 
     @push('scripts')
-        <script>
+        <script nonce="@cspNonce">
             document.addEventListener('DOMContentLoaded', function () {
                 var ajaxController = null;
                 var currentModalResolve = null;

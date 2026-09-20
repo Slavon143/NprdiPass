@@ -92,6 +92,8 @@ enum AuditEvent: string
     case FortnoxSyncFailed = 'fortnox.sync.failed';
     case FortnoxConflictResolved = 'fortnox.conflict.resolved';
     case BillingSubscriptionUpdated = 'billing.subscription.updated';
+    case GdprDataExport = 'gdpr.data_export';
+    case GdprErasure = 'gdpr.erasure';
 
     public function label(): string
     {
@@ -184,6 +186,8 @@ enum AuditEvent: string
             self::FortnoxSyncFailed => 'Fortnox sync failed',
             self::FortnoxConflictResolved => 'Fortnox conflict resolved',
             self::BillingSubscriptionUpdated => 'Billing subscription updated',
+            self::GdprDataExport => 'GDPR data export',
+            self::GdprErasure => 'GDPR erasure request',
         };
     }
 }

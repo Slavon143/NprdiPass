@@ -284,7 +284,7 @@ class PublicPassportSecurityTest extends TestCase
         $response->assertOk();
 
         $content = $response->getContent();
-        preg_match('/<script type="application\/ld\+json">(.*?)<\/script>/s', $content, $matches);
+        preg_match('/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/s', $content, $matches);
         $this->assertNotEmpty($matches, 'JSON-LD script not found in page.');
 
         $json = json_decode($matches[1], true);

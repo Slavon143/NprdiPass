@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\AddCspHeader;
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\ApiSecurityHeaders;
 use App\Http\Middleware\ApiTokenSecretHeaders;
@@ -39,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(EnsureRequestId::class);
         $middleware->prepend(AddSecurityHeaders::class);
+        $middleware->prepend(AddCspHeader::class);
 
         $middleware->api(append: [ApiSecurityHeaders::class]);
 
