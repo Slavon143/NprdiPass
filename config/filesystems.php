@@ -30,6 +30,16 @@ return [
 
     'disks' => [
 
+        'production_imports' => [
+            'driver' => 'local',
+            'root' => env('IMPORTS_ROOT', env('APP_ENV') === 'testing'
+                ? storage_path('framework/testing/disks/production-imports')
+                : storage_path('app/production-imports')),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         'product_documents' => [
             'driver' => 'local',
             'root' => env('DOCUMENTS_ROOT', env('APP_ENV') === 'testing'

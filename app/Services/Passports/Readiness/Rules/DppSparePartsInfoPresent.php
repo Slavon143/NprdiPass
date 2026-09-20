@@ -59,12 +59,14 @@ class DppSparePartsInfoPresent implements PassportReadinessRule
             );
         }
 
-        $sparePartsUrl = $context->normalizedPayload['data']['repair_and_spare_parts']['spare_parts_url']
-            ?? null;
-        $sparePartsNotes = $context->normalizedPayload['data']['repair_and_spare_parts']['spare_parts_notes']
-            ?? null;
+        $section = $context->sectionData(DppSectionKey::RepairAndSpareParts->value);
+        $sparePartsUrl = $section['spare_parts_url'] ?? null;
+        $sparePartsNotes = $section['spare_parts_notes'] ?? null;
+        $spareParts = $section['spare_parts'] ?? null;
 
-        $passed = ! empty($sparePartsUrl) || ! empty($sparePartsNotes);
+        $passed = ! empty($sparePartsUrl)
+            || ! empty($sparePartsNotes)
+            || (is_array($spareParts) && $spareParts !== []);
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -74,6 +76,7 @@ class DppSparePartsInfoPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.spare_parts.information.present.title',
             messageKey: $passed ? 'readiness.dpp.spare_parts.information.present.passed' : 'readiness.dpp.spare_parts.information.present.failed',
             section: DppSectionKey::RepairAndSpareParts,
+            field: 'spare_parts',
             navigationTarget: new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::RepairAndSpareParts->value,
@@ -84,6 +87,7 @@ class DppSparePartsInfoPresent implements PassportReadinessRule
             safeContext: [
                 'has_spare_parts_url' => ! empty($sparePartsUrl),
                 'has_spare_parts_notes' => ! empty($sparePartsNotes),
+                'has_spare_parts_list' => is_array($spareParts) && $spareParts !== [],
             ],
         );
     }

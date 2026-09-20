@@ -312,6 +312,33 @@ test('download buttons are displayed', function () {
 
     $response->assertSee('Download SVG', false);
     $response->assertSee('Download PNG', false);
+    $response->assertSee('Print Label', false);
+});
+
+test('qr page displays print specification', function () {
+    $response = $this->get(route('catalog.products.passport.qr.show', $this->product->uuid));
+    $response->assertOk();
+
+    $response->assertSee('QR specification', false);
+    $response->assertSee('Quiet zone', false);
+    $response->assertSee('4 modules', false);
+    $response->assertSee('Error correction', false);
+    $response->assertSee('Medium', false);
+    $response->assertSee('Contrast ratio', false);
+    $response->assertSee('Contrast passes print baseline.', false);
+});
+
+test('printable label page renders stable public url and print guidance', function () {
+    $response = $this->get(route('catalog.products.passport.qr.label', $this->product->uuid));
+    $response->assertOk();
+
+    $publicUrl = config('passports.public_base_url').'/p/'.$this->passport->public_id;
+
+    $response->assertSee('Printable Product Passport QR label', false);
+    $response->assertSee($this->product->name, false);
+    $response->assertSee($publicUrl, false);
+    $response->assertSee('Print guidance', false);
+    $response->assertSee('quiet zone 4 modules', false);
 });
 
 test('target status shows published state', function () {

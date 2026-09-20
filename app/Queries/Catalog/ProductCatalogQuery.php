@@ -6,6 +6,7 @@ use App\Data\Catalog\Search\CatalogAttributeFilterCriteria;
 use App\Data\Catalog\Search\CatalogProductSearchCriteria;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
@@ -570,7 +571,11 @@ class ProductCatalogQuery
                     ->whereColumn('attribute_options.id', "{$valueTable}.value_option_id")
                     ->whereColumn('attribute_options.company_id', "{$valueTable}.company_id")
                     ->where('attribute_options.attribute_definition_id', $definition->getKey())
-                    ->where('attribute_options.status', AttributeOptionStatus::Active->value);
+                    ->whereIn('attribute_options.status', [
+                        AttributeOptionStatus::Active->value,
+                        AttributeOptionStatus::Deprecated->value,
+                    ])
+                    ->where('attribute_options.approval_status', AttributeOptionApprovalStatus::Approved->value);
             }),
             AttributeDataType::Multiselect => $query->whereExists(function (QueryBuilder $exists) use ($valueTable, $pivotTable): void {
                 $exists->selectRaw('1')
@@ -579,7 +584,11 @@ class ProductCatalogQuery
                         $join->on('attribute_options.id', '=', "{$pivotTable}.attribute_option_id")
                             ->whereColumn('attribute_options.company_id', "{$pivotTable}.company_id")
                             ->whereColumn('attribute_options.attribute_definition_id', "{$pivotTable}.attribute_definition_id")
-                            ->where('attribute_options.status', AttributeOptionStatus::Active->value);
+                            ->whereIn('attribute_options.status', [
+                                AttributeOptionStatus::Active->value,
+                                AttributeOptionStatus::Deprecated->value,
+                            ])
+                            ->where('attribute_options.approval_status', AttributeOptionApprovalStatus::Approved->value);
                     })
                     ->whereColumn("{$pivotTable}.company_id", "{$valueTable}.company_id")
                     ->whereColumn("{$pivotTable}.attribute_definition_id", "{$valueTable}.attribute_definition_id")

@@ -53,6 +53,7 @@ class DppRecyclingInstructionsPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.recycling.instructions.present.title',
             messageKey: $passed ? 'readiness.dpp.recycling.instructions.present.passed' : 'readiness.dpp.recycling.instructions.present.failed',
             section: DppSectionKey::RecyclingAndDisposal,
+            field: 'recycling_instructions',
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::RecyclingAndDisposal->value,

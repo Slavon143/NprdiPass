@@ -9,6 +9,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Services\Passports\Qr\PassportQrPayloadFactory;
+use App\Services\Passports\Qr\PassportQrPrintSpec;
 use App\Services\Passports\Qr\PassportQrRenderer;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
@@ -23,6 +24,7 @@ class ProductPassportQrController extends Controller
         Request $request,
         CurrentCompany $currentCompany,
         PassportQrPayloadFactory $payloadFactory,
+        PassportQrPrintSpec $printSpec,
     ): View {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
@@ -44,6 +46,7 @@ class ProductPassportQrController extends Controller
             passportStatus: $passport->status->value,
             productName: $product->name,
             productUuid: $product->uuid,
+            printSpec: $printSpec->toArray(),
         );
 
         $canManage = $request->user()->can(CompanyPermission::PassportsManage->value, [$company]) === true;
@@ -54,6 +57,44 @@ class ProductPassportQrController extends Controller
             'passport' => $passport,
             'viewModel' => $viewModel,
             'canManage' => $canManage,
+        ]);
+    }
+
+    public function label(
+        Product $product,
+        Request $request,
+        CurrentCompany $currentCompany,
+        PassportQrPayloadFactory $payloadFactory,
+        PassportQrPrintSpec $printSpec,
+    ): View {
+        $company = $this->resolveCompany($currentCompany);
+        $this->assertProductBelongsToCompany($company, $product);
+
+        $passport = $this->resolvePassport($product);
+
+        if (! $request->user()->can(CompanyPermission::PassportsView->value, [$company])) {
+            throw new NotFoundHttpException;
+        }
+
+        $publicUrl = $payloadFactory->create($passport->public_id);
+
+        $viewModel = new PassportQrViewModel(
+            publicId: $passport->public_id,
+            publicUrl: $publicUrl,
+            isPublished: $passport->isPublished(),
+            hasBeenPublished: $passport->hasPublishedVersion(),
+            versionNumber: $passport->currentPublishedVersion?->version_number,
+            passportStatus: $passport->status->value,
+            productName: $product->name,
+            productUuid: $product->uuid,
+            printSpec: $printSpec->toArray(),
+        );
+
+        return view()->make('passports.qr.label', [
+            'company' => $company,
+            'product' => $product,
+            'passport' => $passport,
+            'viewModel' => $viewModel,
         ]);
     }
 

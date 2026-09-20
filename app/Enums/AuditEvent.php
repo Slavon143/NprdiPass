@@ -28,6 +28,11 @@ enum AuditEvent: string
     case CatalogCategoryReordered = 'catalog.category.reordered';
     case CatalogCategoryArchived = 'catalog.category.archived';
     case CatalogCategoryRestored = 'catalog.category.restored';
+    case CatalogCategoryTemplateCreated = 'catalog.category_template.created';
+    case CatalogCategoryTemplateUpdated = 'catalog.category_template.updated';
+    case CatalogCategoryTemplateActivated = 'catalog.category_template.activated';
+    case CatalogProductTaxonomyAcknowledged = 'catalog.product.taxonomy_acknowledged';
+    case CatalogProductReadinessProfileOverridden = 'catalog.product.readiness_profile_overridden';
     case CatalogProductCreated = 'catalog.product.created';
     case CatalogProductUpdated = 'catalog.product.updated';
     case CatalogProductActivated = 'catalog.product.activated';
@@ -48,6 +53,9 @@ enum AuditEvent: string
     case CatalogAttributeOptionArchived = 'catalog.attribute.option.archived';
     case CatalogAttributeOptionRestored = 'catalog.attribute.option.restored';
     case CatalogAttributeOptionsReordered = 'catalog.attribute.options.reordered';
+    case CatalogAttributeDeprecated = 'catalog.attribute.deprecated';
+    case CatalogAttributeOptionDeprecated = 'catalog.attribute.option.deprecated';
+    case CatalogAttributeOptionApproved = 'catalog.attribute.option.approved';
     case CatalogProductAttributesUpdated = 'catalog.product.attributes.updated';
     case CatalogVariantAttributesUpdated = 'catalog.variant.attributes.updated';
     case CatalogMediaUploaded = 'catalog.media.uploaded';
@@ -63,12 +71,27 @@ enum AuditEvent: string
     case CatalogDocumentRejected = 'catalog.document.rejected';
     case CatalogDocumentArchived = 'catalog.document.archived';
     case CatalogDocumentRestored = 'catalog.document.restored';
+    case ImportUploaded = 'import.uploaded';
+    case ImportPreviewed = 'import.previewed';
+    case ImportChunkApplied = 'import.chunk_applied';
+    case ImportCompleted = 'import.completed';
+    case ImportFailed = 'import.failed';
+    case ExportDownloaded = 'export.downloaded';
     case PassportCreated = 'passport.created';
     case PassportDraftUpdated = 'passport.draft.updated';
+    case PassportPublicationApprovalRequested = 'passport.publication_approval.requested';
+    case PassportPublicationApprovalApproved = 'passport.publication_approval.approved';
     case PassportPublished = 'passport.published';
     case PassportUnpublished = 'passport.unpublished';
     case PassportArchived = 'passport.archived';
     case PassportRestored = 'passport.restored';
+    case FortnoxConnectionConnected = 'fortnox.connection.connected';
+    case FortnoxConnectionDisconnected = 'fortnox.connection.disconnected';
+    case FortnoxSyncStarted = 'fortnox.sync.started';
+    case FortnoxSyncCompleted = 'fortnox.sync.completed';
+    case FortnoxSyncFailed = 'fortnox.sync.failed';
+    case FortnoxConflictResolved = 'fortnox.conflict.resolved';
+    case BillingSubscriptionUpdated = 'billing.subscription.updated';
 
     public function label(): string
     {
@@ -97,6 +120,11 @@ enum AuditEvent: string
             self::CatalogCategoryReordered => 'Catalog categories reordered',
             self::CatalogCategoryArchived => 'Catalog category archived',
             self::CatalogCategoryRestored => 'Catalog category restored',
+            self::CatalogCategoryTemplateCreated => 'Catalog category template created',
+            self::CatalogCategoryTemplateUpdated => 'Catalog category template updated',
+            self::CatalogCategoryTemplateActivated => 'Catalog category template activated',
+            self::CatalogProductTaxonomyAcknowledged => 'Catalog product taxonomy acknowledged',
+            self::CatalogProductReadinessProfileOverridden => 'Catalog product readiness profile overridden',
             self::CatalogProductCreated => 'Catalog product created',
             self::CatalogProductUpdated => 'Catalog product updated',
             self::CatalogProductActivated => 'Catalog product activated',
@@ -117,6 +145,9 @@ enum AuditEvent: string
             self::CatalogAttributeOptionArchived => 'Catalog attribute option archived',
             self::CatalogAttributeOptionRestored => 'Catalog attribute option restored',
             self::CatalogAttributeOptionsReordered => 'Catalog attribute options reordered',
+            self::CatalogAttributeDeprecated => 'Catalog attribute deprecated',
+            self::CatalogAttributeOptionDeprecated => 'Catalog attribute option deprecated',
+            self::CatalogAttributeOptionApproved => 'Catalog attribute option approved',
             self::CatalogProductAttributesUpdated => 'Catalog product attributes updated',
             self::CatalogVariantAttributesUpdated => 'Catalog variant attributes updated',
             self::CatalogMediaUploaded => 'Catalog media uploaded',
@@ -132,12 +163,27 @@ enum AuditEvent: string
             self::CatalogDocumentRejected => 'Catalog document rejected',
             self::CatalogDocumentArchived => 'Catalog document archived',
             self::CatalogDocumentRestored => 'Catalog document restored',
+            self::ImportUploaded => 'Import uploaded',
+            self::ImportPreviewed => 'Import previewed',
+            self::ImportChunkApplied => 'Import chunk applied',
+            self::ImportCompleted => 'Import completed',
+            self::ImportFailed => 'Import failed',
+            self::ExportDownloaded => 'Export downloaded',
             self::PassportCreated => 'Passport created',
             self::PassportDraftUpdated => 'Passport draft updated',
+            self::PassportPublicationApprovalRequested => 'Passport publication approval requested',
+            self::PassportPublicationApprovalApproved => 'Passport publication approval approved',
             self::PassportPublished => 'Passport published',
             self::PassportUnpublished => 'Passport unpublished',
             self::PassportArchived => 'Passport archived',
             self::PassportRestored => 'Passport restored',
+            self::FortnoxConnectionConnected => 'Fortnox connected',
+            self::FortnoxConnectionDisconnected => 'Fortnox disconnected',
+            self::FortnoxSyncStarted => 'Fortnox sync started',
+            self::FortnoxSyncCompleted => 'Fortnox sync completed',
+            self::FortnoxSyncFailed => 'Fortnox sync failed',
+            self::FortnoxConflictResolved => 'Fortnox conflict resolved',
+            self::BillingSubscriptionUpdated => 'Billing subscription updated',
         };
     }
 }

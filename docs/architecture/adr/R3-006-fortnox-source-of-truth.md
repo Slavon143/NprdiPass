@@ -20,7 +20,7 @@ NordiPass must integrate with Fortnox as the primary ERP for Swedish SME custome
 | Article number | Yes | — | No | Fortnox → NordiPass |
 | Article name | Yes | Yes (DPP override) | Yes | Bidirectional with policy |
 | Description | Yes | Yes (DPP override) | Yes | Bidirectional with policy |
-| Price | Yes | — | No | Fortnox → NordiPass |
+| Price | Yes | — | No | Fortnox SalesPrice → Product commerce |
 | Stock | Yes | — | No | Fortnox → NordiPass |
 | GTIN/EAN | Yes | Yes | Override possible | Fortnox → NordiPass |
 | Manufacturer | — | Yes | — | NordiPass only |
@@ -36,6 +36,7 @@ NordiPass must integrate with Fortnox as the primary ERP for Swedish SME custome
 - Conflict is raised (visible in UI, logged in audit) when both sides have changes
 - Resolution: user chooses Fortnox value or keeps NordiPass value
 - Default: Fortnox wins for commercial data (price, stock); NordiPass wins for DPP data
+- Product commerce is canonical product data. Fortnox `SalesPrice` maps to `commerce.sales_price` / `commerce.price` semantics with currency and VAT metadata; it is not a hidden Fortnox-only field.
 
 ### OAuth Token Storage
 - Encrypted at rest using Laravel's encryption

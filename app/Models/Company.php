@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\CompanyStatus;
+use App\Models\Billing\CompanySubscription;
+use App\Models\Billing\EntitlementOverride;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
@@ -11,12 +13,18 @@ use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Concerns\HasUuid;
+use App\Models\Jobs\JobStatus;
+use App\Models\Notifications\Notification;
+use App\Models\Notifications\NotificationPreference;
 use App\Models\Passports\ProductPassport;
+use App\Models\Webhooks\WebhookDelivery;
+use App\Models\Webhooks\WebhookEndpoint;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -124,5 +132,43 @@ class Company extends Model
     public function productDocuments(): HasMany
     {
         return $this->hasMany(ProductDocument::class);
+    }
+
+    /**
+     * @return HasOne<CompanySubscription, $this>
+     */
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(CompanySubscription::class);
+    }
+
+    public function entitlementOverrides(): HasMany
+    {
+        return $this->hasMany(EntitlementOverride::class);
+    }
+
+    public function webhookEndpoints(): HasMany
+    {
+        return $this->hasMany(WebhookEndpoint::class);
+    }
+
+    public function webhookDeliveries(): HasMany
+    {
+        return $this->hasMany(WebhookDelivery::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    public function jobStatuses(): HasMany
+    {
+        return $this->hasMany(JobStatus::class);
     }
 }

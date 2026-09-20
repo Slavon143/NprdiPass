@@ -1,6 +1,6 @@
 # NordiPass API v1
 
-Stage 8 provides the API foundation only. Product, Document, QR, DPP, import, integration, billing, and webhook endpoints do not exist yet.
+The versioned API covers company-scoped catalog, document, passport, production import, product export, Fortnox integration, and outbound webhook workflows. The OpenAPI contract remains additive within `/api/v1`.
 
 ## Base URL and authentication
 
@@ -27,8 +27,30 @@ A token stops working when it expires or is revoked, its user is suspended, its 
 | --- | --- |
 | `company.read` | `GET /me`, `GET /company` |
 | `members.read` | `GET /company/members` |
+| `imports.read` | List import jobs, preview rows, errors, and mapping templates |
+| `imports.write` | Upload CSV/XLSX files, save mappings, preview, apply, and resume chunks |
+| `exports.read` | Download tenant-scoped product CSV/XLSX exports |
+| `fortnox.read` | `GET /fortnox/connection`, sync runs, mappings, and conflicts |
+| `fortnox.write` | `POST /fortnox/syncs`, `POST /fortnox/conflicts/{conflict}/resolve` |
+| `webhooks.manage` | Create/update/disable webhook endpoints and read webhook delivery logs |
 
-Abilities do not imply one another. Wildcard (`*`) and future product abilities cannot be issued.
+Abilities do not imply one another. Production imports require a persisted preview before write. Repeating an apply request resumes from the saved row cursor and never reapplies completed records; upload idempotency keys are tenant- and file-content-bound.
+
+## Fortnox integration
+
+Fortnox endpoints are hidden until `FEATURE_FORTNOX_INTEGRATION=true`. OAuth connect/callback is a web flow at `/settings/integrations/fortnox`; tokens are stored encrypted at rest and never appear in API responses. A manual sync (`fortnox.write`) fetches articles changed after the last sync cursor, applies the ADR-R3-006 source-of-truth matrix, and records conflicts that stay open until explicitly resolved with `fortnox` (apply provider value) or `nordipass` (keep catalog value and record a per-field override). Provider failures return `fortnox_provider_error` with HTTP 502 and a `retryable` flag.
+
+## Webhooks
+
+Webhook endpoint management uses `webhooks.manage`.
+
+- `GET /webhooks/endpoints` lists tenant-scoped endpoints.
+- `POST /webhooks/endpoints` creates an HTTPS endpoint with a caller supplied secret and subscribed events.
+- `PATCH /webhooks/endpoints/{endpoint}` rotates URL, secret, events, or status.
+- `POST /webhooks/endpoints/{endpoint}/disable` disables delivery without deleting history.
+- `GET /webhooks/deliveries` lists tenant-scoped delivery attempts with optional `status`, `event_type`, and `per_page` filters.
+
+Endpoint secrets are encrypted at rest and never returned by API responses. Delivery requests include `NordiPass-Signature: t=<unix>,v1=<hmac>`, where the HMAC signs `<timestamp>.<raw-json-body>` with SHA-256 and the endpoint secret. Consumers should reject timestamps outside `WEBHOOK_SIGNATURE_TOLERANCE_SECONDS` and use `NordiPass-Event-ID` plus `Idempotency-Key` for replay/idempotency handling.
 
 ## Expiration, revocation, and pruning
 
@@ -62,7 +84,7 @@ Sanctum updates `last_used_at` after successful bearer authentication. This prov
 
 Responses include `X-Request-ID`, `X-Content-Type-Options: nosniff`, and `Cache-Control: no-store`. Dates are ISO 8601 and resources use UUIDs rather than numeric model IDs.
 
-Stable codes are `unauthenticated`, `forbidden`, `validation_error`, `current_company_missing`, `company_inactive`, `token_expired`, `token_invalid`, `token_ability_missing`, `resource_not_found`, `rate_limited`, and `internal_error`. Invalid/revoked/expired tokens return 401; missing abilities and archived companies return 403; suspended companies return 423; validation returns 422; throttling returns 429.
+Stable codes are `unauthenticated`, `forbidden`, `validation_error`, `current_company_missing`, `company_inactive`, `token_expired`, `token_invalid`, `token_ability_missing`, `resource_not_found`, `rate_limited`, `fortnox_provider_error`, and `internal_error`. Invalid/revoked/expired tokens return 401; missing abilities and archived companies return 403; suspended companies return 423; validation returns 422; throttling returns 429; Fortnox provider failures return 502.
 
 ## Pagination
 
@@ -84,4 +106,4 @@ curl \
 
 Raw bearer tokens are never limiter keys. Allowed browser origins come from `API_ALLOWED_ORIGINS`. Credentialed CORS is disabled; production must set explicit origins.
 
-The canonical contract is [`openapi.yaml`](openapi.yaml).
+The canonical contract is [`api/openapi-v1.yaml`](api/openapi-v1.yaml).

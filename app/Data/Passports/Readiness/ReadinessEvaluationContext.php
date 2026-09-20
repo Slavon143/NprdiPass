@@ -29,4 +29,24 @@ readonly class ReadinessEvaluationContext
         public ?ReadinessProfileDefinition $readinessProfile = null,
         public array $config = [],
     ) {}
+
+    /** @return array<string, mixed> */
+    public function sectionData(string $section): array
+    {
+        $data = $this->normalizedPayload['data'][$section] ?? [];
+        $defaultLanguage = $this->passport === null ? 'sv' : $this->passport->default_language;
+        $translations = $this->normalizedPayload['translations'][$defaultLanguage][$section]
+            ?? $this->normalizedPayload['translations']['sv'][$section]
+            ?? [];
+
+        return array_replace(
+            is_array($data) ? $data : [],
+            is_array($translations) ? $translations : [],
+        );
+    }
+
+    public function fieldValue(string $section, string $field): mixed
+    {
+        return $this->sectionData($section)[$field] ?? null;
+    }
 }

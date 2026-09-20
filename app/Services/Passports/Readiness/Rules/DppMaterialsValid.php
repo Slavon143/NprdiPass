@@ -93,6 +93,7 @@ class DppMaterialsValid implements PassportReadinessRule
                 titleKey: 'readiness.dpp.materials.valid.title',
                 messageKey: 'readiness.dpp.materials.valid.failed',
                 section: DppSectionKey::MaterialsAndComposition,
+                field: 'materials',
                 navigationTarget: new ReadinessNavigationTarget(
                     type: 'passport_section',
                     section: DppSectionKey::MaterialsAndComposition->value,

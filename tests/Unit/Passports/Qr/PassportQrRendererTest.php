@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Passports\Qr\PassportQrPrintSpec;
 use App\Services\Passports\Qr\PassportQrRenderer;
 
 test('svg is valid xml', function (): void {
@@ -148,4 +149,24 @@ test('renderer version 1 produces stable checksum', function (): void {
 
     expect(hash('sha256', $svg2))->toBe($hash1Svg);
     expect(hash('sha256', $png2))->toBe($hash1Png);
+});
+
+test('print spec computes black on white contrast baseline', function (): void {
+    config()->set('passports.qr.foreground', '#000000');
+    config()->set('passports.qr.background', '#ffffff');
+
+    $spec = app(PassportQrPrintSpec::class)->toArray();
+
+    expect($spec['contrast_ratio'])->toBeGreaterThan(20.9);
+    expect($spec['contrast_passes'])->toBeTrue();
+    expect($spec['quiet_zone_modules'])->toBe(4);
+});
+
+test('print spec flags low contrast combinations', function (): void {
+    config()->set('passports.qr.foreground', '#777777');
+    config()->set('passports.qr.background', '#888888');
+
+    $spec = app(PassportQrPrintSpec::class)->toArray();
+
+    expect($spec['contrast_passes'])->toBeFalse();
 });

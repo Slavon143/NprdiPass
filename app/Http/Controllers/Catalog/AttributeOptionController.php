@@ -7,6 +7,7 @@ use App\Actions\Catalog\Attributes\CreateAttributeOptionAction;
 use App\Actions\Catalog\Attributes\ReorderAttributeOptionsAction;
 use App\Actions\Catalog\Attributes\RestoreAttributeOptionAction;
 use App\Actions\Catalog\Attributes\UpdateAttributeOptionAction;
+use App\Actions\Catalog\Taxonomy\TaxonomyGovernanceAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Attributes\ReorderAttributeOptionsRequest;
 use App\Http\Requests\Catalog\Attributes\StoreAttributeOptionRequest;
@@ -64,6 +65,40 @@ class AttributeOptionController extends Controller
         $action->execute($this->actor($request), $company, $definition, $ids);
 
         return back()->with('success', 'Options reordered.');
+    }
+
+    public function approve(
+        Request $request,
+        CurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        string $attribute,
+        int $option,
+    ): RedirectResponse {
+        [$company, $definition, $option] = $this->context($currentCompany, $attribute, $option);
+        $this->authorize('update', $option);
+        $action->approveOption($this->actor($request), $company, $definition, $option);
+
+        return back()->with('success', 'Option approved for selection.');
+    }
+
+    public function deprecate(
+        Request $request,
+        CurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        string $attribute,
+        int $option,
+    ): RedirectResponse {
+        [$company, $definition, $option] = $this->context($currentCompany, $attribute, $option);
+        $this->authorize('update', $option);
+        $validated = $request->validate(['replacement_option_id' => ['required', 'integer', 'min:1']]);
+        $replacement = AttributeOption::query()
+            ->forCompany($company)
+            ->where('attribute_definition_id', $definition->getKey())
+            ->whereKey($validated['replacement_option_id'])
+            ->firstOrFail();
+        $action->deprecateOption($this->actor($request), $company, $definition, $option, $replacement);
+
+        return back()->with('success', 'Option deprecated with a replacement.');
     }
 
     /** @return array{Company, AttributeDefinition, AttributeOption} */

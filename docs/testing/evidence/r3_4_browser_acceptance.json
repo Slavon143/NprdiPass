@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-07-22T21:45:06.353Z",
+  "startedAt": "2026-08-20T10:45:41.226Z",
   "appUrl": "http://127.0.0.1:8766",
   "productUuid": "00000000-0000-4000-8000-000000003401",
   "productName": "R3.4 Documents Compliance Acceptance",
@@ -8,104 +8,104 @@
     {
       "command": "php -r echo PHP_BINARY;",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:06.355Z",
-      "finishedAt": "2026-07-22T21:45:06.609Z",
+      "startedAt": "2026-08-20T10:45:41.227Z",
+      "finishedAt": "2026-08-20T10:45:41.315Z",
       "outputExcerpt": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe --version",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:06.610Z",
-      "finishedAt": "2026-07-22T21:45:06.737Z",
+      "startedAt": "2026-08-20T10:45:41.315Z",
+      "finishedAt": "2026-08-20T10:45:41.388Z",
       "outputExcerpt": "PHP 8.5.2 (cli) (built: Jan 13 2026 21:54:57) (ZTS Visual C++ 2022 x64)\nCopyright (c) The PHP Group\nBuilt by The PHP Group\nZend Engine v4.5.2, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.2, Copyright (c), by Zend Technologies\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe --ini",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:06.737Z",
-      "finishedAt": "2026-07-22T21:45:06.873Z",
+      "startedAt": "2026-08-20T10:45:41.388Z",
+      "finishedAt": "2026-08-20T10:45:41.458Z",
       "outputExcerpt": "Configuration File (php.ini) Path: \"\"\nLoaded Configuration File:         (none)\nScan for additional .ini files in: \"C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli;C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\conf.d;\"\nAdditional .ini files parsed:      C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\php.ini\n\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe -r echo extension_loaded('pdo_mysql') ? 'pdo_mysql=yes' : 'pdo_mysql=no';",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:06.873Z",
-      "finishedAt": "2026-07-22T21:45:07.007Z",
+      "startedAt": "2026-08-20T10:45:41.458Z",
+      "finishedAt": "2026-08-20T10:45:41.529Z",
       "outputExcerpt": "pdo_mysql=yes",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe -r echo extension_loaded('openssl') ? 'openssl=yes' : 'openssl=no';",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:07.007Z",
-      "finishedAt": "2026-07-22T21:45:07.147Z",
+      "startedAt": "2026-08-20T10:45:41.529Z",
+      "finishedAt": "2026-08-20T10:45:41.603Z",
       "outputExcerpt": "openssl=yes",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan migrate:fresh --env=acceptance --force",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:07.147Z",
-      "finishedAt": "2026-07-22T21:45:29.652Z",
-      "outputExcerpt": " 2026_07_14_000009_create_product_attribute_value_options_table .. 305.90ms DONE\n 2026_07_14_000010_create_variant_attribute_value_options_table .. 295.79ms DONE\n 2026_07_14_000011_create_product_media_table .. 1s DONE\n 2026_07_14_000012_add_catalog_deferred_foreign_keys .. 732.55ms DONE\n 2026_07_16_000001_create_product_passports_table .. 814.50ms DONE\n 2026_07_16_000002_create_product_passport_versions_table .. 1s DONE\n 2026_07_16_000003_create_product_passport_assets_table .. 833.35ms DONE\n 2026_07_16_000004_add_current_version_pointers_to_product_passports .. 520.96ms DONE\n 2026_07_16_100001_create_product_documents_table .. 430.93ms DONE\n 2026_07_16_100002_create_product_document_versions_table .. 1s DONE\n 2026_07_16_100003_add_current_version_pointer_to_product_documents .. 84.78ms DONE\n 2026_07_16_100004_add_product_document_immutability_triggers .. 22.31ms DONE\n 2026_07_17_000001_create_publication_idempotency_records_table .. 441.17ms DONE\n 2026_07_18_000001_allow_document_passport_asset_kind .. 101.57ms DONE\n 2026_07_18_000002_create_passport_validation_evidence .. 1s DONE\n 2026_07_19_000001_enforce_passport_enabled_languages_array .. 111.96ms DONE\n 2026_07_22_000001_expand_readiness_profile_evidence .. 1s DONE\n 2026_07_22_100001_expand_product_document_compliance_workflow .. 3s DONE\n\n",
+      "startedAt": "2026-08-20T10:45:41.603Z",
+      "finishedAt": "2026-08-20T10:45:53.608Z",
+      "outputExcerpt": " 2026_07_14_000010_create_variant_attribute_value_options_table .. 156.75ms DONE\n 2026_07_14_000011_create_product_media_table .. 551.46ms DONE\n 2026_07_14_000012_add_catalog_deferred_foreign_keys .. 332.79ms DONE\n 2026_07_16_000001_create_product_passports_table .. 351.56ms DONE\n 2026_07_16_000002_create_product_passport_versions_table .. 566.56ms DONE\n 2026_07_16_000003_create_product_passport_assets_table .. 441.94ms DONE\n 2026_07_16_000004_add_current_version_pointers_to_product_passports .. 287.05ms DONE\n 2026_07_16_100001_create_product_documents_table .. 250.10ms DONE\n 2026_07_16_100002_create_product_document_versions_table .. 582.88ms DONE\n 2026_07_16_100003_add_current_version_pointer_to_product_documents .. 54.47ms DONE\n 2026_07_16_100004_add_product_document_immutability_triggers .. 12.32ms DONE\n 2026_07_17_000001_create_publication_idempotency_records_table .. 271.50ms DONE\n 2026_07_18_000001_allow_document_passport_asset_kind .. 52.71ms DONE\n 2026_07_18_000002_create_passport_validation_evidence .. 791.81ms DONE\n 2026_07_19_000001_enforce_passport_enabled_languages_array .. 55.26ms DONE\n 2026_07_22_000001_expand_readiness_profile_evidence .. 550.81ms DONE\n 2026_07_22_100001_expand_product_document_compliance_workflow .. 1s DONE\n 2026_08_20_000001_upgrade_editable_passport_drafts_to_readiness_profile_v2 .. 1.77ms DONE\n\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan db:seed --class=R34DocumentsComplianceAcceptanceSeeder --env=acceptance",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:29.652Z",
-      "finishedAt": "2026-07-22T21:45:32.921Z",
-      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 177 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 2,068 ms DONE \n\n",
+      "startedAt": "2026-08-20T10:45:53.608Z",
+      "finishedAt": "2026-08-20T10:45:55.464Z",
+      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 102 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 1,330 ms DONE \n\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan db:seed --class=R34DocumentsComplianceAcceptanceSeeder --env=acceptance",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:32.921Z",
-      "finishedAt": "2026-07-22T21:45:35.784Z",
-      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 101 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 1,783 ms DONE \n\n",
+      "startedAt": "2026-08-20T10:45:55.464Z",
+      "finishedAt": "2026-08-20T10:45:57.144Z",
+      "outputExcerpt": "\n INFO Seeding database. \n\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. RUNNING \n Database\\Seeders\\RolePermissionSeeder .. 37 ms DONE \n\n Database\\Seeders\\LocalDevelopmentSeeder .. 1,244 ms DONE \n\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan optimize:clear --env=acceptance",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:35.784Z",
-      "finishedAt": "2026-07-22T21:45:36.313Z",
-      "outputExcerpt": "\n INFO Clearing cached bootstrap files. \n\n config .. 1.44ms DONE\n cache .. 9.14ms DONE\n compiled .. 2.27ms DONE\n events .. 0.94ms DONE\n routes .. 0.79ms DONE\n views .. 12.41ms DONE\n\n",
+      "startedAt": "2026-08-20T10:45:57.145Z",
+      "finishedAt": "2026-08-20T10:45:57.588Z",
+      "outputExcerpt": "\n INFO Clearing cached bootstrap files. \n\n config .. 1.34ms DONE\n cache .. 3.54ms DONE\n compiled .. 1.57ms DONE\n events .. 1.40ms DONE\n routes .. 0.95ms DONE\n views .. 7.53ms DONE\n\n",
       "errorExcerpt": ""
     },
     {
       "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan cache:clear --env=acceptance",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:36.313Z",
-      "finishedAt": "2026-07-22T21:45:36.830Z",
+      "startedAt": "2026-08-20T10:45:57.588Z",
+      "finishedAt": "2026-08-20T10:45:58.003Z",
       "outputExcerpt": "\n INFO Application cache cleared successfully. \n\n",
       "errorExcerpt": ""
     },
     {
       "command": "fetch /ready",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:39.563Z",
-      "finishedAt": "2026-07-22T21:45:39.624Z",
+      "startedAt": "2026-08-20T10:45:59.427Z",
+      "finishedAt": "2026-08-20T10:45:59.465Z",
       "outputExcerpt": "HTTP 200",
       "errorExcerpt": ""
     },
     {
       "command": "fetch /login",
       "exitCode": 0,
-      "startedAt": "2026-07-22T21:45:39.624Z",
-      "finishedAt": "2026-07-22T21:45:39.665Z",
+      "startedAt": "2026-08-20T10:45:59.465Z",
+      "finishedAt": "2026-08-20T10:45:59.485Z",
       "outputExcerpt": "HTTP 200",
       "errorExcerpt": ""
     },
     {
-      "command": "taskkill.exe /PID 20080 /T /F",
+      "command": "taskkill.exe /PID 6060 /T /F",
       "exitCode": 1,
-      "startedAt": "2026-07-22T21:46:09.622Z",
-      "finishedAt": "2026-07-22T21:46:09.683Z",
+      "startedAt": "2026-08-20T10:46:15.835Z",
+      "finishedAt": "2026-08-20T10:46:15.863Z",
       "outputExcerpt": "",
       "errorExcerpt": "ERROR: Access denied\r\n"
     }
@@ -113,7 +113,7 @@
   "server": {
     "phpBinary": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
     "port": 8766,
-    "pid": 20080,
+    "pid": 6060,
     "readyStatus": 200,
     "loginStatus": 200,
     "pidPath": "D:\\laravel\\nordipass\\storage\\framework\\r3_4_acceptance_server.pid",
@@ -147,7 +147,7 @@
       {
         "step": "Document detail and version history",
         "page": "Document detail and version history",
-        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/6708dbb3-b0c6-4cbe-926e-aaaf96f0421a",
         "viewport": "375x667",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
         "actual": "HTTP 200; h1=R3.4 Certificate",
@@ -194,7 +194,7 @@
         "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
         "viewport": "375x667",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
-        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "actual": "HTTP 200; h1=Publication readiness",
         "httpResult": 200,
         "consoleWarnings": [],
         "consoleErrors": [],
@@ -279,7 +279,7 @@
       {
         "step": "Document detail and version history",
         "page": "Document detail and version history",
-        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/6708dbb3-b0c6-4cbe-926e-aaaf96f0421a",
         "viewport": "768x1024",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
         "actual": "HTTP 200; h1=R3.4 Certificate",
@@ -326,7 +326,7 @@
         "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
         "viewport": "768x1024",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
-        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "actual": "HTTP 200; h1=Publication readiness",
         "httpResult": 200,
         "consoleWarnings": [],
         "consoleErrors": [],
@@ -411,7 +411,7 @@
       {
         "step": "Document detail and version history",
         "page": "Document detail and version history",
-        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/e0e32742-8644-4f6e-b973-ecb571852db7",
+        "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/6708dbb3-b0c6-4cbe-926e-aaaf96f0421a",
         "viewport": "1280x720",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
         "actual": "HTTP 200; h1=R3.4 Certificate",
@@ -458,7 +458,7 @@
         "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/passport/readiness",
         "viewport": "1280x720",
         "expected": "Page renders without HTTP 500, critical console errors, failed requests, or horizontal overflow.",
-        "actual": "HTTP 200; h1=Passport Readiness: R3.4 Documents Compliance Acceptance",
+        "actual": "HTTP 200; h1=Publication readiness",
         "httpResult": 200,
         "consoleWarnings": [],
         "consoleErrors": [],
@@ -525,14 +525,14 @@
         "result": "passed",
         "expected": "Owner and editor can authenticate into the seeded acceptance company.",
         "actual": "owner=http://127.0.0.1:8766/dashboard; editor=http://127.0.0.1:8766/dashboard",
-        "recordedAt": "2026-07-22T21:45:48.870Z"
+        "recordedAt": "2026-08-20T10:46:04.722Z"
       },
       {
         "step": "Readiness publish gate",
         "result": "passed",
         "expected": "Publish form is available when readiness is not not_ready.",
         "actual": "Publish form available.",
-        "recordedAt": "2026-07-22T21:46:02.765Z"
+        "recordedAt": "2026-08-20T10:46:12.539Z"
       },
       {
         "step": "Publish Version 1 browser smoke",
@@ -540,24 +540,24 @@
         "expected": "Version 1 is published.",
         "actual": "Version 1 text visible.",
         "publicUrl": null,
-        "recordedAt": "2026-07-22T21:46:03.718Z"
+        "recordedAt": "2026-08-20T10:46:13.147Z"
       },
       {
         "step": "Upload PDF document through browser form",
         "result": "passed",
         "expected": "Uploaded PDF is shown as the current document version.",
         "actual": "Uploaded title visible on detail page.",
-        "documentUuid": "150b662f-8e27-49d1-9381-ee68b4c68f96",
-        "versionUuid": "1006ec64-4155-45b1-9e94-4d9137b92bbb",
-        "title": "R3.4 Browser Upload 1784756763718",
-        "recordedAt": "2026-07-22T21:46:04.453Z"
+        "documentUuid": "135bc1a4-1a49-4a79-8d2a-2827198e5193",
+        "versionUuid": "6f65218f-e41f-47cd-a6a3-506cfb5357b3",
+        "title": "R3.4 Browser Upload 1787222773147",
+        "recordedAt": "2026-08-20T10:46:13.632Z"
       },
       {
         "step": "Submit document review",
         "result": "passed",
         "expected": "Review state becomes Pending Review.",
         "actual": "Pending Review",
-        "recordedAt": "2026-07-22T21:46:04.942Z"
+        "recordedAt": "2026-08-20T10:46:13.877Z"
       },
       {
         "step": "Direct unauthorized approval request",
@@ -565,36 +565,36 @@
         "expected": "403",
         "actual": "403",
         "exposure": "No approval granted.",
-        "recordedAt": "2026-07-22T21:46:05.035Z"
+        "recordedAt": "2026-08-20T10:46:13.976Z"
       },
       {
         "step": "Cancel document review",
         "result": "passed",
         "expected": "Review state becomes Cancelled.",
         "actual": "Cancelled visible.",
-        "recordedAt": "2026-07-22T21:46:05.698Z"
+        "recordedAt": "2026-08-20T10:46:14.276Z"
       },
       {
         "step": "Submit document review after cancellation",
         "result": "passed",
         "expected": "Cancelled version can be resubmitted.",
         "actual": "Pending Review visible.",
-        "recordedAt": "2026-07-22T21:46:06.055Z"
+        "recordedAt": "2026-08-20T10:46:14.426Z"
       },
       {
         "step": "Approve document review with separate actor",
         "result": "passed",
         "expected": "Review and approval states become Approved.",
         "actual": "Approved visible.",
-        "recordedAt": "2026-07-22T21:46:06.854Z"
+        "recordedAt": "2026-08-20T10:46:14.712Z"
       },
       {
         "step": "Create replacement version",
         "result": "passed",
         "expected": "Replacement version appears in version history.",
-        "actual": "2\tR3.4 Browser Upload 1784756763718 Replacement\t2026-07-22 21:46\tDraft\tDownload",
-        "versionUuid": "a7ffefb2-70a8-4725-8d42-bc52d522a176",
-        "recordedAt": "2026-07-22T21:46:07.524Z"
+        "actual": "2\tR3.4 Browser Upload 1787222773147 Replacement\t2026-08-20 10:46\tDraft\tDownload",
+        "versionUuid": "4b5e4998-214b-4240-97f2-92c8a0315d98",
+        "recordedAt": "2026-08-20T10:46:15.084Z"
       },
       {
         "step": "Reject replacement version",
@@ -602,7 +602,7 @@
         "expected": "Replacement can be submitted and rejected with a reason.",
         "actual": "submit=0; reject=0",
         "note": "The replacement review action is posted from the browser context because the current detail page only renders review controls for the current version.",
-        "recordedAt": "2026-07-22T21:46:07.912Z"
+        "recordedAt": "2026-08-20T10:46:15.284Z"
       }
     ]
   },
@@ -616,7 +616,7 @@
         "labelFailures": [],
         "keyboardFailures": [],
         "statusTexts": [
-          "R3.4 Browser Upload 1784756763718\tCertificate\tEN\tActive Expired\t2001-02-20\t2",
+          "R3.4 Browser Upload 1787222773147\tCertificate\tEN\tActive Expired\t2001-02-20\t2",
           "R3.4 General\tGeneral Document\tEN\tActive\t2027-06-01\t1",
           "R3.4 Declaration\tDeclaration Of Conformity\tEN\tActive\t2027-06-01\t1",
           "R3.4 Certificate\tCertificate\tEN\tActive\t2027-06-01\t1",
@@ -624,7 +624,7 @@
           "R3.4 Environmental\tEnvironmental Evidence\tEN\tActive\t2027-06-01\t1",
           "R3.4 Private\tCompliance Evidence\tEN\tActive\t2027-06-01\t1",
           "R3.4 Expired Certificate\tCertificate\tEN\tActive Expired\t2026-01-31\t1",
-          "R3.4 Expiring Certificate\tCertificate\tEN\tActive Expiring Soon\t2026-08-10\t1"
+          "R3.4 Expiring Certificate\tCertificate\tEN\tActive Expired\t2026-08-10\t1"
         ]
       }
     }
@@ -640,7 +640,7 @@
     },
     {
       "scenario": "Arbitrary version UUID substitution",
-      "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/150b662f-8e27-49d1-9381-ee68b4c68f96/versions/00000000-0000-4000-8000-999999999999/download",
+      "url": "http://127.0.0.1:8766/catalog/products/00000000-0000-4000-8000-000000003401/documents/135bc1a4-1a49-4a79-8d2a-2827198e5193/versions/00000000-0000-4000-8000-999999999999/download",
       "expectedStatus": "404",
       "actualStatus": "404",
       "exposure": "No tenant or storage detail exposed.",
@@ -659,5 +659,5 @@
   "phpBinary": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe",
   "phpVersion": "PHP 8.5.2 (cli) (built: Jan 13 2026 21:54:57) (ZTS Visual C++ 2022 x64)",
   "phpIni": "Configuration File (php.ini) Path: \"\"\nLoaded Configuration File:         (none)\nScan for additional .ini files in: \"C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli;C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\conf.d;\"\nAdditional .ini files parsed:      C:\\Users\\Vjach\\scoop\\apps\\php\\current\\cli\\php.ini\n\n",
-  "finishedAt": "2026-07-22T21:46:08.762Z"
+  "finishedAt": "2026-08-20T10:46:15.627Z"
 }

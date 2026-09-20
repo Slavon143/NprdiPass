@@ -52,10 +52,9 @@ class DppMaterialsRecycledContentPresent implements PassportReadinessRule
                 code: $this->code(),
                 group: $this->group(),
                 severity: $this->severity(),
-                status: ReadinessRuleStatus::Failed,
+                status: ReadinessRuleStatus::NotApplicable,
                 titleKey: 'readiness.dpp.materials.recycled_content.present.title',
-                messageKey: 'readiness.dpp.materials.recycled_content.present.failed',
-                section: DppSectionKey::MaterialsAndComposition,
+                messageKey: 'readiness.dpp.materials.recycled_content.present.not_applicable_empty',
                 safeContext: ['materials_empty' => true],
             );
         }
@@ -78,7 +77,7 @@ class DppMaterialsRecycledContentPresent implements PassportReadinessRule
             messageKey: $hasRecycledContent ? 'readiness.dpp.materials.recycled_content.present.passed' : 'readiness.dpp.materials.recycled_content.present.failed',
             section: DppSectionKey::MaterialsAndComposition,
             field: 'materials',
-            navigationTarget: new ReadinessNavigationTarget(
+            navigationTarget: $hasRecycledContent ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::MaterialsAndComposition->value,
                 routeName: 'catalog.products.passport.edit',

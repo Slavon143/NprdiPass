@@ -8,7 +8,9 @@ use App\Actions\Catalog\Attributes\CreateAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\DeleteAttributeAction;
 use App\Actions\Catalog\Attributes\RestoreAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\UpdateAttributeDefinitionAction;
+use App\Actions\Catalog\Taxonomy\TaxonomyGovernanceAction;
 use App\Enums\Catalog\AttributeDataType;
+use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Http\Controllers\Controller;
@@ -29,14 +31,54 @@ class AttributeDefinitionController extends Controller
     {
         $company = $currentCompany->require();
         $this->authorize('viewAny', [AttributeDefinition::class, $company]);
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'scope' => ['nullable', 'in:product,variant,both,all'],
+            'type' => ['nullable', 'string', 'max:30'],
+            'status' => ['nullable', 'in:active,archived,all'],
+        ]);
+        $search = trim((string) ($filters['search'] ?? ''));
+        $scope = $filters['scope'] ?? 'all';
+        $type = $filters['type'] ?? 'all';
+        $status = $filters['status'] ?? 'all';
+
+        $query = AttributeDefinition::query()->forCompany($company)
+            ->withCount(['options', 'productValues', 'variantValues'])
+            ->ordered();
+
+        if ($search !== '') {
+            $needle = '%'.$search.'%';
+            $query->where(function ($q) use ($needle): void {
+                $q->where('name', 'like', $needle)->orWhere('code', 'like', $needle);
+            });
+        }
+
+        if ($scope !== 'all') {
+            $query->where('scope', $scope);
+        }
+
+        if ($type !== 'all') {
+            $query->where('type', $type);
+        }
+
+        if ($status === AttributeDefinitionStatus::Active->value) {
+            $query->active();
+        } elseif ($status === AttributeDefinitionStatus::Archived->value) {
+            $query->archived();
+        }
+
+        $definitions = $query->paginate(50)->withQueryString();
+        $allTypes = AttributeDataType::cases();
 
         return view('catalog.attributes.index', [
             'company' => $company,
-            'definitions' => AttributeDefinition::query()->forCompany($company)
-                ->withCount(['options', 'productValues', 'variantValues'])
-                ->ordered()
-                ->paginate(50),
+            'definitions' => $definitions,
             'canManage' => $request->user()?->can('create', [AttributeDefinition::class, $company]) === true,
+            'filters' => ['search' => $search, 'scope' => $scope, 'type' => $type, 'status' => $status],
+            'allTypes' => $allTypes,
+            'totalCount' => AttributeDefinition::query()->forCompany($company)->count(),
+            'visibleCount' => $definitions->total(),
+            'hasActiveFilters' => $search !== '' || $scope !== 'all' || $type !== 'all' || $status !== 'all',
         ]);
     }
 
@@ -67,6 +109,14 @@ class AttributeDefinitionController extends Controller
             'company' => $company,
             'definition' => $definition,
             'canManage' => $request->user()?->can('update', $definition) === true,
+            'replacementDefinitions' => AttributeDefinition::query()
+                ->forCompany($company)
+                ->whereKeyNot($definition->getKey())
+                ->where('status', AttributeDefinitionStatus::Active->value)
+                ->where('type', $definition->type->value)
+                ->where('scope', $definition->scope->value)
+                ->ordered()
+                ->get(),
         ]);
     }
 
@@ -120,6 +170,22 @@ class AttributeDefinitionController extends Controller
         }
 
         return redirect()->route('catalog.attributes.index')->with('success', 'Attribute deleted.');
+    }
+
+    public function deprecate(
+        Request $request,
+        CurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        string $attribute,
+    ): RedirectResponse {
+        $company = $currentCompany->require();
+        $definition = $this->resolveDefinition($company, $attribute);
+        $this->authorize('update', $definition);
+        $validated = $request->validate(['replacement_uuid' => ['required', 'uuid']]);
+        $replacement = $this->resolveDefinition($company, $validated['replacement_uuid']);
+        $action->deprecateDefinition($this->actor($request), $company, $definition, $replacement);
+
+        return back()->with('success', 'Attribute deprecated with a replacement.');
     }
 
     public function bulkDestroy(

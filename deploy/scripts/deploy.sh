@@ -147,9 +147,13 @@ php "${CURRENT_LINK}/artisan" queue:restart 2>/dev/null || true
 if [ -n "$HEALTH_URL" ]; then
     echo "Performing health checks..."
 
+    up_ok=false
+    ready_ok=false
+
     for i in $(seq 1 10); do
         if curl -sf "${HEALTH_URL}/up" > /dev/null 2>&1; then
             echo "  /up OK"
+            up_ok=true
             break
         fi
         sleep 2
@@ -159,10 +163,16 @@ if [ -n "$HEALTH_URL" ]; then
         status=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}/ready" 2>&1 || echo "000")
         if [ "$status" = "200" ]; then
             echo "  /ready OK"
+            ready_ok=true
             break
         fi
         sleep 3
     done
+
+    if [ "$up_ok" != true ] || [ "$ready_ok" != true ]; then
+        echo "ERROR: Deployment health checks failed (/up=${up_ok}, /ready=${ready_ok})."
+        exit 5
+    fi
 fi
 
 # --- Cleanup old releases ---

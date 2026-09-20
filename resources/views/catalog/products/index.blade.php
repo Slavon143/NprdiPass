@@ -2,9 +2,9 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <p class="text-sm font-medium text-indigo-600">{{ __('Catalog') }}</p>
+                <p class="text-sm font-medium text-indigo-600">{{ __('Catalog') }} / {{ __('Products') }}</p>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ __('Products') }}</h1>
-                <p class="mt-1 text-sm text-slate-500">{{ __('Products owned by :company.', ['company' => $company->name]) }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ __('Manage products and their digital product passports.') }}</p>
             </div>
             @if ($canCreate)
                 <a href="{{ route('catalog.products.create') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-testid="product-create-button">{{ __('Create product') }}</a>
@@ -14,7 +14,7 @@
         </div>
     </x-slot>
 
-    <?php
+    @php
         $selectedProductStatuses = $criteria->productStatuses;
         $selectedVariantStatuses = $criteria->variantStatuses;
         $selectedCategories = $criteria->categoryUuids;
@@ -23,48 +23,74 @@
         $needsAttention = $criteria->needsAttention;
         $attributeCriteriaByUuid = collect($criteria->attributeFilters)->keyBy('definitionUuid');
         $productListReturnUrl = request()->fullUrl();
-    ?>
+        $activeFilterCount = count($activeFilterChips);
+    @endphp
 
-    <div id="catalog-products-page" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page">
-        <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <form id="catalog-products-filter-form" method="GET" action="{{ route('catalog.products.index') }}" class="space-y-5" data-ajax-products-form>
-                <div class="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_12rem_12rem_10rem] lg:items-end">
-                    <div>
-                        <x-input-label for="q" :value="__('Search')" />
-                        <x-text-input id="q" name="q" type="search" class="mt-1 block w-full" :value="$criteria->query" placeholder="Name, slug, SKU, GTIN, MPN, Variant, Category" />
-                    </div>
-                    <div>
-                        <x-input-label for="sort" :value="__('Sort')" />
-                        <select id="sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach (['relevance' => 'Relevance', 'updated' => 'Updated', 'created' => 'Created', 'name' => 'Name', 'brand' => 'Brand', 'variant_count' => 'Variant count'] as $value => $label)
-                                <option value="{{ $value }}" @selected($criteria->sort === $value)>{{ __($label) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label for="direction" :value="__('Direction')" />
-                        <select id="direction" name="direction" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="desc" @selected($criteria->direction === 'desc')>{{ __('Descending') }}</option>
-                            <option value="asc" @selected($criteria->direction === 'asc')>{{ __('Ascending') }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label for="per_page" :value="__('Per page')" />
-                        <select id="per_page" name="per_page" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach ([25, 50, 100] as $perPage)
-                                <option value="{{ $perPage }}" @selected($criteria->perPage === $perPage)>{{ $perPage }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+    <div id="catalog-products-page" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page" x-data="{ filtersOpen: false }">
+        <form id="catalog-products-filter-form" method="GET" action="{{ route('catalog.products.index') }}" data-ajax-products-form oninput="clearTimeout(window.__nordipassProductsFilterTimer); window.__nordipassProductsFilterTimer = setTimeout(() => this.requestSubmit(), 300)">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div class="flex-1">
+                    <x-input-label for="q" :value="__('Search')" class="sr-only" />
+                    <x-text-input id="q" name="q" type="search" class="block w-full" :value="$criteria->query" placeholder="Search products, SKU, GTIN…" oninput="clearTimeout(window.__nordipassProductsFilterTimer); window.__nordipassProductsFilterTimer = setTimeout(() => this.form.requestSubmit(), 300)" />
                 </div>
 
-                <div class="grid gap-5 lg:grid-cols-3">
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="filtersOpen = !filtersOpen" :aria-expanded="filtersOpen" aria-controls="catalog-products-filter-panel" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <svg class="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                        </svg>
+                        <span>{{ __('Filters') }}</span>
+                        <span id="catalog-products-filter-count" @class(['rounded-full bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white', 'hidden' => $activeFilterCount === 0])>{{ $activeFilterCount }}</span>
+                    </button>
+
+                    <div class="relative" x-data="{ sortOpen: false }" @click.outside="sortOpen = false" @keydown.escape.window="sortOpen = false">
+                        <button type="button" @click="sortOpen = !sortOpen" :aria-expanded="sortOpen" aria-haspopup="menu" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <svg class="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                            <span>{{ __('Sort') }}</span>
+                            <svg class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <div x-cloak x-show="sortOpen" x-transition role="menu" class="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                            <p class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{{ __('Sort by') }}</p>
+                            <div class="mt-2 space-y-0.5">
+                                @foreach (['relevance' => 'Relevance', 'updated' => 'Updated', 'created' => 'Created', 'name' => 'Name', 'brand' => 'Brand', 'variant_count' => 'Variant count'] as $value => $label)
+                                    <label class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                                        <input type="radio" name="sort" value="{{ $value }}" @checked($criteria->sort === $value) @change="sortOpen = false" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span>{{ __($label) }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p class="mt-3 px-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{{ __('Direction') }}</p>
+                            <div class="mt-2 space-y-0.5">
+                                @foreach (['desc' => 'Descending', 'asc' => 'Ascending'] as $value => $label)
+                                    <label class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                                        <input type="radio" name="direction" value="{{ $value }}" @checked($criteria->direction === $value) @change="sortOpen = false" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span>{{ __($label) }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="catalog-products-filter-panel" x-cloak x-show="filtersOpen" class="mt-4 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-slate-900">{{ __('Filters') }}</h2>
+                    <a href="{{ route('catalog.products.index') }}" data-products-clear class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">{{ __('Clear all') }}</a>
+                </div>
+
+                <div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
                     <fieldset>
-                        <legend class="text-sm font-semibold text-slate-900">{{ __('Product status') }}</legend>
+                        <legend class="text-sm font-semibold text-slate-900">{{ __('Status') }}</legend>
                         <div class="mt-2 flex flex-wrap gap-2">
                             @foreach (['draft' => 'Draft', 'active' => 'Active', 'archived' => 'Archived'] as $value => $label)
                                 <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                    <input type="checkbox" name="product_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600" @checked(in_array($value, $selectedProductStatuses, true))>
+                                    <input type="checkbox" name="product_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked(in_array($value, $selectedProductStatuses, true))>
                                     <span>{{ __($label) }}</span>
                                 </label>
                             @endforeach
@@ -72,33 +98,23 @@
                     </fieldset>
 
                     <fieldset>
-                        <legend class="text-sm font-semibold text-slate-900">{{ __('Variant status') }}</legend>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @foreach (['draft' => 'Draft', 'active' => 'Active', 'archived' => 'Archived'] as $value => $label)
-                                <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                    <input type="checkbox" name="variant_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600" @checked(in_array($value, $selectedVariantStatuses, true))>
-                                    <span>{{ __($label) }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend class="text-sm font-semibold text-slate-900">{{ __('Passport status') }}</legend>
+                        <legend class="text-sm font-semibold text-slate-900">{{ __('Passport') }}</legend>
                         <div class="mt-2 flex flex-wrap gap-2">
                             @foreach (['not_created' => 'Not created', 'draft' => 'Draft', 'published' => 'Published'] as $value => $label)
                                 <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                    <input type="checkbox" name="passport_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600" @checked(in_array($value, $selectedPassportStatuses, true))>
+                                    <input type="checkbox" name="passport_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked(in_array($value, $selectedPassportStatuses, true))>
                                     <span>{{ __($label) }}</span>
                                 </label>
                             @endforeach
                         </div>
+                        <label class="mt-3 inline-flex items-center gap-2 text-sm text-slate-700">
+                            <input type="checkbox" name="needs_attention" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked($needsAttention)>
+                            <span class="font-medium">{{ __('Needs attention') }}</span>
+                        </label>
                     </fieldset>
-                </div>
 
-                <div class="grid gap-5 lg:grid-cols-3">
                     <div>
-                        <x-input-label for="readiness" :value="__('Activation readiness')" />
+                        <x-input-label for="readiness" :value="__('readiness.label')" />
                         <select id="readiness" name="readiness" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="any" @selected($criteria->readiness === 'any')>{{ __('All') }}</option>
                             <option value="ready" @selected($criteria->readiness === 'ready')>{{ __('Ready') }}</option>
@@ -106,77 +122,78 @@
                         </select>
                     </div>
 
-                    <div class="flex items-end pb-1">
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
-                            <input type="checkbox" name="needs_attention" value="1" class="rounded border-slate-300 text-indigo-600" @checked($needsAttention)>
-                            <span class="font-medium">{{ __('Needs attention') }}</span>
-                            <span class="text-xs text-slate-500">{{ __('(Blockers or missing passport)') }}</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="grid gap-4 lg:grid-cols-3">
                     <div>
-                        <x-input-label for="category_uuids" :value="__('Categories')" />
-                        <select id="category_uuids" name="category_uuids[]" multiple size="6" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <x-input-label for="category_uuids" :value="__('Category')" />
+                        <select id="category_uuids" name="category_uuids[]" multiple size="5" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach ($categoryOptions as $categoryOption)
                                 <option value="{{ $categoryOption->uuid }}" @selected(in_array($categoryOption->uuid, $selectedCategories, true))>{{ str_repeat('- ', $categoryOption->depth) }}{{ $categoryOption->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="grid content-start gap-3">
+
+                    <div>
+                        <x-input-label for="brand" :value="__('Brand')" />
+                        <select id="brand" name="brand" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">{{ __('Any brand') }}</option>
+                            @foreach ($brandOptions as $brand)
+                                <option value="{{ $brand }}" @selected($criteria->brand === $brand)>{{ $brand }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <x-input-label for="manufacturer" :value="__('Manufacturer')" />
+                        <select id="manufacturer" name="manufacturer" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">{{ __('Any manufacturer') }}</option>
+                            @foreach ($manufacturerOptions as $manufacturer)
+                                <option value="{{ $manufacturer }}" @selected($criteria->manufacturer === $manufacturer)>{{ $manufacturer }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <fieldset class="lg:col-span-2 xl:col-span-3">
+                        <legend class="text-sm font-semibold text-slate-900">{{ __('Missing data') }}</legend>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach (['primary_category' => 'Primary category', 'default_variant' => 'Default variant', 'primary_image' => 'Primary image', 'variant_sku' => 'SKU', 'required_product_attribute' => 'Required attributes', 'required_variant_attribute' => 'Required variant attributes'] as $value => $label)
+                                <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="checkbox" name="missing_data[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked(in_array($value, $selectedMissing, true))>
+                                    <span>{{ __($label) }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                </div>
+
+                <details class="border-t border-slate-200 pt-5">
+                    <summary class="cursor-pointer select-none text-sm font-semibold text-slate-900 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Advanced filters') }}</summary>
+                    <div class="mt-4 grid gap-5 lg:grid-cols-3">
+                        <fieldset>
+                            <legend class="text-sm font-semibold text-slate-900">{{ __('Variant status') }}</legend>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                @foreach (['draft' => 'Draft', 'active' => 'Active', 'archived' => 'Archived'] as $value => $label)
+                                    <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="checkbox" name="variant_statuses[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked(in_array($value, $selectedVariantStatuses, true))>
+                                        <span>{{ __($label) }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+
                         <div>
                             <x-input-label for="category_mode" :value="__('Category mode')" />
                             <select id="category_mode" name="category_mode" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="primary" @selected($criteria->categoryMode === 'primary')>{{ __('Primary category') }}</option>
                                 <option value="any" @selected($criteria->categoryMode === 'any')>{{ __('Any assigned category') }}</option>
                             </select>
-                        </div>
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
-                            <input type="checkbox" name="include_descendants" value="1" class="rounded border-slate-300 text-indigo-600" @checked($criteria->includeDescendants)>
-                            <span>{{ __('Include descendants') }}</span>
-                        </label>
-                    </div>
-                    <div class="grid content-start gap-3">
-                        <div>
-                            <x-input-label for="brand" :value="__('Brand')" />
-                            <select id="brand" name="brand" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">{{ __('Any brand') }}</option>
-                                @foreach ($brandOptions as $brand)
-                                    <option value="{{ $brand }}" @selected($criteria->brand === $brand)>{{ $brand }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <x-input-label for="manufacturer" :value="__('Manufacturer')" />
-                            <select id="manufacturer" name="manufacturer" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">{{ __('Any manufacturer') }}</option>
-                                @foreach ($manufacturerOptions as $manufacturer)
-                                    <option value="{{ $manufacturer }}" @selected($criteria->manufacturer === $manufacturer)>{{ $manufacturer }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <fieldset>
-                    <legend class="text-sm font-semibold text-slate-900">{{ __('Missing data') }}</legend>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                        @foreach (['primary_category' => 'Primary category', 'default_variant' => 'Default Variant', 'primary_image' => 'Primary image', 'variant_sku' => 'Default Variant SKU', 'required_product_attribute' => 'Required Product attributes', 'required_variant_attribute' => 'Required Variant attributes'] as $value => $label)
-                            <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                <input type="checkbox" name="missing_data[]" value="{{ $value }}" class="rounded border-slate-300 text-indigo-600" @checked(in_array($value, $selectedMissing, true))>
-                                <span>{{ __($label) }}</span>
+                            <label class="mt-2 inline-flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" name="include_descendants" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" @checked($criteria->includeDescendants)>
+                                <span>{{ __('Include descendants') }}</span>
                             </label>
-                        @endforeach
-                    </div>
-                </fieldset>
+                        </div>
 
-                @if ($attributeFilterDefinitions->isNotEmpty())
-                    <section class="border-t border-slate-200 pt-5">
-                        <h2 class="text-sm font-semibold text-slate-900">{{ __('Attribute filters') }}</h2>
-                        <div class="mt-3 grid gap-4 lg:grid-cols-3">
+                        @if ($attributeFilterDefinitions->isNotEmpty())
                             @foreach ($attributeFilterDefinitions as $definition)
-                                <?php $attributeFilter = $attributeCriteriaByUuid->get($definition->uuid); ?>
+                                @php $attributeFilter = $attributeCriteriaByUuid->get($definition->uuid); @endphp
                                 <div>
                                     <x-input-label for="attribute_{{ $definition->uuid }}" :value="$definition->name" />
                                     <input type="hidden" name="attributes[{{ $definition->uuid }}][definition]" value="{{ $definition->uuid }}">
@@ -206,34 +223,33 @@
                                     @endif
                                 </div>
                             @endforeach
-                        </div>
-                    </section>
-                @endif
+                        @endif
+                    </div>
+                </details>
+            </div>
+        </form>
 
-                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
-                    <div id="catalog-products-active-chips" class="flex flex-wrap gap-2">
-                        @foreach ($activeFilterChips as $chip)
-                            <a href="{{ $chip['url'] }}" class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800">{{ $chip['label'] }} <span aria-hidden="true">x</span></a>
+        <div id="catalog-products-active-chips" class="mt-4 flex flex-wrap gap-2">
+            @foreach ($activeFilterChips as $chip)
+                <a href="{{ $chip['url'] }}" class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100">{{ $chip['label'] }} <span aria-hidden="true">×</span></a>
+            @endforeach
+        </div>
+
+        <div id="catalog-products-results" class="mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                <p>{{ trans_choice(':count product|:count products', $products->total(), ['count' => $products->total()]) }}</p>
+                <div class="flex items-center gap-2">
+                    <label for="per_page" class="text-xs font-medium text-slate-500">{{ __('Per page') }}</label>
+                    <select id="per_page" name="per_page" form="catalog-products-filter-form" onchange="this.form.requestSubmit()" class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach ([25, 50, 100] as $perPage)
+                            <option value="{{ $perPage }}" @selected($criteria->perPage === $perPage)>{{ $perPage }}</option>
                         @endforeach
-                    </div>
-                    <div class="flex gap-2">
-                        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Apply filters') }}</button>
-                        <a href="{{ route('catalog.products.index') }}" data-products-clear class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Clear all') }}</a>
-                    </div>
+                    </select>
                 </div>
-            </form>
-        </section>
-
-        <div id="catalog-products-results">
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
-                <p>{{ trans_choice(':count product found|:count products found', $products->total(), ['count' => $products->total()]) }}</p>
-                @if ($criteria->hasFilters())
-                    <p>{{ __('Filters are persisted in the URL.') }}</p>
-                @endif
             </div>
 
             @if ($products->isEmpty())
-                <section class="rounded-2xl border border-slate-200 bg-white px-6 py-20 shadow-sm text-center">
+                <section class="mt-4 rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center shadow-sm">
                     @if ($hasProducts)
                         <p class="font-semibold text-slate-900">{{ __('No products match these filters.') }}</p>
                         <p class="mt-2 text-sm text-slate-500">{{ __('Try adjusting your filter criteria or clear all filters to see all products.') }}</p>
@@ -253,207 +269,211 @@
                     @endif
                 </section>
             @else
-            @if($canPublish || $canArchive)
-                <form id="bulk-products-form" method="POST" action="{{ route('catalog.products.bulk-status', request()->query()) }}" class="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-                    @csrf
-                    @method('PATCH')
-                    <div>
-                        <p class="text-sm font-semibold text-slate-900">{{ __('Bulk actions') }}</p>
-                        <p class="mt-1 text-xs text-slate-500">{{ __('Select products below, then choose what should happen to their lifecycle status.') }}</p>
-                    </div>
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                        <div>
-                            <x-input-label for="bulk-operation" :value="__('Action')" />
-                            <select id="bulk-operation" name="operation" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-56" required>
-                                <option value="">{{ __('Choose action') }}</option>
-                                @if($canPublish)
-                                    <option value="activate">{{ __('Activate selected') }}</option>
-                                    <option value="draft">{{ __('Return selected to draft') }}</option>
-                                @endif
-                                @if($canArchive)
-                                    <option value="archive">{{ __('Archive selected') }}</option>
-                                    <option value="restore">{{ __('Restore selected to draft') }}</option>
-                                @endif
-                            </select>
-                        </div>
-                        <button type="submit" id="bulk-products-submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
-                            {{ __('Apply to selected') }}
-                        </button>
-                    </div>
-                </form>
-            @endif
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm">
-                        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <tr>
-                                @if($canPublish || $canArchive)
-                                    <th class="px-5 py-3">
-                                        <input type="checkbox" id="bulk-products-select-all" class="rounded border-slate-300 text-indigo-600" aria-label="{{ __('Select all products on this page') }}">
-                                    </th>
-                                @endif
-                                <th class="px-5 py-3">{{ __('Product') }}</th>
-                                <th class="px-5 py-3">{{ __('Product status') }}</th>
-                                <th class="px-5 py-3">{{ __('Passport') }}</th>
-                                <th class="px-5 py-3">{{ __('Current Draft Readiness') }}</th>
-                                <th class="px-5 py-3">{{ __('Primary Category') }}</th>
-                                <th class="px-5 py-3">{{ __('Updated') }}</th>
-                                <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach ($products as $product)
-                                @php
-                                    $statusTone = match ($product->status->value) { 'active' => 'emerald', 'archived' => 'amber', default => 'indigo' };
-                                    $summary = $passportSummaries[$product->uuid] ?? null;
-                                @endphp
-                                <tr @class(['bg-amber-50/40' => $product->status->value === 'archived'])>
-                                    @if($canPublish || $canArchive)
-                                        <td class="px-5 py-4 align-top">
-                                            <input type="checkbox" name="products[]" value="{{ $product->uuid }}" form="bulk-products-form" class="bulk-product-checkbox rounded border-slate-300 text-indigo-600" aria-label="{{ __('Select :product', ['product' => $product->name]) }}">
-                                        </td>
+                @if ($canPublish || $canArchive)
+                    <form id="bulk-products-form" method="POST" action="{{ route('catalog.products.bulk-status', request()->query()) }}" class="mt-4">
+                        @csrf
+                        @method('PATCH')
+                        <div id="bulk-products-bar" class="hidden sticky top-20 z-20 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/95 p-4 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-sm font-semibold text-indigo-900">
+                                <span id="bulk-products-count">0</span> <span id="bulk-products-label">{{ trans_choice('product selected|products selected', 0) }}</span>
+                            </p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label for="bulk-operation" class="sr-only">{{ __('Change status') }}</label>
+                                <select id="bulk-operation" name="operation" class="rounded-lg border-slate-300 bg-white text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-56">
+                                    <option value="">{{ __('Change status…') }}</option>
+                                    @if ($canPublish)
+                                        <option value="activate">{{ __('Activate selected') }}</option>
+                                        <option value="draft">{{ __('Return selected to draft') }}</option>
                                     @endif
-                                    <td class="px-5 py-4">
-                                        <div class="flex items-center gap-3">
-                                            @if ($product->primaryMedia)
-                                                <img src="{{ route('catalog.media.content', $product->primaryMedia->uuid) }}" alt="" loading="lazy" decoding="async" class="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 object-cover">
-                                            @else
-                                                <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                                                    </svg>
-                                                </div>
-                                            @endif
-                                            <div class="min-w-0 flex-1">
-                                                <p class="font-semibold text-slate-900 truncate">{{ $product->name }}</p>
-                                                @php
-                                                    $brand = $product->brand ? trim($product->brand) : null;
-                                                    $manufacturer = $product->manufacturer ? trim($product->manufacturer) : null;
-                                                @endphp
-                                                @if ($brand || $manufacturer)
-                                                    <p class="mt-0.5 text-xs text-slate-500 truncate">
-                                                        @if ($brand && $manufacturer && strcasecmp($brand, $manufacturer) !== 0)
-                                                            {{ $brand }} · {{ $manufacturer }}
-                                                        @else
-                                                            {{ $brand ?: $manufacturer }}
-                                                        @endif
-                                                    </p>
-                                                @endif
-                                                <p class="mt-0.5 text-xs text-slate-400">
-                                                    {{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }} · {{ trans_choice(':count image|:count images', $product->product_media_count, ['count' => $product->product_media_count]) }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        @if ($summary === null || $summary['passport_status'] === 'not_created')
-                                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/20">{{ __('Not created') }}</span>
-                                            @if ($canManagePassports)
-                                                <form method="POST" action="{{ route('catalog.products.passport.store', $product->uuid) }}" class="mt-1">
-                                                    @csrf
-                                                    <button type="submit" class="text-xs font-medium text-indigo-600 hover:text-indigo-500">{{ __('Create') }}</button>
-                                                </form>
-                                            @endif
-                                        @elseif ($summary['passport_status'] === 'draft')
-                                            <x-badge tone="indigo">{{ __('Draft') }}</x-badge>
-                                            @if ($summary['passport_revision'] !== null)
-                                                <p class="mt-1 text-xs text-slate-500">{{ __('Revision :rev', ['rev' => $summary['passport_revision']]) }}</p>
-                                            @endif
-                                        @elseif ($summary['passport_status'] === 'published')
-                                            <x-badge tone="emerald">{{ __('Published') }}</x-badge>
-                                            <p class="mt-1 text-xs text-slate-500">{{ __('Public version is live.') }}</p>
-                                        @elseif ($summary['passport_status'] === 'unpublished')
-                                            <x-badge tone="amber">{{ __('Unpublished') }}</x-badge>
-                                        @elseif ($summary['passport_status'] === 'archived')
-                                            <x-badge tone="slate">{{ __('Archived') }}</x-badge>
-                                        @endif
-                                    </td>
-                                     <td class="px-5 py-4">
-                                        @php
-                                            $score = is_array($summary) ? ($summary['score'] ?? null) : null;
-                                            $blockers = is_array($summary) ? ((int) ($summary['blockers'] ?? 0)) : 0;
-                                            $warnings = is_array($summary) ? ((int) ($summary['warnings'] ?? 0)) : 0;
-                                            $recommendations = is_array($summary) ? ((int) ($summary['recommendations'] ?? 0)) : 0;
-                                        @endphp
-                                        @if (is_array($summary) && is_int($score) && $score > 0)
-                                            <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="block group">
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="text-sm font-semibold text-slate-900">{{ $score }}%</span>
-                                                    @php
-                                                        $readinessTone = match ($summary['readiness_status'] ?? null) {
-                                                            'ready' => 'emerald',
-                                                            'ready_with_warnings' => 'amber',
-                                                            'not_ready' => 'red',
-                                                            default => 'slate',
-                                                        };
-                                                        $readinessLabel = match ($summary['readiness_status'] ?? null) {
-                                                            'ready' => __('Ready'),
-                                                            'ready_with_warnings' => __('Warnings'),
-                                                            'not_ready' => __('Not ready'),
-                                                            default => __('Unknown'),
-                                                        };
-                                                    @endphp
-                                                    <x-badge :tone="$readinessTone">{{ $readinessLabel }}</x-badge>
-                                                </div>
-                                                <p class="mt-1 text-xs text-slate-500 group-hover:text-indigo-600">
-                                                    {{ trans_choice(':count blocker|:count blockers', $blockers, ['count' => $blockers]) }} · {{ trans_choice(':count warning|:count warnings', $warnings, ['count' => $warnings]) }}@if($recommendations > 0) · {{ trans_choice(':count recommendation|:count recommendations', $recommendations, ['count' => $recommendations]) }}@endif
-                                                </p>
-                                                @if(($summary['passport_status'] ?? null) === 'published' && ($summary['readiness_status'] ?? null) !== 'ready')
-                                                    <p class="mt-1 text-xs text-slate-400">{{ __('Checks the current draft; the published version remains live.') }}</p>
-                                                @endif
-                                            </a>
-                                        @elseif (is_array($summary) && $score === 0)
-                                            <div>
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="text-sm font-semibold text-slate-900">0%</span>
-                                                    <x-badge tone="red">{{ __('Not ready') }}</x-badge>
-                                                </div>
-                                                <p class="mt-1 text-xs text-slate-500">{{ $blockers }} {{ __('blockers') }} · {{ $warnings }} {{ __('warnings') }}@if($recommendations > 0) · {{ $recommendations }} {{ __('recommendations') }}@endif</p>
-                                                @if(($summary['passport_status'] ?? null) === 'published')
-                                                    <p class="mt-1 text-xs text-slate-400">{{ __('Checks the current draft; the published version remains live.') }}</p>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <div>
-                                                <span class="text-sm text-slate-400">—</span>
-                                                <p class="mt-1 text-xs text-slate-400">{{ __('Not created') }}</p>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ $product->primaryCategory?->name ?? '—' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-slate-600">
-                                        <time datetime="{{ $product->updated_at?->toAtomString() }}">{{ $product->updated_at?->format('Y-m-d H:i') }}</time>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div class="flex justify-end gap-2">
-                                            <a href="{{ route('catalog.products.show', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Open') }}</a>
-                                            @if ($canUpdate && $product->status->value !== 'archived')
-                                                <a href="{{ route('catalog.products.edit', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" class="rounded-lg border border-indigo-300 px-3 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Edit') }}</a>
-                                            @endif
-                                            @if ($canArchive && $product->status->value !== 'archived')
-                                                <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" data-confirm-title="{{ __('Archive product') }}" data-confirm-message="{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}" data-confirm-action="{{ __('Archive') }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Archive') }}</button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @if ($products->hasPages())
-                    <div class="border-t border-slate-200 px-5 py-4">{{ $products->links() }}</div>
+                                    @if ($canArchive)
+                                        <option value="archive">{{ __('Archive selected') }}</option>
+                                        <option value="restore">{{ __('Restore selected to draft') }}</option>
+                                    @endif
+                                </select>
+                                <button type="submit" id="bulk-products-submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
+                                    {{ __('Apply') }}
+                                </button>
+                                @if ($canArchive)
+                                    <button type="button" id="bulk-products-archive" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Archive') }}</button>
+                                @endif
+                                <button type="button" id="bulk-products-clear" class="rounded-lg p-2.5 text-slate-500 hover:bg-white hover:text-slate-700" aria-label="{{ __('Clear selection') }}">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 @endif
-            </section>
+
+                <section class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <tr>
+                                    @if ($canPublish || $canArchive)
+                                        <th class="w-10 px-4 py-3">
+                                            <input type="checkbox" id="bulk-products-select-all" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" aria-label="{{ __('Select all products on this page') }}">
+                                        </th>
+                                    @endif
+                                    <th class="px-5 py-3">{{ __('Product') }}</th>
+                                    <th class="px-5 py-3">{{ __('Price') }}</th>
+                                    <th class="px-5 py-3">{{ __('Status') }}</th>
+                                    <th class="px-5 py-3">{{ __('Passport') }}</th>
+                                    <th class="px-5 py-3">{{ __('readiness.label') }}</th>
+                                    <th class="px-5 py-3">{{ __('Category') }}</th>
+                                    <th class="px-5 py-3">{{ __('Updated') }}</th>
+                                    <th class="px-5 py-3"><span class="sr-only">{{ __('Actions') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @foreach ($products as $product)
+                                    @php
+                                        $summary = $passportSummaries[$product->uuid] ?? null;
+                                        $statusTone = match ($product->status->value) {
+                                            'active' => 'emerald',
+                                            'archived' => 'slate',
+                                            default => 'slate',
+                                        };
+                                        $isArchived = $product->status->value === 'archived';
+                                        $updatedAt = $product->updated_at;
+                                        $updatedLabel = $updatedAt instanceof \Illuminate\Support\Carbon
+                                            ? $updatedAt->format($updatedAt->year === now()->year ? 'j M' : 'j M Y')
+                                            : null;
+                                        $commerce = is_array($product->commerce) ? $product->commerce : [];
+                                        $salesPrice = $commerce['sales_price'] ?? null;
+                                        $currency = is_string($commerce['currency'] ?? null) ? $commerce['currency'] : 'SEK';
+                                    @endphp
+                                    <tr @class(['bg-amber-50/40' => $isArchived])>
+                                        @if ($canPublish || $canArchive)
+                                            <td class="px-4 py-4 align-top">
+                                                <input type="checkbox" name="products[]" value="{{ $product->uuid }}" form="bulk-products-form" class="bulk-product-checkbox rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" aria-label="{{ __('Select :product', ['product' => $product->name]) }}">
+                                            </td>
+                                        @endif
+                                        <td class="px-5 py-4">
+                                            <div class="flex items-center gap-3">
+                                                @if ($product->primaryMedia)
+                                                    <img src="{{ route('catalog.media.content', $product->primaryMedia->uuid) }}" alt="" loading="lazy" decoding="async" class="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 object-cover">
+                                                @else
+                                                    <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                                                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
+                                                <div class="min-w-0 flex-1">
+                                                    <a href="{{ route('catalog.products.show', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" class="block truncate font-semibold text-slate-900 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                        {{ $product->name }}
+                                                    </a>
+                                                    @if (trim((string) $product->brand) !== '')
+                                                        <p class="mt-0.5 truncate text-xs text-slate-500">{{ $product->brand }}</p>
+                                                    @endif
+                                                    <p class="mt-0.5 text-xs text-slate-400">
+                                                        {{ trans_choice(':count variant|:count variants', $product->variants_count, ['count' => $product->variants_count]) }} · {{ trans_choice(':count image|:count images', $product->product_media_count, ['count' => $product->product_media_count]) }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-5 py-4 text-slate-700">
+                                            @if (is_string($salesPrice) && $salesPrice !== '')
+                                                <span class="font-semibold text-slate-900">{{ $salesPrice }}</span>
+                                                <span class="text-xs text-slate-500">{{ $currency }}</span>
+                                            @else
+                                                <span class="text-sm text-slate-400">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            <x-badge :tone="$statusTone">{{ $product->status->value }}</x-badge>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            @php $passportStatus = $summary['passport_status'] ?? 'not_created'; @endphp
+                                            @if ($passportStatus === 'not_created')
+                                                <x-badge>{{ __('Not created') }}</x-badge>
+                                                @if ($canManagePassports)
+                                                    <form method="POST" action="{{ route('catalog.products.passport.store', $product->uuid) }}" class="mt-1.5">
+                                                        @csrf
+                                                        <button type="submit" class="text-xs font-medium text-indigo-600 hover:text-indigo-500">{{ __('Create passport') }}</button>
+                                                    </form>
+                                                @endif
+                                            @elseif ($passportStatus === 'draft')
+                                                <x-badge tone="indigo">{{ __('Draft') }}</x-badge>
+                                            @elseif ($passportStatus === 'published')
+                                                <x-badge tone="emerald">{{ __('Published') }}</x-badge>
+                                            @elseif ($passportStatus === 'unpublished')
+                                                <x-badge tone="amber">{{ __('Unpublished') }}</x-badge>
+                                            @elseif ($passportStatus === 'archived')
+                                                <x-badge>{{ __('Archived') }}</x-badge>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            @php
+                                                $score = is_array($summary) ? ($summary['score'] ?? null) : null;
+                                                $blockers = is_array($summary) ? ((int) ($summary['blockers'] ?? 0)) : 0;
+                                                $readinessTextTone = match ($summary['readiness_status'] ?? null) {
+                                                    'ready' => 'text-emerald-700',
+                                                    'ready_with_warnings' => 'text-amber-700',
+                                                    'not_ready' => 'text-red-700',
+                                                    default => 'text-slate-900',
+                                                };
+                                            @endphp
+                                            @if (is_array($summary) && is_int($score))
+                                                <a href="{{ route('catalog.products.passport.readiness', $product->uuid) }}" class="block hover:opacity-80">
+                                                    <span class="text-sm font-semibold {{ $readinessTextTone }}">{{ $score }}%</span>
+                                                    @if ($blockers > 0)
+                                                        <span class="text-xs text-slate-500"> · {{ trans_choice(':count blocker|:count blockers', $blockers, ['count' => $blockers]) }}</span>
+                                                    @endif
+                                                    @if ($passportStatus === 'published')
+                                                        <span class="mt-0.5 block text-xs text-slate-400">{{ __('Public version live') }}</span>
+                                                    @endif
+                                                </a>
+                                            @else
+                                                <span class="text-sm text-slate-400">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-4 text-slate-700">
+                                            {{ $product->primaryCategory?->name ?? '—' }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-5 py-4 text-slate-600">
+                                            <time datetime="{{ $updatedAt?->toAtomString() }}">{{ $updatedLabel }}</time>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            <div class="relative" x-data="{ open: false }">
+                                                <button type="button" x-ref="button" @click="open = !open; if (open) { const r = $refs.button.getBoundingClientRect(); const m = $refs.menu; m.style.top = (r.bottom + 4) + 'px'; m.style.left = Math.max(8, Math.min(r.right - 224, window.innerWidth - 232)) + 'px'; }" :aria-expanded="open" aria-haspopup="menu" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="{{ __('Actions for :product', ['product' => $product->name]) }}">
+                                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                        <path d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                                                    </svg>
+                                                </button>
+                                                <div x-ref="menu" x-cloak x-show="open" @click.outside="open = false" @keydown.escape.window="open = false" role="menu" class="fixed z-50 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                                                    <a href="{{ route('catalog.products.show', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" role="menuitem" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50">{{ __('Open') }}</a>
+                                                    @if ($canUpdate && ! $isArchived)
+                                                        <a href="{{ route('catalog.products.edit', ['product' => $product->uuid, 'return' => $productListReturnUrl]) }}" role="menuitem" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50">{{ __('Edit') }}</a>
+                                                    @endif
+                                                    @if ($canArchive && ! $isArchived)
+                                                        <form method="POST" action="{{ route('catalog.products.destroy', $product->uuid) }}" data-confirm-title="{{ __('Archive product') }}" data-confirm-message="{{ __('Archive this product? It will be hidden from normal catalog work, but passport history will be kept.') }}" data-confirm-action="{{ __('Archive') }}">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" role="menuitem" class="block w-full px-4 py-2 text-left text-sm text-red-700 transition hover:bg-red-50">{{ __('Archive') }}</button>
+                                                        </form>
+                                                    @endif
+                                                    @if ($canArchive && $isArchived)
+                                                        <form method="POST" action="{{ route('catalog.products.restore', $product->uuid) }}">
+                                                            @csrf
+                                                            <button type="submit" role="menuitem" class="block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">{{ __('Restore') }}</button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if ($products->hasPages())
+                        <div class="border-t border-slate-200 px-5 py-4">{{ $products->links() }}</div>
+                    @endif
+                </section>
             @endif
         </div>
     </div>
@@ -462,7 +482,6 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 var ajaxController = null;
-                var debounceTimer = null;
                 var currentModalResolve = null;
 
                 function page() {
@@ -479,6 +498,10 @@
 
                 function activeChips() {
                     return document.getElementById('catalog-products-active-chips');
+                }
+
+                function filterCountBadge() {
+                    return document.getElementById('catalog-products-filter-count');
                 }
 
                 function cleanFormData(form) {
@@ -513,6 +536,20 @@
 
                     container.classList.toggle('opacity-60', isLoading);
                     container.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                }
+
+                function syncFilterCount() {
+                    var badge = filterCountBadge();
+
+                    if (!badge) {
+                        return;
+                    }
+
+                    var chips = activeChips();
+                    var count = chips ? chips.querySelectorAll('a').length : 0;
+
+                    badge.textContent = count;
+                    badge.classList.toggle('hidden', count === 0);
                 }
 
                 function fetchProducts(url, pushUrl) {
@@ -556,6 +593,8 @@
                                 currentChips.innerHTML = freshChips.innerHTML;
                             }
 
+                            syncFilterCount();
+
                             if (pushUrl) {
                                 window.history.pushState({ catalogProductsUrl: url.toString() }, '', url.toString());
                             }
@@ -574,19 +613,6 @@
                         });
                 }
 
-                function scheduleFetch(delay) {
-                    var form = filterForm();
-
-                    if (!form) {
-                        return;
-                    }
-
-                    window.clearTimeout(debounceTimer);
-                    debounceTimer = window.setTimeout(function () {
-                        fetchProducts(urlFromForm(form), true);
-                    }, delay);
-                }
-
                 function ensureConfirmModal() {
                     var existing = document.getElementById('catalog-products-confirm-modal');
 
@@ -596,7 +622,7 @@
 
                     var modal = document.createElement('div');
                     modal.id = 'catalog-products-confirm-modal';
-                    modal.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 px-4 py-6';
+                    modal.className = 'fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/50 px-4 py-6';
                     modal.innerHTML = [
                         '<div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/10">',
                         '  <div class="flex items-start gap-4">',
@@ -663,20 +689,22 @@
 
                 function bindBulkActions() {
                     var form = document.getElementById('bulk-products-form');
-                    var selectAll = document.getElementById('bulk-products-select-all');
-                    var submit = document.getElementById('bulk-products-submit');
-                    var operation = document.getElementById('bulk-operation');
-                    var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.bulk-product-checkbox'));
 
-                    if (!form || !submit || !operation || checkboxes.length === 0) {
-                        return;
-                    }
-
-                    if (form.dataset.bulkActionsBound === '1') {
+                    if (!form || form.dataset.bulkActionsBound === '1') {
                         return;
                     }
 
                     form.dataset.bulkActionsBound = '1';
+
+                    var bar = document.getElementById('bulk-products-bar');
+                    var selectAll = document.getElementById('bulk-products-select-all');
+                    var submit = document.getElementById('bulk-products-submit');
+                    var operation = document.getElementById('bulk-operation');
+                    var countEl = document.getElementById('bulk-products-count');
+                    var labelEl = document.getElementById('bulk-products-label');
+                    var clearBtn = document.getElementById('bulk-products-clear');
+                    var archiveBtn = document.getElementById('bulk-products-archive');
+                    var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.bulk-product-checkbox'));
 
                     function selectedCount() {
                         return checkboxes.filter(function (checkbox) {
@@ -686,10 +714,22 @@
 
                     function syncBulkState() {
                         var count = selectedCount();
-                        submit.disabled = count === 0 || !operation.value;
-                        submit.textContent = count > 0
-                            ? '{{ __('Apply to selected') }} (' + count + ')'
-                            : '{{ __('Apply to selected') }}';
+
+                        if (bar) {
+                            bar.classList.toggle('hidden', count === 0);
+                        }
+
+                        if (countEl) {
+                            countEl.textContent = count;
+                        }
+
+                        if (labelEl) {
+                            labelEl.textContent = count === 1 ? '{{ __('product selected') }}' : '{{ __('products selected') }}';
+                        }
+
+                        if (submit) {
+                            submit.disabled = count === 0 || !operation || !operation.value;
+                        }
 
                         if (selectAll) {
                             selectAll.checked = count === checkboxes.length;
@@ -710,12 +750,31 @@
                         checkbox.addEventListener('change', syncBulkState);
                     });
 
-                    operation.addEventListener('change', syncBulkState);
+                    if (operation) {
+                        operation.addEventListener('change', syncBulkState);
+                    }
+
+                    if (clearBtn) {
+                        clearBtn.addEventListener('click', function () {
+                            checkboxes.forEach(function (checkbox) {
+                                checkbox.checked = false;
+                            });
+                            syncBulkState();
+                        });
+                    }
+
+                    if (archiveBtn && operation) {
+                        archiveBtn.addEventListener('click', function () {
+                            operation.value = 'archive';
+                            syncBulkState();
+                            form.requestSubmit();
+                        });
+                    }
 
                     form.addEventListener('submit', function (event) {
                         var count = selectedCount();
 
-                        if (count === 0 || !operation.value) {
+                        if (count === 0 || !operation || !operation.value) {
                             event.preventDefault();
                             return;
                         }
@@ -744,44 +803,40 @@
                 }
 
                 function bindConfirmForms() {
-                    Array.prototype.slice.call(document.querySelectorAll('form[data-confirm-message]')).forEach(function (form) {
-                        if (form.dataset.confirmBound === '1') {
+                    if (document.documentElement.dataset.confirmFormsBound === '1') {
+                        return;
+                    }
+
+                    document.documentElement.dataset.confirmFormsBound = '1';
+
+                    document.addEventListener('submit', function (event) {
+                        var form = event.target instanceof HTMLElement ? event.target.closest('form[data-confirm-message]') : null;
+
+                        if (!form || form.dataset.confirmed === '1') {
                             return;
                         }
 
-                        form.dataset.confirmBound = '1';
+                        event.preventDefault();
 
-                        form.addEventListener('submit', function (event) {
-                            if (form.dataset.confirmed === '1') {
+                        confirmAction({
+                            title: form.dataset.confirmTitle,
+                            message: form.dataset.confirmMessage,
+                            action: form.dataset.confirmAction,
+                        }).then(function (confirmed) {
+                            if (!confirmed) {
                                 return;
                             }
 
-                            event.preventDefault();
-
-                            confirmAction({
-                                title: form.dataset.confirmTitle,
-                                message: form.dataset.confirmMessage,
-                                action: form.dataset.confirmAction,
-                            }).then(function (confirmed) {
-                                if (!confirmed) {
-                                    return;
-                                }
-
-                                form.dataset.confirmed = '1';
-                                form.requestSubmit();
-                            });
+                            form.dataset.confirmed = '1';
+                            form.requestSubmit();
                         });
-                    });
+                    }, true);
                 }
 
                 function bindAjaxFilters() {
                     var form = filterForm();
 
-                    if (!form) {
-                        return;
-                    }
-
-                    if (form.dataset.ajaxFiltersBound === '1') {
+                    if (!form || form.dataset.ajaxFiltersBound === '1') {
                         return;
                     }
 
@@ -791,34 +846,12 @@
                         event.preventDefault();
                         fetchProducts(urlFromForm(form), true);
                     });
-
-                    Array.prototype.slice.call(form.querySelectorAll('input, select')).forEach(function (field) {
-                        if (field.type === 'hidden') {
-                            return;
-                        }
-
-                        if (field.id === 'q' || field.matches('input[type="search"], input[type="text"], input[inputmode], input[type="date"]')) {
-                            field.addEventListener('input', function () {
-                                scheduleFetch(300);
-                            });
-
-                            return;
-                        }
-
-                        field.addEventListener('change', function () {
-                            scheduleFetch(50);
-                        });
-                    });
                 }
 
                 function bindAjaxLinks() {
                     var container = page();
 
-                    if (!container) {
-                        return;
-                    }
-
-                    if (container.dataset.ajaxLinksBound === '1') {
+                    if (!container || container.dataset.ajaxLinksBound === '1') {
                         return;
                     }
 
@@ -854,15 +887,16 @@
                     });
                 }
 
+                function bindResults() {
+                    bindBulkActions();
+                    bindConfirmForms();
+                }
+
                 function bindCatalogProductsPage() {
                     bindAjaxFilters();
                     bindAjaxLinks();
                     bindResults();
-                }
-
-                function bindResults() {
-                    bindBulkActions();
-                    bindConfirmForms();
+                    syncFilterCount();
                 }
 
                 window.addEventListener('popstate', function () {

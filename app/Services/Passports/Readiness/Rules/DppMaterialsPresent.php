@@ -57,6 +57,7 @@ class DppMaterialsPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.materials.present.title',
             messageKey: $passed ? 'readiness.dpp.materials.present.passed' : 'readiness.dpp.materials.present.failed',
             section: DppSectionKey::MaterialsAndComposition,
+            field: 'materials',
             navigationTarget: new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::MaterialsAndComposition->value,

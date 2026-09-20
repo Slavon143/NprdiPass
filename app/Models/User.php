@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Enums\UserStatus;
 use App\Models\Concerns\HasUuid;
+use App\Models\Jobs\JobStatus;
+use App\Models\Notifications\Notification;
+use App\Models\Notifications\NotificationPreference;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -78,5 +81,20 @@ class User extends Authenticatable implements MustVerifyEmail
     public function invitationsSent(): HasMany
     {
         return $this->hasMany(CompanyInvitation::class, 'invited_by');
+    }
+
+    public function tenantNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    public function jobStatuses(): HasMany
+    {
+        return $this->hasMany(JobStatus::class);
     }
 }

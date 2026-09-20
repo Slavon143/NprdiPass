@@ -1,17 +1,23 @@
 <?php
 
+use App\Enums\PlatformPermission;
 use App\Http\Controllers\AcceptCompanyInvitationController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\Billing\StripeWebhookController;
 use App\Http\Controllers\CancelCompanyInvitationController;
 use App\Http\Controllers\Catalog\AttributeDefinitionController;
 use App\Http\Controllers\Catalog\AttributeOptionController;
+use App\Http\Controllers\Catalog\AttributeUsageController;
 use App\Http\Controllers\Catalog\CatalogAuditController;
 use App\Http\Controllers\Catalog\CategoryArchiveController;
 use App\Http\Controllers\Catalog\CategoryController;
 use App\Http\Controllers\Catalog\CategoryMoveController;
 use App\Http\Controllers\Catalog\CategoryReorderController;
 use App\Http\Controllers\Catalog\CategoryRestoreController;
+use App\Http\Controllers\Catalog\CategoryTemplateController;
+use App\Http\Controllers\Catalog\ImportController;
 use App\Http\Controllers\Catalog\MediaContentController;
 use App\Http\Controllers\Catalog\PassportPublicationController;
 use App\Http\Controllers\Catalog\PassportReadinessController;
@@ -23,6 +29,7 @@ use App\Http\Controllers\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductPassportController;
 use App\Http\Controllers\Catalog\ProductPassportQrController;
+use App\Http\Controllers\Catalog\ProductTaxonomyController;
 use App\Http\Controllers\Catalog\ProductVariantController;
 use App\Http\Controllers\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Catalog\SetDefaultProductVariantController;
@@ -34,9 +41,13 @@ use App\Http\Controllers\CompanySelectionController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CompanySwitchController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Integrations\FortnoxController;
+use App\Http\Controllers\JobCenterController;
 use App\Http\Controllers\NoCompanyController;
+use App\Http\Controllers\NotificationCenterController;
 use App\Http\Controllers\Passports\PublicPassportAssetController;
 use App\Http\Controllers\Passports\PublicPassportController;
+use App\Http\Controllers\Platform\PlatformOperationsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RemoveCompanyMemberController;
@@ -50,6 +61,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/stripe/webhook', StripeWebhookController::class)
+    ->middleware(['feature.billing', 'throttle:stripe-webhook'])
+    ->name('stripe.webhook');
 
 Route::middleware(['invitation.secure', 'throttle:invitations.verify'])->group(function (): void {
     Route::get('/invitations/{invitation:uuid}', ShowCompanyInvitationController::class)
@@ -76,37 +91,94 @@ Route::middleware(['auth', 'verified', 'company.resolve'])->group(function (): v
 Route::middleware([
     'auth',
     'verified',
+    'feature.platform-operations',
+    'platform.permission:'.PlatformPermission::PlatformAccess->value,
+])
+    ->prefix('platform/operations')
+    ->name('platform.operations.')
+    ->group(function (): void {
+        Route::get('/', [PlatformOperationsController::class, 'index'])->name('index');
+        Route::get('/companies/{company:uuid}', [PlatformOperationsController::class, 'showCompany'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesView->value)
+            ->name('companies.show');
+        Route::post('/companies/{company:uuid}/support-grants', [PlatformOperationsController::class, 'grantSupport'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesManage->value)
+            ->name('support-grants.store');
+        Route::post('/companies/{company:uuid}/support-grants/{grant}/revoke', [PlatformOperationsController::class, 'revokeSupport'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesManage->value)
+            ->whereUuid('grant')
+            ->name('support-grants.revoke');
+        Route::post('/companies/{company:uuid}/feature-flags', [PlatformOperationsController::class, 'updateFlag'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesManage->value)
+            ->name('feature-flags.update');
+        Route::post('/companies/{company:uuid}/incidents', [PlatformOperationsController::class, 'reportIncident'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesManage->value)
+            ->name('incidents.store');
+        Route::post('/incidents/{incident}/resolve', [PlatformOperationsController::class, 'resolveIncident'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesManage->value)
+            ->whereUuid('incident')
+            ->name('incidents.resolve');
+    });
+
+Route::middleware([
+    'auth',
+    'verified',
     'company.resolve',
     'company.selected',
     'company.member',
     'company.active',
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-all-read', [NotificationCenterController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/preferences', [NotificationCenterController::class, 'updatePreferences'])->name('notifications.preferences.update');
+    Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'markRead'])->whereUuid('notification')->name('notifications.read');
+    Route::post('/notifications/{notification}/dismiss', [NotificationCenterController::class, 'dismiss'])->whereUuid('notification')->name('notifications.dismiss');
+    Route::get('/job-center', [JobCenterController::class, 'index'])->name('job-center.index');
+    Route::get('/job-center/{job}', [JobCenterController::class, 'show'])->whereUuid('job')->name('job-center.show');
+    Route::post('/job-center/{job}/cancel', [JobCenterController::class, 'cancel'])->whereUuid('job')->name('job-center.cancel');
+    Route::post('/job-center/{job}/retry', [JobCenterController::class, 'retry'])->whereUuid('job')->name('job-center.retry');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
     Route::get('/catalog/audit', [CatalogAuditController::class, 'index'])->name('catalog.audit.index');
     Route::get('/catalog/audit/{auditEvent}', [CatalogAuditController::class, 'show'])->whereNumber('auditEvent')->name('catalog.audit.show');
     Route::get('/catalog/media/{media}/content', MediaContentController::class)
         ->whereUuid('media')->name('catalog.media.content');
 
+    Route::prefix('catalog/imports')->name('catalog.imports.')->middleware('feature.production-imports')->group(function (): void {
+        Route::get('/', [ImportController::class, 'index'])->name('index');
+        Route::post('/', [ImportController::class, 'store'])->name('store');
+        Route::post('/templates', [ImportController::class, 'storeTemplate'])->name('templates.store');
+        Route::get('/exports/products.{format}', [ImportController::class, 'export'])->whereIn('format', ['csv', 'xlsx'])->name('export');
+        Route::get('/{importJob}', [ImportController::class, 'show'])->whereUuid('importJob')->name('show');
+        Route::post('/{importJob}/preview', [ImportController::class, 'preview'])->whereUuid('importJob')->name('preview');
+        Route::post('/{importJob}/apply', [ImportController::class, 'apply'])->whereUuid('importJob')->name('apply');
+        Route::get('/{importJob}/errors.csv', [ImportController::class, 'errors'])->whereUuid('importJob')->name('errors');
+    });
+
     Route::prefix('catalog/attributes')->name('catalog.attributes.')->group(function (): void {
         Route::get('/', [AttributeDefinitionController::class, 'index'])->name('index');
         Route::get('/create', [AttributeDefinitionController::class, 'create'])->name('create');
         Route::post('/', [AttributeDefinitionController::class, 'store'])->name('store');
         Route::delete('/bulk-destroy', [AttributeDefinitionController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::get('/{attribute}/usage', [AttributeUsageController::class, 'show'])->whereUuid('attribute')->name('usage');
         Route::get('/{attribute}', [AttributeDefinitionController::class, 'show'])->whereUuid('attribute')->name('show');
         Route::get('/{attribute}/edit', [AttributeDefinitionController::class, 'edit'])->whereUuid('attribute')->name('edit');
         Route::patch('/{attribute}', [AttributeDefinitionController::class, 'update'])->whereUuid('attribute')->name('update');
         Route::delete('/{attribute}', [AttributeDefinitionController::class, 'destroy'])->whereUuid('attribute')->name('destroy');
         Route::post('/{attribute}/archive', [AttributeDefinitionController::class, 'archive'])->whereUuid('attribute')->name('archive');
         Route::post('/{attribute}/restore', [AttributeDefinitionController::class, 'restore'])->whereUuid('attribute')->name('restore');
+        Route::post('/{attribute}/deprecate', [AttributeDefinitionController::class, 'deprecate'])->whereUuid('attribute')->name('deprecate');
         Route::post('/{attribute}/options', [AttributeOptionController::class, 'store'])->whereUuid('attribute')->name('options.store');
         Route::patch('/{attribute}/options/reorder', [AttributeOptionController::class, 'reorder'])->whereUuid('attribute')->name('options.reorder');
         Route::patch('/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->whereUuid('attribute')->whereNumber('option')->name('options.update');
         Route::post('/{attribute}/options/{option}/archive', [AttributeOptionController::class, 'archive'])->whereUuid('attribute')->whereNumber('option')->name('options.archive');
         Route::post('/{attribute}/options/{option}/restore', [AttributeOptionController::class, 'restore'])->whereUuid('attribute')->whereNumber('option')->name('options.restore');
+        Route::post('/{attribute}/options/{option}/approve', [AttributeOptionController::class, 'approve'])->whereUuid('attribute')->whereNumber('option')->name('options.approve');
+        Route::post('/{attribute}/options/{option}/deprecate', [AttributeOptionController::class, 'deprecate'])->whereUuid('attribute')->whereNumber('option')->name('options.deprecate');
     });
 
     Route::prefix('catalog/products')->name('catalog.products.')->group(function (): void {
+        Route::post('/{product}/taxonomy/acknowledge', [ProductTaxonomyController::class, 'acknowledge'])->whereUuid('product')->name('taxonomy.acknowledge');
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
@@ -170,6 +242,8 @@ Route::middleware([
         Route::get('/{product}/passport/preview', [ProductPassportController::class, 'preview'])->whereUuid('product')->name('passport.preview');
         Route::get('/{product}/passport/publish-confirm', [PassportPublicationController::class, 'publishConfirm'])->whereUuid('product')->name('passport.publish-confirm');
         Route::post('/{product}/passport/publish', [PassportPublicationController::class, 'publish'])->whereUuid('product')->name('passport.publish');
+        Route::post('/{product}/passport/publication-approvals', [PassportPublicationController::class, 'requestPublicationApproval'])->whereUuid('product')->name('passport.publication-approvals.store');
+        Route::post('/{product}/passport/publication-approvals/{approval}/approve', [PassportPublicationController::class, 'approvePublicationApproval'])->whereUuid('product')->whereUuid('approval')->name('passport.publication-approvals.approve');
         Route::post('/{product}/passport/unpublish', [PassportPublicationController::class, 'unpublish'])->whereUuid('product')->name('passport.unpublish');
         Route::post('/{product}/passport/archive', [PassportPublicationController::class, 'archive'])->whereUuid('product')->name('passport.archive');
         Route::post('/{product}/passport/restore', [PassportPublicationController::class, 'restore'])->whereUuid('product')->name('passport.restore');
@@ -184,6 +258,7 @@ Route::middleware([
         Route::post('/{product}/passport/sections/{section}/reset', [ProductPassportController::class, 'resetSection'])->whereUuid('product')->name('passport.sections.reset');
         Route::put('/{product}/passport/languages', [ProductPassportController::class, 'updateLanguages'])->whereUuid('product')->name('passport.languages.update');
         Route::get('/{product}/passport/qr', [ProductPassportQrController::class, 'show'])->whereUuid('product')->name('passport.qr.show');
+        Route::get('/{product}/passport/qr/label', [ProductPassportQrController::class, 'label'])->whereUuid('product')->name('passport.qr.label');
         Route::get('/{product}/passport/qr.svg', [ProductPassportQrController::class, 'svg'])->whereUuid('product')->name('passport.qr.svg');
         Route::get('/{product}/passport/qr.png', [ProductPassportQrController::class, 'png'])->whereUuid('product')->name('passport.qr.png');
     });
@@ -195,6 +270,10 @@ Route::middleware([
         Route::delete('/bulk-destroy', [CategoryController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::patch('/reorder', CategoryReorderController::class)->name('reorder');
         Route::get('/{category}/edit', [CategoryController::class, 'edit'])->whereUuid('category')->name('edit');
+        Route::get('/{category}/template', [CategoryTemplateController::class, 'show'])->whereUuid('category')->name('template.show');
+        Route::post('/{category}/templates', [CategoryTemplateController::class, 'store'])->whereUuid('category')->name('template.store');
+        Route::put('/{category}/templates/{template}', [CategoryTemplateController::class, 'update'])->whereUuid('category')->whereUuid('template')->name('template.update');
+        Route::post('/{category}/templates/{template}/activate', [CategoryTemplateController::class, 'activate'])->whereUuid('category')->whereUuid('template')->name('template.activate');
         Route::patch('/{category}', [CategoryController::class, 'update'])->whereUuid('category')->name('update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->whereUuid('category')->name('destroy');
         Route::patch('/{category}/move', CategoryMoveController::class)->whereUuid('category')->name('move');
@@ -205,6 +284,15 @@ Route::middleware([
     Route::prefix('settings')->name('settings.')->group(function (): void {
         Route::get('/company', [CompanySettingsController::class, 'edit'])->name('company.edit');
         Route::patch('/company', [CompanySettingsController::class, 'update'])->name('company.update');
+        Route::prefix('billing')->name('billing.')->middleware('feature.billing')->group(function (): void {
+            Route::get('/', [BillingController::class, 'index'])->name('index');
+            Route::post('/checkout', [BillingController::class, 'checkout'])
+                ->middleware('throttle:billing-checkout')
+                ->name('checkout');
+            Route::post('/portal', [BillingController::class, 'portal'])
+                ->middleware('throttle:billing-portal')
+                ->name('portal');
+        });
         Route::get('/members', CompanyMembersController::class)->name('members.index');
         Route::get('/api-tokens', [ApiTokenController::class, 'index'])
             ->name('api-tokens.index');
@@ -232,6 +320,14 @@ Route::middleware([
         Route::delete('/members/{membership}', RemoveCompanyMemberController::class)
             ->whereNumber('membership')
             ->name('members.destroy');
+        Route::prefix('integrations/fortnox')->name('integrations.fortnox.')->middleware('feature.fortnox')->group(function (): void {
+            Route::get('/', [FortnoxController::class, 'index'])->name('index');
+            Route::post('/connect', [FortnoxController::class, 'connect'])->middleware('throttle:fortnox-connect')->name('connect');
+            Route::get('/callback', [FortnoxController::class, 'callback'])->middleware('throttle:fortnox-callback')->name('callback');
+            Route::post('/disconnect', [FortnoxController::class, 'disconnect'])->name('disconnect');
+            Route::post('/sync', [FortnoxController::class, 'sync'])->middleware('throttle:fortnox-sync')->name('sync');
+            Route::post('/conflicts/{conflict}/resolve', [FortnoxController::class, 'resolve'])->whereUuid('conflict')->name('conflicts.resolve');
+        });
     });
 });
 
@@ -241,7 +337,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::prefix('p/{publicId}')->name('public.passports.')->middleware('throttle:public-passport')->group(function (): void {
+Route::prefix('p/{publicId}')->name('public.passports.')->middleware(['throttle:public-passport', 'public.passport.no_cookies'])->group(function (): void {
     Route::get('media/{asset}', [PublicPassportAssetController::class, 'media'])
         ->whereUuid('asset')
         ->name('media.show')

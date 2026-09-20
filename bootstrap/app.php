@@ -8,13 +8,19 @@ use App\Http\Middleware\EnsureApiCompanyIsActive;
 use App\Http\Middleware\EnsureApiCompanyMembership;
 use App\Http\Middleware\EnsureApiTokenAbility;
 use App\Http\Middleware\EnsureApiTokenIsValid;
+use App\Http\Middleware\EnsureBillingEnabled;
 use App\Http\Middleware\EnsureCompanyIsActive;
 use App\Http\Middleware\EnsureCompanySelected;
+use App\Http\Middleware\EnsureFortnoxEnabled;
+use App\Http\Middleware\EnsurePlatformOperationsEnabled;
+use App\Http\Middleware\EnsurePlatformPermission;
+use App\Http\Middleware\EnsureProductionImportsEnabled;
 use App\Http\Middleware\EnsureRequestId;
 use App\Http\Middleware\EnsureUserBelongsToCurrentCompany;
 use App\Http\Middleware\InvitationSecurityHeaders;
 use App\Http\Middleware\ResolveApiCompany;
 use App\Http\Middleware\ResolveCurrentCompany;
+use App\Http\Middleware\StripPublicPassportCookies;
 use App\Tenancy\Exceptions\CurrentCompanyNotSet;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -51,6 +57,10 @@ return Application::configure(basePath: dirname(__DIR__))
             $middleware->trustHosts(at: array_map('trim', explode(',', $hosts)));
         }
 
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
+
         $middleware->alias([
             'company.resolve' => ResolveCurrentCompany::class,
             'company.selected' => EnsureCompanySelected::class,
@@ -63,6 +73,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.company.active' => EnsureApiCompanyIsActive::class,
             'api.ability' => EnsureApiTokenAbility::class,
             'api-token.secret' => ApiTokenSecretHeaders::class,
+            'feature.production-imports' => EnsureProductionImportsEnabled::class,
+            'feature.fortnox' => EnsureFortnoxEnabled::class,
+            'feature.billing' => EnsureBillingEnabled::class,
+            'public.passport.no_cookies' => StripPublicPassportCookies::class,
+            'platform.permission' => EnsurePlatformPermission::class,
+            'feature.platform-operations' => EnsurePlatformOperationsEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

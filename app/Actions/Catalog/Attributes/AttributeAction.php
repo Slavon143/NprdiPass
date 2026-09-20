@@ -7,6 +7,7 @@ use App\Authorization\CompanyAuthorizer;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyPermission;
+use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Models\Catalog\AttributeDefinition;
@@ -77,7 +78,7 @@ abstract class AttributeAction
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{name: string, code: string, description: string|null, type: AttributeDataType, scope: AttributeScope, unit: string|null, required: bool, filterable: bool, searchable: bool, validation_rules: array<string, int|float|string>|null, sort_order: int}
+     * @return array{name: string, code: string, description: string|null, type: AttributeDataType, scope: AttributeScope, unit: string|null, required: bool, filterable: bool, searchable: bool, vocabulary_controlled: bool, validation_rules: array<string, int|float|string>|null, sort_order: int}
      */
     protected function definitionData(array $data, ?AttributeDefinition $fallback = null): array
     {
@@ -101,6 +102,18 @@ abstract class AttributeAction
         $type = $this->dataType($data['type'] ?? $fallback?->type);
         $scope = $this->scope($data['scope'] ?? $fallback?->scope);
         $rules = $this->validator->normalizeRules($type, $data['validation_rules'] ?? $fallback?->validation_rules);
+        $vocabularyControlled = $this->boolean(
+            $data,
+            'vocabulary_controlled',
+            $fallback === null ? false : $fallback->vocabulary_controlled,
+        );
+
+        if ($vocabularyControlled && ! in_array($type, [AttributeDataType::Select, AttributeDataType::Multiselect], true)) {
+            throw AttributeOperationException::invalid(
+                'vocabulary_controlled',
+                'Controlled vocabularies are available only for select and multiselect attributes.',
+            );
+        }
 
         return [
             'name' => $name,
@@ -112,6 +125,7 @@ abstract class AttributeAction
             'required' => $this->boolean($data, 'required', $fallback === null ? false : $fallback->required),
             'filterable' => $this->boolean($data, 'filterable', $fallback === null ? false : $fallback->filterable),
             'searchable' => $this->boolean($data, 'searchable', $fallback === null ? false : $fallback->searchable),
+            'vocabulary_controlled' => $vocabularyControlled,
             'validation_rules' => $rules === [] ? null : $rules,
             'sort_order' => $this->sortOrder($data['sort_order'] ?? ($fallback === null ? 0 : $fallback->sort_order)),
         ];
@@ -145,6 +159,25 @@ abstract class AttributeAction
         return (int) ($exception->errorInfo[1] ?? 0) === 1062
             ? AttributeOperationException::codeConflict($field, $exception)
             : null;
+    }
+
+    protected function assertControlledVocabularyAdmin(User $actor, Company $company, AttributeDefinition $definition): void
+    {
+        if (! $definition->vocabulary_controlled) {
+            return;
+        }
+
+        $role = $actor->memberships()
+            ->where('company_id', $company->getKey())
+            ->value('role');
+
+        $allowed = $role instanceof CompanyRole
+            ? in_array($role, [CompanyRole::Owner, CompanyRole::Admin], true)
+            : in_array($role, [CompanyRole::Owner->value, CompanyRole::Admin->value], true);
+
+        if (! $allowed) {
+            throw new AuthorizationException('Controlled vocabularies can be managed only by company owners and admins.');
+        }
     }
 
     /** @param array<string, mixed> $data */

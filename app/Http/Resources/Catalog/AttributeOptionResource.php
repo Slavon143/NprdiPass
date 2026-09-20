@@ -18,6 +18,8 @@ class AttributeOptionResource extends JsonResource
             'code' => $this->code,
             'sort_order' => $this->sort_order,
             'status' => $this->status->value,
+            'approval_status' => $this->approval_status->value,
+            'replaced_by_attribute_option_id' => $this->replaced_by_attribute_option_id,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

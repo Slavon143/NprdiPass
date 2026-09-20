@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $uuid
  * @property int $company_id
  * @property int|null $parent_id
+ * @property int|null $active_template_id
  * @property int $depth
  * @property string $name
  * @property string $slug
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $sort_order
  * @property CategoryStatus $status
  * @property Category|null $parent
+ * @property CategoryTemplate|null $activeTemplate
  */
 class Category extends Model
 {
@@ -68,6 +70,16 @@ class Category extends Model
     public function primaryProducts(): HasMany
     {
         return $this->hasMany(Product::class, 'primary_category_id');
+    }
+
+    public function templates(): HasMany
+    {
+        return $this->hasMany(CategoryTemplate::class);
+    }
+
+    public function activeTemplate(): BelongsTo
+    {
+        return $this->belongsTo(CategoryTemplate::class, 'active_template_id');
     }
 
     public function createdBy(): BelongsTo

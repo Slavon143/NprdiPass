@@ -44,12 +44,18 @@ class DppWarrantyInfoPresent implements PassportReadinessRule
             );
         }
 
-        $supportData = $context->normalizedPayload['data']['support_and_contact'] ?? [];
+        $supportData = $context->sectionData(DppSectionKey::SupportAndContact->value);
 
         $warrantySummary = $supportData['warranty_summary'] ?? null;
         $warrantyUrl = $supportData['warranty_url'] ?? null;
+        $warrantyAvailable = $supportData['warranty_available'] ?? null;
 
-        $passed = ! empty($warrantySummary) || ! empty($warrantyUrl);
+        $passed = $warrantyAvailable === false || ! empty($warrantySummary) || ! empty($warrantyUrl);
+        $messageKey = match (true) {
+            $passed => 'readiness.dpp.warranty.information.present.passed',
+            $warrantyAvailable === true => 'readiness.dpp.warranty.information.present.details_missing',
+            default => 'readiness.dpp.warranty.information.present.declaration_missing',
+        };
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -57,9 +63,10 @@ class DppWarrantyInfoPresent implements PassportReadinessRule
             severity: $this->severity(),
             status: $passed ? ReadinessRuleStatus::Passed : ReadinessRuleStatus::Failed,
             titleKey: 'readiness.dpp.warranty.information.present.title',
-            messageKey: $passed ? 'readiness.dpp.warranty.information.present.passed' : 'readiness.dpp.warranty.information.present.failed',
+            messageKey: $messageKey,
             section: DppSectionKey::SupportAndContact,
-            navigationTarget: new ReadinessNavigationTarget(
+            field: $warrantyAvailable === true ? 'warranty_summary' : 'warranty_available',
+            navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::SupportAndContact->value,
                 routeName: 'catalog.products.passport.edit',
@@ -69,6 +76,7 @@ class DppWarrantyInfoPresent implements PassportReadinessRule
             safeContext: [
                 'has_warranty_summary' => ! empty($warrantySummary),
                 'has_warranty_url' => ! empty($warrantyUrl),
+                'warranty_available' => $warrantyAvailable,
             ],
         );
     }

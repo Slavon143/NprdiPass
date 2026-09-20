@@ -233,6 +233,114 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /categories/{category}/templates:
+    get:
+      operationId: listCategoryTemplates
+      summary: List versioned taxonomy templates for a category
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.read]
+      parameters:
+        - $ref: "#/components/parameters/CategoryUuid"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createCategoryTemplate
+      summary: Create the next draft taxonomy template version
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.write]
+      parameters:
+        - $ref: "#/components/parameters/CategoryUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 255 }
+                readiness_profile: { type: string, maxLength: 100, nullable: true }
+                readiness_profile_version: { type: integer, minimum: 1, nullable: true }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /categories/{category}/templates/{template}:
+    get:
+      operationId: showCategoryTemplate
+      summary: Show a taxonomy template version
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.read]
+      parameters:
+        - $ref: "#/components/parameters/CategoryUuid"
+        - $ref: "#/components/parameters/TemplateUuid"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateCategoryTemplate
+      summary: Replace the editable definition of a draft template
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.write]
+      parameters:
+        - $ref: "#/components/parameters/CategoryUuid"
+        - $ref: "#/components/parameters/TemplateUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, attributes, dpp_defaults]
+              properties:
+                name: { type: string, maxLength: 255 }
+                attributes:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: object
+                    required: [attribute_uuid, requirement]
+                    properties:
+                      attribute_uuid: { type: string, format: uuid }
+                      requirement: { type: string, enum: [required, recommended] }
+                      sort_order: { type: integer, minimum: 0 }
+                dpp_defaults: { type: object }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /categories/{category}/templates/{template}/activate:
+    post:
+      operationId: activateCategoryTemplate
+      summary: Activate an immutable taxonomy template version and flag products for review
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.lifecycle]
+      parameters:
+        - $ref: "#/components/parameters/CategoryUuid"
+        - $ref: "#/components/parameters/TemplateUuid"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   # ── Products ──────────────────────────────────────────────────
   /products:
     get:
@@ -362,6 +470,62 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /products/{product}/taxonomy:
+    get:
+      operationId: getProductTaxonomyDiagnostics
+      summary: Show taxonomy review state, missing category attributes, and effective readiness profile
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.read]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /products/{product}/taxonomy/acknowledge:
+    post:
+      operationId: acknowledgeProductTaxonomy
+      summary: Acknowledge the active category template after required attributes are complete
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /products/{product}/taxonomy/readiness-profile:
+    patch:
+      operationId: updateProductReadinessProfileOverride
+      summary: Set or clear a pinned readiness profile override
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                readiness_profile: { type: string, maxLength: 100, nullable: true }
+                readiness_profile_version: { type: integer, minimum: 1, nullable: true }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ── Product Variants ──────────────────────────────────────────
   /products/{product}/variants:
@@ -607,7 +771,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name, code, type, scope, required, filterable, searchable, sort_order]
+              required: [name, code, type, scope, required, filterable, searchable, vocabulary_controlled, sort_order]
               properties:
                 name: { type: string, maxLength: 255 }
                 code: { type: string, maxLength: 100 }
@@ -618,6 +782,7 @@ paths:
                 required: { type: boolean }
                 filterable: { type: boolean }
                 searchable: { type: boolean }
+                vocabulary_controlled: { type: boolean }
                 validation_rules: { type: object }
                 sort_order: { type: integer, minimum: 0 }
       responses:
@@ -662,6 +827,7 @@ paths:
                 required: { type: boolean }
                 filterable: { type: boolean }
                 searchable: { type: boolean }
+                vocabulary_controlled: { type: boolean }
                 validation_rules: { type: object }
                 sort_order: { type: integer, minimum: 0 }
       responses:
@@ -700,6 +866,31 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /attributes/{attribute}/deprecate:
+    post:
+      operationId: deprecateAttributeDefinition
+      summary: Deprecate an attribute with a compatible replacement
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.lifecycle]
+      parameters:
+        - $ref: "#/components/parameters/AttributeUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [replacement_uuid]
+              properties:
+                replacement_uuid: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/AttributeDefinitionResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   # ── Attribute Options ─────────────────────────────────────────
   /attributes/{attribute}/options:
@@ -834,6 +1025,48 @@ paths:
           in: path
           required: true
           schema: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/AttributeOptionResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /attributes/{attribute}/options/{option}/deprecate:
+    post:
+      operationId: deprecateAttributeOption
+      summary: Deprecate an option with an approved replacement
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.lifecycle]
+      parameters:
+        - $ref: "#/components/parameters/AttributeUuid"
+        - $ref: "#/components/parameters/OptionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [replacement_option_id]
+              properties:
+                replacement_option_id: { type: integer, minimum: 1 }
+      responses:
+        "200": { $ref: "#/components/responses/AttributeOptionResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /attributes/{attribute}/options/{option}/approve:
+    post:
+      operationId: approveAttributeOption
+      summary: Approve an option for controlled-vocabulary selection
+      tags: [Taxonomy]
+      security:
+        - bearerAuth: [catalog.lifecycle]
+      parameters:
+        - $ref: "#/components/parameters/AttributeUuid"
+        - $ref: "#/components/parameters/OptionId"
       responses:
         "200": { $ref: "#/components/responses/AttributeOptionResource" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
@@ -1767,6 +2000,391 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ── Production import & export ────────────────────────────────
+  /imports:
+    get:
+      operationId: listImportJobs
+      summary: List tenant import jobs
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: uploadImport
+      summary: Upload a tenant-scoped CSV or XLSX import
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.write]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, mode]
+              properties:
+                file: { type: string, format: binary }
+                mode: { type: string, enum: [create, update, upsert] }
+                idempotency_key: { type: string, maxLength: 191 }
+                chunk_size: { type: integer, minimum: 1, maximum: 1000 }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /imports/{importJob}:
+    get:
+      operationId: getImportJob
+      summary: Get import status and preview rows
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.read]
+      parameters:
+        - name: importJob
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /imports/{importJob}/preview:
+    post:
+      operationId: previewImport
+      summary: Validate and persist the deterministic import plan
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.write]
+      parameters:
+        - name: importJob
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mapping]
+              properties:
+                mapping:
+                  type: object
+                  additionalProperties: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /imports/{importJob}/apply:
+    post:
+      operationId: applyImportChunk
+      summary: Apply or resume idempotent import chunks
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.write]
+      parameters:
+        - name: importJob
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max_chunks: { type: integer, minimum: 1, maximum: 100, default: 1 }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /imports/{importJob}/errors.csv:
+    get:
+      operationId: downloadImportErrors
+      summary: Download the complete row-level error report
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.read]
+      parameters:
+        - name: importJob
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: CSV error report
+          content:
+            text/csv: { schema: { type: string } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /import-templates:
+    get:
+      operationId: listImportMappingTemplates
+      summary: List reusable tenant mapping templates
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+    post:
+      operationId: saveImportMappingTemplate
+      summary: Create or update a tenant mapping template by normalized name
+      tags: [Imports]
+      security:
+        - bearerAuth: [imports.write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, mapping]
+              properties:
+                name: { type: string, maxLength: 255 }
+                mapping:
+                  type: object
+                  additionalProperties: { type: string }
+      responses:
+        "201": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /exports/products.{format}:
+    get:
+      operationId: exportProducts
+      summary: Export tenant products as CSV or XLSX
+      tags: [Imports]
+      security:
+        - bearerAuth: [exports.read]
+      parameters:
+        - name: format
+          in: path
+          required: true
+          schema: { type: string, enum: [csv, xlsx] }
+      responses:
+        "200":
+          description: Downloadable product export
+          content:
+            text/csv: { schema: { type: string } }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
+
+  /fortnox/connection:
+    get:
+      operationId: getFortnoxConnection
+      summary: Fortnox connection status
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /fortnox/syncs:
+    get:
+      operationId: listFortnoxSyncs
+      summary: Fortnox sync history
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: startFortnoxSync
+      summary: Run a manual Fortnox article sync
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.write]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502":
+          description: Fortnox provider failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /fortnox/syncs/{syncRun}:
+    get:
+      operationId: getFortnoxSync
+      summary: Single Fortnox sync run with conflicts
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.read]
+      parameters:
+        - name: syncRun
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /fortnox/mappings:
+    get:
+      operationId: listFortnoxMappings
+      summary: Fortnox article to product/variant mappings
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+
+  /fortnox/conflicts:
+    get:
+      operationId: listFortnoxConflicts
+      summary: Fortnox sync conflicts
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.read]
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+
+  /fortnox/conflicts/{conflict}/resolve:
+    post:
+      operationId: resolveFortnoxConflict
+      summary: Resolve an open Fortnox conflict
+      tags: [Fortnox]
+      security:
+        - bearerAuth: [fortnox.write]
+      parameters:
+        - name: conflict
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution: { type: string, enum: [fortnox, nordipass] }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /webhooks/endpoints:
+    get:
+      operationId: listWebhookEndpoints
+      summary: List webhook endpoints
+      tags: [Webhooks]
+      security:
+        - bearerAuth: [webhooks.manage]
+      responses:
+        "200": { $ref: "#/components/responses/WebhookEndpointCollection" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createWebhookEndpoint
+      summary: Create a webhook endpoint
+      tags: [Webhooks]
+      security:
+        - bearerAuth: [webhooks.manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, secret, events]
+              properties:
+                url: { type: string, format: uri, maxLength: 2048 }
+                secret: { type: string, minLength: 16, maxLength: 255, writeOnly: true }
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items:
+                    $ref: "#/components/schemas/WebhookEventType"
+      responses:
+        "201": { $ref: "#/components/responses/WebhookEndpointResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /webhooks/endpoints/{endpoint}:
+    patch:
+      operationId: updateWebhookEndpoint
+      summary: Update a webhook endpoint
+      tags: [Webhooks]
+      security:
+        - bearerAuth: [webhooks.manage]
+      parameters:
+        - name: endpoint
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url: { type: string, format: uri, maxLength: 2048 }
+                secret: { type: string, minLength: 16, maxLength: 255, writeOnly: true }
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items:
+                    $ref: "#/components/schemas/WebhookEventType"
+                status: { type: string, enum: [active, disabled] }
+      responses:
+        "200": { $ref: "#/components/responses/WebhookEndpointResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /webhooks/endpoints/{endpoint}/disable:
+    post:
+      operationId: disableWebhookEndpoint
+      summary: Disable a webhook endpoint
+      tags: [Webhooks]
+      security:
+        - bearerAuth: [webhooks.manage]
+      parameters:
+        - name: endpoint
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/WebhookEndpointResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /webhooks/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      summary: List webhook delivery attempts
+      tags: [Webhooks]
+      security:
+        - bearerAuth: [webhooks.manage]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, delivered, failed] }
+        - name: event_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/WebhookEventType"
+        - name: per_page
+          in: query
+          schema: { type: integer, enum: [25, 50, 100], default: 50 }
+      responses:
+        "200": { $ref: "#/components/responses/WebhookDeliveryCollection" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
 # ════════════════════════════════════════════════════════════════
 components:
   securitySchemes:
@@ -1778,6 +2396,11 @@ components:
   parameters:
     CategoryUuid:
       name: category
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    TemplateUuid:
+      name: template
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -1796,6 +2419,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    OptionId:
+      name: option
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
     MediaUuid:
       name: media
       in: path
@@ -1867,6 +2495,7 @@ components:
         slug: { type: string }
         brand: { type: string, nullable: true }
         manufacturer: { type: string, nullable: true }
+        commerce: { $ref: "#/components/schemas/ProductCommerce" }
         status: { type: string }
         variant_count: { type: integer }
         created_at: { type: string, format: date-time }
@@ -1881,6 +2510,7 @@ components:
         description: { type: string, nullable: true }
         brand: { type: string, nullable: true }
         manufacturer: { type: string, nullable: true }
+        commerce: { $ref: "#/components/schemas/ProductCommerce" }
         status: { type: string }
         published_at: { type: string, format: date-time, nullable: true }
         primary_category: { $ref: "#/components/schemas/Category" }
@@ -1890,6 +2520,15 @@ components:
         primary_media: { $ref: "#/components/schemas/Media" }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+    ProductCommerce:
+      type: object
+      nullable: true
+      properties:
+        sales_price: { type: string, nullable: true, example: "150.00" }
+        currency: { type: string, nullable: true, example: SEK }
+        vat_code: { type: string, nullable: true, example: SE25 }
+        source: { type: string, nullable: true, example: Fortnox }
+        last_synced_at: { type: string, format: date-time, nullable: true }
     Variant:
       type: object
       properties:
@@ -1917,7 +2556,10 @@ components:
         required: { type: boolean }
         filterable: { type: boolean }
         searchable: { type: boolean }
-        status: { type: string }
+        vocabulary_controlled: { type: boolean }
+        validation_rules: { type: object, nullable: true }
+        status: { type: string, enum: [active, deprecated, archived] }
+        replaced_by_attribute_definition_id: { type: integer, nullable: true }
         sort_order: { type: integer }
         options_count: { type: integer }
         product_values_count: { type: integer }
@@ -1930,8 +2572,12 @@ components:
         id: { type: integer }
         label: { type: string }
         code: { type: string }
-        status: { type: string }
+        status: { type: string, enum: [active, deprecated, archived] }
+        approval_status: { type: string, enum: [pending, approved, rejected] }
+        replaced_by_attribute_option_id: { type: integer, nullable: true }
         sort_order: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     Media:
       type: object
       properties:
@@ -2153,6 +2799,44 @@ components:
         payload: { type: object }
         content_checksum: { type: string }
         published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+
+    WebhookEventType:
+      type: string
+      enum:
+        - passport.published
+        - passport.unpublished
+        - document.approved
+        - import.completed
+        - billing.subscription.updated
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+        status: { type: string, enum: [active, disabled] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    WebhookDelivery:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        endpoint_uuid: { type: string, format: uuid, nullable: true }
+        event_type:
+          $ref: "#/components/schemas/WebhookEventType"
+        aggregate_type: { type: string, nullable: true }
+        aggregate_uuid: { type: string, format: uuid, nullable: true }
+        status: { type: string, enum: [pending, delivered, failed] }
+        attempts: { type: integer }
+        response_status: { type: integer, nullable: true }
+        last_attempt_at: { type: string, format: date-time, nullable: true }
+        delivered_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
 
     # ── Readiness schemas ───────────────────────────────
@@ -2514,6 +3198,42 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PassportVersionDetail"
+    WebhookEndpointCollection:
+      description: Paginated webhook endpoint list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebhookEndpoint"
+              meta:
+                $ref: "#/components/schemas/PaginationMeta"
+    WebhookEndpointResource:
+      description: Single webhook endpoint
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: "#/components/schemas/WebhookEndpoint"
+              meta: { type: object }
+    WebhookDeliveryCollection:
+      description: Paginated webhook delivery list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebhookDelivery"
+              meta:
+                $ref: "#/components/schemas/PaginationMeta"
 
 tags:
   - name: Categories
@@ -2526,6 +3246,8 @@ tags:
     description: Product and variant lifecycle transitions
   - name: Attributes
     description: Attribute definitions and options
+  - name: Taxonomy
+    description: Versioned category templates, controlled vocabularies, and product taxonomy review
   - name: AttributeValues
     description: Product and variant attribute value sync
   - name: Media
@@ -2534,3 +3256,7 @@ tags:
     description: Product document and certificate management
   - name: Passports
     description: Product Digital Product Passport (DPP) authoring and editing
+  - name: Fortnox
+    description: "Fortnox integration foundation: connection, sync runs, mappings, and conflicts"
+  - name: Webhooks
+    description: Outbound webhook endpoints, signatures, and delivery logs

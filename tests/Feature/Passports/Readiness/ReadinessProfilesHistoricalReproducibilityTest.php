@@ -143,6 +143,7 @@ class ReadinessProfilesHistoricalReproducibilityTest extends TestCase
 
     public function test_historical_v1_publication_evidence_survives_active_v2_profile_change(): void
     {
+        $this->activateV1Profile();
         $this->createReadyPassportDraft();
 
         $passport = $this->passport();
@@ -230,6 +231,7 @@ class ReadinessProfilesHistoricalReproducibilityTest extends TestCase
 
     public function test_readiness_diagnostics_commands_report_profile_evidence_and_missing_records_safely(): void
     {
+        $this->activateV1Profile();
         $this->createReadyPassportDraft();
 
         $passport = $this->passport();
@@ -386,6 +388,11 @@ class ReadinessProfilesHistoricalReproducibilityTest extends TestCase
 
         config()->set('passport_readiness.profiles', $profiles);
         config()->set('passport_readiness.profile_version', 2);
+    }
+
+    private function activateV1Profile(): void
+    {
+        config()->set('passport_readiness.profile_version', 1);
     }
 
     private function pinDraftToProfile(ProductPassportVersion $draft, object $profile): void

@@ -12,6 +12,10 @@ use InvalidArgumentException;
 
 class SessionCurrentCompany implements CurrentCompany
 {
+    private ?Company $cached = null;
+
+    private bool $resolved = false;
+
     public function __construct(
         private readonly Session $session,
         private readonly AuthFactory $auth,
@@ -19,10 +23,16 @@ class SessionCurrentCompany implements CurrentCompany
 
     public function get(): ?Company
     {
+        if ($this->resolved) {
+            return $this->cached;
+        }
+
+        $this->resolved = true;
+
         $companyId = $this->companyIdFromSession();
 
         if ($companyId === null) {
-            return null;
+            return $this->cached = null;
         }
 
         $user = $this->auth->guard()->user();
@@ -30,7 +40,7 @@ class SessionCurrentCompany implements CurrentCompany
         if (! $user instanceof User || $user->trashed()) {
             $this->clear();
 
-            return null;
+            return $this->cached = null;
         }
 
         $company = $user->companies()
@@ -40,10 +50,10 @@ class SessionCurrentCompany implements CurrentCompany
         if ($company === null) {
             $this->clear();
 
-            return null;
+            return $this->cached = null;
         }
 
-        return $company;
+        return $this->cached = $company;
     }
 
     public function require(): Company
@@ -60,11 +70,15 @@ class SessionCurrentCompany implements CurrentCompany
         }
 
         $this->session->put($this->sessionKey(), $companyId);
+        $this->resolved = true;
+        $this->cached = $company;
     }
 
     public function clear(): void
     {
         $this->session->forget($this->sessionKey());
+        $this->resolved = true;
+        $this->cached = null;
     }
 
     public function has(): bool

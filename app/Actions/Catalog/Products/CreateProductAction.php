@@ -26,6 +26,12 @@ class CreateProductAction extends ProductAction
         array $additionalCategoryUuids = [],
     ): Product {
         $company = $this->authorize($actor, $company, CompanyPermission::CatalogCreate);
+        $this->entitlements->assertBelowLimit(
+            $company,
+            'catalog.products.max',
+            $company->products()->count(),
+        );
+
         $data = $this->normalizedData($data);
 
         try {

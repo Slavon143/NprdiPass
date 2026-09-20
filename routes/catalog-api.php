@@ -4,6 +4,8 @@ use App\Enums\ApiTokenAbility;
 use App\Http\Controllers\Api\V1\Catalog\AttributeDefinitionController;
 use App\Http\Controllers\Api\V1\Catalog\AttributeOptionController;
 use App\Http\Controllers\Api\V1\Catalog\CategoryController;
+use App\Http\Controllers\Api\V1\Catalog\CategoryTemplateController;
+use App\Http\Controllers\Api\V1\Catalog\ImportController;
 use App\Http\Controllers\Api\V1\Catalog\MediaContentController;
 use App\Http\Controllers\Api\V1\Catalog\PassportReadinessController;
 use App\Http\Controllers\Api\V1\Catalog\ProductAttributeController;
@@ -12,6 +14,7 @@ use App\Http\Controllers\Api\V1\Catalog\ProductDocumentController;
 use App\Http\Controllers\Api\V1\Catalog\ProductLifecycleController;
 use App\Http\Controllers\Api\V1\Catalog\ProductMediaController;
 use App\Http\Controllers\Api\V1\Catalog\ProductPassportController;
+use App\Http\Controllers\Api\V1\Catalog\ProductTaxonomyController;
 use App\Http\Controllers\Api\V1\Catalog\ProductVariantController;
 use App\Http\Controllers\Api\V1\Catalog\ProductVariantLifecycleController;
 use App\Http\Controllers\Api\V1\Catalog\VariantAttributeController;
@@ -19,6 +22,25 @@ use App\Http\Controllers\Api\V1\Catalog\VariantMediaController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('catalog')->name('catalog.')->group(function (): void {
+
+    Route::get('/imports', [ImportController::class, 'index'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::ImportsRead->value])->name('imports.index');
+    Route::post('/imports', [ImportController::class, 'store'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::ImportsWrite->value])->name('imports.store');
+    Route::get('/imports/{importJob}', [ImportController::class, 'show'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::ImportsRead->value])->whereUuid('importJob')->name('imports.show');
+    Route::post('/imports/{importJob}/preview', [ImportController::class, 'preview'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::ImportsWrite->value])->whereUuid('importJob')->name('imports.preview');
+    Route::post('/imports/{importJob}/apply', [ImportController::class, 'apply'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::ImportsWrite->value])->whereUuid('importJob')->name('imports.apply');
+    Route::get('/imports/{importJob}/errors.csv', [ImportController::class, 'errors'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::ImportsRead->value])->whereUuid('importJob')->name('imports.errors');
+    Route::get('/exports/products.{format}', [ImportController::class, 'export'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::ExportsRead->value])->whereIn('format', ['csv', 'xlsx'])->name('exports.products');
+    Route::get('/import-templates', [ImportController::class, 'templates'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::ImportsRead->value])->name('import-templates.index');
+    Route::post('/import-templates', [ImportController::class, 'storeTemplate'])
+        ->middleware(['feature.production-imports', 'throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::ImportsWrite->value])->name('import-templates.store');
 
     // Categories
     Route::get('/categories', [CategoryController::class, 'index'])
@@ -46,6 +68,23 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
         ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
         ->name('categories.restore');
 
+    // Category taxonomy templates
+    Route::get('/categories/{category}/templates', [CategoryTemplateController::class, 'index'])
+        ->middleware(['throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::CatalogRead->value])
+        ->name('categories.templates.index');
+    Route::post('/categories/{category}/templates', [CategoryTemplateController::class, 'store'])
+        ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
+        ->name('categories.templates.store');
+    Route::get('/categories/{category}/templates/{template}', [CategoryTemplateController::class, 'show'])
+        ->middleware(['throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::CatalogRead->value])
+        ->name('categories.templates.show');
+    Route::put('/categories/{category}/templates/{template}', [CategoryTemplateController::class, 'update'])
+        ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
+        ->name('categories.templates.update');
+    Route::post('/categories/{category}/templates/{template}/activate', [CategoryTemplateController::class, 'activate'])
+        ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
+        ->name('categories.templates.activate');
+
     // Products
     Route::get('/products', [ProductController::class, 'index'])
         ->middleware(['throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::CatalogRead->value])
@@ -59,6 +98,15 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::patch('/products/{product}', [ProductController::class, 'update'])
         ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
         ->name('products.update');
+    Route::get('/products/{product}/taxonomy', [ProductTaxonomyController::class, 'show'])
+        ->middleware(['throttle:catalog-api-read', 'api.ability:'.ApiTokenAbility::CatalogRead->value])
+        ->name('products.taxonomy.show');
+    Route::post('/products/{product}/taxonomy/acknowledge', [ProductTaxonomyController::class, 'acknowledge'])
+        ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
+        ->name('products.taxonomy.acknowledge');
+    Route::patch('/products/{product}/taxonomy/readiness-profile', [ProductTaxonomyController::class, 'updateProfileOverride'])
+        ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
+        ->name('products.taxonomy.readiness-profile.update');
 
     // Product variants (nested under products)
     Route::get('/products/{product}/variants', [ProductVariantController::class, 'index'])
@@ -137,6 +185,9 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::post('/attributes/{attribute}/restore', [AttributeDefinitionController::class, 'restore'])
         ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
         ->name('attributes.restore');
+    Route::post('/attributes/{attribute}/deprecate', [AttributeDefinitionController::class, 'deprecate'])
+        ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
+        ->name('attributes.deprecate');
 
     // Attribute options (nested under definitions)
     Route::get('/attributes/{attribute}/options', [AttributeOptionController::class, 'index'])
@@ -157,6 +208,12 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::post('/attributes/{attribute}/options/{option}/restore', [AttributeOptionController::class, 'restore'])
         ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
         ->name('attributes.options.restore');
+    Route::post('/attributes/{attribute}/options/{option}/deprecate', [AttributeOptionController::class, 'deprecate'])
+        ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
+        ->name('attributes.options.deprecate');
+    Route::post('/attributes/{attribute}/options/{option}/approve', [AttributeOptionController::class, 'approve'])
+        ->middleware(['throttle:catalog-api-lifecycle', 'api.ability:'.ApiTokenAbility::CatalogLifecycle->value])
+        ->name('attributes.options.approve');
 
     // Product media
     Route::get('/products/{product}/media', [ProductMediaController::class, 'index'])

@@ -24,6 +24,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $uuid
  * @property int $company_id
  * @property int|null $primary_category_id
+ * @property int|null $taxonomy_template_id
+ * @property bool $taxonomy_needs_review
+ * @property CarbonImmutable|null $taxonomy_reviewed_at
+ * @property string|null $readiness_profile_override
+ * @property int|null $readiness_profile_version_override
+ * @property string|null $readiness_rule_set_fingerprint_override
  * @property int $default_variant_id
  * @property int|null $primary_media_id
  * @property string $name
@@ -32,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $description
  * @property string|null $brand
  * @property string|null $manufacturer
+ * @property array<string, mixed>|null $commerce
  * @property ProductStatus $status
  * @property CarbonImmutable|null $published_at
  * @property int|null $created_by
@@ -56,6 +63,7 @@ class Product extends Model
         'description',
         'brand',
         'manufacturer',
+        'commerce',
     ];
 
     protected $hidden = ['slug_normalized'];
@@ -64,7 +72,11 @@ class Product extends Model
     {
         return [
             'status' => ProductStatus::class,
+            'commerce' => 'array',
             'published_at' => 'immutable_datetime',
+            'taxonomy_needs_review' => 'boolean',
+            'taxonomy_reviewed_at' => 'immutable_datetime',
+            'readiness_profile_version_override' => 'integer',
         ];
     }
 
@@ -92,6 +104,11 @@ class Product extends Model
     public function primaryCategory(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'primary_category_id');
+    }
+
+    public function taxonomyTemplate(): BelongsTo
+    {
+        return $this->belongsTo(CategoryTemplate::class, 'taxonomy_template_id');
     }
 
     public function attributeValues(): HasMany

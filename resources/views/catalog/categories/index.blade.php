@@ -4,163 +4,62 @@
             <div>
                 <p class="text-sm font-medium text-indigo-600">{{ __('Catalog') }}</p>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ __('Categories') }}</h1>
-                <p class="mt-1 text-sm text-slate-500">{{ __('Manage the category hierarchy for :company.', ['company' => $company->name]) }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ __('Organize products into a hierarchy.') }}</p>
             </div>
             @if ($canManage)
-                <a href="{{ route('catalog.categories.create') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-testid="category-create-button">{{ __('Create category') }}</a>
+                <a href="{{ route('catalog.categories.create') }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-testid="category-create-button">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                    {{ __('Create category') }}
+                </a>
             @else
                 <x-badge>{{ __('Read only') }}</x-badge>
             @endif
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="categories-page">
-        <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <form method="GET" action="{{ route('catalog.categories.index') }}" class="grid gap-4 lg:grid-cols-[1fr_12rem_16rem_auto] lg:items-end">
-                <div>
-                    <x-input-label for="search" :value="__('Search')" />
-                    <x-text-input id="search" name="search" type="search" class="mt-1 block w-full" :value="$filters['search']" placeholder="Name or slug" />
+    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8" data-testid="categories-page">
+        <section class="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <form method="GET" action="{{ route('catalog.categories.index') }}" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="relative w-full sm:max-w-xs">
+                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="search" name="search" value="{{ $filters['search'] }}" placeholder="{{ __('Search categories...') }}" aria-label="{{ __('Search categories') }}" class="block w-full rounded-lg border-slate-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" oninput="clearTimeout(window.__nordipassCategorySearchTimer); window.__nordipassCategorySearchTimer = setTimeout(() => this.form.requestSubmit(), 300)">
                 </div>
-                <div>
-                    <x-input-label for="status" :value="__('Status')" />
-                    <select id="status" name="status" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div class="flex items-center gap-3">
+                    <select name="status" aria-label="{{ __('Status') }}" onchange="this.form.requestSubmit()" class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="all" @selected($filters['status'] === 'all')>{{ __('All statuses') }}</option>
                         <option value="active" @selected($filters['status'] === 'active')>{{ __('Active') }}</option>
                         <option value="archived" @selected($filters['status'] === 'archived')>{{ __('Archived') }}</option>
                     </select>
-                </div>
-                <div>
-                    <x-input-label for="parent" :value="__('Parent')" />
-                    <select id="parent" name="parent" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">{{ __('Any parent') }}</option>
-                        <option value="root" @selected($filters['parent'] === 'root')>{{ __('Root only') }}</option>
-                        @foreach ($parentOptions as $parentOption)
-                            <option value="{{ $parentOption->uuid }}" @selected($filters['parent'] === $parentOption->uuid)>{{ str_repeat('— ', $parentOption->depth) }}{{ $parentOption->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Apply') }}</button>
-                    <a href="{{ route('catalog.categories.index') }}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Clear') }}</a>
+                    @if ($hasActiveFilters)
+                        <a href="{{ route('catalog.categories.index') }}" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Clear') }}</a>
+                    @endif
                 </div>
             </form>
         </section>
 
+        <p class="mb-3 px-1 text-sm font-medium text-slate-500">{{ trans_choice(':count category|:count categories', $visibleCount, ['count' => $visibleCount]) }}</p>
+
         <x-input-error :messages="$errors->all()" class="mb-5 rounded-lg bg-red-50 p-4" />
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            @if ($categories->isEmpty())
-                <div class="px-6 py-16 text-center">
+        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4" data-testid="category-tree" x-data="{ expanded: @js($initialExpanded) }">
+            @if ($totalCount === 0)
+                <div class="px-4 py-16 text-center">
+                    <p class="font-semibold text-slate-900">{{ __('No categories yet.') }}</p>
+                    <p class="mt-1 text-sm text-slate-500">{{ __('Create a category to start organizing products.') }}</p>
+                    @if ($canManage)
+                        <a href="{{ route('catalog.categories.create') }}" class="mt-5 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Create category') }}</a>
+                    @endif
+                </div>
+            @elseif ($tree === [])
+                <div class="px-4 py-16 text-center">
                     <p class="font-semibold text-slate-900">{{ __('No categories match these filters.') }}</p>
+                    <p class="mt-1 text-sm text-slate-500">{{ __('Try a different search or status filter.') }}</p>
+                    <a href="{{ route('catalog.categories.index') }}" class="mt-5 inline-flex rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{{ __('Clear filters') }}</a>
                 </div>
             @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm">
-                        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <tr>
-                                <th class="px-5 py-3">{{ __('Category') }}</th>
-                                <th class="px-5 py-3">{{ __('Parent') }}</th>
-                                <th class="px-5 py-3">{{ __('Level') }}</th>
-                                <th class="px-5 py-3">{{ __('Sort order') }}</th>
-                                <th class="px-5 py-3">{{ __('Status') }}</th>
-                                <th class="px-5 py-3 text-right">{{ __('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach ($categories as $category)
-                                @php
-                                    $depth = (int) $category->depth;
-                                    $indentRem = min($depth, 6) * 1.25;
-                                @endphp
-                                <tr>
-                                    <td class="px-5 py-4">
-                                        <div style="padding-left: {{ $indentRem }}rem">
-                                            <p class="flex items-center gap-2 font-semibold text-slate-900">
-                                                @if($depth > 0)
-                                                    <span class="text-slate-400" aria-hidden="true">↳</span>
-                                                @endif
-                                                <span>{{ $category->name }}</span>
-                                            </p>
-                                            <p class="mt-1 font-mono text-xs text-slate-500">{{ $category->slug }}</p>
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        @if($category->parent)
-                                            <p class="font-medium text-slate-700">{{ $category->parent->name }}</p>
-                                            <p class="mt-1 text-xs text-slate-500">{{ __('Nested under this parent') }}</p>
-                                        @else
-                                            <x-badge tone="slate">{{ __('Root category') }}</x-badge>
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        @if($depth === 0)
-                                            <x-badge tone="indigo">{{ __('Top level') }}</x-badge>
-                                        @else
-                                            <x-badge tone="slate">{{ __('Level :level', ['level' => $depth]) }}</x-badge>
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <span class="font-mono text-sm font-semibold text-slate-700">{{ $category->sort_order }}</span>
-                                        <p class="mt-1 text-xs text-slate-500">{{ __('Lower numbers appear first under the same parent.') }}</p>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <x-badge :tone="$category->status->value === 'active' ? 'emerald' : 'amber'">{{ ucfirst($category->status->value) }}</x-badge>
-                                        @if ($category->children_count > 0)
-                                            <p class="mt-1 text-xs text-amber-700">{{ trans_choice(':count child category|:count child categories', $category->children_count, ['count' => $category->children_count]) }}</p>
-                                        @endif
-                                        @if ($category->primary_products_count > 0)
-                                            <p class="mt-1 text-xs text-amber-700">
-                                                {{ trans_choice('Primary for :count product|Primary for :count products', $category->primary_products_count, ['count' => $category->primary_products_count]) }}
-                                                @if ($category->active_primary_products_count !== $category->primary_products_count)
-                                                    <span class="text-slate-500">({{ trans_choice(':count active|:count active', $category->active_primary_products_count, ['count' => $category->active_primary_products_count]) }})</span>
-                                                @endif
-                                            </p>
-                                        @endif
-                                        @if ($category->assigned_products_count > $category->primary_products_count)
-                                            <p class="mt-1 text-xs text-amber-700">
-                                                {{ trans_choice('Also assigned to :count product|Also assigned to :count products', $category->assigned_products_count - $category->primary_products_count, ['count' => $category->assigned_products_count - $category->primary_products_count]) }}
-                                            </p>
-                                        @endif
-                                        @if ($category->primary_products_count > 0 || $category->assigned_products_count > 0)
-                                            @php($categoryProductLink = $categoryProductLinks[$category->uuid] ?? null)
-                                            <a href="{{ $categoryProductLink['url'] ?? route('catalog.products.index', ['category_uuids' => [$category->uuid], 'category_mode' => $category->primary_products_count > 0 ? 'primary' : 'any']) }}" class="mt-1 inline-block text-xs font-semibold text-indigo-700 hover:text-indigo-900">{{ $categoryProductLink['label'] ?? __('View products') }}</a>
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        @if ($canManage)
-                                            <div class="flex items-center justify-end gap-2">
-                                                @foreach (['up' => __('Move up'), 'down' => __('Move down')] as $direction => $label)
-                                                    @if ($reorderPayloads[$category->uuid][$direction] !== null)
-                                                        <form method="POST" action="{{ route('catalog.categories.reorder') }}">
-                                                            @csrf
-                                                            @method('PATCH')
-                                                            <input type="hidden" name="parent_uuid" value="{{ $reorderPayloads[$category->uuid]['parent_uuid'] }}">
-                                                            @foreach ($reorderPayloads[$category->uuid][$direction] as $orderedUuid)<input type="hidden" name="ordered_uuids[]" value="{{ $orderedUuid }}">@endforeach
-                                                            <button type="submit" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50" title="{{ __('Changes order only among categories with the same parent.') }}" aria-label="{{ $label }}">
-                                                                {{ $direction === 'up' ? '↑' : '↓' }}
-                                                                <span class="sr-only">{{ $label }}</span>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                @endforeach
-                                                <a href="{{ route('catalog.categories.edit', $category->uuid) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50">{{ __('Edit') }}</a>
-                                                <form method="POST" action="{{ route('catalog.categories.destroy', $category->uuid) }}" onsubmit="return confirm('{{ __('Delete this category? This is only allowed when it has no child categories or product assignments.') }}')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
-                                                </form>
-                                            </div>
-                                            <p class="mt-2 text-right text-xs text-slate-400">{{ __('Arrows change sibling order.') }}</p>
-                                        @else
-                                            <span class="block text-right text-xs text-slate-400">{{ __('View only') }}</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @if ($categories->hasPages())<div class="border-t border-slate-200 px-5 py-4">{{ $categories->links() }}</div>@endif
+                @include('catalog.categories._tree', ['nodes' => $tree])
             @endif
         </section>
     </div>

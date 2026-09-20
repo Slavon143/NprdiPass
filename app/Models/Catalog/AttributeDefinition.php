@@ -27,9 +27,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $required
  * @property bool $filterable
  * @property bool $searchable
+ * @property bool $vocabulary_controlled
  * @property array<string, int|float|string>|null $validation_rules
  * @property int $sort_order
  * @property AttributeDefinitionStatus $status
+ * @property int|null $replaced_by_attribute_definition_id
  */
 class AttributeDefinition extends Model
 {
@@ -57,6 +59,7 @@ class AttributeDefinition extends Model
             'required' => 'boolean',
             'filterable' => 'boolean',
             'searchable' => 'boolean',
+            'vocabulary_controlled' => 'boolean',
             'validation_rules' => 'array',
             'sort_order' => 'integer',
             'status' => AttributeDefinitionStatus::class,
@@ -83,6 +86,21 @@ class AttributeDefinition extends Model
         return $this->hasMany(VariantAttributeValue::class);
     }
 
+    public function replacement(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'replaced_by_attribute_definition_id');
+    }
+
+    public function replacedDefinitions(): HasMany
+    {
+        return $this->hasMany(self::class, 'replaced_by_attribute_definition_id');
+    }
+
+    public function templateAssignments(): HasMany
+    {
+        return $this->hasMany(CategoryTemplateAttribute::class);
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -101,6 +119,11 @@ class AttributeDefinition extends Model
     public function scopeArchived(Builder $query): Builder
     {
         return $query->where($query->qualifyColumn('status'), AttributeDefinitionStatus::Archived->value);
+    }
+
+    public function scopeDeprecated(Builder $query): Builder
+    {
+        return $query->where($query->qualifyColumn('status'), AttributeDefinitionStatus::Deprecated->value);
     }
 
     public function scopeOrdered(Builder $query): Builder

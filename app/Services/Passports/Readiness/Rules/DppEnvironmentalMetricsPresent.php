@@ -50,21 +50,24 @@ class DppEnvironmentalMetricsPresent implements PassportReadinessRule
         $recycledContentPercentage = $envData['recycled_content_percentage'] ?? null;
         $expectedLifetimeYears = $envData['expected_lifetime_years'] ?? null;
         $energyConsumptionKwh = $envData['energy_consumption_kwh'] ?? null;
+        $environmentalMetrics = $envData['environmental_metrics'] ?? null;
 
-        $allEmpty = empty($carbonFootprint)
-            && empty($recycledContentPercentage)
-            && empty($expectedLifetimeYears)
-            && empty($energyConsumptionKwh);
+        $hasMetric = is_numeric($carbonFootprint)
+            || is_numeric($recycledContentPercentage)
+            || is_numeric($expectedLifetimeYears)
+            || is_numeric($energyConsumptionKwh)
+            || (is_array($environmentalMetrics) && $environmentalMetrics !== []);
 
         return new ReadinessRuleResult(
             code: $this->code(),
             group: $this->group(),
             severity: $this->severity(),
-            status: $allEmpty ? ReadinessRuleStatus::Failed : ReadinessRuleStatus::Passed,
+            status: $hasMetric ? ReadinessRuleStatus::Passed : ReadinessRuleStatus::Failed,
             titleKey: 'readiness.dpp.environmental.metrics.present.title',
-            messageKey: $allEmpty ? 'readiness.dpp.environmental.metrics.present.failed' : 'readiness.dpp.environmental.metrics.present.passed',
+            messageKey: $hasMetric ? 'readiness.dpp.environmental.metrics.present.passed' : 'readiness.dpp.environmental.metrics.present.failed',
             section: DppSectionKey::EnvironmentalInformation,
-            navigationTarget: new ReadinessNavigationTarget(
+            field: 'environmental_metrics',
+            navigationTarget: $hasMetric ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::EnvironmentalInformation->value,
                 routeName: 'catalog.products.passport.edit',
@@ -72,10 +75,11 @@ class DppEnvironmentalMetricsPresent implements PassportReadinessRule
                 label: 'Edit Environmental',
             ),
             safeContext: [
-                'has_carbon_footprint' => ! empty($carbonFootprint) && is_numeric($carbonFootprint),
-                'has_recycled_content' => ! empty($recycledContentPercentage) && is_numeric($recycledContentPercentage),
-                'has_expected_lifetime' => ! empty($expectedLifetimeYears) && is_numeric($expectedLifetimeYears),
-                'has_energy_consumption' => ! empty($energyConsumptionKwh) && is_numeric($energyConsumptionKwh),
+                'has_carbon_footprint' => is_numeric($carbonFootprint),
+                'has_recycled_content' => is_numeric($recycledContentPercentage),
+                'has_expected_lifetime' => is_numeric($expectedLifetimeYears),
+                'has_energy_consumption' => is_numeric($energyConsumptionKwh),
+                'has_structured_metrics' => is_array($environmentalMetrics) && $environmentalMetrics !== [],
             ],
         );
     }

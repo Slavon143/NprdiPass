@@ -14,7 +14,6 @@ use App\Http\Requests\Catalog\Categories\BulkDeleteCategoriesRequest;
 use App\Http\Requests\Catalog\Categories\StoreCategoryRequest;
 use App\Http\Requests\Catalog\Categories\UpdateCategoryRequest;
 use App\Models\Catalog\Category;
-use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CategoryHierarchyService;
@@ -33,65 +32,85 @@ class CategoryController extends Controller
         $this->authorize('viewAny', [Category::class, $company]);
         $filters = $request->validate([
             'status' => ['nullable', 'in:active,archived,all'],
-            'parent' => ['nullable', 'string', 'max:36'],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
-        $query = Category::query()
-            ->forCompany($company)
-            ->with('parent:id,uuid,name')
-            ->withCount([
-                'children as children_count',
-                'children as active_children_count' => fn (Builder $query): Builder => $query
-                    ->where('status', CategoryStatus::Active->value),
-                'primaryProducts as primary_products_count' => fn (Builder $query): Builder => $query
-                    ->where('status', '!=', ProductStatus::Archived->value),
-                'primaryProducts as active_primary_products_count' => fn (Builder $query): Builder => $query->where('status', ProductStatus::Active->value),
-                'products as assigned_products_count' => fn (Builder $query): Builder => $query
-                    ->where('products.status', '!=', ProductStatus::Archived->value),
-                'products as active_assigned_products_count' => fn (Builder $query): Builder => $query->where('status', ProductStatus::Active->value),
-            ]);
         $status = $filters['status'] ?? 'all';
-
-        if ($status === CategoryStatus::Active->value) {
-            $query->active();
-        } elseif ($status === CategoryStatus::Archived->value) {
-            $query->archived();
-        }
-
-        $parentFilter = $filters['parent'] ?? null;
-
-        if ($parentFilter === 'root') {
-            $query->roots();
-        } elseif (is_string($parentFilter) && $parentFilter !== '') {
-            $parent = $this->resolveCategory($company, $parentFilter);
-            $query->where('parent_id', $parent->getKey());
-        }
-
         $search = trim((string) ($filters['search'] ?? ''));
-
-        if ($search !== '') {
-            $query->where(function (Builder $query) use ($search): void {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
-            });
-        }
+        $hasActiveFilters = $status !== 'all' || $search !== '';
 
         $allCategories = Category::query()
             ->forCompany($company)
+            ->withCount([
+                'children as children_count',
+                'primaryProducts as primary_products_count' => fn (Builder $query): Builder => $query
+                    ->where('status', '!=', ProductStatus::Archived->value),
+                'products as assigned_products_count' => fn (Builder $query): Builder => $query
+                    ->where('products.status', '!=', ProductStatus::Archived->value),
+            ])
             ->limit(CategoryHierarchyService::MAX_CATEGORIES_PER_COMPANY + 1)
             ->ordered()
             ->get();
 
-        $categories = $query->ordered()->paginate(50)->withQueryString();
+        $byId = $allCategories->keyBy('id');
+        $matchedIds = $allCategories->filter(function (Category $category) use ($status, $search): bool {
+            if ($status === CategoryStatus::Active->value && $category->status->value !== CategoryStatus::Active->value) {
+                return false;
+            }
+
+            if ($status === CategoryStatus::Archived->value && $category->status->value !== CategoryStatus::Archived->value) {
+                return false;
+            }
+
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+
+                if (! str_contains(mb_strtolower($category->name), $needle)
+                    && ! str_contains(mb_strtolower($category->slug), $needle)) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->pluck('id');
+
+        $visibleIds = $hasActiveFilters ? $matchedIds : $allCategories->pluck('id');
+
+        if ($hasActiveFilters) {
+            foreach ($matchedIds as $matchedId) {
+                $parentId = $byId->get($matchedId)?->parent_id;
+
+                while ($parentId !== null) {
+                    if (! $visibleIds->contains($parentId)) {
+                        $visibleIds->push($parentId);
+                    }
+
+                    $parentId = $byId->get($parentId)?->parent_id;
+                }
+            }
+        }
+
+        $childrenMap = [];
+
+        foreach ($allCategories as $category) {
+            $childrenMap[(int) ($category->parent_id ?? 0)][] = $category;
+        }
+
+        $tree = $this->buildCategoryTree(0, $childrenMap, $visibleIds);
+
+        $initialExpanded = $hasActiveFilters
+            ? $visibleIds->unique()->mapWithKeys(fn (int $id): array => [$id => true])->all()
+            : collect($tree)->mapWithKeys(fn (array $node): array => [$node['category']->id => true])->all();
 
         return view()->make('catalog.categories.index', [
             'company' => $company,
-            'categories' => $categories,
-            'parentOptions' => $allCategories->where('status', CategoryStatus::Active),
+            'tree' => $tree,
+            'totalCount' => $allCategories->count(),
+            'visibleCount' => $visibleIds->unique()->count(),
+            'hasActiveFilters' => $hasActiveFilters,
+            'initialExpanded' => $initialExpanded,
             'canManage' => $request->user()?->can('create', [Category::class, $company]) === true,
             'reorderPayloads' => $this->reorderPayloads($allCategories),
-            'categoryProductLinks' => $this->categoryProductLinks($company, $categories->getCollection()),
-            'filters' => ['status' => $status, 'parent' => $parentFilter, 'search' => $search],
+            'filters' => ['status' => $status, 'search' => $search],
         ]);
     }
 
@@ -253,51 +272,26 @@ class CategoryController extends Controller
     }
 
     /**
-     * @param  Collection<int, Category>  $categories
-     * @return array<string, array{url: string, label: string}>
+     * @param  array<int, list<Category>>  $childrenMap
+     * @param  Collection<int, int>  $visibleIds
+     * @return list<array{category: Category, children: list<array{category: Category, children: mixed}>}>
      */
-    private function categoryProductLinks(Company $company, Collection $categories): array
+    private function buildCategoryTree(int $parentId, array $childrenMap, Collection $visibleIds): array
     {
-        $links = [];
+        $nodes = [];
 
-        foreach ($categories as $category) {
-            $primaryCount = (int) ($category->primary_products_count ?? 0);
-            $assignedCount = (int) ($category->assigned_products_count ?? 0);
-            $uuid = null;
-
-            if ($primaryCount === 1) {
-                $uuid = Product::query()
-                    ->forCompany($company)
-                    ->where('primary_category_id', $category->getKey())
-                    ->where('status', '!=', ProductStatus::Archived->value)
-                    ->value('uuid');
-            } elseif ($primaryCount === 0 && $assignedCount === 1) {
-                $uuid = $category->products()
-                    ->where('products.status', '!=', ProductStatus::Archived->value)
-                    ->value('products.uuid');
-            }
-
-            if (is_string($uuid) && $uuid !== '') {
-                $links[$category->uuid] = [
-                    'url' => route('catalog.products.show', $uuid),
-                    'label' => __('Open product'),
-                ];
-
+        foreach ($childrenMap[$parentId] ?? [] as $category) {
+            if (! $visibleIds->contains($category->getKey())) {
                 continue;
             }
 
-            if ($primaryCount > 0 || $assignedCount > 0) {
-                $links[$category->uuid] = [
-                    'url' => route('catalog.products.index', [
-                        'category_uuids' => [$category->uuid],
-                        'category_mode' => $primaryCount > 0 ? 'primary' : 'any',
-                    ]),
-                    'label' => __('View products'),
-                ];
-            }
+            $nodes[] = [
+                'category' => $category,
+                'children' => $this->buildCategoryTree($category->getKey(), $childrenMap, $visibleIds),
+            ];
         }
 
-        return $links;
+        return $nodes;
     }
 
     /**

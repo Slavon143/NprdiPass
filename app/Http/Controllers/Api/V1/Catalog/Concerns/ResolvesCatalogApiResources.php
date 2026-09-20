@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Catalog\Concerns;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
 use App\Models\Catalog\Category;
+use App\Models\Catalog\CategoryTemplate;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
@@ -31,6 +32,17 @@ trait ResolvesCatalogApiResources
         $product = Product::query()->forCompany($company)->where('uuid', $uuid)->first();
 
         return $product instanceof Product ? $product : throw new ModelNotFoundException;
+    }
+
+    protected function resolveCategoryTemplate(Company $company, Category $category, string $uuid): CategoryTemplate
+    {
+        $template = CategoryTemplate::query()
+            ->forCompany($company)
+            ->where('category_id', $category->getKey())
+            ->where('uuid', $uuid)
+            ->first();
+
+        return $template instanceof CategoryTemplate ? $template : throw new ModelNotFoundException;
     }
 
     protected function resolveVariant(Company $company, Product $product, string $uuid): ProductVariant

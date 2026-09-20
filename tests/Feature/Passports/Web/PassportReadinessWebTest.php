@@ -211,11 +211,13 @@ class PassportReadinessWebTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_rule_codes_are_hidden_in_production(): void
+    public function test_rule_codes_appear_only_inside_rule_details(): void
     {
         $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
 
         $response->assertOk();
+        $response->assertSee('Rule details');
+        $response->assertSee('certificates.declaration_present');
         $response->assertDontSee('catalog.product.active');
         $response->assertDontSee('readiness.catalog.product.active');
         $response->assertDontSee('readiness.passport.payload.valid');
@@ -226,13 +228,28 @@ class PassportReadinessWebTest extends TestCase
         $response->assertSee('No Declaration of Conformity has been linked.');
     }
 
+    public function test_page_leads_with_blockers_and_defers_passed_checks(): void
+    {
+        $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
+
+        $response->assertOk()
+            ->assertSee('Publication readiness')
+            ->assertSee('Not ready to publish')
+            ->assertSeeInOrder([
+                'Must be fixed before publishing',
+                'Other improvements',
+                'checks passed',
+                'Technical details',
+            ]);
+    }
+
     public function test_failed_passport_fields_link_to_editor_field(): void
     {
         $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]));
 
         $response->assertOk();
         $response->assertSee(
-            route('catalog.products.passport.edit', $this->product->uuid).'#field-manufacturer_and_operator-manufacturer_country',
+            route('catalog.products.passport.edit', ['product' => $this->product->uuid, 'section' => 'manufacturer_and_operator']).'#field-manufacturer_and_operator-manufacturer_country',
             false,
         );
     }

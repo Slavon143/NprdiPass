@@ -296,6 +296,8 @@ class PublicPassportCacheTest extends TestCase
 
         $second = $this->get("/p/{$this->publicId}", ['If-None-Match' => $etag]);
         $second->assertStatus(304);
+        $second->assertHeader('X-Robots-Tag', 'index, follow');
+        $this->assertFalse($second->headers->has('Set-Cookie'));
     }
 
     public function test_publish_version_2_invalidates_page(): void

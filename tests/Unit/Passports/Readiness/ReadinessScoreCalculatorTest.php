@@ -206,7 +206,8 @@ class ReadinessScoreCalculatorTest extends TestCase
 
     public function test_missing_or_invalid_weight_is_rejected(): void
     {
-        config()->set('passport_readiness.profiles.nordipass-pilot.versions.1.weights.warning', 0);
+        $activeVersion = (int) config('passport_readiness.profile_version');
+        config()->set("passport_readiness.profiles.nordipass-pilot.versions.{$activeVersion}.weights.warning", 0);
         $rule = $this->makeRule('warning', ReadinessRuleGroup::Safety, ReadinessSeverity::Warning, ReadinessRuleStatus::Passed);
 
         $this->expectException(InvalidArgumentException::class);

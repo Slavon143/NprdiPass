@@ -61,6 +61,28 @@ test('status is serialized as string enum value', function () {
     expect(is_string($res->json('data.status')))->toBeTrue();
 });
 
+test('product commerce is serialized as canonical product data', function () {
+    [$user, $company] = apiCatalogContext();
+    $product = seedSerialProduct($company, $user);
+    $product->forceFill([
+        'commerce' => [
+            'sales_price' => '150.00',
+            'currency' => 'SEK',
+            'vat_code' => 'SE25',
+            'source' => 'Fortnox',
+            'last_synced_at' => '2026-09-07T10:15:00+00:00',
+        ],
+    ])->save();
+
+    $res = apiGet($user, $company, [ApiTokenAbility::CatalogRead->value], "products/{$product->uuid}");
+
+    expect($res->json('data.commerce.sales_price'))->toBe('150.00')
+        ->and($res->json('data.commerce.currency'))->toBe('SEK')
+        ->and($res->json('data.commerce.vat_code'))->toBe('SE25')
+        ->and($res->json('data.commerce.source'))->toBe('Fortnox')
+        ->and($res->json('data.commerce.last_synced_at'))->toBe('2026-09-07T10:15:00+00:00');
+});
+
 test('dates are serialized as ISO 8601', function () {
     [$user, $company] = apiCatalogContext();
     $product = seedSerialProduct($company, $user);

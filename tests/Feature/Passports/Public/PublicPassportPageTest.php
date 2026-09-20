@@ -371,4 +371,46 @@ class PublicPassportPageTest extends TestCase
         $response->assertSee('width=device-width', false);
         $response->assertSee('initial-scale=1', false);
     }
+
+    public function test_public_passport_v2_accessibility_landmarks_are_present(): void
+    {
+        auth()->guard('web')->logout();
+
+        $response = $this->get(route('public.passports.show', ['publicId' => $this->publicId]));
+        $response->assertOk();
+
+        $response->assertSee('data-public-passport-v2="true"', false);
+        $response->assertSee('Skip to main content', false);
+        $response->assertSee('role="banner"', false);
+        $response->assertSee('id="main-content"', false);
+        $response->assertSee('aria-label="Passport sections"', false);
+        $response->assertSee('id="quick-facts"', false);
+        $response->assertSee('id="publication-details"', false);
+        $response->assertSee('role="contentinfo"', false);
+    }
+
+    public function test_public_passport_sets_privacy_and_seo_headers_without_cookie(): void
+    {
+        auth()->guard('web')->logout();
+
+        $response = $this->get(route('public.passports.show', ['publicId' => $this->publicId]));
+        $response->assertOk();
+
+        $response->assertHeader('X-Robots-Tag', 'index, follow');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
+        $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        $this->assertFalse($response->headers->has('Set-Cookie'));
+    }
+
+    public function test_public_passport_privacy_notice_is_visible(): void
+    {
+        auth()->guard('web')->logout();
+
+        $response = $this->get(route('public.passports.show', ['publicId' => $this->publicId]));
+        $response->assertOk();
+
+        $response->assertSee('Privacy: this public page does not require sign-in and does not set tracking cookies.', false);
+        $response->assertSee('without raw IP addresses, full user-agent strings, or full referrer URLs', false);
+    }
 }

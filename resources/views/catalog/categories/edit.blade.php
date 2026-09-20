@@ -23,7 +23,13 @@
         </form>
 
         <aside class="space-y-6">
-            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section class="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm">
+                <h2 class="font-semibold text-slate-900">{{ __('Taxonomy template') }}</h2>
+                <p class="mt-2 text-sm text-slate-600">{{ __('Define required category attributes and versioned passport defaults.') }}</p>
+                <a href="{{ route('catalog.categories.template.show', $category->uuid) }}" class="mt-4 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Manage template') }}</a>
+            </section>
+
+            <section id="hierarchy" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 class="font-semibold text-slate-900">{{ __('Hierarchy') }}</h2>
                 <dl class="mt-3 space-y-2 text-sm">
                     <div class="flex justify-between gap-4"><dt class="text-slate-500">{{ __('Depth') }}</dt><dd class="font-semibold">{{ $category->depth }}</dd></div>

@@ -11,6 +11,7 @@ use App\Actions\Catalog\Attributes\UpdateAttributeDefinitionAction;
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyRole;
@@ -21,6 +22,7 @@ use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
+use App\Services\Catalog\Taxonomy\TaxonomyLifecycleService;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +197,33 @@ test('options are select-only tenant-owned immutable after use archivable and de
     $text = app(CreateAttributeDefinitionAction::class)->execute($actor, $company, r17DefinitionData(['name' => 'Text', 'code' => 'text', 'validation_rules' => []]));
     expect(fn () => $create->execute($actor, $company, $text, ['label' => 'No', 'code' => 'no', 'sort_order' => 0]))
         ->toThrow(AttributeOperationException::class, 'select and multiselect');
+});
+
+test('controlled vocabulary options require explicit approval before they are approved', function () {
+    [$actor, $company] = r17DefinitionContext();
+    $definition = app(CreateAttributeDefinitionAction::class)->execute($actor, $company, r17DefinitionData([
+        'name' => 'Controlled colour',
+        'code' => 'controlled_colour',
+        'type' => 'select',
+        'vocabulary_controlled' => true,
+        'validation_rules' => [],
+    ]));
+
+    $option = app(CreateAttributeOptionAction::class)->execute($actor, $company, $definition, [
+        'label' => 'Blue',
+        'code' => 'blue',
+        'sort_order' => 0,
+    ]);
+
+    expect($definition->vocabulary_controlled)->toBeTrue()
+        ->and($option->approval_status)->toBe(AttributeOptionApprovalStatus::Pending)
+        ->and($option->approved_at)->toBeNull();
+
+    $option = app(TaxonomyLifecycleService::class)->approveOption($option, $actor);
+
+    expect($option->approval_status)->toBe(AttributeOptionApprovalStatus::Approved)
+        ->and($option->approved_by)->toBe($actor->getKey())
+        ->and($option->approved_at)->not->toBeNull();
 });
 
 test('wrong tenant definition is rejected even when passed directly to an action', function () {

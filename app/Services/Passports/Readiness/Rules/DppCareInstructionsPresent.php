@@ -44,10 +44,14 @@ class DppCareInstructionsPresent implements PassportReadinessRule
             );
         }
 
-        $careInstructions = $context->normalizedPayload['data']['usage_and_care']['care_instructions']
-            ?? null;
+        $section = $context->sectionData(DppSectionKey::UsageAndCare->value);
+        $careInstructions = $section['care_instructions'] ?? null;
+        $careSteps = $section['care_steps'] ?? null;
+        $maintenanceInstructions = $section['maintenance_instructions'] ?? null;
 
-        $passed = ! empty($careInstructions);
+        $passed = ! empty($careInstructions)
+            || (is_array($careSteps) && $careSteps !== [])
+            || ! empty($maintenanceInstructions);
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -67,6 +71,8 @@ class DppCareInstructionsPresent implements PassportReadinessRule
             ),
             safeContext: [
                 'care_instructions_exists' => ! empty($careInstructions),
+                'care_steps_exist' => is_array($careSteps) && $careSteps !== [],
+                'maintenance_instructions_exist' => ! empty($maintenanceInstructions),
             ],
         );
     }

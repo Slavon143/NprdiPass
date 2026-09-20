@@ -59,8 +59,10 @@ class DppRepairInstructionsPresent implements PassportReadinessRule
             );
         }
 
-        $repairInstructions = $context->normalizedPayload['data']['repair_and_spare_parts']['repair_instructions']
-            ?? null;
+        $repairInstructions = $context->fieldValue(
+            DppSectionKey::RepairAndSpareParts->value,
+            'repair_instructions',
+        );
 
         $passed = ! empty($repairInstructions);
 

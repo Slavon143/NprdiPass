@@ -29,6 +29,7 @@ class UpdateAttributeOptionAction extends AttributeAction
                     ->whereKey($option->getKey())
                     ->lockForUpdate()
                     ->firstOrFail();
+                $this->assertControlledVocabularyAdmin($actor, $company, $definition);
                 $values = $this->optionData($data, $option);
                 $used = $option->productSelectValues()->exists()
                     || $option->variantSelectValues()->exists()

@@ -69,6 +69,7 @@ class DppSafetyReviewed implements PassportReadinessRule
             titleKey: 'readiness.dpp.safety.reviewed.title',
             messageKey: $hasContent ? 'readiness.dpp.safety.reviewed.passed' : 'readiness.dpp.safety.reviewed.failed',
             section: DppSectionKey::Safety,
+            field: 'warnings',
             navigationTarget: $hasContent ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::Safety->value,

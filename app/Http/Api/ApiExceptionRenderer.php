@@ -13,6 +13,7 @@ use App\Exceptions\Catalog\MediaOperationException;
 use App\Exceptions\Catalog\ProductActivationBlocked;
 use App\Exceptions\Catalog\ProductOperationException;
 use App\Exceptions\Catalog\VariantOperationException;
+use App\Exceptions\Fortnox\FortnoxProviderException;
 use App\Models\PersonalAccessToken;
 use App\Tenancy\Exceptions\CurrentCompanyNotSet;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -108,6 +109,15 @@ class ApiExceptionRenderer
                 $exception->getMessage(),
                 $status,
                 [$exception->field => [$exception->getMessage()]],
+            );
+        }
+
+        if ($exception instanceof FortnoxProviderException) {
+            return $this->response->error(
+                'fortnox_provider_error',
+                $exception->getMessage(),
+                502,
+                ['retryable' => $exception->retryable],
             );
         }
 

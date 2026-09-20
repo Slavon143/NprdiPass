@@ -7,6 +7,7 @@ use App\Actions\Catalog\Attributes\CreateAttributeOptionAction;
 use App\Actions\Catalog\Attributes\ReorderAttributeOptionsAction;
 use App\Actions\Catalog\Attributes\RestoreAttributeOptionAction;
 use App\Actions\Catalog\Attributes\UpdateAttributeOptionAction;
+use App\Actions\Catalog\Taxonomy\TaxonomyGovernanceAction;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Api\V1\Catalog\Concerns\AuthorizesCatalogApi;
 use App\Http\Controllers\Api\V1\Catalog\Concerns\ResolvesCatalogApiResources;
@@ -163,6 +164,48 @@ class AttributeOptionController extends Controller
         return $response->success(
             AttributeOptionResource::collection($options)->resolve($request),
         );
+    }
+
+    public function deprecate(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        ApiResponse $response,
+        string $attribute,
+        int $option,
+    ): JsonResponse {
+        $company = $this->currentCompany($currentCompany);
+        $definition = $this->resolveAttributeDefinition($company, $attribute);
+        $option = $this->resolveAttributeOption($definition, $option);
+        $this->authorizeOptionUpdate($option);
+        $validated = $request->validate(['replacement_option_id' => ['required', 'integer', 'min:1']]);
+        $replacement = $this->resolveAttributeOption($definition, $validated['replacement_option_id']);
+        $option = $action->deprecateOption(
+            $this->actor($request),
+            $company,
+            $definition,
+            $option,
+            $replacement,
+        );
+
+        return $response->success((new AttributeOptionResource($option))->resolve($request));
+    }
+
+    public function approve(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        ApiResponse $response,
+        string $attribute,
+        int $option,
+    ): JsonResponse {
+        $company = $this->currentCompany($currentCompany);
+        $definition = $this->resolveAttributeDefinition($company, $attribute);
+        $option = $this->resolveAttributeOption($definition, $option);
+        $this->authorizeOptionUpdate($option);
+        $option = $action->approveOption($this->actor($request), $company, $definition, $option);
+
+        return $response->success((new AttributeOptionResource($option))->resolve($request));
     }
 
     private function actor(Request $request): User

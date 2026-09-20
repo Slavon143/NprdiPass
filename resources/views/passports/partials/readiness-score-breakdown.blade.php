@@ -48,7 +48,7 @@
         <div class="mt-4">
             <div class="font-semibold text-slate-900">Needs attention</div>
             <p class="mt-1 text-xs text-slate-600">
-                These items are not all activation blockers. Red blockers prevent activation; yellow warnings and blue recommendations reduce the readiness score and should be reviewed before publishing.
+                These items are not all blocking issues. Red blocking issues prevent publication; yellow warnings and blue recommendations reduce the readiness score and should be reviewed before publishing.
             </p>
             <div class="mt-2 space-y-2">
                 @foreach (array_slice($failedRules, 0, 8) as $rule)

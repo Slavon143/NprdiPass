@@ -9,13 +9,13 @@ Passport readiness is a versioned, explainable publication decision. It is not a
 The authoritative profile is `config/passport_readiness.php`:
 
 - profile: `nordipass-pilot`
-- profile version: `1`
-- rule-set version: `1`
+- active profile version: `2`
+- active rule-set version: `2`
 - score algorithm version: `1`
 - maximum evaluation query budget: `20`
 - required core sections: identity, manufacturer/operator, safety, recycling/disposal
 
-Every validation run persists those identifiers. Changing rules, weights, grouping, or scoring requires incrementing the appropriate version; historical evidence must not be reinterpreted using new configuration.
+Every validation run persists those identifiers. Changing rules, weights, grouping, applicability, or scoring requires incrementing the appropriate version; historical evidence must not be reinterpreted using new configuration. Profile v1 remains registered as deprecated with fingerprint `f668cbb32defc4b23420a129970ec9233c8cb330905898ce2206e37583611569`. New and editable drafts use profile v2 with fingerprint `cba5078e465bba66f53ffcb613a7975a9ca4d5c8dd7888c72dcac988bd95e5b5`; published v1 snapshots are not migrated.
 
 R3.2 adds an immutable rule-set fingerprint to the evaluated result. The fingerprint is calculated from the pinned profile code/version, rule-set version, score algorithm name/version, severity weights, and the registered PHP rule codes/classes/groups/severities. Runtime scoring uses the resolved profile definition, not the mutable top-level compatibility weights.
 
@@ -41,7 +41,15 @@ It is clamped to 0..100. If no rules are applicable, the score is 100. Duplicate
 no failed blocker rules
 ```
 
-Warnings and the single recommendation reduce the score but do not block publication.
+Warnings and recommendations reduce the score but do not block publication. Non-applicable rules do not reduce the score.
+
+Profile v2 also makes editor applicability explicit:
+
+- an empty materials list produces one actionable warning to add materials; percentage and recycled-content follow-ups are not applicable until a row exists;
+- a declared `No` for take-back, warranty, repairability, or spare-parts availability is a complete declaration rather than missing information;
+- when a gate is `Yes`, the follow-up result points to the details field;
+- default-language translations and structured repeaters are evaluated through the same canonical field view as the editor;
+- numeric zero is treated as supplied data for percentages and environmental metrics.
 
 ## Evaluation path
 
@@ -103,7 +111,7 @@ The public resolver accepts only the current immutable published version and pub
 
 | Fixture | Passed | Failed blockers | Failed warnings | Failed recommendations | N/A | Points | Score |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Traffic signals equivalent | 34 | 8 | 21 | 1 | 2 | 277 / 421 | 66% |
-| Reflective Safety Vest | 42 | 3 | 18 | 1 | 2 | 336 / 421 | 80% |
+| Traffic signals equivalent | 34 | 8 | 19 | 0 | 5 | 277 / 414 | 67% |
+| Reflective Safety Vest | 42 | 3 | 16 | 0 | 5 | 336 / 414 | 81% |
 
 Both examples were correctly Not Ready. Historical expectations based on 65 rules are stale.

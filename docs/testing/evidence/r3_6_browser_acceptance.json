@@ -1,0 +1,64 @@
+{
+  "release": "R3.6",
+  "generated_at": "2026-08-20T20:55:06.852Z",
+  "result": "passed",
+  "responsive_pages": [
+    {
+      "name": "imports-index",
+      "width": 375,
+      "url": "http://127.0.0.1:8765/catalog/imports",
+      "scrollWidth": 375,
+      "innerWidth": 375,
+      "screenshot": "docs/testing/evidence/r3_6_browser_acceptance/375-imports-index.png"
+    },
+    {
+      "name": "import-job",
+      "width": 375,
+      "url": "http://127.0.0.1:8765/catalog/imports/72769dc0-8d35-4be3-8e55-e7288212e98e",
+      "scrollWidth": 375,
+      "innerWidth": 375,
+      "screenshot": "docs/testing/evidence/r3_6_browser_acceptance/375-import-job.png"
+    },
+    {
+      "name": "imports-index",
+      "width": 1280,
+      "url": "http://127.0.0.1:8765/catalog/imports",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "screenshot": "docs/testing/evidence/r3_6_browser_acceptance/1280-imports-index.png"
+    },
+    {
+      "name": "import-job",
+      "width": 1280,
+      "url": "http://127.0.0.1:8765/catalog/imports/72769dc0-8d35-4be3-8e55-e7288212e98e",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "screenshot": "docs/testing/evidence/r3_6_browser_acceptance/1280-import-job.png"
+    }
+  ],
+  "workflows": [
+    "authenticated owner session",
+    "tenant-scoped CSV upload",
+    "deterministic preview with row error",
+    "downloadable row-level CSV error report",
+    "mapping template save and reload",
+    "idempotent two-chunk apply and resume",
+    "tenant product CSV and XLSX exports"
+  ],
+  "exports": [
+    {
+      "format": "csv",
+      "status": 200,
+      "type": "text/csv; charset=UTF-8",
+      "size": 377
+    },
+    {
+      "format": "xlsx",
+      "status": 200,
+      "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "size": 6394
+    }
+  ],
+  "console_errors": [],
+  "failed_requests": []
+}

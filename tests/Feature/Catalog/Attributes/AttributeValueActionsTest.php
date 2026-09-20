@@ -6,6 +6,7 @@ use App\Actions\Catalog\Products\ProductAggregateCreator;
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyRole;
@@ -140,18 +141,23 @@ test('scope enforcement rejects Product and Variant targets while both is accept
         ->and($validator->normalize($company, $both, AttributeScope::Variant, 'x')->clear)->toBeFalse();
 });
 
-test('wrong definition company and inactive options are rejected before persistence', function () {
+test('wrong definition company and inactive or unapproved options are rejected before persistence', function () {
     [$actor, $company, $product] = r17ValueContext();
     $select = r17ValueDefinition($company, $actor, 'select', AttributeDataType::Select, AttributeScope::Product);
     $archived = r17ValueOption($company, $select, 'old', AttributeOptionStatus::Archived);
     $otherDefinition = r17ValueDefinition($company, $actor, 'other_select', AttributeDataType::Select, AttributeScope::Product);
     $wrong = r17ValueOption($company, $otherDefinition, 'wrong');
+    $pending = r17ValueOption($company, $select, 'pending');
+    $pending->forceFill(['approval_status' => AttributeOptionApprovalStatus::Pending])->save();
 
     expect(fn () => app(SyncProductAttributeValuesAction::class)->execute($actor, $company, $product, [
         $select->uuid => $archived->id,
     ]))->toThrow(AttributeOperationException::class, 'unavailable')
         ->and(fn () => app(SyncProductAttributeValuesAction::class)->execute($actor, $company, $product, [
             $select->uuid => $wrong->id,
+        ]))->toThrow(AttributeOperationException::class, 'unavailable')
+        ->and(fn () => app(SyncProductAttributeValuesAction::class)->execute($actor, $company, $product, [
+            $select->uuid => $pending->id,
         ]))->toThrow(AttributeOperationException::class, 'unavailable')
         ->and(ProductAttributeValue::query()->count())->toBe(0);
 });

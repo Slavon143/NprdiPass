@@ -44,23 +44,13 @@ class DppEnvironmentalClaimsPresent implements PassportReadinessRule
             );
         }
 
-        $envData = $context->normalizedPayload['data']['environmental_information'] ?? [];
-
+        $envData = $context->sectionData(DppSectionKey::EnvironmentalInformation->value);
         $environmentalClaims = $envData['environmental_claims'] ?? null;
+        $environmentalClaimRecords = $envData['environmental_claim_records'] ?? null;
         $environmentalNotes = $envData['environmental_notes'] ?? null;
-
-        $defaultLang = $context->passport->default_language ?? 'sv';
-        $envTranslations = $context->normalizedPayload['translations'][$defaultLang]['environmental_information'] ?? [];
-
-        if ($environmentalClaims === null) {
-            $environmentalClaims = $envTranslations['environmental_claims'] ?? null;
-        }
-
-        if ($environmentalNotes === null) {
-            $environmentalNotes = $envTranslations['environmental_notes'] ?? null;
-        }
-
-        $passed = ! empty($environmentalClaims) || ! empty($environmentalNotes);
+        $passed = ! empty($environmentalClaims)
+            || ! empty($environmentalNotes)
+            || (is_array($environmentalClaimRecords) && $environmentalClaimRecords !== []);
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -70,7 +60,8 @@ class DppEnvironmentalClaimsPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.environmental.claims.present.title',
             messageKey: $passed ? 'readiness.dpp.environmental.claims.present.passed' : 'readiness.dpp.environmental.claims.present.failed',
             section: DppSectionKey::EnvironmentalInformation,
-            navigationTarget: new ReadinessNavigationTarget(
+            field: 'environmental_claim_records',
+            navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::EnvironmentalInformation->value,
                 routeName: 'catalog.products.passport.edit',
@@ -80,6 +71,7 @@ class DppEnvironmentalClaimsPresent implements PassportReadinessRule
             safeContext: [
                 'has_environmental_claims' => ! empty($environmentalClaims),
                 'has_environmental_notes' => ! empty($environmentalNotes),
+                'has_environmental_claim_records' => is_array($environmentalClaimRecords) && $environmentalClaimRecords !== [],
             ],
         );
     }

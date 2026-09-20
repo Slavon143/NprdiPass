@@ -4,6 +4,7 @@ namespace App\Actions\Catalog\Attributes;
 
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Models\Catalog\AttributeDefinition;
@@ -30,6 +31,8 @@ class CreateAttributeOptionAction extends AttributeAction
                     throw AttributeOperationException::invalid('option', 'Options are available only for active select and multiselect attributes.');
                 }
 
+                $this->assertControlledVocabularyAdmin($actor, $company, $definition);
+
                 if ($definition->options()->lockForUpdate()->count() >= self::MAX_OPTIONS) {
                     throw AttributeOperationException::invalid('option', 'The maximum number of options has been reached.');
                 }
@@ -40,6 +43,11 @@ class CreateAttributeOptionAction extends AttributeAction
                     'attribute_definition_id' => $definition->getKey(),
                     ...$this->optionData($data),
                     'status' => AttributeOptionStatus::Active,
+                    'approval_status' => $definition->vocabulary_controlled
+                        ? AttributeOptionApprovalStatus::Pending
+                        : AttributeOptionApprovalStatus::Approved,
+                    'approved_at' => $definition->vocabulary_controlled ? null : now(),
+                    'approved_by' => $definition->vocabulary_controlled ? null : $actor->getKey(),
                 ])->save();
 
                 $this->auditLogger->logTenant($company, AuditEvent::CatalogAttributeOptionCreated, $actor, $definition, [

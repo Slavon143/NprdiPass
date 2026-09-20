@@ -6,6 +6,7 @@ use App\Actions\Catalog\Attributes\ArchiveAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\CreateAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\RestoreAttributeDefinitionAction;
 use App\Actions\Catalog\Attributes\UpdateAttributeDefinitionAction;
+use App\Actions\Catalog\Taxonomy\TaxonomyGovernanceAction;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Api\V1\Catalog\Concerns\AuthorizesCatalogApi;
 use App\Http\Controllers\Api\V1\Catalog\Concerns\ResolvesCatalogApiResources;
@@ -56,6 +57,7 @@ class AttributeDefinitionController extends Controller
             'required' => $request->boolean('required'),
             'filterable' => $request->boolean('filterable'),
             'searchable' => $request->boolean('searchable'),
+            'vocabulary_controlled' => $request->boolean('vocabulary_controlled'),
             'sort_order' => $request->input('sort_order', 0),
         ]);
 
@@ -69,6 +71,7 @@ class AttributeDefinitionController extends Controller
             'required' => ['required', 'boolean'],
             'filterable' => ['required', 'boolean'],
             'searchable' => ['required', 'boolean'],
+            'vocabulary_controlled' => ['required', 'boolean'],
             'validation_rules' => ['nullable', 'array'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:4294967295'],
         ]);
@@ -119,6 +122,7 @@ class AttributeDefinitionController extends Controller
             'required' => ['nullable', 'boolean'],
             'filterable' => ['nullable', 'boolean'],
             'searchable' => ['nullable', 'boolean'],
+            'vocabulary_controlled' => ['nullable', 'boolean'],
             'validation_rules' => ['nullable', 'array'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
         ]);
@@ -167,6 +171,28 @@ class AttributeDefinitionController extends Controller
         return $response->success(
             (new AttributeDefinitionResource($definition))->resolve($request),
         );
+    }
+
+    public function deprecate(
+        Request $request,
+        TokenCurrentCompany $currentCompany,
+        TaxonomyGovernanceAction $action,
+        ApiResponse $response,
+        string $attribute,
+    ): JsonResponse {
+        $company = $this->currentCompany($currentCompany);
+        $definition = $this->resolveAttributeDefinition($company, $attribute);
+        $this->authorizeAttributeUpdate($definition);
+        $validated = $request->validate(['replacement_uuid' => ['required', 'uuid']]);
+        $replacement = $this->resolveAttributeDefinition($company, $validated['replacement_uuid']);
+        $definition = $action->deprecateDefinition(
+            $this->actor($request),
+            $company,
+            $definition,
+            $replacement,
+        );
+
+        return $response->success((new AttributeDefinitionResource($definition))->resolve($request));
     }
 
     private function actor(Request $request): User

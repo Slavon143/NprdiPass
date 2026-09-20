@@ -30,10 +30,17 @@ class DppTakeBackProgramPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $takeBackProgram = $context->normalizedPayload['data']['recycling_and_disposal']['take_back_program']
-            ?? null;
+        $recyclingData = $context->sectionData(DppSectionKey::RecyclingAndDisposal->value);
 
-        $passed = ! empty($takeBackProgram);
+        $takeBackProgram = $recyclingData['take_back_program'] ?? null;
+        $takeBackAvailable = $recyclingData['take_back_program_available'] ?? null;
+
+        $passed = $takeBackAvailable === false || ! empty($takeBackProgram);
+        $messageKey = match (true) {
+            $passed => 'readiness.dpp.take_back_program.present.passed',
+            $takeBackAvailable === true => 'readiness.dpp.take_back_program.present.details_missing',
+            default => 'readiness.dpp.take_back_program.present.declaration_missing',
+        };
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -41,10 +48,10 @@ class DppTakeBackProgramPresent implements PassportReadinessRule
             severity: $this->severity(),
             status: $passed ? ReadinessRuleStatus::Passed : ReadinessRuleStatus::Failed,
             titleKey: 'readiness.dpp.take_back_program.present.title',
-            messageKey: $passed ? 'readiness.dpp.take_back_program.present.passed' : 'readiness.dpp.take_back_program.present.failed',
+            messageKey: $messageKey,
             section: DppSectionKey::RecyclingAndDisposal,
-            field: 'take_back_program',
-            navigationTarget: new ReadinessNavigationTarget(
+            field: $takeBackAvailable === true ? 'take_back_program' : 'take_back_program_available',
+            navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::RecyclingAndDisposal->value,
                 routeName: 'catalog.products.passport.edit',
@@ -53,6 +60,7 @@ class DppTakeBackProgramPresent implements PassportReadinessRule
             ),
             safeContext: [
                 'take_back_program_exists' => ! empty($takeBackProgram),
+                'take_back_program_available' => $takeBackAvailable,
             ],
         );
     }

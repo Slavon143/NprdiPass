@@ -32,4 +32,6 @@ enum CompanyPermission: string
     case PassportsView = 'passports.view';
     case PassportsManage = 'passports.manage';
     case PassportsPublish = 'passports.publish';
+    case FortnoxManage = 'fortnox.manage';
+    case BillingManage = 'billing.manage';
 }

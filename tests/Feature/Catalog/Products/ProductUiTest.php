@@ -97,9 +97,41 @@ test('viewer sees only current company products and read only product details', 
     $this->get(route('catalog.products.show', $visible->uuid))
         ->assertOk()
         ->assertSee('Visible product')
-        ->assertSee('Default variant')
+        ->assertSee('Default')
         ->assertSee('TEST-VISIBLE_PRODUCT')
         ->assertDontSee('Edit product');
+});
+
+test('product commerce from fortnox is visible on the index and product card', function () {
+    [$owner, $company] = r15UiContext();
+    $product = r15UiProduct($company, $owner, 'NP-TEST-001');
+    $product->forceFill([
+        'commerce' => [
+            'sales_price' => '150.00',
+            'currency' => 'SEK',
+            'vat_code' => 'SE25',
+            'source' => 'Fortnox',
+            'last_synced_at' => '2026-09-07T10:15:00+00:00',
+        ],
+    ])->save();
+
+    $this->actingAs($owner)->get(route('catalog.products.index'))
+        ->assertOk()
+        ->assertSee('Price')
+        ->assertSee('150.00')
+        ->assertSee('SEK');
+
+    $this->get(route('catalog.products.show', $product->uuid))
+        ->assertOk()
+        ->assertSee('Commerce')
+        ->assertSee('Sales price')
+        ->assertSee('150.00 SEK')
+        ->assertSee('VAT')
+        ->assertSee('25%')
+        ->assertSee('Source')
+        ->assertSee('Fortnox')
+        ->assertSee('Last synced')
+        ->assertSee('2026-09-07 10:15');
 });
 
 test('product index is paginated and loads row relations and category counts', function () {

@@ -52,10 +52,9 @@ class DppMaterialsPercentageComplete implements PassportReadinessRule
                 code: $this->code(),
                 group: $this->group(),
                 severity: $this->severity(),
-                status: ReadinessRuleStatus::Failed,
+                status: ReadinessRuleStatus::NotApplicable,
                 titleKey: 'readiness.dpp.materials.percentage_complete.title',
-                messageKey: 'readiness.dpp.materials.percentage_complete.failed',
-                section: DppSectionKey::MaterialsAndComposition,
+                messageKey: 'readiness.dpp.materials.percentage_complete.not_applicable_empty',
                 safeContext: ['materials_empty' => true],
             );
         }

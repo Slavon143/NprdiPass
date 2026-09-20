@@ -165,7 +165,7 @@ class PassportReadinessApiTest extends TestCase
 
         $this->assertSame('weighted_ratio', $data['score_algorithm']);
         $this->assertSame(1, $data['score_algorithm_version']);
-        $this->assertSame(1, $data['rule_set_version']);
+        $this->assertSame((int) config('passport_readiness.rule_set_version'), $data['rule_set_version']);
         $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $data['rule_set_fingerprint']);
     }
 

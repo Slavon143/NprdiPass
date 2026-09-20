@@ -15,8 +15,8 @@ test('catalog enum values match the schema contract', function () {
     expect(array_column(ProductStatus::cases(), 'value'))->toBe(['draft', 'active', 'archived'])
         ->and(array_column(ProductVariantStatus::cases(), 'value'))->toBe(['draft', 'active', 'archived'])
         ->and(array_column(CategoryStatus::cases(), 'value'))->toBe(['active', 'archived'])
-        ->and(array_column(AttributeDefinitionStatus::cases(), 'value'))->toBe(['active', 'archived'])
-        ->and(array_column(AttributeOptionStatus::cases(), 'value'))->toBe(['active', 'archived'])
+        ->and(array_column(AttributeDefinitionStatus::cases(), 'value'))->toBe(['active', 'deprecated', 'archived'])
+        ->and(array_column(AttributeOptionStatus::cases(), 'value'))->toBe(['active', 'deprecated', 'archived'])
         ->and(array_column(AttributeDataType::cases(), 'value'))->toBe([
             'text', 'integer', 'decimal', 'boolean', 'date', 'select', 'multiselect',
         ])

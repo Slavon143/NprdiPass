@@ -4,6 +4,7 @@ namespace App\Support\Catalog;
 
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Exceptions\Catalog\AttributeOperationException;
@@ -292,6 +293,7 @@ class AttributeValueValidator
             ->forCompany($company)
             ->where('attribute_definition_id', $definition->getKey())
             ->where('status', AttributeOptionStatus::Active->value)
+            ->where('approval_status', AttributeOptionApprovalStatus::Approved->value)
             ->whereKey($ids)
             ->count();
 

@@ -30,6 +30,22 @@ function progress(message) {
   console.error(`[r3.4 acceptance] ${message}`);
 }
 
+function systemBrowserExecutable() {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    process.platform === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : null,
+    process.platform === 'win32' ? 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe' : null,
+    process.platform === 'win32' ? 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe' : null,
+    process.platform === 'win32' ? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe' : null,
+    process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : null,
+    process.platform === 'linux' ? '/usr/bin/google-chrome' : null,
+    process.platform === 'linux' ? '/usr/bin/chromium' : null,
+    process.platform === 'linux' ? '/usr/bin/chromium-browser' : null,
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
+
 function command(commandName, args, options = {}) {
   const startedAt = new Date().toISOString();
   try {
@@ -647,10 +663,12 @@ async function main() {
     }
 
     progress('launch browser');
+    const executablePath = systemBrowserExecutable();
     browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       timeout: 30000,
+      ...(executablePath ? { executablePath } : {}),
     });
 
     progress('open pages');

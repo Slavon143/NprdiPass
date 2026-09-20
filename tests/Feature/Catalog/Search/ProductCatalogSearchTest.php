@@ -237,7 +237,7 @@ test('default listing is tenant scoped and hides archived products unless explic
         ->assertDontSee('Archived Ear Defenders')
         ->assertDontSee('Foreign Secret')
         ->assertDontSee('Create product')
-        ->assertSee('2 products found');
+        ->assertSee('2 products');
 
     $this->get(route('catalog.products.index', ['product_statuses' => ['archived']]))
         ->assertOk()

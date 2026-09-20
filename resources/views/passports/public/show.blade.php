@@ -2,7 +2,7 @@
 
 @section('content')
 {{-- Product Hero --}}
-<section class="mb-8">
+<section id="overview" class="mb-8" aria-labelledby="passport-title">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @php
             $primaryMedia = $passport->media[0] ?? null;
@@ -23,7 +23,7 @@
             @if($passport->productBrand !== null)
                 <div class="text-sm font-semibold text-blue-600 mb-1">{{ $passport->productBrand }}</div>
             @endif
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">{{ $passport->productName }}</h1>
+            <h1 id="passport-title" class="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">{{ $passport->productName }}</h1>
             @if(isset($passport->sectionData['identity']['public_description']))
                 <p class="text-slate-600 leading-relaxed">{{ $passport->sectionData['identity']['public_description'] }}</p>
             @endif
@@ -42,11 +42,22 @@
     </div>
 </section>
 
+<nav class="sticky top-0 z-20 -mx-4 mb-8 border-y border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:rounded-lg sm:border" aria-label="Passport sections">
+    <ul class="flex gap-2 overflow-x-auto text-sm" role="list">
+        <li><a href="#overview" class="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">Overview</a></li>
+        <li><a href="#quick-facts" class="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">Quick facts</a></li>
+        @if(count($passport->documents) > 0)
+            <li><a href="#documents" class="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">Documents</a></li>
+        @endif
+        <li><a href="#publication-details" class="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">Publication</a></li>
+    </ul>
+</nav>
+
 {{-- Language Selector --}}
 @if(isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
-<section class="mb-6">
-    <div class="flex items-center gap-3 text-sm">
-        <span class="text-slate-500 font-medium">Language</span>
+<section class="mb-6" aria-labelledby="language-selector-title">
+    <div class="flex flex-wrap items-center gap-3 text-sm">
+        <h2 id="language-selector-title" class="text-sm text-slate-500 font-medium">Language</h2>
         @foreach($passport->enabledLocales as $locale)
             @php
                 $isActive = ($passport->requestedLocale ?? $passport->defaultLanguage) === $locale;
@@ -96,8 +107,8 @@
 @endif
 
 {{-- Quick Facts --}}
-<section class="mb-8">
-    <h2 class="text-lg font-semibold mb-3">Quick Facts</h2>
+<section id="quick-facts" class="mb-8" aria-labelledby="quick-facts-title">
+    <h2 id="quick-facts-title" class="text-lg font-semibold mb-3">Quick Facts</h2>
     <dl class="bg-slate-50 rounded-lg p-4">
         @if($passport->defaultVariantGtin !== null)
             <div class="quick-fact"><dt>GTIN</dt><dd>{{ $passport->defaultVariantGtin }}</dd></div>
@@ -125,8 +136,8 @@
 @if(in_array('identity', $passport->enabledSections))
     @php $s = $passport->sectionData['identity'] ?? []; @endphp
     @if(!empty(array_filter($s, fn($v) => $v !== null && $v !== '')))
-    <section class="passport-section">
-        <h2>{{ $passport->sectionLabels['identity'] ?? 'Identity' }}</h2>
+    <section class="passport-section" aria-labelledby="section-identity">
+        <h2 id="section-identity">{{ $passport->sectionLabels['identity'] ?? 'Identity' }}</h2>
         @if(!empty($s['public_name']) && $s['public_name'] !== $passport->productName) <p class="text-slate-700">{{ $s['public_name'] }}</p> @endif
         @if(!empty($s['public_description'])) <p class="text-slate-600 text-sm mt-1">{!! nl2br(e($s['public_description'])) !!}</p> @endif
     </section>
@@ -156,8 +167,8 @@
         @continue
     @endif
 
-    <section class="passport-section">
-        <h2>{{ $sectionLabel }}</h2>
+    <section @class(['passport-section']) @if($sectionKey === 'certifications_and_documents') id="documents" @endif aria-labelledby="section-{{ $sectionKey }}">
+        <h2 id="section-{{ $sectionKey }}">{{ $sectionLabel }}</h2>
 
         @switch($sectionKey)
             @case('manufacturer_and_operator')
@@ -222,7 +233,7 @@
 @endforeach
 
 {{-- Publication Details --}}
-<section class="mt-10 pt-6 border-t border-slate-200" aria-label="Publication details">
+<section id="publication-details" class="mt-10 pt-6 border-t border-slate-200" aria-label="Publication details">
     <div class="text-xs text-slate-400 space-y-1">
         <div>Passport Version {{ $passport->versionNumber }}
             @if($passport->publishedAt !== '')

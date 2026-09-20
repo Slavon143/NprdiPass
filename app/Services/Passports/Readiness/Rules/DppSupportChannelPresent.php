@@ -49,8 +49,12 @@ class DppSupportChannelPresent implements PassportReadinessRule
         $supportEmail = $supportData['support_email'] ?? null;
         $supportPhone = $supportData['support_phone'] ?? null;
         $supportUrl = $supportData['support_url'] ?? null;
+        $supportChannels = $supportData['support_channels'] ?? null;
 
-        $passed = ! empty($supportEmail) || ! empty($supportPhone) || ! empty($supportUrl);
+        $passed = ! empty($supportEmail)
+            || ! empty($supportPhone)
+            || ! empty($supportUrl)
+            || (is_array($supportChannels) && $supportChannels !== []);
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -60,7 +64,8 @@ class DppSupportChannelPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.support.channel.present.title',
             messageKey: $passed ? 'readiness.dpp.support.channel.present.passed' : 'readiness.dpp.support.channel.present.failed',
             section: DppSectionKey::SupportAndContact,
-            navigationTarget: new ReadinessNavigationTarget(
+            field: 'support_channels',
+            navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::SupportAndContact->value,
                 routeName: 'catalog.products.passport.edit',
@@ -71,6 +76,7 @@ class DppSupportChannelPresent implements PassportReadinessRule
                 'has_support_email' => ! empty($supportEmail),
                 'has_support_phone' => ! empty($supportPhone),
                 'has_support_url' => ! empty($supportUrl),
+                'has_support_channels' => is_array($supportChannels) && $supportChannels !== [],
             ],
         );
     }

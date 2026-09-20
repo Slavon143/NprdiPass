@@ -128,6 +128,30 @@ class CompanyPermissionGate
         return $this->allows($user, $company, CompanyPermission::PassportsManage);
     }
 
+    public function passportsPublish(User $user, Company $company): bool
+    {
+        $freshCompany = Company::query()->find($company->getKey());
+
+        return $freshCompany?->status === CompanyStatus::Active
+            && $this->allows($user, $freshCompany, CompanyPermission::PassportsPublish);
+    }
+
+    public function fortnoxManage(User $user, Company $company): bool
+    {
+        $freshCompany = Company::query()->find($company->getKey());
+
+        return $freshCompany?->status === CompanyStatus::Active
+            && $this->allows($user, $freshCompany, CompanyPermission::FortnoxManage);
+    }
+
+    public function billingManage(User $user, Company $company): bool
+    {
+        $freshCompany = Company::query()->find($company->getKey());
+
+        return $freshCompany?->status === CompanyStatus::Active
+            && $this->allows($user, $freshCompany, CompanyPermission::BillingManage);
+    }
+
     private function allowsCatalog(User $user, Company $company, CompanyPermission $permission): bool
     {
         $freshCompany = Company::query()->find($company->getKey());

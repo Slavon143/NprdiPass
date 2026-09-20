@@ -54,7 +54,11 @@ class DppFieldDefinition
             'emergency_instructions' => 'Emergency instructions',
             'age_restrictions' => 'Age restrictions',
             'usage_instructions' => 'Usage instructions',
+            'usage_steps' => 'Usage steps',
+            'usage_warnings' => 'Usage warnings',
             'care_instructions' => 'Care instructions',
+            'care_steps' => 'Care steps',
+            'care_warnings' => 'Care warnings',
             'maintenance_instructions' => 'Maintenance instructions',
             'storage_recommendations' => 'Storage recommendations',
             'repairable' => 'Repairable',
@@ -107,6 +111,23 @@ class DppFieldDefinition
             'warranty_claim_instructions' => 'Warranty claim instructions',
             'support_notes' => 'Support notes',
             default => $this->key,
+        };
+    }
+
+    public function help(): ?string
+    {
+        return match ($this->key) {
+            'materials' => 'Add one row per material. Product share (%) describes how much of the product is made from that material; recycled content (%) describes how much of that material is recycled. Use 0 when the value is known to be none.',
+            'take_back_program_available' => 'Choose Yes only when the manufacturer, seller, or another named organization accepts the product back after use.',
+            'take_back_program' => 'Explain who accepts returns, where customers should go, and any conditions. General recycling or disposal instructions belong in the fields above.',
+            'environmental_metrics' => 'Add measured product data such as carbon footprint, energy use, expected lifetime, or another clearly named metric with a value and unit.',
+            'environmental_claim_records' => 'Use structured claims when you make statements such as “recycled”, “low carbon”, or “repairable”. Add a source and set Review state to Reviewed only after verification.',
+            'recycling_codes' => 'Add recognized recycling or material identification codes that apply to this product or its packaging, one code per line.',
+            'repairable' => 'Choose Yes or No. Selecting No is a valid declaration and hides repair-only fields.',
+            'spare_parts_available' => 'Choose Yes only when customers or service partners can obtain spare parts.',
+            'support_channels' => 'Add at least one public way for customers to request help, such as an email address, phone number, website, or service center.',
+            'warranty_available' => 'Choose Yes or No. If Yes, provide a warranty summary or public warranty URL.',
+            default => null,
         };
     }
 }

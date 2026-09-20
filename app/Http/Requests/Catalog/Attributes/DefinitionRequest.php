@@ -17,6 +17,7 @@ abstract class DefinitionRequest extends AttributeRequest
             'required' => ['required', 'boolean'],
             'filterable' => ['required', 'boolean'],
             'searchable' => ['required', 'boolean'],
+            'vocabulary_controlled' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:4294967295'],
             'validation_rules' => ['nullable', 'array'],
             'validation_rules.min_length' => ['nullable', 'integer', 'min:0', 'max:1000'],
@@ -40,6 +41,7 @@ abstract class DefinitionRequest extends AttributeRequest
             'required' => $this->boolean('required'),
             'filterable' => $this->boolean('filterable'),
             'searchable' => $this->boolean('searchable'),
+            'vocabulary_controlled' => $this->boolean('vocabulary_controlled'),
             'sort_order' => $this->input('sort_order', 0),
         ]);
     }

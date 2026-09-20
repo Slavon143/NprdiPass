@@ -130,4 +130,19 @@ class ReadinessRuleRegistryTest extends TestCase
         $this->assertIsArray($rules);
         $this->assertNotEmpty($rules);
     }
+
+    public function test_every_rule_has_user_facing_title_and_result_messages(): void
+    {
+        /** @var array<string, array<string, string>> $translations */
+        $translations = require lang_path('en/readiness.php');
+
+        foreach ($this->registry->all() as $rule) {
+            $messages = $translations[$rule->code()] ?? null;
+
+            $this->assertIsArray($messages, "Rule {$rule->code()} has no English readiness copy.");
+            $this->assertNotEmpty($messages['title'] ?? null, "Rule {$rule->code()} has no title.");
+            $this->assertNotEmpty($messages['passed'] ?? $messages['message'] ?? null, "Rule {$rule->code()} has no passed message.");
+            $this->assertNotEmpty($messages['failed'] ?? $messages['message'] ?? null, "Rule {$rule->code()} has no failed message.");
+        }
+    }
 }

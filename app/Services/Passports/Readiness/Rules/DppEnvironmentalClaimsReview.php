@@ -44,15 +44,43 @@ class DppEnvironmentalClaimsReview implements PassportReadinessRule
             );
         }
 
+        $section = $context->sectionData(DppSectionKey::EnvironmentalInformation->value);
+        $claims = $section['environmental_claims'] ?? [];
+        $records = $section['environmental_claim_records'] ?? [];
+        $hasClaims = (is_array($claims) && $claims !== []) || (is_array($records) && $records !== []);
+
+        if (! $hasClaims) {
+            return new ReadinessRuleResult(
+                code: $this->code(),
+                group: $this->group(),
+                severity: $this->severity(),
+                status: ReadinessRuleStatus::NotApplicable,
+                titleKey: 'readiness.dpp.environmental.claims.review.title',
+                messageKey: 'readiness.dpp.environmental.claims.review.not_applicable_empty',
+                safeContext: ['claims_present' => false],
+            );
+        }
+
+        $allReviewed = is_array($records) && $records !== [];
+        foreach (is_array($records) ? $records : [] as $record) {
+            if (! is_array($record) || ($record['review_state'] ?? null) !== 'reviewed') {
+                $allReviewed = false;
+                break;
+            }
+        }
+
         return new ReadinessRuleResult(
             code: $this->code(),
             group: $this->group(),
             severity: $this->severity(),
-            status: ReadinessRuleStatus::Failed,
+            status: $allReviewed ? ReadinessRuleStatus::Passed : ReadinessRuleStatus::Failed,
             titleKey: 'readiness.dpp.environmental.claims.review.title',
-            messageKey: 'readiness.dpp.environmental.claims.review.recommendation',
+            messageKey: $allReviewed
+                ? 'readiness.dpp.environmental.claims.review.passed'
+                : 'readiness.dpp.environmental.claims.review.recommendation',
             section: DppSectionKey::EnvironmentalInformation,
-            navigationTarget: new ReadinessNavigationTarget(
+            field: 'environmental_claim_records',
+            navigationTarget: $allReviewed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::EnvironmentalInformation->value,
                 routeName: 'catalog.products.passport.edit',
@@ -60,7 +88,9 @@ class DppEnvironmentalClaimsReview implements PassportReadinessRule
                 label: 'Review Environmental Claims',
             ),
             safeContext: [
-                'reminder' => 'Review all environmental claims for accuracy and compliance.',
+                'claims_present' => true,
+                'structured_claims_count' => is_array($records) ? count($records) : 0,
+                'all_claims_reviewed' => $allReviewed,
             ],
         );
     }

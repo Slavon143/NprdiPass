@@ -15,27 +15,27 @@ class ReadinessAcceptanceFixturesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_readiness_acceptance_fixtures_match_canonical_r2_arithmetic(): void
+    public function test_readiness_acceptance_fixtures_match_active_v2_arithmetic(): void
     {
         $this->seed(ReadinessAcceptanceFixtureSeeder::class);
 
         $this->assertFixtureReadiness(
             productName: 'Reflective Safety Vest',
             expected: [
-                'score' => 80,
+                'score' => 81,
                 'earned_points' => 336,
-                'applicable_points' => 421,
-                'failed_points' => 85,
+                'applicable_points' => 414,
+                'failed_points' => 78,
                 'failed_points_by_severity' => [
                     'blocker' => 30,
-                    'warning' => 54,
-                    'recommendation' => 1,
+                    'warning' => 48,
+                    'recommendation' => 0,
                 ],
                 'passed' => 42,
                 'blockers' => 3,
-                'warnings' => 18,
-                'recommendations' => 1,
-                'not_applicable' => 2,
+                'warnings' => 16,
+                'recommendations' => 0,
+                'not_applicable' => 5,
             ],
         );
 
@@ -54,20 +54,20 @@ class ReadinessAcceptanceFixturesTest extends TestCase
         $this->assertFixtureReadiness(
             productName: 'Traffic signals',
             expected: [
-                'score' => 66,
+                'score' => 67,
                 'earned_points' => 277,
-                'applicable_points' => 421,
-                'failed_points' => 144,
+                'applicable_points' => 414,
+                'failed_points' => 137,
                 'failed_points_by_severity' => [
                     'blocker' => 80,
-                    'warning' => 63,
-                    'recommendation' => 1,
+                    'warning' => 57,
+                    'recommendation' => 0,
                 ],
                 'passed' => 34,
                 'blockers' => 8,
-                'warnings' => 21,
-                'recommendations' => 1,
-                'not_applicable' => 2,
+                'warnings' => 19,
+                'recommendations' => 0,
+                'not_applicable' => 5,
             ],
         );
     }

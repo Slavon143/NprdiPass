@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Passports\Publication;
 
+use App\Actions\Approvals\ApprovePassportPublicationApprovalAction;
+use App\Actions\Approvals\RequestPassportPublicationApprovalAction;
 use App\Actions\Passports\CreateProductPassportDraftAction;
 use App\Actions\Passports\PublishProductPassport;
 use App\Actions\Passports\UpdateProductPassportSectionAction;
+use App\Enums\Approvals\PassportPublicationApprovalStatus;
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
@@ -26,6 +29,7 @@ use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -354,6 +358,90 @@ class PublishGateTest extends TestCase
         $this->assertSame(ProductPassportVersionStatus::Published, $result->publishedVersion->status);
         $this->assertNotNull($result->publishedVersion->version_number);
         $this->assertNotNull($result->passport->current_published_version_id);
+    }
+
+    public function test_editor_requests_publication_approval_and_owner_approves(): void
+    {
+        $this->fillCoreSections();
+        $passport = $this->draftPassport();
+
+        CompanyMembership::query()
+            ->where('company_id', $this->company->getKey())
+            ->where('user_id', $this->actor->getKey())
+            ->update(['role' => CompanyRole::Editor->value, 'is_owner' => false]);
+
+        $this->expectException(AuthorizationException::class);
+
+        try {
+            $this->publishAction()->handle(
+                $this->actor,
+                $this->company,
+                $this->product,
+                $passport,
+                $this->revision,
+                true,
+            );
+        } finally {
+            $approval = app(RequestPassportPublicationApprovalAction::class)->handle(
+                $this->actor,
+                $this->company,
+                $this->product,
+                $passport,
+                $this->revision,
+                true,
+            );
+
+            $this->assertSame(PassportPublicationApprovalStatus::Pending, $approval->status);
+            $this->assertSame($this->actor->getKey(), $approval->requested_by);
+
+            $owner = User::factory()->create(['email_verified_at' => now()]);
+            CompanyMembership::factory()->create([
+                'company_id' => $this->company->getKey(),
+                'user_id' => $owner->getKey(),
+                'role' => CompanyRole::Owner,
+            ]);
+
+            $result = app(ApprovePassportPublicationApprovalAction::class)->handle(
+                $owner,
+                $this->company,
+                $this->product,
+                $passport->fresh(['currentDraftVersion']),
+                $approval,
+            );
+
+            $approval = $approval->fresh();
+
+            $this->assertSame(ProductPassportStatus::Published, $result->passport->status);
+            $this->assertSame(PassportPublicationApprovalStatus::Approved, $approval->status);
+            $this->assertSame($owner->getKey(), $approval->approved_by);
+            $this->assertSame($result->publishedVersion->getKey(), $approval->published_version_id);
+        }
+    }
+
+    public function test_requester_cannot_approve_their_own_publication_request(): void
+    {
+        $this->fillCoreSections();
+        $passport = $this->draftPassport();
+
+        $approval = app(RequestPassportPublicationApprovalAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport,
+            $this->revision,
+            true,
+        );
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Publication must be approved by a different company member.');
+
+        app(ApprovePassportPublicationApprovalAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport,
+            $approval,
+        );
     }
 
     public function test_readiness_is_recalculated_in_transaction(): void

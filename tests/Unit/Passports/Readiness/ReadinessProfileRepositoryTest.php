@@ -30,4 +30,16 @@ class ReadinessProfileRepositoryTest extends TestCase
 
         $this->assertNotSame($original, $changed);
     }
+
+    public function test_v2_is_active_and_v1_remains_resolvable_as_deprecated(): void
+    {
+        $active = app(ReadinessProfileRepository::class)->active();
+        $v1 = app(ReadinessProfileRepository::class)->for('nordipass-pilot', 1);
+
+        $this->assertSame(2, $active->version);
+        $this->assertSame(2, $active->ruleSetVersion);
+        $this->assertSame('active', $active->status);
+        $this->assertSame('deprecated', $v1->status);
+        $this->assertNotSame($v1->fingerprint, $active->fingerprint);
+    }
 }

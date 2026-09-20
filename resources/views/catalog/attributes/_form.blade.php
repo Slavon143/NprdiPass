@@ -9,7 +9,7 @@
     <div><x-input-label for="sort_order" :value="__('Sort order')" /><x-text-input id="sort_order" name="sort_order" type="number" min="0" class="mt-1 block w-full" :value="old('sort_order', $definition?->sort_order ?? 0)" required /><x-input-error class="mt-2" :messages="$errors->get('sort_order')" /></div>
 </div>
 <div class="grid gap-3 sm:grid-cols-3">
-    @foreach(['required' => 'Required', 'filterable' => 'Filterable', 'searchable' => 'Searchable'] as $field => $label)
+    @foreach(['required' => 'Required', 'filterable' => 'Filterable', 'searchable' => 'Searchable', 'vocabulary_controlled' => 'Controlled vocabulary'] as $field => $label)
         <input type="hidden" name="{{ $field }}" value="0"><label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3"><input type="checkbox" name="{{ $field }}" value="1" class="rounded border-slate-300 text-indigo-600" @checked(old($field, (bool) ($definition?->{$field} ?? false)))><span class="text-sm font-medium text-slate-700">{{ __($label) }}</span></label>
     @endforeach
 </div>

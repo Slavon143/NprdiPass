@@ -50,6 +50,7 @@ class DppManufacturerContactPresent implements PassportReadinessRule
             titleKey: 'readiness.dpp.manufacturer.contact.present.title',
             messageKey: $passed ? 'readiness.dpp.manufacturer.contact.present.passed' : 'readiness.dpp.manufacturer.contact.present.failed',
             section: DppSectionKey::ManufacturerAndOperator,
+            field: 'manufacturer_email',
             navigationTarget: $passed ? null : new ReadinessNavigationTarget(
                 type: 'passport_section',
                 section: DppSectionKey::ManufacturerAndOperator->value,

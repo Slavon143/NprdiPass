@@ -13,6 +13,8 @@ readonly class PassportQrViewModel
         public string $passportStatus,
         public string $productName,
         public string $productUuid,
+        /** @var array<string, mixed> */
+        public array $printSpec = [],
     ) {}
 
     public function targetStatusLabel(): string

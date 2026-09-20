@@ -342,7 +342,7 @@ test('wrong tenant lifecycle routes are concealed and lifecycle controls match a
     $this->get(route('catalog.products.activate', $product->uuid))->assertMethodNotAllowed();
     $this->get(route('catalog.products.show', $product->uuid))
         ->assertOk()
-        ->assertSee('Activation readiness')
+        ->assertSee('Catalog readiness')
         ->assertSee('Ready')
         ->assertSee('Activate')
         ->assertSee(route('catalog.products.variants.edit', [$product->uuid, $product->defaultVariant?->uuid]).'#gtin', false);
@@ -352,6 +352,6 @@ test('wrong tenant lifecycle routes are concealed and lifecycle controls match a
     app(CurrentCompany::class)->set($company);
     $this->actingAs($viewer);
     $this->get(route('catalog.products.show', $product->uuid))
-        ->assertOk()->assertSee('Activation readiness')->assertDontSee('>Activate<', false)->assertDontSee('>Archive<', false);
+        ->assertOk()->assertSee('Catalog readiness')->assertDontSee('>Activate<', false)->assertDontSee('>Archive<', false);
     $this->post(route('catalog.products.activate', $product->uuid))->assertForbidden();
 });

@@ -41,4 +41,21 @@ return [
         'read_per_minute' => (int) env('RATE_LIMIT_PASSPORTS_API_READ_PER_MINUTE', 120),
         'write_per_minute' => (int) env('RATE_LIMIT_PASSPORTS_API_WRITE_PER_MINUTE', 60),
     ],
+
+    'fortnox' => [
+        'connect_per_minute' => (int) env('RATE_LIMIT_FORTNOX_CONNECT_PER_MINUTE', 10),
+        'callback_per_minute' => (int) env('RATE_LIMIT_FORTNOX_CALLBACK_PER_MINUTE', 20),
+        'sync_per_minute' => (int) env('RATE_LIMIT_FORTNOX_SYNC_PER_MINUTE', 10),
+    ],
+
+    'fortnox_api' => [
+        'read_per_minute' => (int) env('RATE_LIMIT_FORTNOX_API_READ_PER_MINUTE', 120),
+        'write_per_minute' => (int) env('RATE_LIMIT_FORTNOX_API_WRITE_PER_MINUTE', 60),
+    ],
+
+    'billing' => [
+        'checkout_per_minute' => (int) env('RATE_LIMIT_BILLING_CHECKOUT_PER_MINUTE', 10),
+        'portal_per_minute' => (int) env('RATE_LIMIT_BILLING_PORTAL_PER_MINUTE', 20),
+        'webhook_per_minute' => (int) env('RATE_LIMIT_STRIPE_WEBHOOK_PER_MINUTE', 120),
+    ],
 ];

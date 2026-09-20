@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Catalog;
 
+use App\Actions\Approvals\ApprovePassportPublicationApprovalAction;
+use App\Actions\Approvals\RequestPassportPublicationApprovalAction;
 use App\Actions\Passports\ArchiveProductPassport;
 use App\Actions\Passports\PublishProductPassport;
 use App\Actions\Passports\RestoreProductPassport;
 use App\Actions\Passports\UnpublishProductPassport;
+use App\Enums\Approvals\PassportPublicationApprovalStatus;
 use App\Enums\CompanyPermission;
 use App\Enums\Passports\ProductPassportVersionStatus;
 use App\Http\Controllers\Controller;
@@ -13,6 +16,7 @@ use App\Http\Requests\Passports\ArchivePassportRequest;
 use App\Http\Requests\Passports\PublishPassportRequest;
 use App\Http\Requests\Passports\RestorePassportRequest;
 use App\Http\Requests\Passports\UnpublishPassportRequest;
+use App\Models\Approvals\PassportPublicationApproval;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
@@ -64,6 +68,74 @@ class PassportPublicationController extends Controller
                 ->route('catalog.products.passport.publish-confirm', ['product' => $product->uuid])
                 ->withErrors($e->errors())
                 ->withInput();
+        }
+    }
+
+    public function requestPublicationApproval(
+        Product $product,
+        PublishPassportRequest $request,
+        CurrentCompany $currentCompany,
+        RequestPassportPublicationApprovalAction $action,
+    ): RedirectResponse {
+        $company = $this->resolveCompany($currentCompany);
+        $this->assertProductBelongsToCompany($company, $product);
+
+        $passport = $this->resolvePassport($product);
+        $validated = $request->validated();
+
+        try {
+            $action->handle(
+                $this->actor($request),
+                $company,
+                $product,
+                $passport,
+                (int) $validated['expected_revision'],
+                (bool) ($validated['acknowledge_warnings'] ?? false),
+            );
+
+            return redirect()
+                ->route('catalog.products.passport.publish-confirm', ['product' => $product->uuid])
+                ->with('success', 'Publication approval requested.');
+        } catch (ConflictHttpException $e) {
+            return redirect()
+                ->route('catalog.products.passport.publish-confirm', ['product' => $product->uuid])
+                ->with('error', $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function approvePublicationApproval(
+        Product $product,
+        PassportPublicationApproval $approval,
+        Request $request,
+        CurrentCompany $currentCompany,
+        ApprovePassportPublicationApprovalAction $action,
+    ): RedirectResponse {
+        $company = $this->resolveCompany($currentCompany);
+        $this->assertProductBelongsToCompany($company, $product);
+
+        $passport = $this->resolvePassport($product);
+
+        try {
+            $result = $action->handle(
+                $this->actor($request),
+                $company,
+                $product,
+                $passport,
+                $approval,
+            );
+
+            return redirect()
+                ->to(route('catalog.products.passport.show', ['product' => $product->uuid]).'#published-version')
+                ->with('success', 'Publication approved and Passport published as Version '.$result->publishedVersion->version_number.'.');
+        } catch (ConflictHttpException $e) {
+            return redirect()
+                ->route('catalog.products.passport.publish-confirm', ['product' => $product->uuid])
+                ->with('error', $e->getMessage());
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('catalog.products.passport.publish-confirm', ['product' => $product->uuid])
+                ->withErrors($e->errors());
         }
     }
 
@@ -175,8 +247,15 @@ class PassportPublicationController extends Controller
         $readinessContext = $builder->build($company, $product);
         $readinessResult = $evaluator->evaluate($readinessContext);
 
-        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true
-            || $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canManage = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
+        $pendingApproval = PassportPublicationApproval::query()
+            ->where('company_id', $company->getKey())
+            ->where('passport_id', $passport->getKey())
+            ->where('draft_version_id', $draft->getKey())
+            ->where('status', PassportPublicationApprovalStatus::Pending->value)
+            ->with('requester')
+            ->first();
 
         return view('passports.publish-confirm', [
             'company' => $company,
@@ -184,7 +263,9 @@ class PassportPublicationController extends Controller
             'passport' => $passport,
             'draft' => $draft,
             'readiness' => $readinessResult,
+            'canManage' => $canManage,
             'canPublish' => $canPublish,
+            'pendingApproval' => $pendingApproval,
         ]);
     }
 

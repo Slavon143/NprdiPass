@@ -3,13 +3,14 @@ name: Deploy Production
 on:
   workflow_dispatch:
     inputs:
-      release_id:
-        description: 'Release artifact name (from release workflow)'
+      release_run_id:
+        description: 'GitHub Actions run ID from the successful Release Build workflow'
         required: true
         type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: deploy-production
@@ -30,6 +31,9 @@ jobs:
         with:
           name: nordipass-release
           path: ./artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.release_run_id }}
 
       - name: Verify artifact checksum
         run: |
@@ -52,12 +56,25 @@ jobs:
           umask 077
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > deploy_key
 
+          ssh -i deploy_key \
+            -o StrictHostKeyChecking=yes \
+            -p "${DEPLOY_PORT:-22}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "mkdir -p '${DEPLOY_PATH}/deploy/scripts'"
+
           scp -i deploy_key \
             -o StrictHostKeyChecking=yes \
             -P "${DEPLOY_PORT:-22}" \
             artifact/nordipass-release.tar.gz \
             artifact/nordipass-release.tar.gz.sha256 \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+
+          scp -i deploy_key \
+            -o StrictHostKeyChecking=yes \
+            -P "${DEPLOY_PORT:-22}" \
+            deploy/scripts/deploy.sh \
+            deploy/scripts/rollback.sh \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/scripts/"
 
           ssh -i deploy_key \
             -o StrictHostKeyChecking=yes \

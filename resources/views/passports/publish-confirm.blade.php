@@ -88,8 +88,27 @@
             <p class="text-lg font-bold text-indigo-600">Version {{ $estimatedVersion }}</p>
         </div>
 
+        @if($pendingApproval)
+        <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
+            <h2 class="text-xl font-semibold mb-4">Publication Approval</h2>
+            <p class="text-sm text-gray-700">
+                Approval requested by {{ $pendingApproval->requester?->name ?? 'another company member' }}
+                for draft revision #{{ $pendingApproval->expected_revision }}.
+            </p>
+
+            @if($canPublish)
+            <form method="POST" action="{{ route('catalog.products.passport.publication-approvals.approve', ['product' => $product->uuid, 'approval' => $pendingApproval->uuid]) }}" class="mt-4">
+                @csrf
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 text-sm font-semibold">
+                    Approve and Publish
+                </button>
+            </form>
+            @endif
+        </div>
+        @endif
+
         {{-- Publish Form --}}
-        @if($canPublish && $readiness->status->value !== 'not_ready')
+        @if($canPublish && ! $pendingApproval && $readiness->status->value !== 'not_ready')
         <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
             <h2 class="text-xl font-semibold mb-4">Confirm Publication</h2>
 
@@ -111,6 +130,37 @@
                 <div class="flex items-center gap-4">
                     <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 text-sm font-semibold">
                         Publish Passport
+                    </button>
+                    <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="text-gray-600 hover:underline text-sm">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+        @endif
+
+        @if(!$canPublish && $canManage && ! $pendingApproval && $readiness->status->value !== 'not_ready')
+        <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
+            <h2 class="text-xl font-semibold mb-4">Request Publication Approval</h2>
+
+            <form method="POST" action="{{ route('catalog.products.passport.publication-approvals.store', $product->uuid) }}">
+                @csrf
+                <input type="hidden" name="expected_revision" value="{{ $draft->draft_revision }}">
+
+                @if($readiness->counts->warnings > 0)
+                <div class="mb-4">
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="acknowledge_warnings" value="1" class="rounded border-gray-300">
+                        <span class="text-gray-700">
+                            I acknowledge the <strong>{{ $readiness->counts->warnings }}</strong> warning(s) and request approval to publish.
+                        </span>
+                    </label>
+                </div>
+                @endif
+
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 text-sm font-semibold">
+                        Request Approval
                     </button>
                     <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="text-gray-600 hover:underline text-sm">
                         Cancel

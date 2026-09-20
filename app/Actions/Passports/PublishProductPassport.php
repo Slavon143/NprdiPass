@@ -23,13 +23,14 @@ use App\Models\Passports\ProductPassportAsset;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\Passports\PublicationIdempotencyRecord;
 use App\Models\User;
+use App\Services\Billing\EntitlementService;
+use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
 use App\Services\Passports\CanonicalJsonEncoder;
 use App\Services\Passports\PassportSnapshotBuilder;
 use App\Services\Passports\PassportVersionNumberAllocator;
 use App\Services\Passports\Publication\PublicationAssetStager;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
-use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +55,8 @@ class PublishProductPassport
         private readonly CanonicalJsonEncoder $canonicalJsonEncoder,
         private readonly PublicationAssetStager $assetStager,
         private readonly RecordPassportValidationRun $recordValidationRun,
-        private readonly ReadinessProfileRepository $profileRepository,
+        private readonly ProductReadinessProfileResolver $profileResolver,
+        private readonly EntitlementService $entitlements,
     ) {}
 
     public function handle(
@@ -91,6 +93,7 @@ class PublishProductPassport
 
         try {
             $freshCompany = $this->authorize($actor, $company);
+            $this->entitlements->assertEnabled($freshCompany, 'public_passports.enabled');
             $this->assertProductBelongsToCompany($freshCompany, $product);
             $this->assertPassportBelongsToProduct($passport, $product);
 
@@ -254,7 +257,7 @@ class PublishProductPassport
                 $newDraft->setAttribute('draft_revision', $oldRevision + 1);
                 $newDraft->setAttribute('schema_version', $oldSchemaVersion);
                 $newDraft->setAttribute('payload', $oldPayload);
-                $activeProfile = $this->profileRepository->active();
+                $activeProfile = $this->profileResolver->resolve($product);
                 $newDraft->setAttribute('readiness_profile', $activeProfile->code);
                 $newDraft->setAttribute('readiness_profile_version', $activeProfile->version);
                 $newDraft->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);
@@ -736,7 +739,7 @@ class PublishProductPassport
             throw new AuthorizationException;
         }
 
-        $this->authorizer->authorize($actor, $freshCompany, CompanyPermission::PassportsManage);
+        $this->authorizer->authorize($actor, $freshCompany, CompanyPermission::PassportsPublish);
 
         return $freshCompany;
     }

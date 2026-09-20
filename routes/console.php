@@ -27,6 +27,26 @@ Schedule::command('nordipass:scheduler-heartbeat')
     ->everyMinute()
     ->withoutOverlapping(5);
 
+Schedule::command('fortnox:sync --all-companies')
+    ->hourly()
+    ->withoutOverlapping(55)
+    ->appendOutputTo(storage_path('logs/scheduler-fortnox-sync.log'));
+
+Schedule::command('billing:reconcile')
+    ->dailyAt('01:30')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/scheduler-billing-reconcile.log'));
+
+Schedule::command('analytics:aggregate')
+    ->hourly()
+    ->withoutOverlapping(55)
+    ->appendOutputTo(storage_path('logs/scheduler-analytics-aggregate.log'));
+
+Schedule::command('analytics:prune')
+    ->dailyAt('02:30')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/scheduler-analytics-prune.log'));
+
 Schedule::command('nordipass:backup')
     ->dailyAt('02:00')
     ->withoutOverlapping(180)

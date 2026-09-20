@@ -31,8 +31,7 @@ class PassportVersionController extends Controller
             ->orderByDesc('version_number')
             ->get();
 
-        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true
-            || $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
 
         return view('passports.versions.index', [
             'company' => $company,
@@ -58,8 +57,7 @@ class PassportVersionController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true
-            || $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
 
         return view('passports.versions.show', [
             'company' => $company,

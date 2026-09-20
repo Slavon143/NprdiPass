@@ -1,0 +1,174 @@
+{
+  "startedAt": "2026-08-20T13:27:08.460Z",
+  "appUrl": "http://127.0.0.1:8767",
+  "status": "passed",
+  "commands": [
+    {
+      "command": "php -r echo PHP_BINARY;",
+      "exitCode": 0,
+      "startedAt": "2026-08-20T13:27:08.460Z",
+      "finishedAt": "2026-08-20T13:27:08.549Z",
+      "output": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe"
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan migrate:fresh --env=acceptance --force",
+      "exitCode": 0,
+      "startedAt": "2026-08-20T13:27:08.549Z",
+      "finishedAt": "2026-08-20T13:27:22.672Z",
+      "output": " 2026_07_14_000002_create_products_table .. 247.08ms DONE\r\n 2026_07_14_000003_create_product_variants_table .. 434.93ms DONE\r\n 2026_07_14_000004_create_category_product_table .. 154.75ms DONE\r\n 2026_07_14_000005_create_attribute_definitions_table .. 385.41ms DONE\r\n 2026_07_14_000006_create_attribute_options_table .. 200.21ms DONE\r\n 2026_07_14_000007_create_product_attribute_values_table .. 324.09ms DONE\r\n 2026_07_14_000008_create_variant_attribute_values_table .. 311.21ms DONE\r\n 2026_07_14_000009_create_product_attribute_value_options_table .. 168.56ms DONE\r\n 2026_07_14_000010_create_variant_attribute_value_options_table .. 165.92ms DONE\r\n 2026_07_14_000011_create_product_media_table .. 533.66ms DONE\r\n 2026_07_14_000012_add_catalog_deferred_foreign_keys .. 329.86ms DONE\r\n 2026_07_16_000001_create_product_passports_table .. 372.04ms DONE\r\n 2026_07_16_000002_create_product_passport_versions_table .. 513.44ms DONE\r\n 2026_07_16_000003_create_product_passport_assets_table .. 457.29ms DONE\r\n 2026_07_16_000004_add_current_version_pointers_to_product_passports .. 269.21ms DONE\r\n 2026_07_16_100001_create_product_documents_table .. 243.07ms DONE\r\n 2026_07_16_100002_create_product_document_versions_table .. 537.83ms DONE\r\n 2026_07_16_100003_add_current_version_pointer_to_product_documents .. 54.88ms DONE\r\n 2026_07_16_100004_add_product_document_immutability_triggers .. 14.40ms DONE\r\n 2026_07_17_000001_create_publication_idempotency_records_table .. 272.35ms DONE\r\n 2026_07_18_000001_allow_document_passport_asset_kind .. 62.80ms DONE\r\n 2026_07_18_000002_create_passport_validation_evidence .. 828.58ms DONE\r\n 2026_07_19_000001_enforce_passport_enabled_languages_array .. 57.15ms DONE\r\n 2026_07_22_000001_expand_readiness_profile_evidence .. 561.48ms DONE\r\n 2026_07_22_100001_expand_product_document_compliance_workflow .. 1s DONE\r\n 2026_08_20_000001_upgrade_editable_passport_drafts_to_readiness_profile_v2 .. 1.95ms DONE\r\n 2026_08_20_000002_add_taxonomy_governance_foundation .. 2s DONE"
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan db:seed --class=R35TaxonomyGovernanceAcceptanceSeeder --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-08-20T13:27:22.672Z",
+      "finishedAt": "2026-08-20T13:27:24.434Z",
+      "output": "INFO Seeding database. \n\r\n Database\\Seeders\\LocalDevelopmentSeeder .. RUNNING \r\n Database\\Seeders\\RolePermissionSeeder .. RUNNING \r\n Database\\Seeders\\RolePermissionSeeder .. 101 ms DONE \r\n\r\n Database\\Seeders\\LocalDevelopmentSeeder .. 1,336 ms DONE"
+    },
+    {
+      "command": "C:\\Users\\Vjach\\scoop\\apps\\php\\current\\php.exe artisan optimize:clear --env=acceptance",
+      "exitCode": 0,
+      "startedAt": "2026-08-20T13:27:24.434Z",
+      "finishedAt": "2026-08-20T13:27:24.874Z",
+      "output": "INFO Clearing cached bootstrap files. \n\r\n config .. 2.34ms DONE\r\n cache .. 4.94ms DONE\r\n compiled .. 1.20ms DONE\r\n events .. 0.50ms DONE\r\n routes .. 0.45ms DONE\r\n views .. 14.85ms DONE"
+    }
+  ],
+  "pages": [
+    {
+      "name": "category-template",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "url": "http://127.0.0.1:8767/settings/catalog/categories/00000000-0000-4000-8000-000000003501/template",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\375-category-template.png",
+      "result": "passed"
+    },
+    {
+      "name": "product-needs-review",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "url": "http://127.0.0.1:8767/catalog/products/00000000-0000-4000-8000-000000003502",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\375-product-needs-review.png",
+      "result": "passed"
+    },
+    {
+      "name": "attribute-governance",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "url": "http://127.0.0.1:8767/catalog/attributes/00000000-0000-4000-8000-000000003503",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\375-attribute-governance.png",
+      "result": "passed"
+    },
+    {
+      "name": "category-template",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "url": "http://127.0.0.1:8767/settings/catalog/categories/00000000-0000-4000-8000-000000003501/template",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\1280-category-template.png",
+      "result": "passed"
+    },
+    {
+      "name": "product-needs-review",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "url": "http://127.0.0.1:8767/catalog/products/00000000-0000-4000-8000-000000003502",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\1280-product-needs-review.png",
+      "result": "passed"
+    },
+    {
+      "name": "attribute-governance",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "url": "http://127.0.0.1:8767/catalog/attributes/00000000-0000-4000-8000-000000003503",
+      "status": 200,
+      "overflow": false,
+      "consoleErrors": [],
+      "serverErrors": [],
+      "screenshot": "D:\\laravel\\nordipass\\docs\\testing\\evidence\\r3_5_browser_acceptance\\1280-attribute-governance.png",
+      "result": "passed"
+    }
+  ],
+  "workflow": [
+    {
+      "name": "Category template content 375",
+      "result": "passed",
+      "actual": "Toggle navigation\nNordiPass\nNordiPass Demo AB\nDO\n\nCatalog · Categories\n\nTaxonomy template\n\nR3.5 Apparel Governance\n\nBack to category\nActive template\n\nApparel governance standard · v1\n\nReadiness profile: nordipass-pilot v2\n\nDraft name\nCREATE DRAFT\nVersion history\n\nv1 · Apparel governance standard\n\n1 attributes · nordipass-pilot v2\n\nActive"
+    },
+    {
+      "name": "Product Needs Review 375",
+      "result": "passed",
+      "actual": "Toggle navigation\nNordiPass\nNordiPass Demo AB\nDO\n\nCatalog / Products / R3.5 Taxonomy Review Jacket\n\nR3.5 Taxonomy Review Jacket\nDraft\n\nNordiPass Lab\n\nAcceptance fixture for category taxonomy review.\n\nBack to products\nEdit product\nMore\nOverview\nProduct data\nPassport\nDocuments\nVariants\nActivity\nCategory taxonomy\nNeeds Review\n\nApparel governance standard · v1\n\nEffective readiness profile: NordiPass Pilot Readiness (nordipass-pilot v2)\n\nRequired before acknowledgement:\n\nPrimary material primary_mate"
+    },
+    {
+      "name": "Controlled vocabulary governance 375",
+      "result": "passed",
+      "actual": "Toggle navigation\nNordiPass\nNordiPass Demo AB\nDO\n\nCatalog · Attributes\n\nPrimary material\nActive\n\nprimary_material\n\nAll attributes\nEdit\nDefinition\nType\nSelect\nScope\nProduct\nUnit\n—\nUsage\n0\n\nControlled primary material for R3.5 acceptance.\n\nLifecycle governance\n\nDeprecation keeps historical values readable and directs new integrations to a compatible replacement.\n\nCreate another active attribute with the same type and scope before deprecating this definition.\n\nARCHIVE ATTRIBUTE\nControlled vocabular"
+    },
+    {
+      "name": "Category template content 1280",
+      "result": "passed",
+      "actual": "NordiPass\nDashboard\n\nCATALOG\n\nProducts\nCategories\nAttributes\n\nCOMPANY\n\nMembers\nCompany settings\n\nSYSTEM\n\nAudit\nAPI tokens\nNordiPass Demo AB\nDO\nDemo Owner\nowner@nordipass.local\n\nCatalog · Categories\n\nTaxonomy template\n\nR3.5 Apparel Governance\n\nBack to category\nActive template\n\nApparel governance standard · v1\n\nReadiness profile: nordipass-pilot v2\n\nDraft name\nCREATE DRAFT\nVersion history\n\nv1 · Apparel governance standard\n\n1 attributes · nordipass-pilot v2\n\nActive"
+    },
+    {
+      "name": "Product Needs Review 1280",
+      "result": "passed",
+      "actual": "NordiPass\nDashboard\n\nCATALOG\n\nProducts\nCategories\nAttributes\n\nCOMPANY\n\nMembers\nCompany settings\n\nSYSTEM\n\nAudit\nAPI tokens\nNordiPass Demo AB\nDO\nDemo Owner\nowner@nordipass.local\n\nCatalog / Products / R3.5 Taxonomy Review Jacket\n\nR3.5 Taxonomy Review Jacket\nDraft\n\nNordiPass Lab\n\nAcceptance fixture for category taxonomy review.\n\nBack to products\nEdit product\nMore\nOverview\nProduct data\nPassport\nDocuments\nVariants\nActivity\nCategory taxonomy\nNeeds Review\n\nApparel governance standard · v1\n\nEffective rea"
+    },
+    {
+      "name": "Controlled vocabulary governance 1280",
+      "result": "passed",
+      "actual": "NordiPass\nDashboard\n\nCATALOG\n\nProducts\nCategories\nAttributes\n\nCOMPANY\n\nMembers\nCompany settings\n\nSYSTEM\n\nAudit\nAPI tokens\nNordiPass Demo AB\nDO\nDemo Owner\nowner@nordipass.local\n\nCatalog · Attributes\n\nPrimary material\nActive\n\nprimary_material\n\nAll attributes\nEdit\nDefinition\nType\nSelect\nScope\nProduct\nUnit\n—\nUsage\n0\n\nControlled primary material for R3.5 acceptance.\n\nLifecycle governance\n\nDeprecation keeps historical values readable and directs new integrations to a compatible replacement.\n\nCreate an"
+    },
+    {
+      "name": "Create next draft from active version",
+      "result": "passed",
+      "actual": "NordiPass\nDashboard\n\nCATALOG\n\nProducts\nCategories\nAttributes\n\nCOMPANY\n\nMembers\nCompany settings\n\nSYSTEM\n\nAudit\nAPI tokens\nNordiPass Demo AB\nDO\nDemo Owner\nowner@nordipass.local\nDraft taxonomy template created.\n\nCatalog · Categories\n\nTaxonomy template\n\nR3.5 Apparel Governance\n\nBack to category\nActive template\n\nApparel governance standard · v1\n\nReadiness profile: nordipass-pilot v2\n\nDraft v2\nDraft\n\nOnly a draft can be changed. Activation retires the previous version and flags affected products for review.\n\nnordipass-pilot v2\nTemplate name\nCategory attributes\n\nRequired attributes must be completed before a product can acknowledge this taxonomy version. Recommended attributes stay visible but do "
+    },
+    {
+      "name": "Approve controlled vocabulary option",
+      "result": "passed",
+      "actual": "NordiPass\nDashboard\n\nCATALOG\n\nProducts\nCategories\nAttributes\n\nCOMPANY\n\nMembers\nCompany settings\n\nSYSTEM\n\nAudit\nAPI tokens\nNordiPass Demo AB\nDO\nDemo Owner\nowner@nordipass.local\nOption approved for selection.\n\nCatalog · Attributes\n\nPrimary material\nActive\n\nprimary_material\n\nAll attributes\nEdit\nDefinition\nType\nSelect\nScope\nProduct\nUnit\n—\nUsage\n0\n\nControlled primary material for R3.5 acceptance.\n\nLifecycle governance\n\nDeprecation keeps historical values readable and directs new integrations to a compatible replacement.\n\nCreate another active attribute with the same type and scope before deprecating this definition.\n\nARCHIVE ATTRIBUTE\nControlled vocabulary\n2\n\nOnly active, approved options are sel"
+    },
+    {
+      "name": "Unknown taxonomy resource is not disclosed",
+      "result": "passed",
+      "actual": "url=http://127.0.0.1:8767/settings/catalog/categories/00000000-0000-4000-8000-999999999999/template"
+    }
+  ],
+  "limitations": [],
+  "server": {
+    "pid": 8552,
+    "loginStatus": 200
+  },
+  "finishedAt": "2026-08-20T13:27:43.906Z"
+}

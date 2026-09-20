@@ -36,11 +36,11 @@ class ReadinessRulePresenter
     {
         $statusSuffix = $rule->status->value;
 
-        foreach ([
+        foreach (array_unique([
+            $rule->messageKey,
             "readiness.{$rule->code}.{$statusSuffix}",
             "readiness.{$rule->code}.message",
-            $rule->messageKey,
-        ] as $key) {
+        ]) as $key) {
             $translated = $this->translation($key);
             if ($translated !== null) {
                 return $translated;
@@ -144,7 +144,7 @@ class ReadinessRulePresenter
             ReadinessRuleStatus::Passed => __('Passed'),
             ReadinessRuleStatus::NotApplicable => __('Not applicable'),
             ReadinessRuleStatus::Failed => match ($rule->severity) {
-                ReadinessSeverity::Blocker => __('Blocker'),
+                ReadinessSeverity::Blocker => __('Blocking issue'),
                 ReadinessSeverity::Warning => __('Warning'),
                 ReadinessSeverity::Recommendation => __('Recommendation'),
             },
@@ -176,7 +176,7 @@ class ReadinessRulePresenter
             ReadinessRuleStatus::NotApplicable => __('Not required for this product or disabled passport section.'),
             ReadinessRuleStatus::Failed => match ($rule->severity) {
                 ReadinessSeverity::Blocker => __('Must be fixed before the passport can be published.'),
-                ReadinessSeverity::Warning => __('Does not block activation, but lowers readiness and should be fixed before publishing.'),
+                ReadinessSeverity::Warning => __('Does not block publication, but lowers readiness and should be fixed before publishing.'),
                 ReadinessSeverity::Recommendation => __('Recommended improvement. It does not block publishing.'),
             },
         };
@@ -242,7 +242,13 @@ class ReadinessRulePresenter
             return route('catalog.products.show', $product->uuid).'#passport';
         }
 
-        return route('catalog.products.passport.edit', $product->uuid).($rule === null ? '' : $this->anchor($rule));
+        $url = route('catalog.products.passport.edit', $product->uuid);
+
+        if ($rule !== null && $rule->section !== null) {
+            $url .= '?section='.$rule->section->value;
+        }
+
+        return $url.($rule === null ? '' : $this->anchor($rule));
     }
 
     private function hasPassport(Product $product): bool
@@ -291,6 +297,10 @@ class ReadinessRulePresenter
 
         if ($rule->navigationTarget?->routeName !== 'catalog.products.passport.edit') {
             return $url;
+        }
+
+        if ($rule->section !== null) {
+            $url .= '?section='.$rule->section->value;
         }
 
         return $url.$this->anchor($rule);

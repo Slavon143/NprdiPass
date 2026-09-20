@@ -30,6 +30,7 @@
     @endif
 
     <meta name="robots" content="{{ ($isPreview ?? false) ? 'noindex, nofollow' : 'index, follow' }}">
+    <meta name="format-detection" content="telephone=no">
 
     @if(!($isPreview ?? false) && isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
         @foreach($passport->enabledLocales as $locale)
@@ -63,17 +64,17 @@
         }
     </style>
 </head>
-<body class="bg-white font-sans text-slate-900 antialiased">
+<body class="bg-white font-sans text-slate-900 antialiased" data-public-passport-v2="true">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">Skip to main content</a>
 
-    <header class="border-b border-slate-200 bg-slate-50">
+    <header class="border-b border-slate-200 bg-slate-50" role="banner">
         <div class="mx-auto max-w-4xl px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <div class="text-sm text-slate-500">Digital Product Passport</div>
             <div class="text-xs text-slate-400">Powered by NordiPass</div>
         </div>
     </header>
 
-    <main id="main-content" class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 pb-16">
+    <main id="main-content" class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 pb-16" tabindex="-1">
         @if($isPreview ?? false)
             <div class="mb-6 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
                 <div class="font-semibold">Draft preview — not public</div>
@@ -83,9 +84,12 @@
         @yield('content')
     </main>
 
-    <footer class="border-t border-slate-200 bg-slate-50 mt-8">
-        <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 text-xs text-slate-400">
+    <footer class="border-t border-slate-200 bg-slate-50 mt-8" role="contentinfo">
+        <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 text-xs text-slate-500 space-y-2">
             <p>This Digital Product Passport is based on information published by the responsible company. NordiPass provides the technical platform and does not independently certify the product or its legal compliance.</p>
+            @unless($isPreview ?? false)
+                <p id="privacy-notice">Privacy: this public page does not require sign-in and does not set tracking cookies. Anonymous, aggregate view analytics may be recorded without raw IP addresses, full user-agent strings, or full referrer URLs.</p>
+            @endunless
         </div>
     </footer>
 </body>

@@ -69,8 +69,8 @@ use App\Services\Passports\Readiness\Rules\PassportStatusEditable;
 
 return [
     'profile' => 'nordipass-pilot',
-    'profile_version' => 1,
-    'rule_set_version' => 1,
+    'profile_version' => 2,
+    'rule_set_version' => 2,
     'score_algorithm' => 'weighted_ratio',
     'score_algorithm_version' => 1,
 
@@ -88,7 +88,7 @@ return [
             'status' => 'active',
             'versions' => [
                 1 => [
-                    'status' => 'active',
+                    'status' => 'deprecated',
                     'rule_set_version' => 1,
                     'score_algorithm' => 'weighted_ratio',
                     'score_algorithm_version' => 1,
@@ -100,6 +100,27 @@ return [
                     'metadata' => [
                         'migration_source' => 'R2/R3.1 config passport_readiness.score_weights',
                         'legal_disclaimer' => 'Operational readiness only; not legal certification.',
+                    ],
+                ],
+                2 => [
+                    'status' => 'active',
+                    'rule_set_version' => 2,
+                    'score_algorithm' => 'weighted_ratio',
+                    'score_algorithm_version' => 1,
+                    'weights' => [
+                        'blocker' => 10,
+                        'warning' => 3,
+                        'recommendation' => 1,
+                    ],
+                    'metadata' => [
+                        'migration_source' => 'R3.4.1 readiness editor field and messaging audit',
+                        'legal_disclaimer' => 'Operational readiness only; not legal certification.',
+                        'behavior_changes' => [
+                            'defer material percentage and recycled-content checks until a material row exists',
+                            'read translatable editor fields from the default-language payload',
+                            'recognize structured support channels, environmental metrics, and reviewed claims',
+                            'route conditional rules to their declaration field before gated details',
+                        ],
                     ],
                 ],
             ],

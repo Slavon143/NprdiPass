@@ -18,6 +18,7 @@ class ProductSummaryResource extends JsonResource
             'slug' => $this->slug,
             'status' => $this->status->value,
             'brand' => $this->brand,
+            'commerce' => $this->commerce,
             'default_variant' => $this->whenLoaded('defaultVariant', fn (): array => [
                 'uuid' => $this->defaultVariant->uuid,
                 'name' => $this->defaultVariant->name,

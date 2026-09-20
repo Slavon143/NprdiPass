@@ -1,6 +1,23 @@
 # NordiPass
 
-NordiPass is a Laravel application. **R0 RELEASE READY WITH ACCEPTED LIMITATIONS.** R0 covers Foundation Stages 1–9: bootstrap, core database, tenancy, authorization, company UI, invitations, tenant-aware audit, REST API foundation, and infrastructure hardening. Later product modules remain intentionally deferred.
+NordiPass is a Laravel application for product catalogues and Digital Product Passports. **R3.13 PUBLIC API AND WEBHOOKS FOUNDATION IS IMPLEMENTED.** The current baseline includes tenant-aware catalogues, versioned Passport readiness, advanced DPP sections, document compliance workflows, immutable publication evidence, public Passport rendering, production import/export, the Fortnox integration foundation, Stripe billing with webhook inbox, analytics, QR label management, and outbound webhooks with signed delivery logs. Production promotion still requires environment-specific Stripe sandbox verification, staging, backup/restore, and deployment approvals described in the release gates.
+
+## Current R3 Documents
+
+- [R3.7 Fortnox Foundation](docs/releases/R3_7_FORTNOX_FOUNDATION.md)
+- [R3.8 Stripe Billing and Entitlements](docs/releases/R3_8_BILLING_FOUNDATION.md)
+- [R3.9 Analytics Foundation](docs/releases/R3_9_ANALYTICS_FOUNDATION.md)
+- [R3.10 Roles and Approval Foundation](docs/releases/R3_10_ROLES_AND_APPROVAL_FOUNDATION.md)
+- [R3.11 Public Passport v2](docs/releases/R3_11_PUBLIC_PASSPORT_V2.md)
+- [R3.12 QR and Label Management](docs/releases/R3_12_QR_LABEL_MANAGEMENT.md)
+- [R3.13 Public API and Webhooks](docs/releases/R3_13_PUBLIC_API_AND_WEBHOOKS.md)
+- [R3.14 Notifications and Job Center](docs/releases/R3_14_NOTIFICATIONS_AND_JOB_CENTER.md)
+- [R3.15 Platform Operations](docs/releases/R3_15_PLATFORM_OPERATIONS.md)
+- [R3.7 Fortnox Test Evidence](docs/testing/R3_7_FORTNOX_TEST_EVIDENCE.md)
+- [R3.4.1 Release Hardening](docs/releases/R3_4_1_RELEASE_HARDENING.md)
+- [Readiness Editor Audit](docs/testing/R3_4_1_READINESS_EDITOR_AUDIT.md)
+- [R3.5 Handoff](docs/releases/R3_5_HANDOFF.md)
+- [R3 Release Gates](docs/releases/R3_RELEASE_GATES.md)
 
 ## R0 Release Documents
 
@@ -251,7 +268,7 @@ Expiration defaults to 90 days, has a 365-day maximum, and disables non-expiring
 
 Sanctum updates `last_used_at` after each successful bearer authentication, which means one database write per accepted API request. This is intentional for R0 visibility and should be revisited if future business APIs reach high request volume.
 
-The daily scheduler runs `php artisan nordipass:prune-api-tokens`; use `--dry-run` and `--days=`. See [`docs/API.md`](docs/API.md) and [`docs/openapi.yaml`](docs/openapi.yaml).
+The daily scheduler runs `php artisan nordipass:prune-api-tokens`; use `--dry-run` and `--days=`. See [`docs/API.md`](docs/API.md) and [`docs/api/openapi-v1.yaml`](docs/api/openapi-v1.yaml).
 
 ## CI and Deployment
 
@@ -269,11 +286,11 @@ See [`docs/infrastructure/HEALTH_LOGGING_SECURITY.md`](docs/infrastructure/HEALT
 
 ## Queues and Scheduler
 
-NordiPass uses three queues: `mail` (invitation notifications), `maintenance` (pruning and cleanup), and `default` (other background jobs). The local environment uses the database driver; production uses Redis.
+NordiPass uses dedicated queues for `mail` (invitation notifications), `maintenance` (pruning and cleanup), `analytics` (public passport analytics), `webhooks` (outbound webhook delivery), and `default` (other background jobs). The local environment uses the database driver; production uses Redis.
 
 ```bash
 # Local worker
-php artisan queue:work --queue=mail,maintenance,default --sleep=1 --tries=3 --timeout=300
+php artisan queue:work --queue=mail,maintenance,analytics,webhooks,default --sleep=1 --tries=3 --timeout=300
 
 # Local scheduler
 php artisan schedule:work

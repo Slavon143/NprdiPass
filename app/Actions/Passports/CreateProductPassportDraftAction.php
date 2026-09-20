@@ -16,8 +16,8 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
 use App\Services\Passports\DppPayloadNormalizer;
-use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -29,7 +29,7 @@ class CreateProductPassportDraftAction
         private readonly CompanyAuthorizer $authorizer,
         private readonly AuditLogger $auditLogger,
         private readonly DppPayloadNormalizer $normalizer,
-        private readonly ReadinessProfileRepository $profileRepository,
+        private readonly ProductReadinessProfileResolver $profileResolver,
     ) {}
 
     public function handle(User $actor, Company $company, Product $product): ProductPassport
@@ -88,7 +88,7 @@ class CreateProductPassportDraftAction
             $version->setAttribute('draft_revision', 1);
             $version->setAttribute('schema_version', '1');
             $version->setAttribute('payload', $normalized);
-            $activeProfile = $this->profileRepository->active();
+            $activeProfile = $this->profileResolver->resolve($product);
             $version->setAttribute('readiness_profile', $activeProfile->code);
             $version->setAttribute('readiness_profile_version', $activeProfile->version);
             $version->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);

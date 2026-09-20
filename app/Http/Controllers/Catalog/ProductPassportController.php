@@ -101,8 +101,7 @@ class ProductPassportController extends Controller
         $sectionKeys = $schemaRegistry->sectionKeysInOrder();
         $readiness = $readinessEvaluator->evaluate($readinessContextBuilder->build($company, $product));
         $canManage = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
-        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true
-            || $canManage;
+        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
 
         return view()->make('passports.show', [
             'company' => $company,
@@ -144,6 +143,8 @@ class ProductPassportController extends Controller
         ProductPassportEditorQuery $editorQuery,
         DppCatalogContextProvider $contextProvider,
         DppSchemaRegistry $schemaRegistry,
+        ReadinessContextBuilder $readinessContextBuilder,
+        PassportReadinessEvaluator $readinessEvaluator,
         Request $request,
     ): View {
         $company = $this->resolveCompany($currentCompany);
@@ -154,6 +155,9 @@ class ProductPassportController extends Controller
         $catalogContext = $contextProvider->context($product, $company);
         $sections = $schemaRegistry->sections();
         $sectionKeys = $schemaRegistry->sectionKeysInOrder();
+        $readiness = $readinessEvaluator->evaluate($readinessContextBuilder->build($company, $product));
+        $canManage = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
+        $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
 
         return view()->make('passports.editor', [
             'company' => $company,
@@ -163,7 +167,9 @@ class ProductPassportController extends Controller
             'catalogContext' => $catalogContext,
             'sections' => $sections,
             'sectionKeys' => $sectionKeys,
-            'canManage' => $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true,
+            'readiness' => $readiness,
+            'canManage' => $canManage,
+            'canPublish' => $canPublish,
         ]);
     }
 

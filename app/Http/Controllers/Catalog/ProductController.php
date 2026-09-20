@@ -32,6 +32,8 @@ use App\Models\User;
 use App\Queries\Catalog\ProductCatalogQuery;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Services\Catalog\ProductActivationReadinessService;
+use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
+use App\Services\Catalog\Taxonomy\ProductTaxonomyDiagnosticsService;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ProductIndexReadinessProvider;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
@@ -116,6 +118,8 @@ class ProductController extends Controller
         ProductActivationReadinessService $readinessService,
         ReadinessContextBuilder $passportContextBuilder,
         PassportReadinessEvaluator $passportEvaluator,
+        ProductTaxonomyDiagnosticsService $taxonomyDiagnosticsService,
+        ProductReadinessProfileResolver $readinessProfileResolver,
         ProductIndexReturnUrl $productIndexReturnUrl,
         string $product,
     ): View {
@@ -142,6 +146,8 @@ class ProductController extends Controller
             ->ordered()
             ->get();
         $readiness = $readinessService->evaluate($company, $product);
+        $taxonomyDiagnostics = $taxonomyDiagnosticsService->diagnose($product);
+        $effectiveReadinessProfile = $readinessProfileResolver->resolve($product);
         $isArchived = $product->status === ProductStatus::Archived;
 
         $passport = $product->passport;
@@ -154,6 +160,14 @@ class ProductController extends Controller
             $passportReadiness = $passportEvaluator->evaluate($passportContext);
         }
 
+        $documents = ProductDocument::query()->forCompany($company)
+            ->where('product_id', $product->getKey())
+            ->active()
+            ->with('currentVersion')
+            ->withCount('versions')
+            ->orderByDesc('created_at')
+            ->get();
+
         return view()->make('catalog.products.show', [
             'company' => $company,
             'product' => $product,
@@ -162,12 +176,16 @@ class ProductController extends Controller
             'canManageAttributes' => ! $isArchived && $request->user()?->can('manageAttributes', $product) === true,
             'canManageMedia' => ! $isArchived && $request->user()?->can('manageMedia', $product) === true,
             'canManageDocuments' => $request->user()?->can('viewAny', [ProductDocument::class, $company]) === true,
-            'documentCount' => ProductDocument::query()->forCompany($company)->where('product_id', $product->getKey())->active()->count(),
+            'documents' => $documents,
+            'documentApprovedCount' => $documents->filter(fn (ProductDocument $document): bool => $document->currentVersion?->isApproved() === true)->count(),
+            'documentAwaitingReviewCount' => $documents->filter(fn (ProductDocument $document): bool => $document->currentVersion?->review_status?->value === 'pending_review')->count(),
             'canActivate' => $product->status === ProductStatus::Draft && $request->user()?->can('activate', $product) === true,
             'canReturnToDraft' => $product->status === ProductStatus::Active && $request->user()?->can('returnToDraft', $product) === true,
             'canArchive' => $product->status !== ProductStatus::Archived && $request->user()?->can('archive', $product) === true,
             'canRestore' => $product->status === ProductStatus::Archived && $request->user()?->can('restore', $product) === true,
             'readiness' => $readiness,
+            'taxonomyDiagnostics' => $taxonomyDiagnostics,
+            'effectiveReadinessProfile' => $effectiveReadinessProfile,
             'passport' => $passport,
             'passportReadiness' => $passportReadiness,
             'canManagePassports' => $canManagePassports,

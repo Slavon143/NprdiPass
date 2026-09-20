@@ -4,6 +4,12 @@ namespace App\Providers;
 
 use App\Models\Company;
 use App\Models\PersonalAccessToken;
+use App\Services\Billing\Contracts\StripeBillingProvider;
+use App\Services\Billing\FakeStripeBillingProvider;
+use App\Services\Billing\HttpStripeBillingProvider;
+use App\Services\Fortnox\Contracts\FortnoxProvider;
+use App\Services\Fortnox\FakeFortnoxProvider;
+use App\Services\Fortnox\HttpFortnoxProvider;
 use App\Tenancy\Contracts\CurrentCompany;
 use App\Tenancy\SessionCurrentCompany;
 use App\Tenancy\TokenCurrentCompany;
@@ -21,8 +27,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(CurrentCompany::class, SessionCurrentCompany::class);
+        $this->app->scoped(CurrentCompany::class, SessionCurrentCompany::class);
         $this->app->scoped(TokenCurrentCompany::class);
+
+        $this->app->bind(FortnoxProvider::class, function ($app): FortnoxProvider {
+            $configured = (string) config('fortnox.provider');
+
+            return $configured === 'fake'
+                ? $app->make(FakeFortnoxProvider::class)
+                : $app->make(HttpFortnoxProvider::class);
+        });
+        $this->app->singleton(FakeFortnoxProvider::class);
+
+        $this->app->bind(StripeBillingProvider::class, function ($app): StripeBillingProvider {
+            $configured = (string) config('billing.provider');
+
+            return $configured === 'fake'
+                ? $app->make(FakeStripeBillingProvider::class)
+                : $app->make(HttpStripeBillingProvider::class);
+        });
+        $this->app->singleton(FakeStripeBillingProvider::class);
     }
 
     /**
@@ -181,5 +205,73 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(config('rate_limits.public_passport.assets_per_minute', 120))
                 ->by($request->ip());
         });
+
+        RateLimiter::for('fortnox-connect', function (Request $request): Limit {
+            $company = $request->attributes->get('currentCompany');
+            $companyKey = $company instanceof Company ? $company->getKey() : 'none';
+            $userKey = $request->user()?->getAuthIdentifier() ?? $request->ip();
+
+            return Limit::perMinute(config('rate_limits.fortnox.connect_per_minute', 10))
+                ->by("{$userKey}|{$companyKey}");
+        });
+
+        RateLimiter::for(
+            'fortnox-callback',
+            fn (Request $request): Limit => Limit::perMinute(
+                config('rate_limits.fortnox.callback_per_minute', 20),
+            )->by($request->ip()),
+        );
+
+        RateLimiter::for('fortnox-sync', function (Request $request): Limit {
+            $company = $request->attributes->get('currentCompany');
+            $companyKey = $company instanceof Company ? $company->getKey() : 'none';
+            $userKey = $request->user()?->getAuthIdentifier() ?? $request->ip();
+
+            return Limit::perMinute(config('rate_limits.fortnox.sync_per_minute', 10))
+                ->by("{$userKey}|{$companyKey}");
+        });
+
+        RateLimiter::for('fortnox-api-read', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'fortnox-read:token:'.$token->getKey()
+                : 'fortnox-read:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.fortnox_api.read_per_minute', 120))->by($tokenKey);
+        });
+
+        RateLimiter::for('fortnox-api-write', function (Request $request): Limit {
+            $token = $request->user()?->currentAccessToken();
+            $tokenKey = $token instanceof PersonalAccessToken
+                ? 'fortnox-write:token:'.$token->getKey()
+                : 'fortnox-write:'.$request->ip();
+
+            return Limit::perMinute(config('rate_limits.fortnox_api.write_per_minute', 60))->by($tokenKey);
+        });
+
+        RateLimiter::for('billing-checkout', function (Request $request): Limit {
+            $company = $request->attributes->get('currentCompany');
+            $companyKey = $company instanceof Company ? $company->getKey() : 'none';
+            $userKey = $request->user()?->getAuthIdentifier() ?? $request->ip();
+
+            return Limit::perMinute(config('rate_limits.billing.checkout_per_minute', 10))
+                ->by("{$userKey}|{$companyKey}");
+        });
+
+        RateLimiter::for('billing-portal', function (Request $request): Limit {
+            $company = $request->attributes->get('currentCompany');
+            $companyKey = $company instanceof Company ? $company->getKey() : 'none';
+            $userKey = $request->user()?->getAuthIdentifier() ?? $request->ip();
+
+            return Limit::perMinute(config('rate_limits.billing.portal_per_minute', 20))
+                ->by("{$userKey}|{$companyKey}");
+        });
+
+        RateLimiter::for(
+            'stripe-webhook',
+            fn (Request $request): Limit => Limit::perMinute(
+                config('rate_limits.billing.webhook_per_minute', 120),
+            )->by($request->ip()),
+        );
     }
 }

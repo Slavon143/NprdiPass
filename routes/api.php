@@ -38,4 +38,20 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         'api.company.member',
         'api.company.active',
     ])->group(base_path('routes/catalog-api.php'));
+
+    Route::middleware([
+        'auth:sanctum',
+        'api.token.valid',
+        'api.company.resolve',
+        'api.company.member',
+        'api.company.active',
+    ])->group(base_path('routes/fortnox-api.php'));
+
+    Route::middleware([
+        'auth:sanctum',
+        'api.token.valid',
+        'api.company.resolve',
+        'api.company.member',
+        'api.company.active',
+    ])->group(base_path('routes/webhooks-api.php'));
 });

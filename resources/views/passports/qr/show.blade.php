@@ -85,6 +85,10 @@
                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
                         Download PNG
                     </a>
+                    <a href="{{ route('catalog.products.passport.qr.label', $product->uuid) }}"
+                       class="bg-gray-100 text-gray-800 px-4 py-2 rounded hover:bg-gray-200 text-sm border">
+                        Print Label
+                    </a>
                 </div>
             </div>
         </div>
@@ -101,6 +105,36 @@
                     <li>Use dark QR on a light background</li>
                     <li>Test the printed sample before mass printing</li>
                 </ul>
+            </div>
+            <div class="mt-6 bg-white shadow rounded-lg p-6">
+                <h3 class="text-md font-semibold mb-3">QR specification</h3>
+                <dl class="text-sm text-gray-600 space-y-2">
+                    <div class="flex justify-between gap-4">
+                        <dt>Quiet zone</dt>
+                        <dd class="font-semibold text-gray-800">{{ $viewModel->printSpec['quiet_zone_modules'] }} modules</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt>Error correction</dt>
+                        <dd class="font-semibold text-gray-800">{{ ucfirst($viewModel->printSpec['error_correction']) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt>Foreground</dt>
+                        <dd class="font-semibold text-gray-800">{{ $viewModel->printSpec['foreground'] }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt>Background</dt>
+                        <dd class="font-semibold text-gray-800">{{ $viewModel->printSpec['background'] }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt>Contrast ratio</dt>
+                        <dd class="font-semibold text-gray-800">{{ number_format($viewModel->printSpec['contrast_ratio'], 2) }}:1</dd>
+                    </div>
+                </dl>
+                @if($viewModel->printSpec['contrast_passes'])
+                    <p class="mt-3 rounded bg-green-50 px-3 py-2 text-xs font-medium text-green-800">Contrast passes print baseline.</p>
+                @else
+                    <p class="mt-3 rounded bg-red-50 px-3 py-2 text-xs font-medium text-red-800">Contrast is below the print baseline. Use darker foreground or lighter background.</p>
+                @endif
             </div>
         </div>
     </div>
