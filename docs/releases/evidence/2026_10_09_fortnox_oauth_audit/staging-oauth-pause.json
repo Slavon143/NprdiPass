@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-09T13:10:44+00:00",
+  "scope": "staging only",
+  "authorization_started": false,
+  "fortnox_requests": 0,
+  "source_deployed": false,
+  "changed_key": "FORTNOX_AUTHORIZE_URL",
+  "connection_rows_unchanged": true,
+  "new_oauth_start_blocked": true,
+  "existing_token_and_api_configuration_preserved": true,
+  "completed": true
+}

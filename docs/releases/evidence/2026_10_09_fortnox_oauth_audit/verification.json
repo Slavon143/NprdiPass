@@ -1,0 +1,22 @@
+{
+  "source_baseline": "3e6ae56ba20585b9fd17a82e1b94967e39467f02",
+  "checks": [
+    {
+      "tool": "pest",
+      "result": "passed",
+      "tests": 137,
+      "passed": 137,
+      "assertions": 538,
+      "duration_ms": 50698
+    },
+    {
+      "tool": "phpstan",
+      "result": "passed",
+      "errors": 0
+    },
+    {
+      "tool": "pint",
+      "result": "passed"
+    }
+  ]
+}

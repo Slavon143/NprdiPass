@@ -39,6 +39,7 @@ class HttpFortnoxProvider implements FortnoxProvider
 
     public function authorizationUrl(string $state, string $redirectUri): string
     {
+        app(FortnoxSubscriptionGuard::class)->assertAuthorizationEnabled((string) $this->config['client_id']);
         $base = rtrim((string) ($this->config['authorize_url'] ?? ''), '/');
         $this->assertSafeExternalUrl($base);
 
@@ -54,6 +55,7 @@ class HttpFortnoxProvider implements FortnoxProvider
 
     public function exchangeAuthorizationCode(string $code, string $redirectUri): FortnoxAccessToken
     {
+        app(FortnoxSubscriptionGuard::class)->assertAuthorizationEnabled((string) $this->config['client_id']);
         $response = $this->tokenRequest('authorization_code', [
             'code' => $code,
             'redirect_uri' => $redirectUri,
@@ -62,8 +64,10 @@ class HttpFortnoxProvider implements FortnoxProvider
         return $this->tokenFrom($response->json());
     }
 
-    public function refreshAccessToken(string $refreshToken): FortnoxAccessToken
+    public function refreshAccessToken(string $refreshToken, ?string $tenantId = null): FortnoxAccessToken
     {
+        app(FortnoxSubscriptionGuard::class)->assertTenantAllowed($tenantId);
+        app(FortnoxSubscriptionGuard::class)->assertTestClient((string) $this->config['client_id']);
         $response = $this->tokenRequest('refresh_token', [
             'refresh_token' => $refreshToken,
         ]);
@@ -73,6 +77,8 @@ class HttpFortnoxProvider implements FortnoxProvider
 
     public function listArticles(string $accessToken, ?string $modifiedAfter = null, ?string $page = null): FortnoxArticlePage
     {
+        $guard = app(FortnoxSubscriptionGuard::class);
+        $guard->assertTenantAllowed($guard->tenantIdFromServerToken($accessToken));
         $base = rtrim((string) ($this->config['base_url'] ?? ''), '/');
         $this->assertSafeExternalUrl($base);
 
@@ -215,13 +221,16 @@ class HttpFortnoxProvider implements FortnoxProvider
         }
 
         $expiresIn = (int) ($payload['expires_in'] ?? 3600);
+        $guard = app(FortnoxSubscriptionGuard::class);
+        $tenantId = $guard->tenantIdFromServerToken($accessToken);
+        $guard->assertTenantAllowed($tenantId);
 
         return new FortnoxAccessToken(
             accessToken: $accessToken,
             refreshToken: isset($payload['refresh_token']) ? (string) $payload['refresh_token'] : null,
             expiresAt: $expiresIn > 0 ? CarbonImmutable::now()->addSeconds($expiresIn) : null,
             scope: isset($payload['scope']) ? (string) $payload['scope'] : null,
-            tenantId: null,
+            tenantId: $tenantId,
         );
     }
 

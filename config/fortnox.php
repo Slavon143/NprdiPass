@@ -18,6 +18,13 @@ return [
 
     'redirect_path' => '/settings/integrations/fortnox/callback',
 
+    // Consent happens on Fortnox before the callback; a callback check alone
+    // cannot prevent a user accepting an order in the external portal.
+    'nonproduction_oauth_enabled' => (bool) env('FORTNOX_NONPRODUCTION_OAUTH_ENABLED', false),
+    'nonproduction_tenant_id' => (string) env('FORTNOX_NONPRODUCTION_TENANT_ID', '1854146'),
+    // Operator-approved integration client; its portal owner is not the API tenant.
+    'nonproduction_client_id' => (string) env('FORTNOX_NONPRODUCTION_CLIENT_ID', ''),
+
     // Additional scopes require renewed consent for existing connections.
     'scopes' => array_values(array_unique(array_filter(array_map(
         'trim',

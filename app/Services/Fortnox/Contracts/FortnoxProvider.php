@@ -18,7 +18,7 @@ interface FortnoxProvider
     /**
      * @throws FortnoxProviderException
      */
-    public function refreshAccessToken(string $refreshToken): FortnoxAccessToken;
+    public function refreshAccessToken(string $refreshToken, ?string $tenantId = null): FortnoxAccessToken;
 
     /**
      * @throws FortnoxProviderException

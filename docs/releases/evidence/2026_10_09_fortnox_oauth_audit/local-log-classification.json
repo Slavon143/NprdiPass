@@ -1,0 +1,470 @@
+{
+  "raw_lines_emitted": false,
+  "events": [
+    {
+      "timestamp_as_logged": "2026-10-03 09:33:45",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 09:33:48",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.connect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 22:43:18",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 22:43:20",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.connect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 22:43:33",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.connect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:00:49",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:17",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:18",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.connect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:29",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.callback",
+        "method": "GET",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:29",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:32",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.sync",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:32",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:42",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.disconnect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:42",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:43",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.connect",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:47",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.callback",
+        "method": "GET",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:47",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "http_telemetry": null,
+      "known_context_keys": [],
+      "exception_classes": [
+        "Illuminate\\\\Database\\\\QueryException",
+        "PDOException"
+      ],
+      "categories": [
+        "database_error"
+      ],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": [
+        "apply",
+        "createProduct",
+        "execute",
+        "executeLocked",
+        "handle",
+        "resolveMapping",
+        "run",
+        "sync"
+      ]
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.sync",
+        "method": "POST",
+        "status": 500
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:08:40",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:09:39",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:09:41",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.sync",
+        "method": "POST",
+        "status": 302
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    },
+    {
+      "timestamp_as_logged": "2026-10-03 23:09:41",
+      "http_telemetry": {
+        "route": "settings.integrations.fortnox.index",
+        "method": "GET",
+        "status": 200
+      },
+      "known_context_keys": [
+        "method",
+        "route",
+        "path_template",
+        "status"
+      ],
+      "exception_classes": [],
+      "categories": [],
+      "provider_error_codes": [],
+      "curl_error_numbers": [],
+      "known_subscription_ids_mentioned": [],
+      "reviewed_functions": []
+    }
+  ]
+}

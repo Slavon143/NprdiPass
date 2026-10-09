@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-10-09T12:41:19+00:00",
+  "environment": "local",
+  "provider": "http",
+  "scopes": [
+    "article"
+  ],
+  "client_id_configured": true,
+  "client_secret_configured": true,
+  "connection_rows": [
+    {
+      "company_id": 2,
+      "uuid": "07749588-5dba-4517-8348-5305f06fb552",
+      "status": "active",
+      "external_tenant_id": null,
+      "connected_at": "2026-10-03T23:01:47+00:00",
+      "updated_at": "2026-10-04T14:04:41+00:00",
+      "token_expires_at": "2026-10-04T15:04:41+00:00",
+      "scopes": [
+        "article"
+      ],
+      "stored_jwt_tenant_id": "1854146",
+      "jwt_issued_at": "2026-10-04T14:04:42+00:00",
+      "jwt_expires_at": "2026-10-04T15:04:42+00:00",
+      "token_format": "jwt",
+      "has_refresh_token": true,
+      "claims_are_metadata_not_signature_verification": true
+    }
+  ],
+  "oauth_states": [
+    {
+      "company_id": 2,
+      "user_id": 1,
+      "created_at": "2026-10-03 22:43:20",
+      "expires_at": "2026-10-03 22:53:20",
+      "consumed_at": null
+    },
+    {
+      "company_id": 2,
+      "user_id": 1,
+      "created_at": "2026-10-03 22:43:33",
+      "expires_at": "2026-10-03 22:53:33",
+      "consumed_at": null
+    },
+    {
+      "company_id": 2,
+      "user_id": 1,
+      "created_at": "2026-10-03 23:01:18",
+      "expires_at": "2026-10-03 23:11:18",
+      "consumed_at": "2026-10-03 23:01:28"
+    },
+    {
+      "company_id": 2,
+      "user_id": 1,
+      "created_at": "2026-10-03 23:01:43",
+      "expires_at": "2026-10-03 23:11:43",
+      "consumed_at": "2026-10-03 23:01:47"
+    }
+  ],
+  "audit_events": [
+    {
+      "company_id": 2,
+      "event": "fortnox.connection.connected",
+      "created_at": "2026-10-03 23:01:29",
+      "connection_uuid": "07749588-5dba-4517-8348-5305f06fb552",
+      "external_tenant_id": null,
+      "scopes": [
+        "article"
+      ]
+    },
+    {
+      "company_id": 2,
+      "event": "fortnox.connection.disconnected",
+      "created_at": "2026-10-03 23:01:42",
+      "connection_uuid": "07749588-5dba-4517-8348-5305f06fb552",
+      "external_tenant_id": null,
+      "scopes": null
+    },
+    {
+      "company_id": 2,
+      "event": "fortnox.connection.connected",
+      "created_at": "2026-10-03 23:01:47",
+      "connection_uuid": "07749588-5dba-4517-8348-5305f06fb552",
+      "external_tenant_id": null,
+      "scopes": [
+        "article"
+      ]
+    }
+  ],
+  "read_only": true,
+  "network_requests_performed": false,
+  "completed": true
+}

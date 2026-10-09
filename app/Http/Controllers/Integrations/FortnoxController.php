@@ -16,6 +16,8 @@ use App\Models\Fortnox\FortnoxConnection;
 use App\Models\Fortnox\FortnoxSyncConflict;
 use App\Models\Fortnox\FortnoxSyncRun;
 use App\Models\User;
+use App\Services\Fortnox\FortnoxOAuthService;
+use App\Services\Fortnox\FortnoxSubscriptionGuard;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -28,9 +30,21 @@ class FortnoxController extends Controller
     {
         $company = $currentCompany->require();
         $this->authorize(CompanyPermission::FortnoxManage->value, $company);
+        $connection = FortnoxConnection::query()->forCompany($company)->first();
+        $oauth = app(FortnoxOAuthService::class);
+        $authorizationBlocked = false;
+        if ($oauth->usesRealProvider()) {
+            try {
+                app(FortnoxSubscriptionGuard::class)->assertAuthorizationEnabled((string) config('fortnox.client_id'));
+                $oauth->assertConnectionAllowed($connection);
+            } catch (FortnoxProviderException) {
+                $authorizationBlocked = true;
+            }
+        }
 
         return view('integrations.fortnox.index', [
-            'connection' => FortnoxConnection::query()->forCompany($company)->first(),
+            'connection' => $connection,
+            'authorizationBlocked' => $authorizationBlocked,
             'syncRuns' => FortnoxSyncRun::query()->forCompany($company)->with('triggeredBy')->latest()->limit(20)->get(),
             'conflicts' => FortnoxSyncConflict::query()->forCompany($company)
                 ->with('mapping')
@@ -46,7 +60,12 @@ class FortnoxController extends Controller
 
     public function connect(Request $request, CurrentCompany $currentCompany, ConnectFortnoxAction $action): RedirectResponse
     {
-        $url = $action->execute($this->actor($request), $currentCompany->require());
+        try {
+            $url = $action->execute($this->actor($request), $currentCompany->require());
+        } catch (FortnoxProviderException $exception) {
+            return redirect()->route('settings.integrations.fortnox.index')
+                ->with('error', $exception->getMessage());
+        }
 
         return redirect()->away($url);
     }

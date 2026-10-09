@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec /opt/alt/python312/bin/python3 "$SCRIPT_DIR/site-control.py" resume "$@"

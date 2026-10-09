@@ -9,6 +9,7 @@ use App\Enums\CompanyPermission;
 use App\Enums\Fortnox\FortnoxConnectionStatus;
 use App\Enums\Fortnox\FortnoxSyncRunStatus;
 use App\Exceptions\Fortnox\FortnoxProviderException;
+use App\Exceptions\Fortnox\FortnoxSubscriptionBlocked;
 use App\Models\Company;
 use App\Models\Fortnox\FortnoxConnection;
 use App\Models\Fortnox\FortnoxSyncRun;
@@ -177,6 +178,10 @@ class FortnoxSyncService
                 $accessToken = (string) ($payload['access_token'] ?? '');
                 $expiresAt = $locked->token_expires_at;
                 $margin = max(0, (int) config('fortnox.token_refresh_margin_seconds'));
+                $guard = app(FortnoxSubscriptionGuard::class);
+                $tenantId = $this->provider instanceof HttpFortnoxProvider
+                    ? $guard->assertStoredTokenAllowed($accessToken, $locked->external_tenant_id)
+                    : null;
 
                 if ($accessToken !== '' && $expiresAt !== null && $expiresAt->greaterThan(now()->addSeconds($margin))) {
                     return $accessToken;
@@ -187,7 +192,7 @@ class FortnoxSyncService
                     throw FortnoxProviderException::unauthorized('Fortnox tokens are missing. Re-connect the integration.');
                 }
 
-                $token = $this->provider->refreshAccessToken($refreshToken);
+                $token = $this->provider->refreshAccessToken($refreshToken, $tenantId);
 
                 $locked->forceFill([
                     'token_payload' => [
@@ -203,7 +208,7 @@ class FortnoxSyncService
                 return $token->accessToken;
             });
         } catch (FortnoxProviderException $exception) {
-            if (! $exception->retryable) {
+            if (! $exception->retryable && ! $exception instanceof FortnoxSubscriptionBlocked) {
                 FortnoxConnection::query()
                     ->forCompany($company)
                     ->whereKey($connection->getKey())

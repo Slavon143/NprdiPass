@@ -5,6 +5,7 @@ namespace App\Actions\Fortnox;
 use App\Authorization\CompanyAuthorizer;
 use App\Enums\CompanyPermission;
 use App\Models\Company;
+use App\Models\Fortnox\FortnoxConnection;
 use App\Models\Fortnox\FortnoxOAuthState;
 use App\Models\User;
 use App\Services\Billing\EntitlementService;
@@ -23,9 +24,12 @@ class ConnectFortnoxAction
     {
         $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
         $this->entitlements->assertEnabled($company, 'fortnox.enabled');
+        $this->oauth->assertConnectionAllowed(FortnoxConnection::query()->forCompany($company)->first());
 
         $state = bin2hex(random_bytes(48));
         $ttl = max(1, (int) config('fortnox.oauth_state_ttl_minutes'));
+        // Validate external authorization before creating even an unused state.
+        $url = $this->oauth->authorizationUrl($state);
 
         DB::transaction(function () use ($actor, $company, $state, $ttl): void {
             $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
@@ -37,6 +41,6 @@ class ConnectFortnoxAction
             ]);
         });
 
-        return $this->oauth->authorizationUrl($state);
+        return $url;
     }
 }

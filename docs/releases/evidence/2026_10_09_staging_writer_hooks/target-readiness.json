@@ -1,0 +1,85 @@
+{
+    "checked_at": "2026-10-09T14:41:23+00:00",
+    "kind": "staging_release_readiness_before_pause",
+    "state": {
+        "checked_at": "2026-10-09T14:41:23+00:00",
+        "environment": "staging",
+        "release": "staging-source-20261007-3b3dd0fb5f00",
+        "scoped_cli_writers": 0,
+        "database": "codecraf_nordipass_staging",
+        "other_database_connections": 0,
+        "database_events": 0,
+        "reserved_jobs": 0,
+        "pending_jobs": 1,
+        "failed_jobs": 0,
+        "scheduler_heartbeat": {
+            "expires_at": 2106916862,
+            "fresh": true
+        },
+        "worker_heartbeat": {
+            "expires_at": 2106916862,
+            "fresh": true
+        }
+    },
+    "health": {
+        "up": 200,
+        "ready": 200
+    },
+    "legacy_web_processes_pending": [
+        2924994
+    ],
+    "http_gate_sha256": "4abb0baea89286528a17223a8bf86766407d60a073a731ccfc73cc5fdb9b3b66",
+    "gate_installation": {
+        "installed_at": "2026-10-09T14:16:21+00:00",
+        "release": "staging-source-20261007-3b3dd0fb5f00",
+        "version": "v1",
+        "gate_sha256": "4abb0baea89286528a17223a8bf86766407d60a073a731ccfc73cc5fdb9b3b66",
+        "legacy_web_processes": [
+            {
+                "pid": 2924994,
+                "start": "252578698"
+            }
+        ],
+        "old_source_modified": false,
+        "production_changed": false,
+        "pause_marker_created": false,
+        "http_health_status": 200,
+        "installed": true
+    },
+    "hooks_installation": {
+        "kind": "staging_hooks_installed_not_executed",
+        "checked_at": "2026-10-09T14:39:33+00:00",
+        "files": {
+            "site-control.py": "24a11eb44d84faacfb8255f563f0376d8664be0faf97620e45e3fd6d91dcb788",
+            "inspect-state.php": "ec3807fc22a954bb889d65a45398cd63427b4b41692759e3e6c49d6405473ce3",
+            "boundary-backup.php": "3fc86b0afda2d92c0fc177924d895c215e331a9291309329f4f7dbc7567bc2dc",
+            "pause-writers": "706ee1fa611cfc48f6da006b378864ffb7057a90df1b79b85e86fd7a09daa1bd",
+            "verify-writers-stopped": "45d02a990ada51c504565a0ec354a95d3221f1c72dbca5c45ace8febdd4b1e74",
+            "resume-writers": "ef8637a1cd6babfb581a45023fd4d49af24412f88a34b8d040e68f7595ae77ce",
+            "verify-backup": "be4a31e1218bcead37fc339e5f0df708cfe136ecec70fa9dee9b8fc5159edfa9"
+        },
+        "native_syntax_passed": true,
+        "legacy_web_processes_pending": [
+            2924994
+        ],
+        "writers_paused": false,
+        "current_release_unchanged": true,
+        "production_changed": false
+    },
+    "native_hooks_tests": {
+        "checked_at": "2026-10-09T14:38:41+00:00",
+        "package_sha256": "803501a25ebca5f588ace0a8c8e0d6855f94066cdb84130e4ae5cb0ceddff17d",
+        "native_php_and_flock": true,
+        "tests": 17,
+        "exit": 0,
+        "no_skips": true,
+        "live_application_mutated": false,
+        "current_release_unchanged": true,
+        "passed": true
+    },
+    "writers_paused": false,
+    "current_release_unchanged": true,
+    "database_restore_performed": false,
+    "deployment_performed": false,
+    "production_changed": false
+}

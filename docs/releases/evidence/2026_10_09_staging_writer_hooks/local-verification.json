@@ -1,0 +1,59 @@
+{
+  "pint": {
+    "status": "passed"
+  },
+  "site_php_pint": {
+    "status": "passed"
+  },
+  "phpstan": {
+    "status": "passed",
+    "errors": 0
+  },
+  "frontend_build": {
+    "status": "passed"
+  },
+  "composer_validate": {
+    "status": "passed"
+  },
+  "composer_audit": {
+    "status": "passed",
+    "advisories": 0
+  },
+  "npm_production_audit": {
+    "status": "passed",
+    "vulnerabilities": 0
+  },
+  "npm_full_audit": {
+    "status": "existing_accepted_dev_risk",
+    "exit": 1,
+    "high": 5,
+    "semantic_fingerprint_matches_october_8": true,
+    "moderate": 0,
+    "critical": 0
+  },
+  "full_php_suite": {
+    "status": "passed",
+    "exit": 0,
+    "tests": 2975,
+    "assertions": 14153,
+    "duration_ms": 3943361,
+    "log_sha256": "8fb74e355b4a605687090f51a4e11f26daaeb8f50e25c11f5290d6c77ba7fa32"
+  },
+  "native_staging_hook_tests": {
+    "checked_at": "2026-10-09T14:46:49+00:00",
+    "package_sha256": "feff6209083b394f5e4d56b64fa97978fbb0cb16e19d8828e2e6b012944c346b",
+    "native_php_and_flock": true,
+    "tests": 18,
+    "exit": 0,
+    "no_skips": true,
+    "live_application_mutated": false,
+    "current_release_unchanged": true,
+    "passed": true
+  },
+  "production_changed": false,
+  "new_oauth_authorization": false,
+  "new_commit_created": false,
+  "pre_existing_runtime_warnings": [
+    "Duplicate PHP extension load warnings; complete suite exit 0."
+  ]
+}

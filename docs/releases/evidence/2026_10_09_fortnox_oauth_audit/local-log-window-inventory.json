@@ -1,0 +1,441 @@
+{
+  "kind": "sanitised_october_3_and_4_log_inventory",
+  "window": "2026-10-03 and 2026-10-04 as logged, to include the Stockholm midnight boundary",
+  "files": [
+    {
+      "file": "artisan-serve-test.err.log",
+      "bytes": 280,
+      "sha256": "86ff9131a77e36d9cf86532360c5b495ffd3fef139a7b97df9856e61b4959375",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "artisan-serve-test.out.log",
+      "bytes": 386,
+      "sha256": "c9933fb95426a853f2a0e1000b719da03a067cc6d5da657000ff23a7b4b4c260",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "laravel.log",
+      "bytes": 198206051,
+      "sha256": "6a2fe0347fc7002208c5ac4daef0ae699591da2ab801b049de1c5f93c27c06e4",
+      "october_3_and_4_lines_in_timestamped_context": 734
+    },
+    {
+      "file": "stage5-serve-error.log",
+      "bytes": 280,
+      "sha256": "86ff9131a77e36d9cf86532360c5b495ffd3fef139a7b97df9856e61b4959375",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "stage5-serve-out.log",
+      "bytes": 9756,
+      "sha256": "a67b320f724a55c23a0e2765e65504d18dab151c3a0ebace8ed8edcc5a9cfcca",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "stage6-serve-error.log",
+      "bytes": 280,
+      "sha256": "86ff9131a77e36d9cf86532360c5b495ffd3fef139a7b97df9856e61b4959375",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "stage6-serve-out.log",
+      "bytes": 8270,
+      "sha256": "92b43a24046e072407417228f8fb1cf84197fd3bf32c6da58d04aec657f5d1b6",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "serve-fortnox.out",
+      "bytes": 89,
+      "sha256": "13f25951ba7ef4a2f76425f264311f4ea868b56b55af062b1e50be211e473a30",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    },
+    {
+      "file": "serve-fortnox.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "october_3_and_4_lines_in_timestamped_context": 0
+    }
+  ],
+  "references": [
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 09:33:45",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 09:33:48",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 22:43:18",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 22:43:20",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 22:43:33",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:00:49",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:17",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:18",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:29",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:29",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:32",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:32",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:42",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:42",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:43",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:47",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:47",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:01:50",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:08:40",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:09:39",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:09:41",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    },
+    {
+      "file": "laravel.log",
+      "timestamp_as_logged": "2026-10-03 23:09:41",
+      "route_references": [],
+      "known_subscription_ids_mentioned": [],
+      "kind": "log_reference_not_proof_of_a_successful_action"
+    }
+  ],
+  "raw_lines_emitted": false
+}

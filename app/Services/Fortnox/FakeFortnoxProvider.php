@@ -66,22 +66,9 @@ class FakeFortnoxProvider implements FortnoxProvider
         // The browser is redirected straight back to the local callback with
         // a simulated authorization code, so the full flow works without any
         // Fortnox credentials in local/testing.
-        if ((string) config('fortnox.client_id') === '') {
-            return $redirectUri.'?'.http_build_query([
-                'code' => 'fake-code',
-                'state' => $state,
-            ]);
-        }
-
-        $base = rtrim((string) config('fortnox.authorize_url'), '/');
-
-        return $base.'?'.http_build_query([
-            'client_id' => (string) config('fortnox.client_id'),
-            'redirect_uri' => $redirectUri,
-            'response_type' => 'code',
-            'scope' => implode(' ', (array) config('fortnox.scopes')),
+        return $redirectUri.'?'.http_build_query([
+            'code' => 'fake-code',
             'state' => $state,
-            'access_type' => 'offline',
         ]);
     }
 
@@ -95,7 +82,7 @@ class FakeFortnoxProvider implements FortnoxProvider
         return $this->token();
     }
 
-    public function refreshAccessToken(string $refreshToken): FortnoxAccessToken
+    public function refreshAccessToken(string $refreshToken, ?string $tenantId = null): FortnoxAccessToken
     {
         $this->throwIfScheduled('refresh');
         if ($refreshToken === '') {

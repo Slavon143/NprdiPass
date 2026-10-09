@@ -8,24 +8,32 @@
     <div class="space-y-6">
         <section class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('Connection') }}</h2>
+            @if ($authorizationBlocked)
+                <p class="mt-3 text-sm text-amber-700" data-testid="fortnox-authorization-blocked">{{ __('New Fortnox connections are blocked in this environment. Contact your administrator to verify the permitted test account.') }}</p>
+            @endif
             @if ($connection === null || $connection->status === \App\Enums\Fortnox\FortnoxConnectionStatus::Revoked)
                 <p class="mt-1 text-sm text-slate-600">{{ __('Connect your Fortnox account to synchronize article data into the catalog.') }}</p>
+                @unless ($authorizationBlocked)
                 <form class="mt-4" method="POST" action="{{ route('settings.integrations.fortnox.connect') }}" data-testid="fortnox-connect-form">
                     @csrf
                     <x-primary-button>{{ __('Connect Fortnox') }}</x-primary-button>
                 </form>
+                @endunless
             @else
                 <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-3">
                     <div><dt class="text-slate-500">{{ __('Status') }}</dt><dd class="mt-1 font-medium text-slate-900">{{ $connection->status->label() }}</dd></div>
                     <div><dt class="text-slate-500">{{ __('Connected') }}</dt><dd class="mt-1 font-medium text-slate-900">{{ $connection->connected_at?->format('Y-m-d H:i') ?? '—' }}</dd></div>
                     <div><dt class="text-slate-500">{{ __('Last sync') }}</dt><dd class="mt-1 font-medium text-slate-900">{{ $connection->last_synced_at?->format('Y-m-d H:i') ?? '—' }}</dd></div>
+                    <div><dt class="text-slate-500">{{ __('Fortnox account') }}</dt><dd class="mt-1 font-medium text-slate-900">{{ $connection->external_tenant_id ?? __('Not recorded') }}</dd></div>
                 </dl>
                 @if ($connection->failure_message)
                     <p class="mt-3 text-sm text-amber-700">{{ $connection->failure_message }}</p>
                 @endif
                 <div class="mt-4 flex gap-2">
                     <form method="POST" action="{{ route('settings.integrations.fortnox.sync') }}" data-testid="fortnox-sync-form">@csrf<x-primary-button>{{ __('Sync now') }}</x-primary-button></form>
-                    <form method="POST" action="{{ route('settings.integrations.fortnox.connect') }}">@csrf<x-secondary-button type="submit">{{ __('Reconnect') }}</x-secondary-button></form>
+                    @unless ($authorizationBlocked)
+                        <form method="POST" action="{{ route('settings.integrations.fortnox.connect') }}">@csrf<x-secondary-button type="submit">{{ __('Reconnect') }}</x-secondary-button></form>
+                    @endunless
                     <form method="POST" action="{{ route('settings.integrations.fortnox.disconnect') }}" data-testid="fortnox-disconnect-form">@csrf<x-danger-button>{{ __('Disconnect') }}</x-danger-button></form>
                 </div>
             @endif

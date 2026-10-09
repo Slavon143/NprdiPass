@@ -7,6 +7,12 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Http;
 
+beforeEach(function () {
+    // These existing transport-contract tests exercise production semantics
+    // against Http::fake; protected-environment behavior has dedicated coverage.
+    app()->detectEnvironment(fn (): string => 'production');
+});
+
 function fortnoxHttpProvider(array $overrides = []): HttpFortnoxProvider
 {
     return new HttpFortnoxProvider(array_merge([

@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-10-09T12:54:50+00:00",
+  "expected_api_tenant_id": "1854146",
+  "authorization_started": false,
+  "token_refresh_performed": false,
+  "fortnox_write_requests": 0,
+  "read_requests": 1,
+  "observed_api_tenant_id": "1854146",
+  "articles_returned": 100,
+  "has_next_page": true,
+  "authenticated_test_api_read_passed": true,
+  "connection_row_unchanged": true,
+  "completed": true
+}

@@ -41,6 +41,7 @@ class CompleteFortnoxCallbackAction
             throw ValidationException::withMessages(['state' => 'The OAuth state is invalid, expired, or already used.']);
         }
 
+        $this->oauth->assertConnectionAllowed(FortnoxConnection::query()->forCompany($company)->first());
         $token = $this->oauth->exchange($code);
 
         return DB::transaction(function () use ($actor, $company, $token): FortnoxConnection {
@@ -49,6 +50,7 @@ class CompleteFortnoxCallbackAction
                 ->forCompany($company)
                 ->lockForUpdate()
                 ->first();
+            $this->oauth->assertConnectionAllowed($connection);
 
             if ($connection === null) {
                 $connection = new FortnoxConnection;
@@ -93,6 +95,7 @@ class CompleteFortnoxCallbackAction
             $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
             $record = FortnoxOAuthState::query()
                 ->where('company_id', $company->getKey())
+                ->where('user_id', $actor->getKey())
                 ->where('state_hash', $hash)
                 ->lockForUpdate()
                 ->first();

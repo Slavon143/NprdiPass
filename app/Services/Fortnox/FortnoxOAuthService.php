@@ -3,7 +3,9 @@
 namespace App\Services\Fortnox;
 
 use App\Data\Fortnox\FortnoxAccessToken;
+use App\Enums\Fortnox\FortnoxConnectionStatus;
 use App\Exceptions\Fortnox\FortnoxProviderException;
+use App\Models\Fortnox\FortnoxConnection;
 use App\Services\Fortnox\Contracts\FortnoxProvider;
 use Illuminate\Support\Str;
 
@@ -14,6 +16,33 @@ class FortnoxOAuthService
     public function authorizationUrl(string $state): string
     {
         return $this->provider->authorizationUrl($state, $this->redirectUri());
+    }
+
+    public function usesRealProvider(): bool
+    {
+        return $this->provider instanceof HttpFortnoxProvider;
+    }
+
+    public function assertConnectionAllowed(?FortnoxConnection $connection): void
+    {
+        if ($connection === null || ! $this->usesRealProvider()) {
+            return;
+        }
+
+        $guard = app(FortnoxSubscriptionGuard::class);
+        if ($guard->isProtectedEnvironment()) {
+            if ($connection->status === FortnoxConnectionStatus::Revoked) {
+                if ($connection->external_tenant_id !== null) {
+                    $guard->assertTenantAllowed($connection->external_tenant_id);
+                }
+
+                return;
+            }
+            $guard->assertStoredTokenAllowed(
+                (string) ($connection->token_payload['access_token'] ?? ''),
+                $connection->external_tenant_id,
+            );
+        }
     }
 
     /**

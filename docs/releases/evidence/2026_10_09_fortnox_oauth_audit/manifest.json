@@ -1,0 +1,9 @@
+{
+  "live-test-read.json": "d8a265e273a5d465ae8eacc28539a8a7d2ee6f7f5d6289584c681483d803403d",
+  "local-log-classification.json": "259a4a27882f617974504952f5dc9d6f6f67faded3ea8b48248ed88b2ae58016",
+  "local-log-window-inventory.json": "57160f1b5947460beab1f42df8d607daaa5589984f2a69953e437fe7c090e38f",
+  "local-readonly.json": "895fc13d8b2cd4af6234b549ebd4756f747b7746a78ffb09129a2300895db227",
+  "staging-oauth-pause.json": "97ec8fc912998472b5ced0e677c78933cdad8450f78ce6d9c7d1b8ba0d82c45a",
+  "staging-readonly.json": "0bd87f74e20b3b7419915cb58ec353587ae2894a385475e019f4eefd5126e818",
+  "verification.json": "23a964c0e1071fff67e699b1aa4b82b2a40b6c21a96588e62430139b3802b738"
+}
