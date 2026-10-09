@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Notifications\MarkNotificationsReadAction;
 use App\Enums\Notifications\NotificationType;
 use App\Models\Notifications\Notification;
 use App\Models\Notifications\NotificationPreference;
@@ -13,7 +14,7 @@ use Illuminate\View\View;
 
 class NotificationCenterController extends Controller
 {
-    public function index(Request $request, CurrentCompany $currentCompany): View
+    public function index(Request $request, CurrentCompany $currentCompany, MarkNotificationsReadAction $markRead): View
     {
         $company = $currentCompany->require();
         $user = $this->actor($request);
@@ -23,7 +24,17 @@ class NotificationCenterController extends Controller
             ->where('user_id', $user->getKey())
             ->whereNull('dismissed_at')
             ->latest()
+            ->orderByDesc('id')
             ->paginate(25);
+
+        $notificationIds = $notifications->getCollection()
+            ->map(fn (Notification $notification): int => (int) $notification->getKey())
+            ->values()
+            ->all();
+        $readAt = $markRead->execute($user, $company, $notificationIds);
+        foreach ($notifications as $notification) {
+            $notification->read_at ??= $readAt;
+        }
 
         $preferences = NotificationPreference::query()
             ->forCompany($company)

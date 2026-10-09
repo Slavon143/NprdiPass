@@ -52,6 +52,7 @@
         .quick-fact dt { font-weight: 600; min-width: 10rem; color: #475569; font-size: 0.875rem; }
         .quick-fact dd { color: #1e293b; font-size: 0.875rem; }
         .safety-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; }
+        .safety-neutral { display: inline-flex; align-items: center; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; }
         .recycling-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; }
         .document-card { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; }
         .document-card dt { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }

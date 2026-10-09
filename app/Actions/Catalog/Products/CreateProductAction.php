@@ -9,6 +9,8 @@ use App\Exceptions\Catalog\ProductOperationException;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogWriteTransaction;
+use App\Support\Catalog\VariantIdentifierNormalizer;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,7 @@ class CreateProductAction extends ProductAction
     /**
      * @param  array<string, mixed>  $data
      * @param  list<string>  $additionalCategoryUuids
+     * @param  array<string, mixed>  $defaultVariantIdentifiers
      */
     public function execute(
         User $actor,
@@ -24,33 +27,38 @@ class CreateProductAction extends ProductAction
         array $data,
         ?string $primaryCategoryUuid = null,
         array $additionalCategoryUuids = [],
+        bool $imported = false,
+        array $defaultVariantIdentifiers = [],
     ): Product {
-        $company = $this->authorize($actor, $company, CompanyPermission::CatalogCreate);
-        $this->entitlements->assertBelowLimit(
-            $company,
-            'catalog.products.max',
-            $company->products()->count(),
-        );
-
-        $data = $this->normalizedData($data);
+        $preflightData = null;
+        if (DB::transactionLevel() === 0) {
+            $company = $this->authorize($actor, $company, CompanyPermission::CatalogCreate);
+            $preflightData = $this->normalizedData($data);
+        }
 
         try {
-            return DB::transaction(function () use (
+            return app(CatalogWriteTransaction::class)->run(function () use (
                 $actor,
                 $company,
                 $data,
+                $preflightData,
                 $primaryCategoryUuid,
                 $additionalCategoryUuids,
+                $imported,
+                $defaultVariantIdentifiers,
             ): Product {
                 $company = $this->authorize($actor, $company, CompanyPermission::CatalogCreate);
+                $data = $preflightData ?? $this->normalizedData($data);
+                $managed = ! ($imported && $company->commercial_model_version === 1);
+                $this->capacity->assertPoolSlotAvailable($company);
+                if ($managed) {
+                    $this->capacity->assertSlotAvailable($company);
+                }
                 $product = $this->aggregateCreator->create($actor, $company, $data, [
                     'name' => 'Default',
-                    'sku' => null,
-                    'sku_normalized' => null,
-                    'gtin' => null,
-                    'mpn' => null,
+                    ...app(VariantIdentifierNormalizer::class)->normalize($defaultVariantIdentifiers),
                     'sort_order' => 0,
-                ]);
+                ], $managed);
                 $categorySync = $this->categories->sync(
                     $company,
                     $product,
@@ -75,10 +83,14 @@ class CreateProductAction extends ProductAction
                     ],
                 );
 
-                return $product->refresh()->load(['defaultVariant', 'primaryCategory', 'categories']);
+                return $product->refresh()->loadMissing(['defaultVariant', 'primaryCategory', 'categories']);
             });
         } catch (QueryException $exception) {
             if ($this->isDuplicateKey($exception)) {
+                $variantConflict = app(VariantIdentifierNormalizer::class)->conflict($exception);
+                if ($variantConflict !== null) {
+                    throw $variantConflict;
+                }
                 throw ProductOperationException::slugConflict($exception);
             }
 

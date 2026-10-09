@@ -15,6 +15,7 @@ use App\Models\CompanyMembership;
 use App\Models\User;
 use App\Security\EmailNormalizer;
 use App\Security\InvitationTokenVerifier;
+use App\Services\Billing\CompanySeatCapacity;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -97,6 +98,8 @@ class AcceptCompanyInvitation
                 if (! $role instanceof CompanyRole) {
                     throw new InvitationCannotBeAccepted;
                 }
+
+                app(CompanySeatCapacity::class)->assertAvailable($company, (int) $lockedInvitation->getKey());
 
                 $membership = new CompanyMembership;
                 $membership->company_id = $company->getKey();

@@ -58,7 +58,26 @@ Staging mirrors production configuration but may use relaxed rate limits and non
 
 ## Production
 
-Production must use Redis for cache, queue, and sessions. The filesystem default is `local`. An S3-compatible disk can be added later if document storage requires it (Laravel Filesystem abstraction).
+The table's production Redis defaults assume suitable durable infrastructure for
+queues, sessions and locks. MySQL is the supported alternative where the Redis
+instance can evict these records. The filesystem default is `local`. An
+S3-compatible disk can be added later if document storage requires it (Laravel
+Filesystem abstraction).
+
+For the Oderland server, use the verified Unix-socket configuration and driver
+procedure in [Queues and Scheduler](QUEUES_AND_SCHEDULER.md#oderland-unix-socket-laravel-13).
+The socket `/tmp/redis` was verified from the application account over SSH on
+2026-10-09. This instance uses `allkeys-lru` with a 128000000-byte limit and no
+AOF. Keep `QUEUE_CONNECTION=database`, `SESSION_DRIVER=database` and
+`CACHE_STORE=database` for coordination; use the explicit Redis store only for
+regenerable data. Application settings were not switched during diagnostics.
+
+Oderland's October 9 support reply confirms that Redis data does not persist
+across Redis/server restarts. The current Standard plan also limits PHP
+processes to 15 minutes and cannot run persistent workers/Horizon. Existing
+short database-backed cron workers remain the unpaid option; their production
+acceptance and deployment controls must be verified explicitly. No paid plan
+change has been authorised or ordered.
 
 ### APP_KEY lifecycle
 

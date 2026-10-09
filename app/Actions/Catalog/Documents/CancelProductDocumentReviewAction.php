@@ -20,6 +20,7 @@ class CancelProductDocumentReviewAction extends SubmitProductDocumentVersionForR
         $this->assertDocumentVersion($company, $document, $version);
 
         return DB::transaction(function () use ($actor, $company, $document, $version, $comment): ProductDocumentVersion {
+            $this->authorize($actor, $company, CompanyPermission::CatalogSubmitDocumentReview);
             $lockedVersion = ProductDocumentVersion::query()->whereKey($version->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedVersion->review_status !== ProductDocumentReviewStatus::PendingReview) {

@@ -25,7 +25,7 @@
                 @endif
                 <div class="mt-4 flex gap-2">
                     <form method="POST" action="{{ route('settings.integrations.fortnox.sync') }}" data-testid="fortnox-sync-form">@csrf<x-primary-button>{{ __('Sync now') }}</x-primary-button></form>
-                    <form method="POST" action="{{ route('settings.integrations.fortnox.connect') }}">@csrf<x-secondary-button>{{ __('Reconnect') }}</x-secondary-button></form>
+                    <form method="POST" action="{{ route('settings.integrations.fortnox.connect') }}">@csrf<x-secondary-button type="submit">{{ __('Reconnect') }}</x-secondary-button></form>
                     <form method="POST" action="{{ route('settings.integrations.fortnox.disconnect') }}" data-testid="fortnox-disconnect-form">@csrf<x-danger-button>{{ __('Disconnect') }}</x-danger-button></form>
                 </div>
             @endif
@@ -42,8 +42,8 @@
                         <td class="px-6 py-4">{{ data_get($conflict->nordipass_value, 'value') ?? '—' }}</td>
                         <td class="px-6 py-4">
                             <div class="flex gap-2" data-testid="fortnox-conflict-row">
-                                <form method="POST" action="{{ route('settings.integrations.fortnox.conflicts.resolve', $conflict) }}">@csrf<input type="hidden" name="resolution" value="fortnox"><x-secondary-button>{{ __('Use Fortnox') }}</x-secondary-button></form>
-                                <form method="POST" action="{{ route('settings.integrations.fortnox.conflicts.resolve', $conflict) }}">@csrf<input type="hidden" name="resolution" value="nordipass"><x-secondary-button>{{ __('Keep NordiPass') }}</x-secondary-button></form>
+                                <form method="POST" action="{{ route('settings.integrations.fortnox.conflicts.resolve', $conflict) }}">@csrf<input type="hidden" name="resolution" value="fortnox"><x-secondary-button type="submit">{{ __('Use Fortnox') }}</x-secondary-button></form>
+                                <form method="POST" action="{{ route('settings.integrations.fortnox.conflicts.resolve', $conflict) }}">@csrf<input type="hidden" name="resolution" value="nordipass"><x-secondary-button type="submit">{{ __('Keep NordiPass') }}</x-secondary-button></form>
                             </div>
                         </td>
                     </tr>

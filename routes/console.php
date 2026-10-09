@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\Infrastructure\QueueWorkerHeartbeat;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,6 +28,13 @@ Schedule::command('nordipass:scheduler-heartbeat')
     ->everyMinute()
     ->withoutOverlapping(5);
 
+Schedule::job(new QueueWorkerHeartbeat)->everyMinute()->withoutOverlapping(2);
+
+Schedule::command('nordipass:restore-verify')
+    ->weeklyOn(0, '04:30')
+    ->withoutOverlapping(180)
+    ->appendOutputTo(storage_path('logs/scheduler-restore-verify.log'));
+
 Schedule::command('fortnox:sync --all-companies')
     ->hourly()
     ->withoutOverlapping(55)
@@ -36,6 +44,8 @@ Schedule::command('billing:reconcile')
     ->dailyAt('01:30')
     ->withoutOverlapping(60)
     ->appendOutputTo(storage_path('logs/scheduler-billing-reconcile.log'));
+
+Schedule::command('webhooks:recover')->everyMinute()->withoutOverlapping(5);
 
 Schedule::command('analytics:aggregate')
     ->hourly()

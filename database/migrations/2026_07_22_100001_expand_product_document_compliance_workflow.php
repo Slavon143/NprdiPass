@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\CheckConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,7 @@ return new class extends Migration
         DB::unprepared('DROP TRIGGER IF EXISTS product_document_versions_prevent_update');
         DB::unprepared('DROP TRIGGER IF EXISTS product_document_versions_prevent_delete');
 
-        DB::statement('ALTER TABLE product_document_versions DROP CHECK product_document_versions_type_check');
+        CheckConstraints::drop('product_document_versions', 'product_document_versions_type_check');
 
         Schema::table('product_document_versions', function (Blueprint $table): void {
             $table->string('safe_display_filename')->nullable()->after('original_filename');
@@ -114,10 +115,10 @@ return new class extends Migration
         Schema::dropIfExists('product_document_variant');
         Schema::dropIfExists('product_document_review_decisions');
 
-        DB::statement('ALTER TABLE product_document_versions DROP CHECK product_document_versions_type_check');
-        DB::statement('ALTER TABLE product_document_versions DROP CHECK product_document_versions_review_status_check');
-        DB::statement('ALTER TABLE product_document_versions DROP CHECK product_document_versions_approval_status_check');
-        DB::statement('ALTER TABLE product_document_versions DROP CHECK product_document_versions_valid_dates_check');
+        CheckConstraints::drop('product_document_versions', 'product_document_versions_type_check');
+        CheckConstraints::drop('product_document_versions', 'product_document_versions_review_status_check');
+        CheckConstraints::drop('product_document_versions', 'product_document_versions_approval_status_check');
+        CheckConstraints::drop('product_document_versions', 'product_document_versions_valid_dates_check');
 
         Schema::table('product_document_versions', function (Blueprint $table): void {
             $table->dropForeign(['submitted_by_user_id']);

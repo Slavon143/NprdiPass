@@ -10,6 +10,9 @@ class SensitiveDataSanitizer
         'password_confirmation',
         'current_password',
         'token',
+        'access_token',
+        'refresh_token',
+        'token_payload',
         'token_hash',
         'plain_text_token',
         'api_token',
@@ -57,7 +60,7 @@ class SensitiveDataSanitizer
         }
 
         $value = (string) preg_replace(
-            '/([?&](?:token|token_hash|api_token|secret|authorization)=)[^&\s]+/i',
+            '/([?&](?:token|access_token|refresh_token|token_hash|api_token|secret|client_secret|authorization)=)[^&\s]+/i',
             '$1[REDACTED]',
             $value,
         );

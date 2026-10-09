@@ -51,7 +51,7 @@ class ProductCategoryService
             ->forCompany($company)
             ->whereIn('uuid', $requestedUuids)
             ->orderBy('id')
-            ->lockForUpdate()
+            ->sharedLock()
             ->get()
             ->keyBy('uuid');
 
@@ -69,7 +69,7 @@ class ProductCategoryService
 
         $newCategoryIds = $categories->values()->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
         sort($newCategoryIds);
-        $assignments = CategoryProduct::query()
+        $assignments = CategoryProduct::query()->forceIndex('category_product_company_product_index')
             ->forCompany($company)
             ->where('product_id', $product->getKey())
             ->orderBy('id')
@@ -82,12 +82,12 @@ class ProductCategoryService
         $newPrimaryId = $newPrimary instanceof Category ? $newPrimary->getKey() : null;
         $oldPrimaryUuid = $oldPrimaryId === null
             ? null
-            : Category::withTrashed()->forCompany($company)->whereKey($oldPrimaryId)->value('uuid');
+            : Category::withTrashed()->forCompany($company)->whereKey($oldPrimaryId)->sharedLock()->value('uuid');
         $primaryChanged = $oldPrimaryId !== $newPrimaryId;
         $categoriesChanged = $oldCategoryIds !== $newCategoryIds;
 
         if ($categoriesChanged) {
-            CategoryProduct::query()
+            CategoryProduct::query()->forceIndex('category_product_company_product_index')
                 ->forCompany($company)
                 ->where('product_id', $product->getKey())
                 ->whereNotIn('category_id', $newCategoryIds)

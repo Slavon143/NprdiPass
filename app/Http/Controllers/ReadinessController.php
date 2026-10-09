@@ -46,6 +46,14 @@ class ReadinessController extends Controller
             }
         }
 
+        if (config('health.require_worker', false)) {
+            $workerOk = $this->checkWorker();
+            $checks['worker'] = $workerOk ? 'ok' : 'unavailable';
+            if (! $workerOk) {
+                $unavailable[] = 'worker';
+            }
+        }
+
         if (config('health.require_scheduler', false)) {
             $schedulerOk = $this->checkScheduler();
             $checks['scheduler'] = $schedulerOk ? 'ok' : 'unavailable';
@@ -139,6 +147,20 @@ class ReadinessController extends Controller
             $timestamp = Carbon::parse($heartbeat);
 
             return $timestamp->diffInSeconds(now()) <= $maxAge;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function checkWorker(): bool
+    {
+        try {
+            $heartbeat = Cache::get(config('health.worker_heartbeat_key', 'nordipass:infrastructure:worker:last_run'));
+            if ($heartbeat === null) {
+                return false;
+            }
+
+            return Carbon::parse($heartbeat)->diffInSeconds(now()) <= (int) config('health.worker_max_age', 180);
         } catch (\Throwable) {
             return false;
         }

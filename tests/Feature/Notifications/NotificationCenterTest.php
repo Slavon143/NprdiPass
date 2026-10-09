@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Jobs\JobStatusTracker;
 use App\Services\Notifications\NotificationCenter;
 use App\Tenancy\Contracts\CurrentCompany;
+use Illuminate\Support\Str;
 
 function signedInCompanyUser(): array
 {
@@ -128,7 +129,102 @@ test('notification actions are scoped to current user and company', function () 
         ->and($other->refresh()->read_at)->toBeNull();
 });
 
-test('job center is tenant scoped and supports safe cancel and retry', function () {
+test('viewing the inbox clears the unread indicator and preserves the first read time', function () {
+    [$user, $company] = signedInCompanyUser();
+
+    $this->get(route('notifications.index'))
+        ->assertOk()
+        ->assertDontSee('data-testid="header-notification-unread-indicator"', false);
+
+    $notification = Notification::query()->create([
+        'company_id' => $company->getKey(),
+        'user_id' => $user->getKey(),
+        'type' => NotificationType::BillingEvent,
+        'preference_key' => NotificationType::BillingEvent->value,
+        'severity' => NotificationSeverity::Info,
+        'title' => 'Billing notice',
+        'idempotency_key' => 'billing:unread-indicator',
+    ]);
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('data-testid="header-notification-unread-indicator"', false);
+
+    $this->get(route('notifications.index'))
+        ->assertOk()
+        ->assertDontSee('data-testid="header-notification-unread-indicator"', false)
+        ->assertDontSee('Unread');
+
+    $readAt = $notification->refresh()->read_at;
+    expect($readAt)->not->toBeNull();
+
+    $this->travel(5)->minutes();
+    $this->get(route('notifications.index'))
+        ->assertOk()
+        ->assertDontSee('data-testid="header-notification-unread-indicator"', false);
+
+    expect($notification->refresh()->read_at?->equalTo($readAt))->toBeTrue();
+});
+
+test('inbox viewing leaves unseen dismissed and other recipient notifications unread', function () {
+    [$user, $company] = signedInCompanyUser();
+    $otherUser = User::factory()->create(['email_verified_at' => now()]);
+    CompanyMembership::factory()->viewer()->create([
+        'company_id' => $company->getKey(),
+        'user_id' => $otherUser->getKey(),
+    ]);
+    $otherCompany = Company::factory()->create();
+    CompanyMembership::factory()->owner()->create([
+        'company_id' => $otherCompany->getKey(),
+        'user_id' => $user->getKey(),
+    ]);
+
+    $create = fn (array $attributes = []): Notification => Notification::query()->create([
+        'company_id' => $company->getKey(),
+        'user_id' => $user->getKey(),
+        'type' => NotificationType::ImportCompleted,
+        'preference_key' => NotificationType::ImportCompleted->value,
+        'severity' => NotificationSeverity::Info,
+        'title' => 'Import notification',
+        'idempotency_key' => (string) Str::uuid(),
+        ...$attributes,
+    ]);
+
+    $unseen = $create(['created_at' => now()->subHour(), 'title' => 'Older unread notice']);
+    $dismissed = $create(['dismissed_at' => now(), 'title' => 'Dismissed marker']);
+    $otherRecipient = $create(['user_id' => $otherUser->getKey(), 'title' => 'Other recipient marker']);
+    $otherTenant = $create(['company_id' => $otherCompany->getKey(), 'title' => 'Other company marker']);
+    $firstReadAt = now()->subDay()->startOfSecond();
+    $alreadyRead = $create(['read_at' => $firstReadAt]);
+    $displayed = collect(range(1, 24))->map(fn () => $create());
+
+    $this->get(route('notifications.index'))
+        ->assertOk()
+        ->assertSee('data-testid="header-notification-unread-indicator"', false)
+        ->assertDontSee('Older unread notice')
+        ->assertDontSee('Dismissed marker')
+        ->assertDontSee('Other recipient marker')
+        ->assertDontSee('Other company marker');
+
+    expect($displayed->every(fn (Notification $notification): bool => $notification->refresh()->read_at !== null))->toBeTrue()
+        ->and($unseen->refresh()->read_at)->toBeNull()
+        ->and($dismissed->refresh()->read_at)->toBeNull()
+        ->and($otherRecipient->refresh()->read_at)->toBeNull()
+        ->and($otherTenant->refresh()->read_at)->toBeNull()
+        ->and($alreadyRead->refresh()->read_at?->equalTo($firstReadAt))->toBeTrue();
+
+    $this->get(route('notifications.index', ['page' => 2]))
+        ->assertOk()
+        ->assertSee('Older unread notice')
+        ->assertDontSee('data-testid="header-notification-unread-indicator"', false);
+
+    expect($unseen->refresh()->read_at)->not->toBeNull()
+        ->and($dismissed->refresh()->read_at)->toBeNull()
+        ->and($otherRecipient->refresh()->read_at)->toBeNull()
+        ->and($otherTenant->refresh()->read_at)->toBeNull();
+});
+
+test('job center is tenant scoped and exposes status without fake controls', function () {
     [$user, $company] = signedInCompanyUser();
     $foreignCompany = Company::factory()->create();
     $tracker = app(JobStatusTracker::class);
@@ -157,17 +253,12 @@ test('job center is tenant scoped and supports safe cancel and retry', function 
         ->assertSee('Apply product import')
         ->assertDontSee('Foreign sync');
 
-    $this->post(route('job-center.cancel', $job))->assertRedirect();
-    expect($job->refresh()->status)->toBe(JobStatusState::CancelRequested);
+    $this->get(route('job-center.show', $job))
+        ->assertOk()
+        ->assertDontSee('Retry')
+        ->assertDontSee('Cancel');
 
-    $tracker->markCancelled($job);
-    $this->post(route('job-center.retry', $job))->assertRedirect();
-
-    $retry = JobStatus::query()->forCompany($company)->where('retry_of_id', $job->getKey())->first();
-
-    expect($retry)->not->toBeNull()
-        ->and($retry?->status)->toBe(JobStatusState::Pending)
-        ->and(JobStatus::query()->forCompany($foreignCompany)->first()?->is($foreign))->toBeTrue();
+    expect(JobStatus::query()->forCompany($foreignCompany)->first()?->is($foreign))->toBeTrue();
 });
 
 test('completed jobs cannot be cancelled and missing entities do not break job detail pages', function () {
@@ -189,6 +280,5 @@ test('completed jobs cannot be cancelled and missing entities do not break job d
         ->assertSee('Document expiry scan')
         ->assertSee('00000000-0000-4000-8000-000000000002');
 
-    $this->post(route('job-center.cancel', $job))
-        ->assertSessionHasErrors('job');
+    $this->get(route('job-center.show', $job))->assertOk()->assertDontSee('Retry')->assertDontSee('Cancel');
 });

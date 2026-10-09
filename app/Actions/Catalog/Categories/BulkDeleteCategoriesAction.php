@@ -29,6 +29,7 @@ class BulkDeleteCategoriesAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
 
         return DB::transaction(function () use ($actor, $company, $uuids): array {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
             $all = Category::query()
                 ->forCompany($company)
                 ->whereIn('uuid', $uuids)

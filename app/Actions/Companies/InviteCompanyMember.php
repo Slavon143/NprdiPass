@@ -15,6 +15,7 @@ use App\Models\CompanyInvitation;
 use App\Models\User;
 use App\Security\EmailNormalizer;
 use App\Security\InvitationTokenGenerator;
+use App\Services\Billing\CompanySeatCapacity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -105,6 +106,8 @@ class InviteCompanyMember
                 $pendingInvitation->setAttribute('cancelled_at', now());
                 $pendingInvitation->save();
             }
+
+            app(CompanySeatCapacity::class)->assertAvailable($lockedCompany);
 
             $token = $this->tokenGenerator->generate();
             $expiresHours = max(1, (int) config('invitations.expires_hours', 72));

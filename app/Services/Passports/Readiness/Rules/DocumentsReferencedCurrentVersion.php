@@ -59,7 +59,7 @@ class DocumentsReferencedCurrentVersion implements PassportReadinessRule
 
         foreach ($documentRefs as $ref) {
             $refUuid = $ref['document_uuid'] ?? '';
-            $refVersion = $ref['version_uuid'] ?? null;
+            $refVersion = $ref['document_version_uuid'] ?? null;
             if ($refUuid !== '') {
                 $refUuidToVersionMap[$refUuid] = $refVersion;
             }
@@ -69,8 +69,10 @@ class DocumentsReferencedCurrentVersion implements PassportReadinessRule
             $docUuid = $document->uuid;
             $refVersionUuid = $refUuidToVersionMap[$docUuid] ?? null;
 
-            if ($refVersionUuid !== null && $document->currentVersion !== null) {
-                if ($document->currentVersion->uuid !== $refVersionUuid) {
+            $latestVersion = $document->relationLoaded('readinessLatestVersion')
+                ? $document->getRelation('readinessLatestVersion') : $document->currentVersion;
+            if ($refVersionUuid !== null && $latestVersion !== null) {
+                if ($latestVersion->uuid !== $refVersionUuid) {
                     $outdatedUuids[] = $docUuid;
                 }
             }

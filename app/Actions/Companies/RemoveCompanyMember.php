@@ -40,15 +40,15 @@ class RemoveCompanyMember
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $this->authorizeActiveCompany($actor, $company);
+
             $lockedMembership = CompanyMembership::query()
                 ->whereKey($membership->getKey())
                 ->where('company_id', $company->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $this->authorizeActiveCompany($actor, $company);
-
-            $actorMembership = $this->currentMembership->get($actor, $company)
+            $actorMembership = $this->currentMembership->getForAuthorization($actor, $company)
                 ?? throw new AuthorizationException;
             $actorRole = $this->roleOf($actorMembership);
             $targetRole = $this->roleOf($lockedMembership);

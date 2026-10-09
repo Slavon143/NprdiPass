@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Catalog\Taxonomy;
 
+use App\Data\Catalog\Search\CatalogProductSearchCriteria;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeOptionApprovalStatus;
@@ -20,6 +21,7 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Queries\Catalog\ProductCatalogQuery;
 use App\Services\Catalog\Taxonomy\CategoryTemplateService;
 use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
 use App\Services\Catalog\Taxonomy\ProductTaxonomyDiagnosticsService;
@@ -203,6 +205,18 @@ class CategoryTemplateFoundationTest extends TestCase
         app(CategoryTemplateService::class)->activate($template, $actor);
 
         $this->assertSame($payload, $published->fresh()->payload);
+    }
+
+    public function test_catalog_query_keeps_the_category_template_identity_for_profile_resolution(): void
+    {
+        [$company, $actor, $category, $product] = $this->catalogContext('profile-query');
+        $service = app(CategoryTemplateService::class);
+        $template = $service->activate($service->createDraft($category, $actor, 'Selected profile', 'nordipass-pilot', 1), $actor);
+        $listed = app(ProductCatalogQuery::class)->build($company,
+            new CatalogProductSearchCriteria)->whereKey($product->id)->sole();
+        $profile = app(ProductReadinessProfileResolver::class)->resolve($listed);
+        $this->assertSame($template->readiness_profile_version, $profile->version);
+        $this->assertSame($template->readiness_rule_set_fingerprint, $profile->fingerprint);
     }
 
     /** @return array{Company, User, Category, Product} */

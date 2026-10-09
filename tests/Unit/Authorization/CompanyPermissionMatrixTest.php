@@ -22,6 +22,7 @@ foreach (CompanyRole::cases() as $role) {
                 CompanyPermission::CatalogSubmitDocumentReview,
                 CompanyPermission::PassportsView,
                 CompanyPermission::PassportsManage,
+                CompanyPermission::PassportsUnpublish,
             ], true),
             CompanyRole::Viewer => in_array($permission, [
                 CompanyPermission::CompanyView,

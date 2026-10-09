@@ -292,6 +292,26 @@ class PublicPassportSecurityTest extends TestCase
         $this->assertNotNull($json, 'JSON-LD script decoded to null.');
     }
 
+    public function test_json_ld_cannot_close_its_script_element(): void
+    {
+        $attack = '</script><script>alert(document.domain)</script>';
+        $this->product->forceFill(['name' => $attack, 'brand' => $attack])->save();
+        $passport = $this->freshPassport();
+        app(PublishProductPassport::class)->handle(
+            $this->actor, $this->company, $this->product, $passport,
+            $passport->currentDraftVersion->draft_revision, true,
+        );
+        auth()->guard('web')->logout();
+
+        $response = $this->get("/p/{$this->publicId}")->assertOk();
+        $response->assertDontSee($attack, false);
+        preg_match('/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/s', $response->getContent(), $matches);
+        $this->assertNotEmpty($matches);
+        $json = json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame($attack, $json['brand']['name']);
+        $this->assertStringNotContainsString('<', $matches[1]);
+    }
+
     public function test_private_storage_path_absent(): void
     {
         auth()->guard('web')->logout();

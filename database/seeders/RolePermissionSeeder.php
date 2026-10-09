@@ -26,6 +26,12 @@ class RolePermissionSeeder extends Seeder
         $role = Role::findOrCreate(PlatformRole::SuperAdmin->value, 'web');
         $role->syncPermissions($permissions);
 
+        Role::findOrCreate(PlatformRole::SupportAdmin->value, 'web')->syncPermissions([
+            PlatformPermission::PlatformAccess->value,
+            PlatformPermission::FeedbackView->value,
+            PlatformPermission::FeedbackManage->value,
+        ]);
+
         $registrar->forgetCachedPermissions();
     }
 }

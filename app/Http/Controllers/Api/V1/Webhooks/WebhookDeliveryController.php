@@ -7,6 +7,7 @@ use App\Enums\Webhooks\WebhookEventType;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Webhooks\WebhookDelivery;
+use App\Models\Webhooks\WebhookDeliveryAttempt;
 use App\Tenancy\TokenCurrentCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class WebhookDeliveryController extends Controller
 
         $deliveries = WebhookDelivery::query()
             ->forCompany($currentCompany->require())
-            ->with('endpoint')
+            ->with(['endpoint', 'attemptsLog'])
             ->when(isset($validated['status']), fn ($query) => $query->where('status', $validated['status']))
             ->when(isset($validated['event_type']), fn ($query) => $query->where('event_type', $validated['event_type']))
             ->latest()
@@ -49,6 +50,14 @@ class WebhookDeliveryController extends Controller
             'aggregate_uuid' => $delivery->aggregate_uuid,
             'status' => $delivery->status->value,
             'attempts' => $delivery->attempts,
+            'attempt_history' => $delivery->attemptsLog->map(fn (WebhookDeliveryAttempt $attempt): array => [
+                'attempt' => $attempt->attempt,
+                'status' => $attempt->status,
+                'response_status' => $attempt->response_status,
+                'error_code' => $attempt->error_code,
+                'started_at' => $attempt->started_at?->toISOString(),
+                'finished_at' => $attempt->finished_at?->toISOString(),
+            ])->values()->all(),
             'response_status' => $delivery->response_status,
             'last_attempt_at' => $delivery->last_attempt_at?->toISOString(),
             'delivered_at' => $delivery->delivered_at?->toISOString(),

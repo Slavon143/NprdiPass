@@ -19,6 +19,7 @@ use App\Http\Middleware\EnsureProductionImportsEnabled;
 use App\Http\Middleware\EnsureRequestId;
 use App\Http\Middleware\EnsureUserBelongsToCurrentCompany;
 use App\Http\Middleware\InvitationSecurityHeaders;
+use App\Http\Middleware\RecordRequestTelemetry;
 use App\Http\Middleware\ResolveApiCompany;
 use App\Http\Middleware\ResolveCurrentCompany;
 use App\Http\Middleware\StripPublicPassportCookies;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(EnsureRequestId::class);
         $middleware->prepend(AddSecurityHeaders::class);
         $middleware->prepend(AddCspHeader::class);
+        $middleware->append(RecordRequestTelemetry::class);
 
         $middleware->api(append: [ApiSecurityHeaders::class]);
 

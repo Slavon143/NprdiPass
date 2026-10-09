@@ -1,0 +1,372 @@
+<?php
+
+namespace Tests\Concurrency;
+
+use App\Actions\Passports\CreateProductPassportDraftAction;
+use App\Actions\Passports\PublishProductPassport;
+use App\Actions\Passports\UpdateProductPassportSectionAction;
+use App\Data\Passports\PublicationResult;
+use App\Enums\Billing\BillingSubscriptionStatus;
+use App\Enums\Catalog\CategoryStatus;
+use App\Enums\Catalog\ProductStatus;
+use App\Enums\Catalog\ProductVariantStatus;
+use App\Enums\CompanyRole;
+use App\Enums\CompanyStatus;
+use App\Enums\Passports\DppSectionKey;
+use App\Models\Billing\CompanySubscription;
+use App\Models\Catalog\Category;
+use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductMedia;
+use App\Models\Catalog\ProductVariant;
+use App\Models\Company;
+use App\Models\CompanyMembership;
+use App\Models\Passports\ProductPassport;
+use App\Models\Passports\ProductPassportVersion;
+use App\Models\User;
+use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Storage\TenantStorageInventory;
+use App\Services\Storage\TenantStorageLedger;
+use App\Tenancy\Contracts\CurrentCompany;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
+use Tests\TestCase;
+
+class PublicationStorageQuotaTest extends TestCase
+{
+    private Company $company;
+
+    private User $actor;
+
+    private Product $product;
+
+    private int $revision = 1;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (! in_array(DB::connection()->getDatabaseName(), ['nordipass_testing', 'nordipass_commercial_20261004_testing', 'nordipass_reconcile_20261004_testing'], true)) {
+            throw new \RuntimeException('Owned isolated publication schema required.');
+        }
+        $this->artisan('migrate:fresh')->assertSuccessful();
+        Http::preventStrayRequests();
+        Queue::fake();
+        Storage::fake('passport_assets');
+        config(['passports.asset_readonly' => false]);
+
+        $this->company = Company::factory()->create(['status' => CompanyStatus::Active]);
+        $this->actor = User::factory()->create(['email_verified_at' => now()]);
+
+        CompanyMembership::factory()->create([
+            'company_id' => $this->company->getKey(),
+            'user_id' => $this->actor->getKey(),
+            'role' => CompanyRole::Owner,
+        ]);
+
+        $this->actingAs($this->actor);
+        app(CurrentCompany::class)->set($this->company);
+
+        View::share('currentCompany', $this->company);
+        View::share('availableCompanies', new Collection([$this->company]));
+        View::share('currentMembership', $this->actor->memberships()
+            ->where('company_id', $this->company->getKey())
+            ->first());
+        View::share('slot', '');
+
+        Storage::fake('catalog_media');
+        Storage::disk('catalog_media')->put('test/storage-failure.jpg', 'fake content');
+
+        $category = new Category;
+        $category->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $this->company->getKey(),
+            'name' => 'Storage Failure Category',
+            'slug' => 'storage-fail-cat-'.fake()->unique()->slug(1),
+            'slug_normalized' => 'storage-fail-cat-'.fake()->unique()->slug(1),
+            'depth' => 0,
+            'sort_order' => 0,
+            'status' => CategoryStatus::Active,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $this->product = new Product;
+        $this->product->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $this->company->getKey(),
+            'name' => 'Storage Failure Product '.fake()->unique()->word(),
+            'slug' => 'storage-fail-product-'.fake()->unique()->slug(1),
+            'slug_normalized' => 'storage-fail-product-'.fake()->unique()->slug(1),
+            'brand' => 'Storage Failure Brand',
+            'manufacturer' => 'Storage Failure Manufacturer',
+            'status' => ProductStatus::Active,
+            'primary_category_id' => $category->getKey(),
+            'created_by' => $this->actor->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $variant = new ProductVariant;
+        $variant->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $this->company->getKey(),
+            'product_id' => $this->product->getKey(),
+            'name' => 'Default Variant',
+            'sku' => 'SKU-SF-001',
+            'status' => ProductVariantStatus::Active,
+            'sort_order' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $media = new ProductMedia;
+        $media->forceFill([
+            'uuid' => (string) str()->uuid(),
+            'company_id' => $this->company->getKey(),
+            'product_id' => $this->product->getKey(),
+            'original_filename' => 'storage-failure.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 1024,
+            'storage_path' => 'test/storage-failure.jpg',
+            'checksum_sha256' => str_repeat('a', 64),
+            'sort_order' => 0,
+            'uploaded_by' => $this->actor->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $this->product->forceFill([
+            'default_variant_id' => $variant->getKey(),
+            'primary_media_id' => $media->getKey(),
+        ])->save();
+
+        $this->product->categories()->attach($category->getKey(), [
+            'company_id' => $this->company->getKey(),
+            'created_at' => now(),
+        ]);
+
+        $this->product->refresh();
+    }
+
+    private function fillAllSections(): void
+    {
+        $passport = app(CreateProductPassportDraftAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+        );
+
+        $this->revision = $passport->currentDraftVersion->draft_revision;
+
+        $this->fillSection(DppSectionKey::Identity, [
+            'public_name' => 'Storage Failure Product Name',
+            'public_description' => 'Storage failure test description.',
+        ]);
+
+        $this->fillSection(DppSectionKey::ManufacturerAndOperator, [
+            'manufacturer_display_name' => 'Storage Failure Mfg Inc.',
+            'responsible_operator_display_name' => 'Storage Failure Operator',
+            'contact_notes' => 'Storage failure contact.',
+        ]);
+
+        $this->injectManufacturerContact();
+
+        $this->fillSection(DppSectionKey::Safety, [
+            'warnings' => ['Storage failure warning'],
+            'storage_instructions' => 'Storage failure storage.',
+        ]);
+
+        $this->fillSection(DppSectionKey::RecyclingAndDisposal, [
+            'recycling_instructions' => 'Storage failure recycling.',
+        ]);
+
+        $this->fillSection(DppSectionKey::MaterialsAndComposition, [
+            'materials' => [
+                ['name' => 'Plastic', 'percentage' => 100.0, 'recycled_content_percentage' => 30.0, 'hazardous' => false],
+            ],
+        ]);
+
+        $this->fillSection(DppSectionKey::EnvironmentalInformation, [
+            'carbon_footprint_kg_co2e' => 10.0,
+        ]);
+
+        $this->fillSection(DppSectionKey::UsageAndCare, [
+            'usage_instructions' => 'Usage.',
+        ]);
+
+        $this->fillSection(DppSectionKey::RepairAndSpareParts, [
+            'repair_instructions' => 'Repair.',
+        ]);
+
+        $this->fillSection(DppSectionKey::SupportAndContact, [
+            'warranty_summary' => 'Warranty.',
+        ]);
+    }
+
+    private function fillSection(DppSectionKey $section, array $payload): void
+    {
+        $passport = ProductPassport::query()
+            ->forCompany($this->company)
+            ->where('product_id', $this->product->getKey())
+            ->first();
+
+        $result = app(UpdateProductPassportSectionAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport,
+            $section->value,
+            $payload,
+            $this->revision,
+        );
+
+        $this->revision = $result->currentDraftVersion->draft_revision;
+    }
+
+    private function injectManufacturerContact(): void
+    {
+        $draft = ProductPassport::query()
+            ->forCompany($this->company)
+            ->where('product_id', $this->product->getKey())
+            ->first()
+            ->currentDraftVersion;
+
+        $payload = $draft->payload;
+        $payload['data']['manufacturer_and_operator']['manufacturer_email'] = 'contact@storage-failure.example';
+
+        $normalized = app(DppPayloadNormalizer::class)->normalize($payload);
+
+        $newRevision = $draft->draft_revision + 1;
+        $draft->setAttribute('payload', $normalized);
+        $draft->setAttribute('draft_revision', $newRevision);
+        $draft->setAttribute('updated_by', $this->actor->getKey());
+        $draft->save();
+
+        $this->revision = $newRevision;
+    }
+
+    private function freshPassport(): ProductPassport
+    {
+        return ProductPassport::query()
+            ->forCompany($this->company)
+            ->where('product_id', $this->product->getKey())
+            ->first()
+            ->fresh(['currentDraftVersion', 'currentPublishedVersion']);
+    }
+
+    private function activatePublicationQuota(int $limit): int
+    {
+        $media = $this->product->primaryMedia;
+        $disk = Storage::disk('catalog_media');
+        $content = $disk->get($media->storage_path);
+        $key = $this->company->uuid.'/products/'.$this->product->uuid.'/'.$media->uuid.'.jpg';
+        $disk->put($key, $content);
+        $disk->delete($media->storage_path);
+        $media->forceFill(['storage_path' => $key, 'size_bytes' => strlen($content),
+            'checksum_sha256' => hash('sha256', $content)])->save();
+        $this->company->forceFill(['commercial_model_version' => 1])->save();
+        $this->product->forceFill(['managed' => true])->save();
+        CompanySubscription::query()->create([
+            'company_id' => $this->company->id, 'plan_key' => 'growth',
+            'status' => BillingSubscriptionStatus::Active,
+            'entitlements' => [...config('billing.commercial_plans.growth.entitlements'), 'storage.bytes.max' => $limit],
+            'metadata' => ['commercial_model' => 'v1'],
+        ]);
+
+        return strlen($content);
+    }
+
+    private function publish(): PublicationResult
+    {
+        return app(PublishProductPassport::class)->handle($this->actor, $this->company, $this->product, $this->freshPassport(), $this->revision, true);
+    }
+
+    public function test_publication_cannot_copy_assets_above_the_remaining_storage_allowance(): void
+    {
+        $this->fillAllSections();
+        $bytes = $this->activatePublicationQuota(23);
+        try {
+            $this->publish();
+            $this->fail('Expected publication storage denial.');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('storage allowance', $exception->getMessage());
+        }
+        $this->assertSame([], Storage::disk('passport_assets')->allFiles());
+        $this->assertSame(0, ProductPassportVersion::query()->where('company_id', $this->company->id)->where('status', 'published')->count());
+        $this->assertSame($bytes, app(TenantStorageLedger::class)->usedBytes($this->company));
+    }
+
+    public function test_publication_charges_the_source_and_one_final_copy_without_double_charging_staging(): void
+    {
+        $this->fillAllSections();
+        $bytes = $this->activatePublicationQuota(24);
+        $this->publish();
+        $this->assertSame(2 * $bytes, app(TenantStorageLedger::class)->usedBytes($this->company));
+        $this->assertSame(['files' => 2, 'bytes' => 2 * $bytes], app(TenantStorageInventory::class)->measure($this->company));
+        $this->assertCount(1, Storage::disk('passport_assets')->allFiles());
+    }
+
+    public function test_ancestor_rollback_removes_publication_bytes_and_releases_only_the_new_copy(): void
+    {
+        $this->fillAllSections();
+        $bytes = $this->activatePublicationQuota(24);
+        DB::beginTransaction();
+        try {
+            $this->publish();
+            $this->assertSame(2 * $bytes, app(TenantStorageLedger::class)->usedBytes($this->company));
+        } finally {
+            DB::rollBack();
+        }
+        $this->assertSame([], Storage::disk('passport_assets')->allFiles());
+        $this->assertSame($bytes, app(TenantStorageLedger::class)->usedBytes($this->company));
+        $this->assertSame(0, ProductPassportVersion::query()->where('company_id', $this->company->id)->where('status', 'published')->count());
+    }
+
+    public function test_lost_commit_acknowledgement_keeps_the_charge_for_committed_publication_bytes(): void
+    {
+        $this->fillAllSections();
+        $bytes = $this->activatePublicationQuota(24);
+        $connection = DB::connection();
+        $realPdo = $connection->getPdo();
+        $proxy = \Mockery::mock($realPdo);
+        $proxy->shouldReceive('commit')->once()->andReturnUsing(function () use ($realPdo): bool {
+            $realPdo->commit();
+            throw new \RuntimeException('Injected publication commit acknowledgement failure.');
+        });
+        $connection->setPdo($proxy);
+        try {
+            $this->publish();
+            $this->fail('Expected commit acknowledgement failure.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('Injected publication commit acknowledgement', $exception->getMessage());
+        } finally {
+            $connection->setPdo($realPdo);
+            while ($connection->transactionLevel() > 0) {
+                $connection->rollBack();
+            }
+        }
+        $this->assertSame(2 * $bytes, app(TenantStorageLedger::class)->usedBytes($this->company));
+        $this->assertCount(1, Storage::disk('passport_assets')->allFiles());
+        $this->assertSame(1, ProductPassportVersion::query()->where('company_id', $this->company->id)->where('status', 'published')->count());
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            if ($this->app && in_array(DB::connection()->getDatabaseName(), ['nordipass_testing', 'nordipass_commercial_20261004_testing', 'nordipass_reconcile_20261004_testing'], true)) {
+                foreach (DB::getConnections() as $name => $connection) {
+                    if (str_starts_with($name, 'commercial_storage_')) {
+                        DB::purge($name);
+                    }
+                }
+                $this->artisan('migrate:fresh')->assertSuccessful();
+            }
+        } finally {
+            parent::tearDown();
+        }
+    }
+}

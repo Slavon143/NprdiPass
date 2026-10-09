@@ -16,7 +16,9 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Catalog\ManagedProductGate;
 use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
+use App\Services\Dpp\DppDraftProfileSnapshot;
 use App\Services\Passports\DppPayloadNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +41,9 @@ class CreateProductPassportDraftAction
         try {
             $freshCompany = $this->authorize($actor, $company);
             $this->assertProductBelongsToCompany($freshCompany, $product);
+            $product = Product::query()->forCompany($freshCompany)->whereKey($product->getKey())->sharedLock()->firstOrFail();
             $this->assertProductNotArchived($product);
+            app(ManagedProductGate::class)->assertManaged($product);
 
             $existingPassport = ProductPassport::query()
                 ->forCompany($freshCompany)
@@ -68,6 +72,10 @@ class CreateProductPassportDraftAction
                     $locale => [],
                 ],
                 'document_references' => [],
+                'languages' => [
+                    'default' => $defaultLanguage,
+                    'enabled' => [$defaultLanguage],
+                ],
             ];
 
             $normalized = $this->normalizer->normalize($emptyPayload);
@@ -92,6 +100,7 @@ class CreateProductPassportDraftAction
             $version->setAttribute('readiness_profile', $activeProfile->code);
             $version->setAttribute('readiness_profile_version', $activeProfile->version);
             $version->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);
+            $version->setAttribute('readiness_profile_snapshot', app(DppDraftProfileSnapshot::class)->capture($product, $activeProfile));
             $version->setAttribute('created_by', $actor->getKey());
             $version->save();
 
@@ -145,7 +154,7 @@ class CreateProductPassportDraftAction
     private function assertProductNotArchived(Product $product): void
     {
         if ($product->status === ProductStatus::Archived) {
-            throw new \RuntimeException('Cannot create passport for archived product.');
+            throw new ConflictHttpException('Cannot create passport for archived product.');
         }
     }
 }

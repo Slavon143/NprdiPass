@@ -32,7 +32,9 @@ class MediaPrimaryBelongsToProduct implements PassportReadinessRule
         $primaryMedia = $context->product->primaryMedia;
 
         if ($primaryMedia === null) {
-            $primaryMedia = $context->product->productMedia()->orderBy('sort_order')->orderBy('created_at')->orderBy('id')->first();
+            $primaryMedia = $context->product->relationLoaded('productMedia')
+                ? $context->product->productMedia->sortBy([['sort_order', 'asc'], ['created_at', 'asc'], ['id', 'asc']])->first()
+                : $context->product->productMedia()->orderBy('sort_order')->orderBy('created_at')->orderBy('id')->first();
         }
 
         if ($primaryMedia === null) {

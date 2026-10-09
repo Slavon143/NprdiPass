@@ -22,6 +22,7 @@ class ProductResource extends JsonResource
             'manufacturer' => $this->manufacturer,
             'commerce' => $this->commerce,
             'status' => $this->status->value,
+            'managed' => $this->managed,
             'published_at' => $this->published_at?->toISOString(),
             'primary_category' => CategoryResource::make($this->whenLoaded('primaryCategory')),
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),

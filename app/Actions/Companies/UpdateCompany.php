@@ -43,6 +43,8 @@ class UpdateCompany
         );
 
         DB::transaction(function () use ($actor, $company, $data): void {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CompanyUpdate);
+            $company = Company::query()->whereKey($company->getKey())->lockForUpdate()->firstOrFail();
             $company->fill(array_intersect_key($data, array_flip(self::ALLOWED_FIELDS)));
             $changes = [];
 

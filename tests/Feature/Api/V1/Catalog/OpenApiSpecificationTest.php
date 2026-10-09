@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\Yaml\Yaml;
 
 function openApiSpec(): ?array
@@ -109,7 +110,33 @@ test('All operationId values are unique', function () {
     $unique = array_unique($ids);
 
     expect(count($ids))->toEqual(count($unique), 'Duplicate operationId detected');
-    expect(count($ids))->toEqual(115, 'Must have exactly 115 operations matching registered routes');
+});
+
+test('OpenAPI operations match the actual API routes in both directions', function () {
+    $spec = openApiSpec();
+    $normalize = fn (string $path): string => preg_replace('/\{[^}]+\}/', '{parameter}', trim($path, '/'));
+    $documented = [];
+    foreach ($spec['paths'] as $path => $methods) {
+        foreach ($methods as $method => $operation) {
+            if (! is_array($operation) || ! isset($operation['operationId'])) {
+                continue;
+            }
+            $servers = $operation['servers'] ?? $methods['servers'] ?? $spec['servers'];
+            $documented[] = strtoupper($method).' '.$normalize($servers[0]['url'].$path);
+        }
+    }
+    $registered = [];
+    foreach (Route::getRoutes() as $route) {
+        if (! str_starts_with($route->uri(), 'api/v1/')) {
+            continue;
+        }
+        foreach (array_diff($route->methods(), ['HEAD', 'OPTIONS']) as $method) {
+            $registered[] = $method.' '.$normalize($route->uri());
+        }
+    }
+    sort($documented);
+    sort($registered);
+    expect($documented)->toBe($registered, 'Undocumented routes: '.json_encode(array_values(array_diff($registered, $documented))).'; Unregistered operations: '.json_encode(array_values(array_diff($documented, $registered))));
 });
 
 test('All internal $ref references resolve', function () {
@@ -229,7 +256,7 @@ test('OpenAPI documents all request schemas', function () {
 
     foreach ($paths as $uri => $methods) {
         foreach ($methods as $method => $operation) {
-            if (! is_array($operation)) {
+            if (! is_array($operation) || ! in_array($method, ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'], true)) {
                 continue;
             }
 

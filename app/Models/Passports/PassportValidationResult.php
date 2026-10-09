@@ -7,6 +7,18 @@ use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $code
+ * @property string $severity
+ * @property string $status
+ * @property int $configured_weight
+ * @property string $rule_group
+ * @property string $title_key
+ * @property string $message_key
+ * @property string|null $section
+ * @property string|null $field
+ * @property array<string, mixed>|null $safe_context
+ */
 class PassportValidationResult extends Model
 {
     use HasUuid;

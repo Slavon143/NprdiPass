@@ -27,11 +27,12 @@ class ProductCatalogQuery
         private readonly CatalogSearchStringNormalizer $searchNormalizer,
     ) {}
 
+    /** @return Builder<Product> */
     public function build(Company $company, CatalogProductSearchCriteria $criteria): Builder
     {
         $query = Product::query()
             ->forCompany($company)
-            ->with(['primaryCategory:id,uuid,name,status', 'defaultVariant:id,uuid,product_id,name,sku,gtin,mpn,status', 'primaryMedia:id,uuid,product_id,alt_text,mime_type'])
+            ->with(['primaryCategory:id,uuid,name,status,active_template_id', 'defaultVariant:id,uuid,product_id,name,sku,gtin,mpn,status', 'primaryMedia:id,uuid,product_id,alt_text,mime_type'])
             ->withCount(['categories', 'variants', 'productMedia']);
 
         $this->applyProductStatuses($query, $criteria);

@@ -7,6 +7,8 @@ return [
 
     'path' => env('BACKUP_PATH', 'nordipass/backups'),
 
+    'temporary_path' => env('BACKUP_TEMPORARY_PATH', sys_get_temp_dir().DIRECTORY_SEPARATOR.'nordipass-backups'),
+
     'database' => [
         'enabled' => filter_var(env('BACKUP_DATABASE_ENABLED', true), FILTER_VALIDATE_BOOL),
         'binary' => env('BACKUP_DATABASE_BINARY', ''),
@@ -15,18 +17,13 @@ return [
 
     'files' => [
         'enabled' => filter_var(env('BACKUP_FILES_ENABLED', true), FILTER_VALIDATE_BOOL),
-        'include' => [
-            storage_path('app/private'),
-            storage_path('app/public'),
-        ],
-        'exclude' => [
-            '*.log',
-            '*.tmp',
-            '.DS_Store',
+        'disks' => [
+            'production_imports',
+            'product_documents',
+            'catalog_media',
+            'passport_assets',
         ],
     ],
-
-    'compression' => env('BACKUP_COMPRESSION', 'gzip'),
 
     'verify_after_create' => filter_var(env('BACKUP_VERIFY_AFTER_CREATE', true), FILTER_VALIDATE_BOOL),
 
@@ -39,6 +36,4 @@ return [
     'lock_minutes' => (int) env('BACKUP_LOCK_MINUTES', 180),
 
     'max_age_hours' => (int) env('BACKUP_MAX_AGE_HOURS', 26),
-
-    'encryption_enabled' => filter_var(env('BACKUP_ENCRYPTION_ENABLED', false), FILTER_VALIDATE_BOOL),
 ];

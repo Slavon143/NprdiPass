@@ -20,6 +20,7 @@ use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\Passports\ProductPassport;
+use App\Models\Passports\ProductPassportAsset;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\CanonicalJsonEncoder;
@@ -27,6 +28,7 @@ use App\Services\Passports\DppPayloadNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Validation\ValidationException;
@@ -283,13 +285,13 @@ class StorageFailureTest extends TestCase
         );
     }
 
-    public function test_exception_during_staging_rolls_back(): void
+    public function test_exception_during_validation_hashing_rolls_back(): void
     {
         $this->fillAllSections();
 
         $mockEncoder = $this->createMock(CanonicalJsonEncoder::class);
         $mockEncoder->method('hash')
-            ->willThrowException(new \RuntimeException('Simulated storage failure during checksum'));
+            ->willThrowException(new \RuntimeException('Simulated validation hashing failure'));
 
         $this->instance(CanonicalJsonEncoder::class, $mockEncoder);
 
@@ -297,10 +299,114 @@ class StorageFailureTest extends TestCase
 
         $versionCountBefore = ProductPassportVersion::query()->count();
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Simulated storage failure during checksum');
+        $caught = null;
+        try {
+            app(PublishProductPassport::class)->handle(
+                $this->actor, $this->company, $this->product, $passport, $this->revision, true,
+            );
+        } catch (\RuntimeException $exception) {
+            $caught = $exception;
+        }
+        $this->assertSame('Simulated validation hashing failure', $caught?->getMessage());
 
-        app(PublishProductPassport::class)->handle(
+        $versionCountAfter = ProductPassportVersion::query()->count();
+        $this->assertSame(
+            $versionCountBefore,
+            $versionCountAfter,
+            'DB must roll back after exception during validation hashing.',
+        );
+    }
+
+    public function test_db_failure_after_promotion_removes_promoted_and_staged_assets(): void
+    {
+        $this->fillAllSections();
+
+        $faultReached = false;
+        ProductPassportAsset::created(function (ProductPassportAsset $asset) use (&$faultReached): void {
+            $this->assertStringContainsString('/media/', $asset->storage_key);
+            $this->assertTrue(Storage::disk('passport_assets')->exists($asset->storage_key),
+                'The injected failure must happen after real promotion.');
+            $faultReached = true;
+            throw new \RuntimeException('Simulated DB failure after promotion');
+        });
+
+        $passport = $this->freshPassport();
+
+        try {
+            app(PublishProductPassport::class)->handle(
+                $this->actor,
+                $this->company,
+                $this->product,
+                $passport,
+                $this->revision,
+                true,
+            );
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('after promotion', $e->getMessage());
+        } finally {
+            Event::forget('eloquent.created: '.ProductPassportAsset::class);
+        }
+        $this->assertTrue($faultReached);
+
+        $remainingFiles = Storage::disk('passport_assets')->allFiles();
+        $this->assertSame(
+            [],
+            $remainingFiles,
+            'No staging or promoted files may remain on passport_assets after a rolled-back publication.',
+        );
+
+        $this->assertSame(0, ProductPassportVersion::query()->where('status', 'published')->count());
+    }
+
+    public function test_existing_immutable_destination_blocks_publication_without_overwriting(): void
+    {
+        $this->fillAllSections();
+
+        $passport = $this->freshPassport();
+        $versionUuid = $passport->currentDraftVersion->uuid;
+        $mediaUuid = $this->product->primaryMedia->uuid;
+        $finalPath = "companies/{$this->company->uuid}/passports/{$passport->uuid}/versions/{$versionUuid}/media/{$mediaUuid}.jpg";
+
+        Storage::disk('passport_assets')->put($finalPath, 'PRECIOUS-EXISTING-BYTES');
+
+        try {
+            app(PublishProductPassport::class)->handle(
+                $this->actor,
+                $this->company,
+                $this->product,
+                $passport,
+                $this->revision,
+                true,
+            );
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('already exists', $e->getMessage());
+        }
+
+        $this->assertSame(
+            'PRECIOUS-EXISTING-BYTES',
+            Storage::disk('passport_assets')->get($finalPath),
+            'An existing immutable destination must never be overwritten.',
+        );
+        $this->assertSame(0, ProductPassportVersion::query()->where('status', 'published')->count());
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                Storage::disk('passport_assets')->allFiles(),
+                fn (string $file): bool => str_contains($file, '/staging/'),
+            )),
+            'Failed promotion must not leave staging files behind.',
+        );
+    }
+
+    public function test_successful_publication_verifies_promoted_assets_exist_with_matching_checksums(): void
+    {
+        $this->fillAllSections();
+
+        $passport = $this->freshPassport();
+
+        $result = app(PublishProductPassport::class)->handle(
             $this->actor,
             $this->company,
             $this->product,
@@ -309,12 +415,27 @@ class StorageFailureTest extends TestCase
             true,
         );
 
-        $versionCountAfter = ProductPassportVersion::query()->count();
-        $this->assertSame(
-            $versionCountBefore,
-            $versionCountAfter,
-            'DB must roll back after exception during staging.',
-        );
+        $assets = ProductPassportAsset::query()
+            ->where('passport_id', $passport->getKey())
+            ->get();
+
+        $this->assertNotEmpty($assets);
+
+        foreach ($assets as $asset) {
+            $disk = Storage::disk('passport_assets');
+            $this->assertTrue(
+                $disk->exists($asset->storage_key),
+                "Published asset must physically exist: {$asset->storage_key}",
+            );
+            $this->assertSame(
+                $asset->checksum_sha256,
+                hash('sha256', (string) $disk->get($asset->storage_key)),
+                'Published asset checksum must match the stored record.',
+            );
+        }
+
+        $this->assertNotNull($result->publishedVersion);
+        $this->assertSame(1, ProductPassportVersion::query()->where('status', 'published')->count());
     }
 
     public function test_no_orphan_staging_files_after_rollback(): void

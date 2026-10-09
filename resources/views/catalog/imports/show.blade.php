@@ -5,6 +5,21 @@
             @foreach(['status' => $job->status->value, 'total' => $job->total_rows, 'valid' => $job->valid_rows, 'invalid' => $job->invalid_rows, 'created' => $job->created_rows, 'updated' => $job->updated_rows] as $label => $value)<div><p class="text-xs font-semibold uppercase text-slate-400">{{ __($label) }}</p><p class="mt-1 text-xl font-semibold text-slate-900">{{ $value }}</p></div>@endforeach
         </section>
 
+        <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200" data-testid="import-source-policy">
+            <h2 class="font-semibold text-slate-900">{{ __('What this import applies') }}</h2>
+            <p class="mt-2 text-sm text-slate-600">{{ __('Only mapped columns are applied. New products start as drafts; updates keep the existing product status. Status changes use the separate product lifecycle actions.') }}</p>
+            <p class="mt-2 text-sm text-slate-600">{{ __('Source updated_at does not replace the time of changes in NordiPass. Document references are retained as source data; files and links are not downloaded or attached by this import. Upload documents separately for versioning and review.') }}</p>
+            @if($job->mapping)
+                @php $unmappedColumns = array_values(array_diff($job->headers ?? [], array_values($job->mapping))); @endphp
+                @if($unmappedColumns !== [])
+                    <div class="mt-3 text-sm text-slate-700" data-testid="import-unmapped-columns">
+                        <p class="font-medium">{{ __('Source columns not applied by this mapping') }}</p>
+                        <ul class="mt-1 list-inside list-disc">@foreach($unmappedColumns as $column)<li>{{ $column }}</li>@endforeach</ul>
+                    </div>
+                @endif
+            @endif
+        </section>
+
         @if($canWrite && in_array($job->status->value, ['uploaded', 'previewed'], true))
             <section class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 class="text-lg font-semibold">{{ __('Column mapping') }}</h2><p class="mt-1 text-sm text-slate-600">{{ __('Name is required. Slug is generated from name when it is not mapped.') }}</p>
@@ -23,7 +38,7 @@
         @endif
 
         @if(in_array($job->status->value, ['previewed', 'processing', 'failed'], true) && $canWrite)
-            <section class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-5"><div><h2 class="font-semibold text-indigo-950">{{ __('Apply one resumable chunk') }}</h2><p class="text-sm text-indigo-800">{{ __('Cursor: row :row · chunk size: :size. Repeating this action never reapplies completed rows.', ['row' => $job->next_row, 'size' => $job->chunk_size]) }}</p></div><form method="POST" action="{{ route('catalog.imports.apply', $job) }}">@csrf<input type="hidden" name="max_chunks" value="1"><x-primary-button data-testid="import-apply">{{ $job->status->value === 'processing' ? __('Continue import') : __('Apply import') }}</x-primary-button></form></section>
+            <section class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-5"><div><h2 class="font-semibold text-indigo-950">{{ __('Apply import') }}</h2><p class="text-sm text-indigo-800">{{ __('Progress is resumable and updates as rows are applied. Failed imports can be resumed from the last safe cursor.') }}</p></div><div class="flex gap-2"><form method="POST" action="{{ route('catalog.imports.apply', $job) }}">@csrf<x-primary-button data-testid="import-apply">{{ $job->status->value === 'processing' ? __('Continue import') : __('Apply import') }}</x-primary-button></form>@if($job->status->value === 'processing')<form method="POST" action="{{ route('catalog.imports.cancel', $job) }}">@csrf<x-secondary-button>{{ __('Cancel') }}</x-secondary-button></form>@endif</div></section>
         @endif
 
         @if($job->mapping && $canWrite)

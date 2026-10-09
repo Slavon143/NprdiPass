@@ -18,7 +18,11 @@ return [
 
     'redirect_path' => '/settings/integrations/fortnox/callback',
 
-    'scopes' => ['article'],
+    // Additional scopes require renewed consent for existing connections.
+    'scopes' => array_values(array_unique(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('FORTNOX_SCOPES', 'article')),
+    )))),
 
     // Hosts the real HTTP provider is allowed to contact. SSRF protection:
     // any other host (including IP literals and private ranges) is rejected.
@@ -36,6 +40,19 @@ return [
     'sync_page_size' => (int) env('FORTNOX_SYNC_PAGE_SIZE', 100),
     'sync_chunk_size' => (int) env('FORTNOX_SYNC_CHUNK_SIZE', 100),
     'sync_max_articles_per_run' => (int) env('FORTNOX_SYNC_MAX_ARTICLES_PER_RUN', 5000),
+
+    // A sync run that stays "running" longer than this is treated as an
+    // abandoned run (crashed process) and is resumed from its saved cursor
+    // instead of being rejected as a concurrent duplicate.
+    'sync_run_stale_minutes' => (int) env('FORTNOX_SYNC_RUN_STALE_MINUTES', 30),
+
+    'reconciliation' => [
+        // Safety cap for the exhaustive article fetch. When exceeded, the
+        // report is marked incomplete and no mutations are applied.
+        'max_articles' => (int) env('FORTNOX_RECONCILIATION_MAX_ARTICLES', 100000),
+        // Default handling for Fortnox articles that disappeared: 'report' only.
+        'deletion_policy' => env('FORTNOX_RECONCILIATION_DELETION_POLICY', 'report'),
+    ],
 
     'retry' => [
         'max_attempts' => (int) env('FORTNOX_RETRY_MAX_ATTEMPTS', 3),

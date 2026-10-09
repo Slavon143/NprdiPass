@@ -4,6 +4,7 @@ use App\Data\Fortnox\FortnoxAccessToken;
 use App\Exceptions\Fortnox\FortnoxProviderException;
 use App\Services\Fortnox\HttpFortnoxProvider;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Http;
 
 function fortnoxHttpProvider(array $overrides = []): HttpFortnoxProvider
@@ -19,6 +20,29 @@ function fortnoxHttpProvider(array $overrides = []): HttpFortnoxProvider
         'sync_page_size' => 2,
     ], $overrides));
 }
+
+test('fortnox configured scopes reach the oauth request without duplicates or empty entries', function (string $configured, string $expected) {
+    $environment = Env::getRepository();
+    $previous = $environment->get('FORTNOX_SCOPES');
+    $environment->set('FORTNOX_SCOPES', $configured);
+
+    try {
+        $configuration = require base_path('config/fortnox.php');
+        $url = fortnoxHttpProvider(['scopes' => $configuration['scopes']])
+            ->authorizationUrl('test-state', 'https://app.test/callback');
+        parse_str(parse_url($url, PHP_URL_QUERY), $query);
+
+        expect($query['scope'])->toBe($expected);
+    } finally {
+        $previous === null
+            ? $environment->clear('FORTNOX_SCOPES')
+            : $environment->set('FORTNOX_SCOPES', $previous);
+    }
+})->with([
+    'article only' => ['article', 'article'],
+    'explicit price consent' => ['article,price', 'article price'],
+    'whitespace and duplicates' => [' article , price ,, article ', 'article price'],
+]);
 
 test('https and allowlisted hosts are accepted', function () {
     $provider = fortnoxHttpProvider();

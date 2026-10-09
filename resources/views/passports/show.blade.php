@@ -11,6 +11,15 @@
         <a href="{{ route('catalog.products.show', $product->uuid) }}" class="text-sm font-semibold text-indigo-700 hover:underline">{{ __('Back to Product') }}</a>
     </div>
 
+    @if($readinessHistorical ?? false)
+        <div class="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            {{ __('Readiness recalculation and passport editing are currently unavailable.') }}
+            @if($readiness !== null)
+                {{ __('Stored readiness evaluation') }} · {{ $readiness->evaluatedAt->toDateTimeString() }} · {{ __('Draft revision') }} {{ $readiness->passportRevision }}
+            @endif
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
             {{ session('success') }}
@@ -39,14 +48,14 @@
             $currentDraft = $passport->currentDraftVersion;
             $draftRevision = $currentDraft?->draft_revision ?? ($editorData['draft_revision'] ?? null);
             $draftSchema = $currentDraft?->schema_version ?? ($editorData['schema_version'] ?? null);
-            $canOpenPublish = $canPublish && $currentDraft !== null && $readiness->status->value !== 'not_ready' && ! $passport->isArchived();
+            $canOpenPublish = $canPublish && $currentDraft !== null && $readiness !== null && $readiness?->status->value !== 'not_ready' && ! $passport->isArchived();
             $statusTone = match ($passport->status->value) {
                 'published' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
                 'unpublished' => 'bg-orange-100 text-orange-800 border-orange-200',
                 'archived' => 'bg-slate-100 text-slate-700 border-slate-200',
                 default => 'bg-indigo-100 text-indigo-800 border-indigo-200',
             };
-            $readinessTone = match ($readiness->status->value) {
+            $readinessTone = match ($readiness?->status->value) {
                 'ready' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
                 'ready_with_warnings' => 'bg-amber-100 text-amber-800 border-amber-200',
                 default => 'bg-red-100 text-red-800 border-red-200',
@@ -186,9 +195,9 @@
                     <h2 class="font-semibold text-slate-900">Readiness</h2>
                     <div class="mt-3 flex items-center justify-between gap-3">
                         <span class="rounded-full border px-3 py-1 text-sm font-semibold {{ $readinessTone }}">
-                            {{ str_replace('_', ' ', ucfirst($readiness->status->value)) }}
+                            {{ $readiness === null ? __('No stored readiness evaluation') : str_replace('_', ' ', ucfirst($readiness->status->value)) }}
                         </span>
-                        <span class="text-lg font-bold text-slate-900">{{ $readiness->score }}%</span>
+                        <span class="text-lg font-bold text-slate-900">{{ $readiness === null ? '—' : $readiness->score.'%' }}</span>
                     </div>
                     <p class="mt-3 text-xs text-slate-600">
                         {{ __('Red blockers prevent publishing. Yellow warnings do not block publishing but should be reviewed.') }}
@@ -208,7 +217,7 @@
                             {{ __('Version history') }}
                         </a>
 
-                        @if($canPublish && $passport->isPublished())
+                        @if(($canUnpublish ?? $canPublish) && $passport->isPublished())
                             <form method="POST" action="{{ route('catalog.products.passport.unpublish', $product->uuid) }}" class="mt-2">
                                 @csrf
                                 <button type="submit" class="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onclick="return confirm('{{ __('Unpublish this passport? The QR stays valid, but the public page will be unavailable.') }}')">

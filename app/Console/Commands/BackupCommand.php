@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Infrastructure\PersistentFileArchive;
 use Illuminate\Console\Command;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Cache;
@@ -26,7 +27,7 @@ class BackupCommand extends Command
 
     private array $manifest;
 
-    public function handle(): int
+    public function handle(PersistentFileArchive $fileArchive): int
     {
         if (! config('backup.enabled')) {
             $this->error('Backup is disabled. Set BACKUP_ENABLED=true to enable.');
@@ -56,7 +57,9 @@ class BackupCommand extends Command
 
         try {
             $this->backupId = (string) Str::uuid();
-            $this->tempDir = Storage::path('private/backup-temp/'.$this->backupId);
+            $temporaryRoot = (string) config('backup.temporary_path');
+            $fileArchive->assertOutputSeparated($temporaryRoot);
+            $this->tempDir = rtrim($temporaryRoot, '/\\').DIRECTORY_SEPARATOR.$this->backupId;
 
             $this->info("Backup ID: {$this->backupId}");
             $this->line('Starting backup...');
@@ -68,7 +71,7 @@ class BackupCommand extends Command
             }
 
             if (! $this->option('database-only') && config('backup.files.enabled')) {
-                $this->createFilesArchive();
+                $this->createFilesArchive($fileArchive);
             }
 
             $this->finalizeManifest();
@@ -112,8 +115,9 @@ class BackupCommand extends Command
             ['Database backup', config('backup.database.enabled') ? 'yes' : 'no'],
             ['Database driver', config('database.default')],
             ['Files backup', config('backup.files.enabled') ? 'yes' : 'no'],
-            ['Include directories', implode(', ', config('backup.files.include'))],
-            ['Compression', config('backup.compression')],
+            ['Persistent disks', implode(', ', config('backup.files.disks'))],
+            ['Temporary path', (string) config('backup.temporary_path')],
+            ['Archive format', 'tar+gzip (files), gzip (database)'],
             ['Verify after create', config('backup.verify_after_create') ? 'yes' : 'no'],
             ['Retention daily', (string) config('backup.retention.daily')],
             ['Retention weekly', (string) config('backup.retention.weekly')],
@@ -124,13 +128,17 @@ class BackupCommand extends Command
     private function initializeManifest(): void
     {
         $this->manifest = [
-            'version' => 1,
+            'version' => 2,
             'backup_id' => $this->backupId,
             'application' => config('app.name'),
             'environment' => config('app.env'),
             'created_at' => now()->toIso8601String(),
             'status' => 'incomplete',
             'database_driver' => config('database.default'),
+            'scope' => [
+                'database' => ! $this->option('files-only') && (bool) config('backup.database.enabled'),
+                'files' => ! $this->option('database-only') && (bool) config('backup.files.enabled'),
+            ],
             'artifacts' => [],
         ];
     }
@@ -215,53 +223,26 @@ class BackupCommand extends Command
         }
     }
 
-    private function createFilesArchive(): void
+    private function createFilesArchive(PersistentFileArchive $fileArchive): void
     {
         $this->line('Creating files archive...');
 
-        $includeDirs = config('backup.files.include');
-        $excludePatterns = config('backup.files.exclude');
         $archiveFile = "{$this->tempDir}/files.tar.gz";
 
         if (! is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0700, true);
         }
 
-        $phar = new \PharData($archiveFile);
-
-        foreach ($includeDirs as $dir) {
-            if (! is_dir($dir)) {
-                $this->warn("Directory not found, skipping: {$dir}");
-
-                continue;
-            }
-
-            $realDir = realpath($dir);
-            $relativeBase = basename($realDir);
-
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($realDir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            );
-
-            foreach ($iterator as $file) {
-                $relativePath = $relativeBase.'/'.$iterator->getSubPathname();
-
-                foreach ($excludePatterns as $pattern) {
-                    if (fnmatch($pattern, $file->getFilename())) {
-                        continue 2;
-                    }
-                }
-
-                $phar->addFile($file->getPathname(), $relativePath);
-            }
-        }
+        $stores = $fileArchive->create($archiveFile);
 
         $sha256 = hash_file('sha256', $archiveFile);
 
         $this->manifest['artifacts']['files'] = [
             'path' => basename($archiveFile),
+            'format' => 'tar+gzip',
             'size' => filesize($archiveFile),
             'sha256' => $sha256,
+            'stores' => $stores,
         ];
 
         $this->line('Files archive created.');
@@ -283,6 +264,10 @@ class BackupCommand extends Command
                 throw new \RuntimeException("Checksum mismatch for {$artifact['path']}");
             }
 
+            if ($type === 'files') {
+                app(PersistentFileArchive::class)->inspect($path, $artifact['stores'] ?? []);
+            }
+
             $this->line("  {$type}: checksum OK ({$artifact['sha256']})");
         }
 
@@ -297,11 +282,19 @@ class BackupCommand extends Command
         foreach ($this->manifest['artifacts'] as $type => $artifact) {
             $sourcePath = "{$this->tempDir}/{$artifact['path']}";
             $disk->putFileAs($backupPath, new File($sourcePath), $artifact['path']);
+            $storedPath = $backupPath.'/'.$artifact['path'];
+            if (! $disk->exists($storedPath)
+                || ! hash_equals($artifact['sha256'], hash('sha256', $disk->get($storedPath)))) {
+                throw new \RuntimeException("Stored backup artifact failed verification: {$artifact['path']}");
+            }
         }
 
         $manifestPath = "{$this->tempDir}/manifest.json";
         file_put_contents($manifestPath, json_encode($this->manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $disk->putFileAs($backupPath, new File($manifestPath), 'manifest.json');
+        if (! $disk->exists($backupPath.'/manifest.json')) {
+            throw new \RuntimeException('Stored backup manifest is missing.');
+        }
 
         $this->line("Backup stored on disk '{$this->getDiskName()}' in path '{$backupPath}'.");
     }

@@ -13,6 +13,7 @@ use App\Enums\Fortnox\FortnoxField;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
+use App\Models\Fortnox\FortnoxArticleMapping;
 use App\Models\Fortnox\FortnoxFieldOverride;
 use App\Models\Fortnox\FortnoxSyncConflict;
 use App\Models\User;
@@ -39,9 +40,18 @@ class ResolveFortnoxConflictAction
         }
 
         return DB::transaction(function () use ($actor, $company, $conflictUuid, $resolution): FortnoxSyncConflict {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
+            $candidate = FortnoxSyncConflict::query()->forCompany($company)->where('uuid', $conflictUuid)->firstOrFail();
+            // Match sync's mapping -> product -> variant -> conflict lock order.
+            $mapping = FortnoxArticleMapping::query()->forCompany($company)->whereKey($candidate->mapping_id)->lockForUpdate()->firstOrFail();
+            $product = Product::query()->forCompany($company)->whereKey($mapping->product_id)->lockForUpdate()->first();
+            $variant = $product !== null && $mapping->variant_id !== null
+                ? ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($mapping->variant_id)->lockForUpdate()->first()
+                : null;
             $conflict = FortnoxSyncConflict::query()
                 ->forCompany($company)
                 ->where('uuid', $conflictUuid)
+                ->where('mapping_id', $mapping->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -50,9 +60,6 @@ class ResolveFortnoxConflictAction
             }
 
             $field = $conflict->field;
-            $mapping = $conflict->mapping;
-            $product = $mapping->product;
-            $variant = $mapping->variant;
 
             if (! $this->matrix->isCatalogWritable($field) || $product === null) {
                 throw ValidationException::withMessages(['conflict' => 'This field cannot be resolved through the catalog.']);
@@ -66,12 +73,22 @@ class ResolveFortnoxConflictAction
                 : $conflict->nordipass_value;
 
             $appliedValues = $mapping->last_applied_values ?? [];
+            $currentValue = match ($field) {
+                FortnoxField::Name => $product->name,
+                FortnoxField::Description => $product->description,
+                FortnoxField::Gtin => $variant?->gtin,
+                default => null,
+            };
 
             if ($resolution === 'fortnox') {
+                if ($currentValue !== $nordipassValue) {
+                    throw ValidationException::withMessages(['conflict' => 'The local value changed after this conflict was recorded. Refresh and review the conflict before applying Fortnox.']);
+                }
                 $this->writeField($actor, $company, $field, $fortnoxValue, $product, $variant);
                 $appliedValues[$field->value] = $fortnoxValue;
                 $status = FortnoxConflictStatus::ResolvedFortnox;
             } else {
+                $nordipassValue = $currentValue;
                 FortnoxFieldOverride::query()->updateOrCreate(
                     [
                         'company_id' => $company->getKey(),

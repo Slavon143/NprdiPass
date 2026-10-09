@@ -31,6 +31,7 @@ class BulkArchiveCategoriesAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
 
         return DB::transaction(function () use ($actor, $company, $uuids): array {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
             $allCategories = Category::query()
                 ->forCompany($company)
                 ->whereIn('uuid', $uuids)

@@ -11,6 +11,7 @@
                 <div class="p-6 text-gray-700 space-y-3">
                     <p>{{ __('Your account does not currently have access to an active company.') }}</p>
                     <p>{{ __('Ask a company administrator for an invitation or contact the platform administrator.') }}</p>
+                    <a class="inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" href="{{ route('companies.create') }}">{{ __('Create an organization') }}</a>
                 </div>
             </div>
         </div>

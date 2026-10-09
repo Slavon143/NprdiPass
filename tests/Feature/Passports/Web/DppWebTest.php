@@ -217,8 +217,11 @@ class DppWebTest extends TestCase
     {
         $archivedProduct = $this->createProductForArchivedTest();
 
-        $this->post(route('catalog.products.passport.store', ['product' => $archivedProduct->uuid]))
-            ->assertStatus(500);
+        $url = route('catalog.products.passport.store', ['product' => $archivedProduct->uuid]);
+        $this->postJson($url)->assertStatus(409);
+        $this->post($url)
+            ->assertRedirect(route('catalog.products.show', ['product' => $archivedProduct->uuid, 'tab' => 'passport']))
+            ->assertSessionHasErrors('passport');
     }
 
     public function test_valid_section_update_via_web(): void

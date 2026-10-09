@@ -13,6 +13,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use App\Services\Catalog\ManagedProductGate;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Services\Passports\DppPayloadValidator;
 use App\Services\Passports\DppSchemaRegistry;
@@ -51,6 +52,7 @@ class UpdateProductPassportSectionAction
         try {
             $freshCompany = $this->authorize($actor, $company);
             $this->assertProductBelongsToCompany($freshCompany, $product);
+            $product = app(ManagedProductGate::class)->forMutation($freshCompany, $product);
             $this->assertPassportBelongsToProduct($passport, $product);
 
             $passport = ProductPassport::query()

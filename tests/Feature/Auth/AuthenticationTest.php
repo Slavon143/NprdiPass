@@ -39,3 +39,22 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect('/');
 });
+
+test('user menu logout submits a post form without inline JavaScript', function () {
+    config(['security.csp_enabled' => true]);
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $response = $this->actingAs($user)->get(route('profile.edit'))->assertOk();
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $forms = $xpath->query('//form[@action="'.route('logout').'"]');
+    expect($forms)->not->toBeFalse()
+        ->and($forms->length)->toBeGreaterThan(0);
+    foreach ($forms as $form) {
+        expect($form->getAttribute('method'))->toBe('POST')
+            ->and($xpath->query('.//button[@type="submit"]', $form)->length)->toBe(1)
+            ->and($xpath->query('.//*[@onclick]', $form)->length)->toBe(0)
+            ->and($xpath->query('.//a', $form)->length)->toBe(0);
+    }
+});

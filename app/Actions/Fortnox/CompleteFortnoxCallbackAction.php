@@ -36,7 +36,7 @@ class CompleteFortnoxCallbackAction
             throw ValidationException::withMessages(['code' => 'The authorization code is missing.']);
         }
 
-        $stateRecord = $this->consumeState($company, $state);
+        $stateRecord = $this->consumeState($actor, $company, $state);
         if ($stateRecord === null) {
             throw ValidationException::withMessages(['state' => 'The OAuth state is invalid, expired, or already used.']);
         }
@@ -44,6 +44,7 @@ class CompleteFortnoxCallbackAction
         $token = $this->oauth->exchange($code);
 
         return DB::transaction(function () use ($actor, $company, $token): FortnoxConnection {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
             $connection = FortnoxConnection::query()
                 ->forCompany($company)
                 ->lockForUpdate()
@@ -84,11 +85,12 @@ class CompleteFortnoxCallbackAction
         });
     }
 
-    private function consumeState(Company $company, string $state): ?FortnoxOAuthState
+    private function consumeState(User $actor, Company $company, string $state): ?FortnoxOAuthState
     {
         $hash = hash('sha256', $state);
 
-        return DB::transaction(function () use ($company, $hash): ?FortnoxOAuthState {
+        return DB::transaction(function () use ($actor, $company, $hash): ?FortnoxOAuthState {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
             $record = FortnoxOAuthState::query()
                 ->where('company_id', $company->getKey())
                 ->where('state_hash', $hash)

@@ -3,6 +3,13 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// Keep implicit TCP/TLS host handling intact unless transport is configured.
+// Oderland uses Predis with REDIS_SCHEME=unix and REDIS_PATH=/tmp/redis.
+$redisTransport = array_filter([
+    'scheme' => env('REDIS_SCHEME'),
+    'path' => env('REDIS_PATH'),
+], fn ($value) => $value !== null && $value !== '');
+
 return [
 
     /*
@@ -161,6 +168,7 @@ return [
         ],
 
         'default' => [
+            ...$redisTransport,
             'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', '127.0.0.1'),
             'username' => env('REDIS_USERNAME'),
@@ -174,6 +182,7 @@ return [
         ],
 
         'cache' => [
+            ...$redisTransport,
             'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', '127.0.0.1'),
             'username' => env('REDIS_USERNAME'),

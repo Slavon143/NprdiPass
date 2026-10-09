@@ -27,5 +27,6 @@ readonly class PassportReadinessResult
         public ReadinessSummary $counts,
         public array $rules,
         public CarbonImmutable $evaluatedAt,
+        public array $profileDetails = [],
     ) {}
 }

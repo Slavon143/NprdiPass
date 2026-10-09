@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\Webhooks\WebhookDelivery;
 use App\Models\Webhooks\WebhookEndpoint;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class WebhookDeliveryService
 {
@@ -28,30 +29,35 @@ class WebhookDeliveryService
         ?string $aggregateType = null,
         ?string $aggregateUuid = null,
     ): Collection {
-        $eventId = (string) str()->uuid();
-        $payload = $this->payloadFactory->make($company, $eventType, $data, $eventId);
-        $deliveries = collect();
+        return DB::transaction(function () use ($company, $eventType, $data, $aggregateType, $aggregateUuid): Collection {
+            if (! app(WebhookCommercialAccess::class)->allowsDelivery((int) $company->getKey())) {
+                return collect();
+            }
+            $eventId = (string) str()->uuid();
+            $payload = $this->payloadFactory->make($company, $eventType, $data, $eventId);
+            $deliveries = collect();
 
-        WebhookEndpoint::query()
-            ->forCompany($company)
-            ->where('status', WebhookEndpointStatus::Active->value)
-            ->whereJsonContains('events', $eventType->value)
-            ->each(function (WebhookEndpoint $endpoint) use ($company, $eventType, $aggregateType, $aggregateUuid, $payload, $eventId, $deliveries): void {
-                $delivery = WebhookDelivery::query()->create([
-                    'company_id' => $company->getKey(),
-                    'webhook_endpoint_id' => $endpoint->getKey(),
-                    'event_type' => $eventType,
-                    'aggregate_type' => $aggregateType,
-                    'aggregate_uuid' => $aggregateUuid,
-                    'payload' => $payload,
-                    'status' => WebhookDeliveryStatus::Pending,
-                    'idempotency_key' => hash('sha256', $endpoint->uuid.'|'.$eventId),
-                ]);
+            WebhookEndpoint::query()
+                ->forCompany($company)
+                ->where('status', WebhookEndpointStatus::Active->value)
+                ->whereJsonContains('events', $eventType->value)
+                ->each(function (WebhookEndpoint $endpoint) use ($company, $eventType, $aggregateType, $aggregateUuid, $payload, $eventId, $deliveries): void {
+                    $delivery = WebhookDelivery::query()->create([
+                        'company_id' => $company->getKey(),
+                        'webhook_endpoint_id' => $endpoint->getKey(),
+                        'event_type' => $eventType,
+                        'aggregate_type' => $aggregateType,
+                        'aggregate_uuid' => $aggregateUuid,
+                        'payload' => $payload,
+                        'status' => WebhookDeliveryStatus::Pending,
+                        'idempotency_key' => hash('sha256', $endpoint->uuid.'|'.$eventId),
+                    ]);
 
-                DeliverWebhookJob::dispatch($delivery->id);
-                $deliveries->push($delivery);
-            });
+                    DeliverWebhookJob::dispatch($delivery->id, $company->getKey())->afterCommit();
+                    $deliveries->push($delivery);
+                });
 
-        return $deliveries;
+            return $deliveries;
+        });
     }
 }

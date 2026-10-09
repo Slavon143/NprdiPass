@@ -27,6 +27,7 @@ class BulkDeleteAttributesAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
 
         return DB::transaction(function () use ($actor, $company, $uuids): array {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
             $all = AttributeDefinition::query()
                 ->forCompany($company)
                 ->whereIn('uuid', $uuids)

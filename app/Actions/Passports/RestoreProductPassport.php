@@ -15,6 +15,7 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Catalog\ManagedProductGate;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -38,6 +39,7 @@ class RestoreProductPassport
         try {
             $freshCompany = $this->authorize($actor, $company);
             $this->assertProductBelongsToCompany($freshCompany, $product);
+            $product = app(ManagedProductGate::class)->forMutation($freshCompany, $product);
             $this->assertPassportBelongsToProduct($passport, $product);
 
             $passport = ProductPassport::query()

@@ -416,9 +416,9 @@
         </aside>
 
         {{-- Active section panel --}}
-        <script>window.passportSectionConfig = @json($alpineConfig);</script>
+        <script nonce="@cspNonce">window.passportSectionConfig = @json($alpineConfig);</script>
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm" id="section-panel" data-testid="section-panel"
-                 x-data="passportSection(window.passportSectionConfig)">
+                 x-data="passportSection">
             <div class="flex flex-col gap-4 border-b border-slate-200 p-6 sm:flex-row sm:items-start sm:justify-between">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
@@ -562,8 +562,7 @@
     </div>
 </div>
 
-@if ($canManage)
-<script>
+<script nonce="@cspNonce">
 (function () {
     window.passportSection = function (config) {
         return {
@@ -938,5 +937,4 @@
     });
 })();
 </script>
-@endif
 </x-app-layout>

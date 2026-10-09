@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\CheckConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE product_passports DROP CHECK product_passports_pointers_distinct_check');
+        CheckConstraints::drop('product_passports', 'product_passports_pointers_distinct_check');
 
         Schema::table('product_passports', function (Blueprint $table): void {
             $table->dropForeign('product_passports_published_version_pointer_foreign');

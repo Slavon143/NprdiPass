@@ -10,7 +10,11 @@ use App\Models\Company;
 
 interface StripeBillingProvider
 {
-    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl): StripeCheckoutSession;
+    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $interval = 'month'): StripeCheckoutSession;
+
+    public function createClaimedCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $idempotencyKey, string $interval = 'month'): StripeCheckoutSession;
+
+    public function expireCheckoutSession(string $sessionId): void;
 
     public function createPortalSession(Company $company, CompanySubscription $subscription, string $returnUrl): StripePortalSession;
 

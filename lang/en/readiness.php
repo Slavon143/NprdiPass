@@ -2,6 +2,21 @@
 
 return [
     'label' => 'Readiness',
+    'dpp.requirement' => [
+        'title' => 'Profile requirement', 'deferred' => 'This requirement is outside its application dates.',
+    ],
+    'regulatory.profile' => [
+        'title' => 'Current regulatory requirements',
+        'stale' => 'The regulatory profile has changed or is unavailable. Update the draft to current requirements and review it again.',
+    ],
+    'regulatory.battery' => [
+        'title' => 'Battery passport coverage',
+        'incomplete' => 'Article 77 applies. Full Annex XIII coverage, restricted access and EU registry registration have not been verified in this implementation.',
+    ],
+    'regulatory.context' => [
+        'invalid' => 'Correct the invalid product classification before publication.',
+        'date_missing' => 'Record the market or lifecycle event date to determine battery passport applicability.',
+    ],
 
     // ──────────────────────────────────────────────
     // BLOCKERS

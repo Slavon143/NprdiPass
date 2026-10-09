@@ -1,189 +1,53 @@
 #!/usr/bin/env bash
-
 set -Eeuo pipefail
-
-# --- Parse arguments ---
-RELEASE_ID=""
-ARTIFACT=""
-CHECKSUM_FILE=""
-APP_ROOT=""
-HEALTH_URL=""
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+source "$SCRIPT_DIR/release-common.sh"
+RELEASE_ID="" ARTIFACT="" CHECKSUM_FILE="" APP_ROOT="" HEALTH_URL=""
+PAUSE_WRITERS="" VERIFY_STOPPED="" RESUME_WRITERS="" VERIFY_BACKUP=""
 DRY_RUN=false
-
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --release-id)    RELEASE_ID="$2"; shift 2 ;;
-        --artifact)      ARTIFACT="$2"; shift 2 ;;
-        --checksum-file) CHECKSUM_FILE="$2"; shift 2 ;;
-        --app-root)      APP_ROOT="$2"; shift 2 ;;
-        --health-url)    HEALTH_URL="$2"; shift 2 ;;
-        --dry-run)       DRY_RUN=true; shift ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+        --release-id|--artifact|--checksum-file|--app-root|--health-url|--pause-writers|--verify-writers-stopped|--resume-writers|--verify-backup)
+            [[ $# -ge 2 && -n "$2" ]] || fail "Missing value for $1."
+            case "$1" in
+                --release-id) RELEASE_ID="$2";; --artifact) ARTIFACT="$2";; --checksum-file) CHECKSUM_FILE="$2";;
+                --app-root) APP_ROOT="$2";; --health-url) HEALTH_URL="${2%/}";; --pause-writers) PAUSE_WRITERS="$2";;
+                --verify-writers-stopped) VERIFY_STOPPED="$2";; --resume-writers) RESUME_WRITERS="$2";; --verify-backup) VERIFY_BACKUP="$2";;
+            esac
+            shift 2;;
+        --dry-run) DRY_RUN=true; shift;;
+        *) fail "Unknown option: $1";;
     esac
 done
-
-# --- Validate required arguments ---
-if [ -z "$RELEASE_ID" ] || [ -z "$ARTIFACT" ] || [ -z "$APP_ROOT" ]; then
-    echo "Usage: $0 --release-id=<id> --artifact=<file> --app-root=<path> [--checksum-file=<file>] [--health-url=<url>] [--dry-run]"
-    exit 2
-fi
-
-RELEASES_DIR="${APP_ROOT}/releases"
-SHARED_DIR="${APP_ROOT}/shared"
-CURRENT_LINK="${APP_ROOT}/current"
-RELEASE_DIR="${RELEASES_DIR}/${RELEASE_ID}"
-
-# --- Dry-run mode ---
-if [ "$DRY_RUN" = true ]; then
-    echo "--- Dry Run ---"
-    echo "Release ID:      $RELEASE_ID"
-    echo "Artifact:        $ARTIFACT"
-    echo "App root:        $APP_ROOT"
-    echo "Release dir:     $RELEASE_DIR"
-    echo "Current link:    $CURRENT_LINK"
-    echo "Health URL:      ${HEALTH_URL:-not set}"
-    echo "Checksum file:   ${CHECKSUM_FILE:-not set}"
-    echo "---"
+validate_release_operation
+[[ -f "$ARTIFACT" && -f "$CHECKSUM_FILE" ]] || fail "Artifact and its checksum file are required."
+[[ ! -e "$RELEASE_DIR" && ! -L "$RELEASE_DIR" ]] || fail "Release ID already exists."
+python3 "$SCRIPT_DIR/release_artifact.py" verify --artifact "$ARTIFACT" --checksum-file "$CHECKSUM_FILE"
+if [[ "$DRY_RUN" == true ]]; then
+    echo "Verified plan: retain executable; pause/drain writers; verify backup; migrate; verify schema/counters; activate $RELEASE_ID; restart and check health."
     exit 0
 fi
-
-# --- Acquire deployment lock ---
-LOCK_FILE="${APP_ROOT}/deploy.lock"
-exec 200>"${LOCK_FILE}"
-if ! flock -n 200; then
-    echo "ERROR: Another deployment is in progress."
-    exit 3
-fi
-trap 'flock -u 200; rm -f "${LOCK_FILE}"' EXIT
-
-# --- Validate paths ---
-if [ "${APP_ROOT}" = "/" ]; then
-    echo "ERROR: Application root cannot be '/'."
-    exit 2
-fi
-
-if [ -z "${RELEASE_ID##*/*}" ]; then
-    echo "ERROR: Invalid release ID."
-    exit 2
-fi
-
-# --- Verify artifact checksum ---
-if [ -n "$CHECKSUM_FILE" ] && [ -f "$CHECKSUM_FILE" ]; then
-    echo "Verifying artifact checksum..."
-    if ! sha256sum -c "$CHECKSUM_FILE"; then
-        echo "ERROR: Artifact checksum mismatch."
-        exit 4
-    fi
-fi
-
-# --- Create release directory ---
-echo "Creating release directory: ${RELEASE_DIR}"
-mkdir -p "${RELEASE_DIR}"
-
-# --- Extract artifact ---
-echo "Extracting artifact..."
-tar -xzf "$ARTIFACT" -C "${RELEASE_DIR}" --strip-components=1
-rm -f "$ARTIFACT" "${CHECKSUM_FILE}"
-
-# --- Verify RELEASE.json ---
-if [ ! -f "${RELEASE_DIR}/RELEASE.json" ]; then
-    echo "ERROR: RELEASE.json not found in artifact."
-    rm -rf "${RELEASE_DIR}"
-    exit 4
-fi
-
-echo "Release: $(jq -r '.ref // "unknown"' "${RELEASE_DIR}/RELEASE.json" 2>/dev/null || cat "${RELEASE_DIR}/RELEASE.json")"
-
-# --- Link shared files ---
-if [ -d "${SHARED_DIR}" ]; then
-    echo "Linking shared files..."
-
-    if [ -f "${SHARED_DIR}/.env" ]; then
-        ln -sf "${SHARED_DIR}/.env" "${RELEASE_DIR}/.env"
-    fi
-
-    for dir in storage/app storage/framework storage/logs; do
-        shared_sub="${SHARED_DIR}/${dir}"
-        release_sub="${RELEASE_DIR}/${dir}"
-        if [ -d "${shared_sub}" ]; then
-            rm -rf "${release_sub}"
-            ln -sf "${shared_sub}" "${release_sub}"
-        fi
-    done
-fi
-
-# --- Create storage symlink ---
-echo "Creating storage symlink..."
-php "${RELEASE_DIR}/artisan" storage:link --force 2>/dev/null || true
-
-# --- Permissions check ---
-for dir in "${RELEASE_DIR}/storage" "${RELEASE_DIR}/bootstrap/cache"; do
-    if [ -d "$dir" ] && [ ! -w "$dir" ]; then
-        echo "WARNING: Directory not writable: ${dir}"
-    fi
+lock_release_operation
+RETAINED=$(python3 "$SCRIPT_DIR/release_artifact.py" retain --artifact "$ARTIFACT" --checksum-file "$CHECKSUM_FILE" --archive-root "$ARCHIVE_DIR")
+pause_and_verify
+mkdir -p "$RELEASES_DIR"
+mkdir "$RELEASE_DIR"
+python3 "$SCRIPT_DIR/release_artifact.py" verify --artifact "$RETAINED/release.tar.gz" --checksum-file "$RETAINED/release.tar.gz.sha256"
+tar -xzf "$RETAINED/release.tar.gz" -C "$RELEASE_DIR" --strip-components=1 --no-same-owner --no-same-permissions
+basename "$RETAINED" > "$RELEASE_DIR/ARTIFACT_SHA256"
+python3 "$SCRIPT_DIR/release_artifact.py" verify-tree --release-dir "$RELEASE_DIR" --archive-root "$ARCHIVE_DIR"
+ln -s "$SHARED_DIR/.env" "$RELEASE_DIR/.env"
+for directory in app framework logs; do
+    rm -rf -- "$RELEASE_DIR/storage/$directory"
+    ln -s "$SHARED_DIR/storage/$directory" "$RELEASE_DIR/storage/$directory"
 done
-
-# --- Run migrations ---
-echo "Running migrations..."
-php "${RELEASE_DIR}/artisan" migrate --force
-
-# --- Cache ---
-echo "Building caches..."
-php "${RELEASE_DIR}/artisan" optimize:clear
-php "${RELEASE_DIR}/artisan" config:cache
-php "${RELEASE_DIR}/artisan" route:cache
-php "${RELEASE_DIR}/artisan" view:cache
-
-# --- Atomic switch ---
-echo "Switching current release..."
-ln -sfn "${RELEASE_DIR}" "${CURRENT_LINK}.new"
-mv -T "${CURRENT_LINK}.new" "${CURRENT_LINK}"
-
-# --- Restart queue workers ---
-echo "Restarting queue workers..."
-php "${CURRENT_LINK}/artisan" queue:restart 2>/dev/null || true
-
-# --- Health checks ---
-if [ -n "$HEALTH_URL" ]; then
-    echo "Performing health checks..."
-
-    up_ok=false
-    ready_ok=false
-
-    for i in $(seq 1 10); do
-        if curl -sf "${HEALTH_URL}/up" > /dev/null 2>&1; then
-            echo "  /up OK"
-            up_ok=true
-            break
-        fi
-        sleep 2
-    done
-
-    for i in $(seq 1 10); do
-        status=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}/ready" 2>&1 || echo "000")
-        if [ "$status" = "200" ]; then
-            echo "  /ready OK"
-            ready_ok=true
-            break
-        fi
-        sleep 3
-    done
-
-    if [ "$up_ok" != true ] || [ "$ready_ok" != true ]; then
-        echo "ERROR: Deployment health checks failed (/up=${up_ok}, /ready=${ready_ok})."
-        exit 5
-    fi
-fi
-
-# --- Cleanup old releases ---
-KEEP="${DEPLOY_KEEP_RELEASES:-5}"
-echo "Cleaning up old releases (keeping ${KEEP})..."
-ls -1t "${RELEASES_DIR}/" | tail -n +$((KEEP + 1)) | while read -r old; do
-    old_path="${RELEASES_DIR}/${old}"
-    if [ "$(readlink -f "${CURRENT_LINK}")" != "$(readlink -f "${old_path}")" ]; then
-        echo "  Removing: ${old}"
-        rm -rf "${old_path}"
-    fi
-done
-
-echo "Deployment completed: ${RELEASE_ID}"
+php "$RELEASE_DIR/artisan" migrate --force
+php "$RELEASE_DIR/artisan" release:verify-schema
+php "$RELEASE_DIR/artisan" catalog:capacity-reconcile --all-companies --repair
+php "$RELEASE_DIR/artisan" catalog:capacity-reconcile --all-companies
+php "$RELEASE_DIR/artisan" storage:link --force
+build_release_caches
+activate_and_check
+# Working directories and content-addressed executable archives are retained.
+# Pruning needs a reviewed retention policy covering historical DPP provenance.
+echo "Deployment completed: $RELEASE_ID"

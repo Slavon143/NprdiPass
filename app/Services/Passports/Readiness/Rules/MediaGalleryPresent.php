@@ -29,7 +29,8 @@ class MediaGalleryPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $mediaCount = $context->product->media()->count();
+        $mediaCount = $context->product->relationLoaded('media')
+            ? $context->product->media->count() : $context->product->media()->count();
         $passed = $mediaCount > 1;
 
         return new ReadinessRuleResult(

@@ -26,13 +26,14 @@ class ProductAggregateCreator
      * @param  array<string, mixed>  $productData
      * @param  array<string, mixed>  $variantData
      */
-    public function create(User $actor, Company $company, array $productData, array $variantData): Product
+    public function create(User $actor, Company $company, array $productData, array $variantData, bool $managed = true): Product
     {
         $variantName = trim((string) ($variantData['name'] ?? ''));
         $product = new Product;
         $product->fill(array_intersect_key($productData, array_flip(self::PRODUCT_FIELDS)));
         $product->forceFill([
             'company_id' => $company->getKey(),
+            'managed' => $managed,
             'name' => $productData['name'],
             'slug' => $productData['slug'],
             'slug_normalized' => $productData['slug'],

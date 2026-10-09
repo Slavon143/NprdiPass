@@ -20,6 +20,7 @@ class PassportReadinessResource extends JsonResource
             'score_algorithm' => $this->scoreAlgorithm,
             'score_algorithm_version' => $this->scoreAlgorithmVersion,
             'rule_set_fingerprint' => $this->ruleSetFingerprint,
+            'profile_details' => $this->profileDetails,
             'passport_uuid' => $this->passportUuid,
             'draft_version_uuid' => $this->draftVersionUuid,
             'passport_revision' => $this->passportRevision,

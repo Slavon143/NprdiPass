@@ -10,8 +10,8 @@ use App\Exceptions\Catalog\ProductOperationException;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
-use App\Services\Billing\EntitlementService;
 use App\Services\Catalog\CatalogLifecycleGuard;
+use App\Services\Catalog\CatalogProductCapacity;
 use App\Services\Catalog\ProductCategoryService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -26,7 +26,7 @@ abstract class ProductAction
         protected readonly ProductCategoryService $categories,
         protected readonly ProductAggregateCreator $aggregateCreator,
         protected readonly CatalogLifecycleGuard $lifecycle,
-        protected readonly EntitlementService $entitlements,
+        protected readonly CatalogProductCapacity $capacity,
     ) {}
 
     protected function authorize(User $actor, Company $company, CompanyPermission $permission): Company
@@ -37,7 +37,7 @@ abstract class ProductAction
             throw new AuthorizationException;
         }
 
-        $this->authorizer->authorize($actor, $freshCompany, $permission);
+        $this->authorizer->authorizeCatalogWrite($actor, $freshCompany, $permission);
 
         return $freshCompany;
     }

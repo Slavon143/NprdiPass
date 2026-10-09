@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8" x-data="{ copied: false }">
+    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8" x-data="copyToken">
         <section class="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('Copy this token now') }}</h2>
             <p class="mt-2 text-sm text-slate-600">{{ __('This secret is shown only once and cannot be recovered later.') }}</p>
@@ -14,7 +14,7 @@
                 <code id="plain-api-token" class="block break-all text-sm text-emerald-300">{{ $plainTextToken }}</code>
             </div>
             <div class="mt-5 flex flex-wrap items-center gap-3">
-                <button type="button" @click="navigator.clipboard.writeText(document.getElementById('plain-api-token').textContent); copied = true" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <button type="button" @click="copy" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                     <span x-show="!copied">{{ __('Copy token') }}</span>
                     <span x-cloak x-show="copied">{{ __('Copied') }}</span>
                 </button>

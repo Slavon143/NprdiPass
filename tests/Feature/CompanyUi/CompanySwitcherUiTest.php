@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Billing\BillingSubscriptionStatus;
+use App\Models\Billing\CompanySubscription;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
@@ -54,6 +56,61 @@ test('switcher shows only active user companies marks current and uses uuid rout
         ->assertDontSee('Foreign Company Hidden');
 });
 
+test('dashboard layout renders array flash messages after company context changes', function () {
+    $user = User::factory()->create();
+    $companyA = Company::factory()->create(['name' => 'Array Flash Alpha']);
+    $companyB = Company::factory()->create(['name' => 'Array Flash Beta']);
+    CompanyMembership::factory()->owner()->create([
+        'user_id' => $user,
+        'company_id' => $companyA,
+    ]);
+    CompanyMembership::factory()->viewer()->create([
+        'user_id' => $user,
+        'company_id' => $companyB,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession([
+            config('tenancy.session_key') => $companyB->getKey(),
+            'success' => ['Company switched.', 'Dashboard refreshed.'],
+        ])
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Array Flash Beta')
+        ->assertSee('Company switched.')
+        ->assertSee('Dashboard refreshed.');
+});
+
+test('dashboard layout renders localized array plan names', function () {
+    config()->set('features.billing', true);
+    config()->set('app.locale', 'en');
+    config()->set('billing.plans.pilot.name', ['en' => 'Pilot localized', 'sv' => 'Pilot lokaliserad']);
+
+    $user = User::factory()->create();
+    $company = Company::factory()->create(['name' => 'Localized Plan Company']);
+    CompanyMembership::factory()->owner()->create([
+        'user_id' => $user,
+        'company_id' => $company,
+    ]);
+    CompanySubscription::query()->create([
+        'company_id' => $company->getKey(),
+        'plan_key' => 'pilot',
+        'status' => BillingSubscriptionStatus::Trialing,
+        'entitlements' => [
+            'catalog.products.max' => 100,
+        ],
+        'trial_ends_at' => now()->addDays(14),
+        'current_period_start' => now(),
+        'current_period_end' => now()->addDays(14),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Localized Plan Company')
+        ->assertSee('Plan: Pilot localized');
+});
+
 test('long company name and user email render without truncating source content', function () {
     $user = User::factory()->create([
         'name' => 'A User With A Deliberately Long Display Name For Responsive Review',
@@ -73,5 +130,5 @@ test('long company name and user email render without truncating source content'
         ->assertOk()
         ->assertSee('NordiPass Company With A Deliberately Long Legal Display Name AB')
         ->assertSee('A User With A Deliberately Long Display Name For Responsive Review')
-        ->assertSee('an-equally-long-billing-email-address@nordipass.local');
+        ->assertSee('a-very-long-user-email-address-for-responsive-testing@nordipass.local');
 });

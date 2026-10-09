@@ -19,11 +19,15 @@ class PassportQrRenderer
 
     public function renderSvg(string $publicId): string
     {
-        $payload = $this->payloadFactory->create($publicId);
+        return $this->renderSvgForUrl($this->payloadFactory->create($publicId));
+    }
+
+    public function renderSvgForUrl(string $url): string
+    {
         $builder = new Builder(new SvgWriter);
 
         $result = $builder->build(
-            data: $payload,
+            data: $url,
             encoding: new Encoding('UTF-8'),
             errorCorrectionLevel: $this->errorCorrectionLevel(),
             size: config('passports.qr.preview_size'),

@@ -4,6 +4,7 @@ namespace Tests\Feature\Passports\Publication;
 
 use App\Actions\Passports\CreateProductPassportDraftAction;
 use App\Actions\Passports\PublishProductPassport;
+use App\Actions\Passports\UnpublishProductPassport;
 use App\Actions\Passports\UpdateProductPassportSectionAction;
 use App\Data\Passports\PublicationResult;
 use App\Enums\AuditEvent;
@@ -15,6 +16,7 @@ use App\Enums\CompanyStatus;
 use App\Enums\Passports\DppSectionKey;
 use App\Enums\Passports\ProductPassportVersionStatus;
 use App\Events\Passports\ProductPassportPublished;
+use App\Jobs\Webhooks\DeliverWebhookJob;
 use App\Models\AuditLog;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
@@ -26,15 +28,20 @@ use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\Passports\PublicationIdempotencyRecord;
 use App\Models\User;
+use App\Models\Webhooks\WebhookDelivery;
+use App\Models\Webhooks\WebhookEndpoint;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 class IdempotencyTest extends TestCase
@@ -390,7 +397,7 @@ class IdempotencyTest extends TestCase
         $this->expectException(ConflictHttpException::class);
         $this->expectExceptionMessage('Idempotency key already used for a different passport.');
 
-        $this->publish($otherPassport, 1, 'key-cross-passport');
+        app(PublishProductPassport::class)->handle($this->actor, $this->company, $otherProduct, $otherPassport, 1, true, 'key-cross-passport');
     }
 
     public function test_idempotency_prevents_duplicate_versions(): void
@@ -416,6 +423,25 @@ class IdempotencyTest extends TestCase
             $versionCountAfter,
             'Publish transitions draft to published + new draft. Expected '.$expectedCount.' but got '.$versionCountAfter.'.',
         );
+    }
+
+    public function test_publication_and_unpublication_create_tenant_outbox_events_once(): void
+    {
+        Queue::fake();
+        WebhookEndpoint::create([
+            'company_id' => $this->company->id, 'url' => 'https://example.test/passports', 'secret' => 'fixture-secret',
+            'events' => ['passport.published', 'passport.unpublished'], 'status' => 'active',
+        ]);
+        $this->fillAllSections();
+        $passport = $this->freshPassport();
+        $published = $this->publish($passport, $this->revision, 'outbox-publish-key');
+        $this->publish($this->freshPassport(), $this->revision, 'outbox-publish-key');
+        $this->assertDatabaseCount('webhook_deliveries', 1);
+        $delivery = WebhookDelivery::query()->sole();
+        $this->assertSame($published->publishedVersion->uuid, $delivery->payload['data']['published_version_uuid']);
+        app(UnpublishProductPassport::class)->handle($this->actor, $this->company, $this->product, $this->freshPassport());
+        $this->assertDatabaseCount('webhook_deliveries', 2);
+        Queue::assertPushed(DeliverWebhookJob::class, 2);
     }
 
     public function test_idempotency_prevents_duplicate_audit(): void
@@ -447,7 +473,7 @@ class IdempotencyTest extends TestCase
         );
     }
 
-    public function test_same_key_different_company_returns_409(): void
+    public function test_cross_company_resources_are_rejected_before_idempotency_lookup(): void
     {
         $this->fillAllSections();
         $passport = $this->freshPassport();
@@ -466,7 +492,7 @@ class IdempotencyTest extends TestCase
         $this->actingAs($otherActor);
         app(CurrentCompany::class)->set($otherCompany);
 
-        $this->expectException(ConflictHttpException::class);
+        $this->expectException(NotFoundHttpException::class);
 
         app(PublishProductPassport::class)->handle(
             $otherActor,
@@ -677,5 +703,17 @@ class IdempotencyTest extends TestCase
         $this->assertNotNull($record->published_version_id);
         $this->assertNotNull($record->started_at);
         $this->assertNotNull($record->completed_at);
+    }
+
+    public function test_cached_retry_does_not_bypass_current_authorization(): void
+    {
+        $this->fillAllSections();
+        $passport = $this->freshPassport();
+        $revision = $this->revision;
+        $this->publish($passport, $revision, 'revoked-permission');
+        CompanyMembership::query()->where('company_id', $this->company->getKey())
+            ->where('user_id', $this->actor->getKey())->update(['role' => CompanyRole::Viewer]);
+        $this->expectException(AuthorizationException::class);
+        $this->publish($this->freshPassport(), $revision, 'revoked-permission');
     }
 }

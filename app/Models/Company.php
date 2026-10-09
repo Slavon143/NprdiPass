@@ -7,6 +7,7 @@ use App\Models\Billing\CompanySubscription;
 use App\Models\Billing\EntitlementOverride;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
+use App\Models\Catalog\CatalogCapacity;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
+ * @property int|null $commercial_model_version
  * @property CompanyStatus $status
  * @property array<string, mixed>|null $settings
  */
@@ -46,10 +48,13 @@ class Company extends Model
         'settings',
     ];
 
+    protected $hidden = ['catalogCapacity', 'catalog_products_count', 'commercial_model_version'];
+
     protected function casts(): array
     {
         return [
             'status' => CompanyStatus::class,
+            'commercial_model_version' => 'integer',
             'settings' => 'array',
         ];
     }
@@ -102,6 +107,12 @@ class Company extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /** @return HasOne<CatalogCapacity, $this> */
+    public function catalogCapacity(): HasOne
+    {
+        return $this->hasOne(CatalogCapacity::class);
     }
 
     public function productVariants(): HasMany

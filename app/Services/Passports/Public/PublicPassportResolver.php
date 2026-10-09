@@ -9,11 +9,22 @@ use App\Enums\Documents\ProductDocumentVisibility;
 use App\Enums\Passports\DppSectionKey;
 use App\Enums\Passports\ProductPassportStatus;
 use App\Models\Passports\ProductPassport;
+use App\Services\Observability\RequestTelemetry;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PublicPassportResolver
 {
     public function resolve(string $publicId, ?string $requestedLocale = null): PublicPassportViewModel
+    {
+        $started = hrtime(true);
+        try {
+            return $this->resolvePublished($publicId, $requestedLocale);
+        } finally {
+            app(RequestTelemetry::class)->recordPublicResolver((hrtime(true) - $started) / 1_000_000);
+        }
+    }
+
+    private function resolvePublished(string $publicId, ?string $requestedLocale): PublicPassportViewModel
     {
         $passport = ProductPassport::query()
             ->with('currentPublishedVersion')
@@ -85,9 +96,22 @@ class PublicPassportResolver
         $enabledSections = $payload['enabled_sections'] ?? [];
         $data = $payload['data'] ?? [];
         $translations = $payload['translations'] ?? [];
-        $defaultLanguage = $passport->default_language;
 
-        $enabledLocales = $passport->enabled_languages ?? [$defaultLanguage];
+        // Language configuration is part of the immutable snapshot. Only
+        // legacy snapshots published before language snapshotting fall back
+        // to the passport row.
+        $languages = $payload['languages'] ?? null;
+        $defaultLanguage = is_array($languages) && is_string($languages['default'] ?? null)
+            ? $languages['default']
+            : ($passport->default_language ?? (string) config('passports.default_language', 'sv'));
+        $enabledLocales = is_array($languages) && is_array($languages['enabled'] ?? null)
+            ? array_values(array_filter($languages['enabled'], fn (mixed $locale): bool => is_string($locale) && $locale !== ''))
+            : array_values($passport->enabled_languages ?? [$defaultLanguage]);
+
+        if ($enabledLocales === []) {
+            $enabledLocales = [$defaultLanguage];
+        }
+
         $effectiveLocale = $this->resolveEffectiveLocale($requestedLocale, $defaultLanguage, $enabledLocales);
         $isFallback = $requestedLocale !== null && $effectiveLocale !== $requestedLocale;
 
@@ -95,6 +119,21 @@ class PublicPassportResolver
         $sectionLabels = $this->buildSectionLabels($enabledSections);
         $media = $this->buildMedia($catalogContext['media'] ?? []);
         $documents = $this->buildDocuments($catalogContext['documents'] ?? []);
+
+        // The published snapshot has two historical representations of the
+        // manufacturer. The DPP section is authoritative when present; the
+        // catalog snapshot is the deterministic fallback for legacy versions.
+        $manufacturerData = $sectionData[DppSectionKey::ManufacturerAndOperator->value] ?? [];
+        $manufacturerDisplayName = $this->firstNonBlank(
+            $manufacturerData['manufacturer_display_name'] ?? null,
+            $product['manufacturer'] ?? null,
+        );
+
+        if (in_array(DppSectionKey::ManufacturerAndOperator->value, $enabledSections, true)
+            && $manufacturerDisplayName !== null) {
+            $sectionData[DppSectionKey::ManufacturerAndOperator->value]['manufacturer_display_name'] = $manufacturerDisplayName;
+        }
+        $product['manufacturer'] = $manufacturerDisplayName;
 
         $productName = $product['name'] ?? '';
         $pageTitle = $productName !== ''
@@ -121,15 +160,8 @@ class PublicPassportResolver
         );
 
         $countryOfOrigin = null;
-        $manufacturerDisplayName = null;
-
         if (in_array(DppSectionKey::OriginAndTraceability->value, $enabledSections, true)) {
             $countryOfOrigin = $data[DppSectionKey::OriginAndTraceability->value]['country_of_origin'] ?? null;
-        }
-
-        if (in_array(DppSectionKey::ManufacturerAndOperator->value, $enabledSections, true)) {
-            $manufacturerData = $sectionData[DppSectionKey::ManufacturerAndOperator->value] ?? [];
-            $manufacturerDisplayName = $manufacturerData['manufacturer_display_name'] ?? null;
         }
 
         return new PublicPassportViewModel(
@@ -161,6 +193,17 @@ class PublicPassportResolver
             enabledLocales: $enabledLocales,
             isFallback: $isFallback,
         );
+    }
+
+    private function firstNonBlank(mixed ...$values): ?string
+    {
+        foreach ($values as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
     }
 
     /** @param  string[]  $enabledLocales */
@@ -209,11 +252,85 @@ class PublicPassportResolver
             }
 
             $merged = $this->sanitizePublicSection($merged);
+            $merged = $this->filterPublicSectionFields($sectionKey, $merged);
 
             $sectionData[$sectionKey] = $merged;
         }
 
         return $sectionData;
+    }
+
+    /**
+     * Public passports must be an explicit contract. Unknown editor fields
+     * are intentionally omitted instead of being rendered by a generic
+     * key/value fallback.
+     *
+     * @param  array<string, mixed>  $section
+     * @return array<string, mixed>
+     */
+    private function filterPublicSectionFields(string $sectionKey, array $section): array
+    {
+        $allowed = [
+            'identity' => ['public_name', 'public_description'],
+            'manufacturer_and_operator' => [
+                'manufacturer_display_name', 'manufacturer_country', 'manufacturer_email',
+                'manufacturer_website', 'responsible_operator_display_name',
+                'responsible_operator_country', 'responsible_operator_email',
+                'responsible_operator_website', 'responsible_operator_role',
+                'responsible_operator_address', 'responsible_operator_phone',
+                'responsible_operator_registration_id', 'responsible_operator_source',
+                'contact_notes',
+            ],
+            'origin_and_traceability' => [
+                'country_of_origin', 'manufacturing_countries', 'production_date',
+                'batch_identification_instructions', 'traceability_notes',
+            ],
+            'materials_and_composition' => ['materials', 'composition_notes'],
+            'safety' => [
+                'warnings', 'hazards', 'personal_protective_equipment',
+                'storage_instructions', 'emergency_instructions', 'age_restrictions',
+            ],
+            'usage_and_care' => [
+                'usage_instructions', 'usage_steps', 'usage_warnings',
+                'care_instructions', 'care_steps', 'care_warnings',
+                'maintenance_instructions', 'storage_recommendations',
+            ],
+            'repair_and_spare_parts' => [
+                'repairable', 'repairability_declaration', 'repair_skill_level',
+                'required_tools', 'estimated_repair_time_minutes',
+                'spare_parts_available', 'spare_parts_url', 'spare_parts',
+                'repair_instructions', 'disassembly_instructions', 'spare_parts_notes',
+                'service_information',
+            ],
+            'recycling_and_disposal' => [
+                'recycling_instructions', 'disposal_instructions', 'take_back_program',
+                'take_back_program_available', 'take_back_program_url',
+                'take_back_program_scope', 'disassembly_guidance', 'sorting_guidance',
+                'hazard_notes', 'waste_material_codes', 'recycling_codes',
+            ],
+            'environmental_information' => [
+                'carbon_footprint_kg_co2e', 'recycled_content_percentage',
+                'recycled_content_calculation_method', 'recycled_content_source',
+                'expected_lifetime_years', 'energy_consumption_kwh',
+                'environmental_metrics', 'environmental_claims',
+                'environmental_claim_records', 'environmental_notes',
+            ],
+            'certifications_and_documents' => [
+                'certification_notes', 'compliance_summary', 'compliance_metadata',
+            ],
+            'support_and_contact' => [
+                'support_email', 'support_phone', 'support_url', 'support_channels',
+                'warranty_available', 'warranty_duration', 'warranty_duration_unit',
+                'warranty_url', 'warranty_summary', 'warranty_conditions',
+                'warranty_exclusions', 'warranty_claim_instructions', 'support_notes',
+            ],
+        ];
+
+        if (! array_key_exists($sectionKey, $allowed)) {
+            return [];
+        }
+
+        return array_intersect_key($section, array_flip($allowed[$sectionKey]));
     }
 
     /**
@@ -437,6 +554,6 @@ class PublicPassportResolver
             $data['category'] = $product['primary_category_name'];
         }
 
-        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        return json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 }

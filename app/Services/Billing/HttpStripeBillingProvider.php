@@ -14,13 +14,24 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class HttpStripeBillingProvider implements StripeBillingProvider
 {
-    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl): StripeCheckoutSession
+    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $interval = 'month'): StripeCheckoutSession
     {
-        $plan = (array) config("billing.plans.{$planKey}");
-        $priceId = (string) ($plan['stripe_price_id'] ?? '');
+        return $this->checkoutSession($company, $planKey, $successUrl, $cancelUrl, null, $interval);
+    }
+
+    public function createClaimedCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $idempotencyKey, string $interval = 'month'): StripeCheckoutSession
+    {
+        return $this->checkoutSession($company, $planKey, $successUrl, $cancelUrl, $idempotencyKey, $interval);
+    }
+
+    private function checkoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, ?string $idempotencyKey = null, string $interval = 'month'): StripeCheckoutSession
+    {
+        $plan = app(CommercialPlanCatalog::class)->checkoutPlan($planKey, $interval);
+        $priceId = (string) ($plan[$interval === 'year' ? 'stripe_annual_price_id' : 'stripe_price_id'] ?? '');
         if ($priceId === '') {
             throw new BillingProviderException("Stripe price is not configured for plan {$planKey}.");
         }
@@ -30,13 +41,23 @@ class HttpStripeBillingProvider implements StripeBillingProvider
             'metadata' => [
                 'company_uuid' => $company->uuid,
                 'plan_key' => $planKey,
+                'billing_interval' => $interval,
             ],
         ];
+        $claimId = $idempotencyKey !== null && str_starts_with($idempotencyKey, 'nordipass-checkout-')
+            ? substr($idempotencyKey, strlen('nordipass-checkout-')) : null;
+        if (is_string($claimId) && Str::isUuid($claimId)) {
+            $subscriptionData['metadata']['checkout_claim_id'] = $claimId;
+        }
         if ($trialDays > 0) {
             $subscriptionData['trial_period_days'] = $trialDays;
         }
 
-        $response = $this->send(fn () => $this->request()
+        $request = $this->request();
+        if ($idempotencyKey !== null) {
+            $request->withHeader('Idempotency-Key', $idempotencyKey);
+        }
+        $response = $this->send(fn () => $request
             ->asForm()
             ->post($this->url('checkout/sessions'), [
                 'mode' => 'subscription',
@@ -47,6 +68,8 @@ class HttpStripeBillingProvider implements StripeBillingProvider
                 'metadata' => [
                     'company_uuid' => $company->uuid,
                     'plan_key' => $planKey,
+                    'billing_interval' => $interval,
+                    ...(is_string($claimId) && Str::isUuid($claimId) ? ['checkout_claim_id' => $claimId] : []),
                 ],
                 'line_items' => [[
                     'price' => $priceId,
@@ -79,6 +102,29 @@ class HttpStripeBillingProvider implements StripeBillingProvider
             id: (string) $response->json('id'),
             url: (string) $response->json('url'),
         );
+    }
+
+    public function expireCheckoutSession(string $sessionId): void
+    {
+        $path = 'checkout/sessions/'.rawurlencode($sessionId);
+        try {
+            $response = $this->send(fn () => $this->request()->asForm()
+                ->withHeader('Idempotency-Key', 'nordipass-expire-'.$sessionId)
+                ->post($this->url($path.'/expire')), 'Stripe checkout session expiration failed.');
+        } catch (BillingProviderException $exception) {
+            if ($exception->status !== 400) {
+                throw $exception;
+            }
+            // Natural expiration or a successful prior request can race a retry.
+            // Only a confirmed expired object permits releasing the local slot.
+            $response = $this->send(fn () => $this->request()->get($this->url($path)), 'Stripe checkout session verification failed.');
+            if ($response->json('status') !== 'expired') {
+                throw $exception;
+            }
+        }
+        if ($response->json('id') !== $sessionId || $response->json('status') !== 'expired') {
+            throw BillingProviderException::retryable('Stripe checkout session expiration could not be confirmed.');
+        }
     }
 
     public function retrieveSubscription(string $stripeSubscriptionId): StripeSubscriptionProjection
@@ -134,12 +180,15 @@ class HttpStripeBillingProvider implements StripeBillingProvider
         $item = $this->relevantSubscriptionItem($payload);
         $price = is_array($item['price'] ?? null) ? $item['price'] : [];
         $priceId = isset($price['id']) ? (string) $price['id'] : null;
+        $resolved = app(CommercialPlanCatalog::class)->price($priceId ?? '');
+        $metadata['commercial_model'] = $resolved['commercial_model'] ?? 'unknown';
+        $metadata['billing_interval'] = $resolved['interval'] ?? 'unknown';
 
         return new StripeSubscriptionProjection(
             stripeCustomerId: (string) ($payload['customer'] ?? ''),
             stripeSubscriptionId: (string) ($payload['id'] ?? ''),
             stripePriceId: $priceId,
-            planKey: $this->planKeyForPrice($priceId) ?? (string) ($metadata['plan_key'] ?? config('billing.default_plan', 'pilot')),
+            planKey: $resolved['plan_key'] ?? 'unknown',
             status: BillingSubscriptionStatus::tryFrom((string) ($payload['status'] ?? 'incomplete')) ?? BillingSubscriptionStatus::Incomplete,
             trialEndsAt: $this->timestamp($payload['trial_end'] ?? null),
             currentPeriodStart: $this->timestamp($item['current_period_start'] ?? null),
@@ -160,11 +209,12 @@ class HttpStripeBillingProvider implements StripeBillingProvider
     private function relevantSubscriptionItem(array $payload): array
     {
         $items = $payload['items']['data'] ?? [];
-        if (! is_array($items) || $items === []) {
+        if (! is_array($items) || $items === [] || ($payload['items']['has_more'] ?? false) === true) {
             return [];
         }
 
         $fallback = null;
+        $known = [];
         foreach ($items as $candidate) {
             if (! is_array($candidate)) {
                 continue;
@@ -173,13 +223,13 @@ class HttpStripeBillingProvider implements StripeBillingProvider
             $price = is_array($candidate['price'] ?? null) ? $candidate['price'] : [];
             $priceId = isset($price['id']) ? (string) $price['id'] : null;
             if ($priceId !== null && $this->planKeyForPrice($priceId) !== null) {
-                return $candidate;
+                $known[] = $candidate;
             }
 
             $fallback ??= $candidate;
         }
 
-        return $fallback ?? [];
+        return count($known) === 1 ? $known[0] : ($known === [] ? ($fallback ?? []) : []);
     }
 
     /** @return Response */
@@ -187,12 +237,18 @@ class HttpStripeBillingProvider implements StripeBillingProvider
     {
         try {
             $response = $request();
-        } catch (ConnectionException $exception) {
-            throw BillingProviderException::retryable($failureMessage.' '.$exception->getMessage());
+        } catch (ConnectionException) {
+            throw BillingProviderException::retryable($failureMessage);
         }
 
         if ($response->failed()) {
-            $message = (string) ($response->json('error.message') ?: $failureMessage);
+            // Provider and transport messages can contain credentials or private
+            // request details. Exceptions reach flash messages, logs and commands.
+            $message = match ($response->status()) {
+                401 => 'Stripe authentication failed. Update the Stripe API key configured for billing.',
+                403 => 'Stripe access denied. Check the permissions of the Stripe API key configured for billing.',
+                default => $failureMessage,
+            };
 
             throw match (true) {
                 $response->status() === 429 || $response->serverError() => BillingProviderException::retryable($message, $response->status()),
@@ -238,12 +294,6 @@ class HttpStripeBillingProvider implements StripeBillingProvider
             return null;
         }
 
-        foreach ((array) config('billing.plans') as $key => $plan) {
-            if (is_array($plan) && ($plan['stripe_price_id'] ?? null) === $priceId) {
-                return (string) $key;
-            }
-        }
-
-        return null;
+        return app(CommercialPlanCatalog::class)->price($priceId)['plan_key'] ?? null;
     }
 }

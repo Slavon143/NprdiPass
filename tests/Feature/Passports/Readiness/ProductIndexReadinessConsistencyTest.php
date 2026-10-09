@@ -13,6 +13,7 @@ use App\Enums\CompanyStatus;
 use App\Enums\Passports\DppSectionKey;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
@@ -26,6 +27,8 @@ use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Tests\TestCase;
 
@@ -301,5 +304,63 @@ class ProductIndexReadinessConsistencyTest extends TestCase
         $this->assertSame($summary1['readiness_status'], $summary2['readiness_status']);
         $this->assertSame($summary1['blockers'], $summary2['blockers']);
         $this->assertSame($summary1['warnings'], $summary2['warnings']);
+    }
+
+    public function test_document_readiness_queries_stay_bounded_across_a_full_page_and_match_direct_evaluation(): void
+    {
+        $this->assertDocumentReadinessQueries(true);
+    }
+
+    public function test_legacy_profile_queries_stay_bounded_and_keep_live_compatibility_semantics(): void
+    {
+        $this->assertDocumentReadinessQueries(false);
+    }
+
+    private function assertDocumentReadinessQueries(bool $frozen): void
+    {
+        Storage::fake('product_documents');
+        $ids = [];
+        for ($index = 0; $index < 25; $index++) {
+            $product = $this->product->replicate(['uuid', 'slug', 'slug_normalized', 'default_variant_id', 'primary_media_id']);
+            $product->forceFill(['uuid' => (string) str()->uuid(), 'slug' => 'batch-'.$index, 'slug_normalized' => 'batch-'.$index,
+                'default_variant_id' => null, 'primary_media_id' => null])->save();
+            $passport = app(CreateProductPassportDraftAction::class)->handle($this->actor, $this->company, $product);
+            $document = ProductDocument::factory()->withInitialVersion([
+                'review_status' => 'approved', 'approval_status' => 'approved', 'visibility' => 'passport_public',
+                'storage_key' => 'batch/'.$index.'.pdf', 'file_available' => true,
+            ])->create(['company_id' => $this->company->id, 'product_id' => $product->id]);
+            Storage::disk('product_documents')->put($document->currentVersion->storage_key, 'fixture');
+            $draft = $passport->currentDraftVersion;
+            if (! $frozen) {
+                $draft->forceFill(['readiness_profile_snapshot' => null]);
+            }
+            $payload = $draft->payload;
+            $payload['document_references'] = [['document_uuid' => $document->uuid,
+                'document_version_uuid' => $document->currentVersion->uuid, 'role' => 'instruction']];
+            $draft->forceFill(['payload' => $payload])->save();
+            $ids[] = $product->id;
+        }
+        $measure = function (array $subset): array {
+            $products = Product::query()->whereIn('id', $subset)->orderBy('id')->get();
+            $paginator = new LengthAwarePaginator($products, count($subset), 25, 1);
+            DB::enableQueryLog();
+            DB::flushQueryLog();
+            $summaries = app(ProductIndexReadinessProvider::class)->loadSummaries($this->company, $paginator);
+            $queries = DB::getQueryLog();
+            DB::disableQueryLog();
+
+            return [$summaries, count($queries), $products, collect($queries)->countBy('query')->all()];
+        };
+        [, $oneCount] = $measure([$ids[0]]);
+        [$summaries, $pageCount, $products, $queries] = $measure($ids);
+        $this->assertLessThanOrEqual($oneCount + 2, $pageCount, 'Readiness must not add SQL queries per document/product: '.json_encode($queries));
+        $this->assertCount(25, $summaries);
+        foreach ($products as $product) {
+            $context = app(ReadinessContextBuilder::class)->build($this->company, $product->fresh());
+            $result = app(PassportReadinessEvaluator::class)->evaluate($context);
+            $this->assertSame($result->score, $summaries[$product->uuid]['score']);
+            $this->assertSame($result->counts->blockers, $summaries[$product->uuid]['blockers']);
+            $this->assertCount(1, $context->referencedDocuments);
+        }
     }
 }

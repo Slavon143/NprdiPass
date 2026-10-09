@@ -4,8 +4,12 @@ namespace App\Services\Passports\Readiness;
 
 use App\Contracts\Passports\PassportReadinessRule;
 use App\Data\Passports\Readiness\ReadinessProfileDefinition;
+use App\Enums\Passports\Readiness\ReadinessRuleGroup;
 use App\Enums\Passports\Readiness\ReadinessSeverity;
+use App\Models\DppProfile;
+use App\Models\DppRequirement;
 use App\Services\Passports\CanonicalJsonEncoder;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class ReadinessProfileRepository
@@ -20,18 +24,20 @@ class ReadinessProfileRepository
         );
     }
 
-    public function for(string $code, int $version): ReadinessProfileDefinition
+    public function for(string $code, int $version, ?DppProfile $catalogueProfile = null): ReadinessProfileDefinition
     {
         $profile = config("passport_readiness.profiles.{$code}");
         $versionConfig = is_array($profile) ? ($profile['versions'][$version] ?? null) : null;
 
-        if (! is_array($profile) || ! is_array($versionConfig)) {
-            if ($code !== (string) config('passport_readiness.profile') || $version !== (int) config('passport_readiness.profile_version')) {
-                throw new InvalidArgumentException("Unknown readiness profile version: {$code} v{$version}.");
+        if (! is_array($versionConfig) && ($catalogueProfile !== null || Schema::hasTable('dpp_profiles'))) {
+            $stored = $catalogueProfile ?? DppProfile::query()->where('key', $code)->where('version', $version)->with('requirements')->first();
+            if ($stored !== null) {
+                return $this->storedDefinition($stored);
             }
+        }
 
-            $profile = [];
-            $versionConfig = [];
+        if (! is_array($profile) || ! is_array($versionConfig)) {
+            throw new InvalidArgumentException("Unknown readiness profile version: {$code} v{$version}.");
         }
 
         $weights = $this->weights($versionConfig['weights'] ?? config('passport_readiness.score_weights'));
@@ -46,7 +52,7 @@ class ReadinessProfileRepository
             throw new InvalidArgumentException("Invalid readiness profile status: {$status}.");
         }
 
-        $fingerprint = $this->canonicalJsonEncoder->hash([
+        $fingerprintInput = [
             'profile' => $code,
             'profile_version' => $version,
             'rule_set_version' => $ruleSetVersion,
@@ -54,7 +60,38 @@ class ReadinessProfileRepository
             'score_algorithm_version' => $scoreAlgorithmVersion,
             'weights' => $weights,
             'rules' => $ruleConfigurations,
-        ]);
+        ];
+
+        // The pilot profile has a legacy fingerprint contract used by stored
+        // historical readiness results. New regulatory profiles include the
+        // persisted requirement catalog in their fingerprint.
+        if ($code !== 'nordipass-pilot' && ($catalogueProfile !== null || Schema::hasTable('dpp_profiles'))) {
+            /** @var DppProfile|null $storedProfile */
+            $storedProfile = $catalogueProfile ?? DppProfile::query()
+                ->where('key', $code)
+                ->where('version', $version)
+                ->with(['requirements' => fn ($query) => $query->orderBy('key')])
+                ->first();
+
+            $requirements = $storedProfile?->requirements->sortBy('key')
+                ->map(fn (DppRequirement $requirement): array => [
+                    'key' => $requirement->key,
+                    'level' => $requirement->level->value,
+                    'section' => $requirement->section,
+                    'field' => $requirement->field,
+                    'source' => $requirement->source,
+                    'source_reference' => $requirement->source_reference,
+                    'source_version' => $requirement->source_version,
+                    'effective_from' => $requirement->effective_from?->toDateString(),
+                    'effective_to' => $requirement->effective_to?->toDateString(),
+                    'rule_code' => $requirement->rule_code,
+                    'evaluation_config' => $requirement->evaluation_config,
+                ])->values()->all() ?? [];
+
+            $fingerprintInput['requirements'] = $requirements;
+        }
+
+        $fingerprint = $this->canonicalJsonEncoder->hash($fingerprintInput);
 
         return new ReadinessProfileDefinition(
             code: $code,
@@ -92,6 +129,28 @@ class ReadinessProfileRepository
         }
 
         return $weights;
+    }
+
+    private function storedDefinition(DppProfile $profile): ReadinessProfileDefinition
+    {
+        // Catalogue requirements drive domain evaluation; only publication
+        // integrity rules are inherited by an independently defined profile.
+        $classes = array_values(array_filter(config('passport_readiness.rules', []), function (string $class): bool {
+            $rule = app($class);
+
+            return in_array($rule->group(), [ReadinessRuleGroup::Passport,
+                ReadinessRuleGroup::Documents,
+                ReadinessRuleGroup::Media], true);
+        }));
+        $weights = $this->weights(config('passport_readiness.score_weights'));
+        $attributes = $profile->attributesToArray();
+        unset($attributes['id'], $attributes['created_at'], $attributes['updated_at']);
+        $requirements = $profile->requirements->sortBy('key')->map(fn ($requirement) => $requirement->attributesToArray())->values()->all();
+
+        return new ReadinessProfileDefinition($profile->key, $profile->version, $profile->name,
+            $profile->description ?? '', $profile->status, $profile->version, 'weighted_ratio', 1,
+            $weights, $classes, $this->canonicalJsonEncoder->hash(['profile' => $attributes, 'requirements' => $requirements,
+                'integrity_rules' => $this->ruleConfigurations($classes, $weights)]), $profile->metadata ?? []);
     }
 
     /**

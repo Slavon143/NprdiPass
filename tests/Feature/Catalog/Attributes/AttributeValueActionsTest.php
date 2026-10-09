@@ -3,14 +3,21 @@
 use App\Actions\Catalog\Attributes\SyncProductAttributeValuesAction;
 use App\Actions\Catalog\Attributes\SyncVariantAttributeValuesAction;
 use App\Actions\Catalog\Products\ProductAggregateCreator;
+use App\Actions\Imports\ApplyImportJobAction;
+use App\Actions\Imports\CreateImportJobAction;
+use App\Actions\Imports\PreviewImportJobAction;
 use App\Enums\AuditEvent;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeOptionApprovalStatus;
 use App\Enums\Catalog\AttributeOptionStatus;
 use App\Enums\Catalog\AttributeScope;
+use App\Enums\Catalog\ProductStatus;
 use App\Enums\CompanyRole;
+use App\Enums\CompanyStatus;
+use App\Enums\Imports\ImportMode;
 use App\Exceptions\Catalog\AttributeOperationException;
+use App\Exceptions\Catalog\LifecycleOperationException;
 use App\Models\AuditLog;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\AttributeOption;
@@ -24,7 +31,9 @@ use App\Models\User;
 use App\Support\Catalog\AttributeValueValidator;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /** @return array{User, Company, Product, ProductVariant} */
 function r17ValueContext(CompanyRole $role = CompanyRole::Owner): array
@@ -106,6 +115,91 @@ test('product sync writes every scalar select and multiselect type to its exact 
         ->and($values[$definitions['integer']->id]->value_decimal)->toBeNull()
         ->and($values[$definitions['multi']->id]->selectedOptions()->pluck('attribute_options.id')->sort()->values()->all())
         ->toBe(collect([$multiA->id, $multiB->id])->sort()->values()->all());
+});
+
+test('merged product attributes preserve omitted typed values pivots and archived evidence while full replacement still clears', function () {
+    [$actor, $company, $product] = r17ValueContext();
+    $definitions = [];
+    foreach (AttributeDataType::cases() as $type) {
+        $definitions[$type->value] = r17ValueDefinition($company, $actor, 'merge_'.$type->value, $type, AttributeScope::Product);
+    }
+    $archived = r17ValueDefinition($company, $actor, 'legacy', AttributeDataType::Text, AttributeScope::Product);
+    $choice = r17ValueOption($company, $definitions['select'], 'chosen');
+    $tag = r17ValueOption($company, $definitions['multiselect'], 'tag');
+    $initial = ['text' => 'Original', 'integer' => '12', 'decimal' => '1234567890123456.1234',
+        'boolean' => '0', 'date' => '2024-02-29', 'select' => $choice->id, 'multiselect' => [$tag->id]];
+    $payload = [$archived->uuid => 'Historical'];
+    foreach ($initial as $type => $value) {
+        $payload[$definitions[$type]->uuid] = $value;
+    }
+    $action = app(SyncProductAttributeValuesAction::class);
+    $action->execute($actor, $company, $product, $payload);
+    $archived->forceFill(['status' => AttributeDefinitionStatus::Archived])->save();
+    $retained = ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)
+        ->where('attribute_definition_id', '!=', $definitions['text']->id)->orderBy('id')->get()->map->getRawOriginal()->all();
+    $pivots = DB::table('product_attribute_value_options')->where('company_id', $company->id)->orderBy('id')->get()->all();
+    $result = $action->merge($actor, $company, $product, [$definitions['text']->uuid => 'Changed']);
+    expect(ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)
+        ->where('attribute_definition_id', '!=', $definitions['text']->id)->orderBy('id')->get()->map->getRawOriginal()->all())->toBe($retained)
+        ->and(DB::table('product_attribute_value_options')->where('company_id', $company->id)->orderBy('id')->get()->all())->toEqual($pivots)
+        ->and($result->relationLoaded('attributeValues'))->toBeTrue()
+        ->and($result->attributeValues->firstWhere('attribute_definition_id', $definitions['text']->id)?->value_text)->toBe('Changed');
+    $action->merge($actor, $company, $product, [$definitions['text']->uuid => null]);
+    expect(ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)->count())->toBe(7);
+    $action->execute($actor, $company, $product, [$definitions['text']->uuid => 'Replacement']);
+    expect(ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)->count())->toBe(2)
+        ->and(ProductAttributeValue::query()->forCompany($company)->where('attribute_definition_id', $archived->id)->value('value_text'))->toBe('Historical');
+});
+
+test('merged product attributes reject foreign payload and product without modifying owned values', function () {
+    [$actor, $company, $product] = r17ValueContext();
+    $owned = r17ValueDefinition($company, $actor, 'owned', AttributeDataType::Text, AttributeScope::Product);
+    $action = app(SyncProductAttributeValuesAction::class);
+    $action->execute($actor, $company, $product, [$owned->uuid => 'Protected']);
+    $other = Company::factory()->create();
+    $foreign = r17ValueDefinition($other, $actor, 'foreign', AttributeDataType::Text, AttributeScope::Product);
+    expect(fn () => $action->merge($actor, $company, $product, [$owned->uuid => 'Overwrite', $foreign->uuid => 'Foreign']))
+        ->toThrow(AttributeOperationException::class);
+    $foreignProduct = app(ProductAggregateCreator::class)->create($actor, $other, ['name' => 'Foreign', 'slug' => 'foreign'], []);
+    expect(fn () => $action->merge($actor, $company, $foreignProduct, [$owned->uuid => 'Foreign target']))
+        ->toThrow(AttributeOperationException::class);
+    expect(ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)->value('value_text'))->toBe('Protected')
+        ->and(ProductAttributeValue::query()->forCompany($other)->count())->toBe(0);
+});
+
+test('merged product attributes recheck membership company status and locked product lifecycle', function () {
+    [$actor, $company, $product] = r17ValueContext();
+    $definition = r17ValueDefinition($company, $actor, 'protected', AttributeDataType::Text, AttributeScope::Product);
+    $action = app(SyncProductAttributeValuesAction::class);
+    $action->merge($actor, $company, $product, [$definition->uuid => 'Protected']);
+    CompanyMembership::query()->where('company_id', $company->id)->where('user_id', $actor->id)->update(['role' => CompanyRole::Viewer->value]);
+    expect(fn () => $action->merge($actor, $company, $product, [$definition->uuid => 'Viewer']))->toThrow(AuthorizationException::class);
+    CompanyMembership::query()->where('company_id', $company->id)->where('user_id', $actor->id)->update(['role' => CompanyRole::Owner->value]);
+    Company::query()->whereKey($company->id)->update(['status' => CompanyStatus::Suspended->value]);
+    expect(fn () => $action->merge($actor, $company, $product, [$definition->uuid => 'Suspended']))->toThrow(AuthorizationException::class);
+    Company::query()->whereKey($company->id)->update(['status' => CompanyStatus::Active->value]);
+    Product::query()->whereKey($product->id)->update(['status' => ProductStatus::Archived->value]);
+    expect(fn () => $action->merge($actor, $company, $product, [$definition->uuid => 'Archived']))->toThrow(LifecycleOperationException::class);
+    expect(ProductAttributeValue::query()->forCompany($company)->where('product_id', $product->id)->value('value_text'))->toBe('Protected');
+});
+
+test('mapped update revalidates omitted options and rolls back product changes when retained option becomes invalid', function () {
+    [$actor, $company, $product] = r17ValueContext();
+    $text = r17ValueDefinition($company, $actor, 'text', AttributeDataType::Text, AttributeScope::Product);
+    $select = r17ValueDefinition($company, $actor, 'select', AttributeDataType::Select, AttributeScope::Product);
+    $option = r17ValueOption($company, $select, 'chosen');
+    app(SyncProductAttributeValuesAction::class)->execute($actor, $company, $product, [$text->uuid => 'Protected', $select->uuid => $option->id]);
+    Storage::fake('production_imports');
+    $source = UploadedFile::fake()->createWithContent('update.csv', "name,slug,text\nRenamed,attribute-product,Overwrite");
+    $job = app(CreateImportJobAction::class)->execute($actor, $company, $source, ImportMode::Update);
+    $job = app(PreviewImportJobAction::class)->execute($actor, $company, $job,
+        ['name' => 'name', 'slug' => 'slug', 'attribute:text' => 'text']);
+    $option->forceFill(['status' => AttributeOptionStatus::Archived])->save();
+    $completed = app(ApplyImportJobAction::class)->execute($actor, $company, $job);
+    expect($completed->updated_rows)->toBe(0)->and($completed->skipped_rows)->toBe(1)
+        ->and($job->errors()->count())->toBe(1)->and($product->fresh()->name)->toBe('Attribute Product')
+        ->and(ProductAttributeValue::query()->forCompany($company)->where('attribute_definition_id', $text->id)->value('value_text'))->toBe('Protected')
+        ->and(AuditLog::query()->where('company_id', $company->id)->where('event', 'catalog.product.updated')->count())->toBe(0);
 });
 
 test('variant sync is independent from Product values and enforces Product Variant ownership', function () {

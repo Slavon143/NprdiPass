@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\CheckConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -36,6 +37,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE product_passports DROP CHECK product_passports_enabled_languages_check');
+        CheckConstraints::drop('product_passports', 'product_passports_enabled_languages_check');
     }
 };

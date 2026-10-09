@@ -25,6 +25,7 @@ class RejectProductDocumentVersionAction extends SubmitProductDocumentVersionFor
         }
 
         return DB::transaction(function () use ($actor, $company, $document, $version, $reason): ProductDocumentVersion {
+            $this->authorize($actor, $company, CompanyPermission::CatalogRejectDocuments);
             $lockedVersion = ProductDocumentVersion::query()->whereKey($version->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedVersion->review_status !== ProductDocumentReviewStatus::PendingReview) {

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Catalog\ProductAttributeController;
 use App\Http\Controllers\Api\V1\Catalog\ProductController;
 use App\Http\Controllers\Api\V1\Catalog\ProductDocumentController;
 use App\Http\Controllers\Api\V1\Catalog\ProductLifecycleController;
+use App\Http\Controllers\Api\V1\Catalog\ProductManagedController;
 use App\Http\Controllers\Api\V1\Catalog\ProductMediaController;
 use App\Http\Controllers\Api\V1\Catalog\ProductPassportController;
 use App\Http\Controllers\Api\V1\Catalog\ProductTaxonomyController;
@@ -124,6 +125,10 @@ Route::prefix('catalog')->name('catalog.')->group(function (): void {
     Route::post('/products/{product}/variants/{variant}/set-default', [ProductVariantController::class, 'setDefault'])
         ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
         ->name('products.variants.set-default');
+
+    Route::patch('/products/{product}/managed', [ProductManagedController::class, 'update'])
+        ->middleware(['throttle:catalog-api-write', 'api.ability:'.ApiTokenAbility::CatalogWrite->value])
+        ->name('products.managed');
 
     // Product lifecycle
     Route::get('/products/{product}/readiness', [ProductLifecycleController::class, 'readiness'])

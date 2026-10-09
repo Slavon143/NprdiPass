@@ -2,20 +2,25 @@
 
 namespace App\Providers;
 
+use App\Authorization\ApiTokenMutationAuthorizer;
 use App\Models\Company;
 use App\Models\PersonalAccessToken;
 use App\Services\Billing\Contracts\StripeBillingProvider;
 use App\Services\Billing\FakeStripeBillingProvider;
 use App\Services\Billing\HttpStripeBillingProvider;
+use App\Services\Dpp\ReadinessExecutionProvenance;
 use App\Services\Fortnox\Contracts\FortnoxProvider;
 use App\Services\Fortnox\FakeFortnoxProvider;
+use App\Services\Fortnox\FortnoxSyncMutex;
 use App\Services\Fortnox\HttpFortnoxProvider;
+use App\Services\Observability\RequestTelemetry;
 use App\Tenancy\Contracts\CurrentCompany;
 use App\Tenancy\SessionCurrentCompany;
 use App\Tenancy\TokenCurrentCompany;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -30,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(CurrentCompany::class, SessionCurrentCompany::class);
         $this->app->scoped(TokenCurrentCompany::class);
+        $this->app->scoped(ApiTokenMutationAuthorizer::class);
+        $this->app->scoped(RequestTelemetry::class);
+        $this->app->scoped(FortnoxSyncMutex::class);
+        $this->app->scoped(ReadinessExecutionProvenance::class);
 
         $this->app->bind(FortnoxProvider::class, function ($app): FortnoxProvider {
             $configured = (string) config('fortnox.provider');
@@ -56,6 +65,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        DB::listen(fn ($query) => app(RequestTelemetry::class)->record($query));
 
         Blade::directive('cspNonce', function (): string {
             return "<?php echo e((string) request()->attributes->get('csp_nonce', '')); ?>";

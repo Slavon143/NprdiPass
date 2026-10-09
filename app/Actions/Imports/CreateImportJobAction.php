@@ -11,8 +11,12 @@ use App\Enums\Imports\ImportMode;
 use App\Models\Company;
 use App\Models\Imports\ImportJob;
 use App\Models\User;
+use App\Services\Billing\CommercialUsageAdmission;
 use App\Services\Billing\EntitlementService;
 use App\Services\Imports\ImportFileReader;
+use App\Services\Storage\FileWriteCompensation;
+use App\Services\Storage\StorageQuotaAdmission;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -71,10 +75,31 @@ class CreateImportJobAction
 
         $uuid = Str::uuid()->toString();
         $path = "companies/{$company->uuid}/jobs/{$uuid}/source.{$extension}";
-        Storage::disk((string) config('imports.disk'))->putFileAs(dirname($path), $file, basename($path));
+        $quota = app(StorageQuotaAdmission::class);
+        $reservation = $quota->reserve($company, (string) config('imports.disk'), $path, (int) $file->getSize(), $uuid);
+        $cleanup = app(FileWriteCompensation::class)->track(
+            fn (): bool => ImportJob::query()->forCompany($company)->where('uuid', $uuid)->sharedLock()->exists(),
+            fn (): bool => $quota->compensate($company, $reservation, fn (): bool => Storage::disk((string) config('imports.disk'))->delete($path)),
+            ['company_uuid' => $company->uuid, 'import_job_uuid' => $uuid, 'operation' => 'import_upload'],
+        );
 
         try {
-            return DB::transaction(function () use ($uuid, $company, $actor, $mode, $extension, $file, $path, $mime, $sha, $headers, $idempotencyKey, $chunkSize): ImportJob {
+            if (Storage::disk((string) config('imports.disk'))->putFileAs(dirname($path), $file, basename($path)) !== $path) {
+                throw new \RuntimeException('The import source could not be stored.');
+            }
+            $quota->written($company, $reservation);
+            $result = DB::transaction(function () use ($uuid, $company, $actor, $mode, $extension, $file, $path, $mime, $sha, $headers, $idempotencyKey, $chunkSize): ImportJob {
+                $this->authorizer->authorize($actor, $company, $mode === ImportMode::Update ? CompanyPermission::CatalogUpdate : CompanyPermission::CatalogCreate);
+                if ($idempotencyKey !== null && $idempotencyKey !== '') {
+                    $existing = ImportJob::query()->forCompany($company)->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
+                    if ($existing !== null) {
+                        if (! hash_equals($existing->source_sha256, $sha)) {
+                            throw ValidationException::withMessages(['idempotency_key' => 'This idempotency key was already used for a different file.']);
+                        }
+
+                        return $existing;
+                    }
+                }
                 $job = ImportJob::query()->create([
                     'uuid' => $uuid,
                     'company_id' => $company->getKey(),
@@ -93,6 +118,8 @@ class CreateImportJobAction
                     'chunk_size' => max(1, min(1000, $chunkSize ?? (int) config('imports.default_chunk_size'))),
                 ]);
 
+                app(CommercialUsageAdmission::class)->consume($company, 'imports', $uuid);
+
                 $this->auditLogger->logTenant($company, AuditEvent::ImportUploaded, $actor, $job, [
                     'import_job_uuid' => $job->uuid,
                     'source_filename' => $job->source_filename,
@@ -101,9 +128,17 @@ class CreateImportJobAction
                 ]);
 
                 return $job;
-            });
+            }, 5);
+            if ($result->uuid !== $uuid) {
+                $cleanup();
+            }
+
+            return $result;
         } catch (Throwable $exception) {
-            Storage::disk((string) config('imports.disk'))->delete($path);
+            $cleanup();
+            if ($exception instanceof AuthorizationException) {
+                throw $exception;
+            }
             if ($idempotencyKey !== null && $idempotencyKey !== '') {
                 $existing = ImportJob::query()->forCompany($company)->where('idempotency_key', $idempotencyKey)->first();
                 if ($existing !== null && hash_equals($existing->source_sha256, $sha)) {

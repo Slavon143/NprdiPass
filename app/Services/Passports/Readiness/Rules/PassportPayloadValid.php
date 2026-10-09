@@ -50,10 +50,14 @@ class PassportPayloadValid implements PassportReadinessRule
         }
 
         try {
+            $documents = collect($context->referencedDocuments);
+            $documentBatch = $documents->every(fn ($document) => $document->relationLoaded('readinessVersions'))
+                ? $documents->keyBy('uuid')->all() : null;
             $this->validator->validateFullPayload(
                 $context->normalizedPayload,
                 $context->company,
                 $context->passport,
+                $documentBatch,
             );
 
             return new ReadinessRuleResult(

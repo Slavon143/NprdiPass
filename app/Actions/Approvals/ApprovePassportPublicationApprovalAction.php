@@ -14,6 +14,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,47 +37,54 @@ class ApprovePassportPublicationApprovalAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::PassportsPublish);
         $this->assertApprovalBelongsToPassport($company, $product, $passport, $approval);
 
-        if ($approval->status !== PassportPublicationApprovalStatus::Pending) {
-            throw new ConflictHttpException('This publication approval is no longer pending.');
-        }
+        return DB::transaction(function () use ($actor, $company, $product, $passport, $approval): PublicationResult {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::PassportsPublish);
+            $passport = ProductPassport::query()->forCompany($company)->whereKey($passport->getKey())->lockForUpdate()->firstOrFail();
+            $approval = PassportPublicationApproval::query()->forCompany($company)->whereKey($approval->getKey())->lockForUpdate()->firstOrFail();
+            $this->assertApprovalBelongsToPassport($company, $product, $passport, $approval);
 
-        if ((int) $approval->requested_by === (int) $actor->getKey()) {
-            throw ValidationException::withMessages([
-                'approval' => ['Publication must be approved by a different company member.'],
-            ]);
-        }
+            if ($approval->status !== PassportPublicationApprovalStatus::Pending) {
+                throw new ConflictHttpException('This publication approval is no longer pending.');
+            }
 
-        $result = $this->publishProductPassport->handle(
-            $actor,
-            $company,
-            $product,
-            $passport,
-            $approval->expected_revision,
-            $approval->acknowledge_warnings,
-        );
+            if ((int) $approval->requested_by === (int) $actor->getKey()) {
+                throw ValidationException::withMessages([
+                    'approval' => ['Publication must be approved by a different company member.'],
+                ]);
+            }
 
-        $approval->forceFill([
-            'status' => PassportPublicationApprovalStatus::Approved,
-            'approved_by' => $actor->getKey(),
-            'approved_at' => now(),
-            'published_version_id' => $result->publishedVersion->getKey(),
-        ])->save();
+            $result = $this->publishProductPassport->handle(
+                $actor,
+                $company,
+                $product,
+                $passport,
+                $approval->expected_revision,
+                $approval->acknowledge_warnings,
+            );
 
-        $this->auditLogger->logTenant(
-            $company,
-            AuditEvent::PassportPublicationApprovalApproved,
-            $actor,
-            $approval,
-            [
-                'product_uuid' => $product->uuid,
-                'passport_uuid' => $passport->uuid,
-                'approval_uuid' => $approval->uuid,
-                'published_version_uuid' => $result->publishedVersion->uuid,
-                'requested_by' => $approval->requested_by,
-            ],
-        );
+            $approval->forceFill([
+                'status' => PassportPublicationApprovalStatus::Approved,
+                'approved_by' => $actor->getKey(),
+                'approved_at' => now(),
+                'published_version_id' => $result->publishedVersion->getKey(),
+            ])->save();
 
-        return $result;
+            $this->auditLogger->logTenant(
+                $company,
+                AuditEvent::PassportPublicationApprovalApproved,
+                $actor,
+                $approval,
+                [
+                    'product_uuid' => $product->uuid,
+                    'passport_uuid' => $passport->uuid,
+                    'approval_uuid' => $approval->uuid,
+                    'published_version_uuid' => $result->publishedVersion->uuid,
+                    'requested_by' => $approval->requested_by,
+                ],
+            );
+
+            return $result;
+        });
     }
 
     private function assertApprovalBelongsToPassport(

@@ -1,52 +1,48 @@
-# Release Checklist
+# Release checklist
 
-## Pre-release
+## Before deployment
 
-- [ ] CI pipeline is green for the target commit
-- [ ] All tests pass (backend + frontend)
-- [ ] PHPStan analysis shows no errors
-- [ ] Pint code style check passes
-- [ ] No new `composer audit` vulnerabilities at `high` or above
-- [ ] No new `npm audit` vulnerabilities at `high` or above
-- [ ] Migration risk has been reviewed (see below)
-- [ ] Verified backup exists and is less than 26 hours old
-- [ ] Release artifact has been built and SHA-256 verified
+- [ ] Target commit: CI, full Laravel suite, PHPStan, Pint and frontend build pass.
+- [ ] Production dependency audits have no unresolved release blockers.
+- [ ] Migrations and index/trigger costs are reviewed for the target database/version.
+- [ ] Real supplier XLSX and representative import/catalogue sizes are accepted.
+- [ ] Tenant roles, public snapshots and billing/webhook retries are accepted on staging.
+- [ ] Proxy, queue supervisor, scheduler and receiver duplicate handling are exercised.
+- [ ] Four site hooks are configured and rehearsed against every writer.
+- [ ] Verified executable archive and metadata exist on server and off-host; recovery works.
+- [ ] Database/file backups, schema/trigger definitions and isolated restoration are verified.
+- [ ] Failure before activation, failed health and incompatible rollback leave writers stopped.
+- [ ] Production environment approval and pinned SSH host identity are ready.
 
-## Migration Risk Review
+## During deployment
 
-| Risk | Check |
-|------|-------|
-| Table lock | Reviewed |
-| Full table rewrite | Reviewed |
-| Large index creation | Reviewed |
-| NOT NULL without backfill | Reviewed |
-| Column rename/drop | Reviewed |
-| Table drop | Reviewed |
-| Data conversion | Reviewed |
+- [ ] Deployment flock acquired without removing its inode.
+- [ ] Archive retained and installed file tree verified.
+- [ ] HTTP mutations, queue, cron/scheduler and DB events stopped and independently checked.
+- [ ] Backup corresponds to the drained boundary and restoration evidence is checked.
+- [ ] migrate --force and readonly release:verify-schema succeed.
+- [ ] Capacity reconciliation repair completes; subsequent check has zero drift.
+- [ ] Shared data links and config/route/view caches are correct.
+- [ ] current atomically switched and fresh processes started through the resume hook.
+- [ ] /up and /ready both return success; read-only application smoke test succeeds.
 
-## Deployment
+## After deployment
 
-- [ ] Environment approval obtained
-- [ ] Deployment lock is available
-- [ ] Maintenance mode is ready (if required)
-- [ ] `php artisan migrate --force` completes
-- [ ] Config, route, and view caches build
-- [ ] `current` symlink atomically switched
-- [ ] Queue workers restarted
-- [ ] `/up` responds 200
-- [ ] `/ready` responds 200
-- [ ] Smoke test passes (safe read-only)
+- [ ] Schema/counters and queued/unreserved job state are recorded.
+- [ ] Supervisor and scheduler start through current; old workers are absent.
+- [ ] Publication/audit immutability and tenant boundaries remain verified.
+- [ ] Release ID, commit, archive/source hashes and runtime identity recorded.
+- [ ] Previous code and executable archives retained under the recovery policy.
+- [ ] Off-host database, file and executable backups remain recoverable.
 
-## Post-deployment
+## Rollback or recovery
 
-- [ ] Previous release is retained
-- [ ] Old releases cleaned up (keep last 5)
-- [ ] Scheduler cron still pointing to `current/artisan`
-- [ ] Deployment documented (release ID, commit SHA, time)
+- [ ] Explicit release ID and verified installed tree selected.
+- [ ] Writers stopped and backup checked before rollback.
+- [ ] Target release's exact schema contract passes before current changes.
+- [ ] Otherwise use a reviewed forward fix or rehearsed coordinated restore.
+- [ ] No automatic migration rollback or previous-code switch assumed.
+- [ ] Fresh processes, health, supervisor and scheduler verified before reopening writes.
 
-## Rollback
-
-- [ ] Previous release identified
-- [ ] `deploy/scripts/rollback.sh --force` executed
-- [ ] `/up` and `/ready` verified after rollback
-- [ ] Database schema compatibility noted
+Fixture tests and local rehearsal do not tick staging/production checks.
+See CI_AND_DEPLOYMENT.md for hook contracts, prerequisites and complete flags.

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1\Catalog;
 use App\Actions\Imports\ApplyImportJobAction;
 use App\Actions\Imports\CreateImportJobAction;
 use App\Actions\Imports\PreviewImportJobAction;
+use App\Actions\Imports\SaveApiImportMappingTemplate;
+use App\Actions\Imports\StartImportJobAction;
+use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Controller;
@@ -15,12 +18,13 @@ use App\Models\Imports\ImportMappingTemplate;
 use App\Models\Imports\ImportRecord;
 use App\Models\User;
 use App\Services\Imports\ProductExportService;
+use App\Services\Jobs\JobStatusTracker;
 use App\Tenancy\TokenCurrentCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ImportController extends Controller
 {
@@ -31,15 +35,12 @@ class ImportController extends Controller
         return $response->success($templates->map->only(['uuid', 'name', 'entity_type', 'mapping', 'defaults'])->all());
     }
 
-    public function storeTemplate(Request $request, TokenCurrentCompany $currentCompany, ApiResponse $response): JsonResponse
+    public function storeTemplate(Request $request, TokenCurrentCompany $currentCompany, ApiResponse $response, SaveApiImportMappingTemplate $action): JsonResponse
     {
         $validated = $request->validate(['name' => ['required', 'string', 'max:255'], 'mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255']]);
         $company = $currentCompany->require();
         $actor = $this->actor($request);
-        $template = ImportMappingTemplate::query()->updateOrCreate(
-            ['company_id' => $company->getKey(), 'name_normalized' => Str::lower(trim($validated['name']))],
-            ['name' => trim($validated['name']), 'entity_type' => 'product', 'mapping' => array_filter($validated['mapping']), 'created_by' => $actor->getKey(), 'updated_by' => $actor->getKey()],
-        );
+        $template = $action->execute($actor, $company, $validated);
 
         return $response->created($template->only(['uuid', 'name', 'entity_type', 'mapping', 'defaults']));
     }
@@ -78,10 +79,28 @@ class ImportController extends Controller
         return $response->success($this->resource($job, true));
     }
 
-    public function apply(Request $request, TokenCurrentCompany $currentCompany, ApplyImportJobAction $action, ApiResponse $response, string $importJob): JsonResponse
+    public function apply(Request $request, TokenCurrentCompany $currentCompany, ApplyImportJobAction $action, StartImportJobAction $start, JobStatusTracker $tracker, ApiResponse $response, string $importJob): JsonResponse
     {
-        $validated = $request->validate(['max_chunks' => ['nullable', 'integer', 'between:1,100']]);
-        $job = $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), (int) ($validated['max_chunks'] ?? 1));
+        $company = $currentCompany->require();
+        $actor = $this->actor($request);
+        $job = $this->job($company, $importJob);
+        [$job, $jobStatus, $queued] = $start->execute($actor, $company, $job);
+        if ($queued) {
+
+            return $response->success($this->resource($job), ['queued' => true], 202);
+        }
+
+        $tracker->markRunning($jobStatus);
+        try {
+            do {
+                $job = $action->execute($actor, $company, $job);
+                $tracker->markProgress($jobStatus, $job->processed_rows, $job->total_rows);
+            } while ($job->status === ImportJobStatus::Processing);
+            $tracker->markSucceeded($jobStatus, ['import_job_uuid' => $job->uuid, 'status' => $job->status->value]);
+        } catch (Throwable $exception) {
+            $tracker->markFailed($jobStatus, 'import_failed', $exception->getMessage());
+            throw $exception;
+        }
 
         return $response->success($this->resource($job));
     }
@@ -124,7 +143,7 @@ class ImportController extends Controller
             'source_filename' => $job->source_filename, 'headers' => $job->headers, 'mapping' => $job->mapping,
             'total_rows' => $job->total_rows, 'valid_rows' => $job->valid_rows, 'invalid_rows' => $job->invalid_rows,
             'processed_rows' => $job->processed_rows, 'created_rows' => $job->created_rows, 'updated_rows' => $job->updated_rows,
-            'skipped_rows' => $job->skipped_rows, 'next_row' => $job->next_row, 'chunk_size' => $job->chunk_size,
+            'skipped_rows' => $job->skipped_rows, 'next_row' => $job->next_row,
             'created_at' => $job->created_at?->toIso8601String(), 'completed_at' => $job->completed_at?->toIso8601String(),
         ];
         if ($includeRows && $job->relationLoaded('records')) {

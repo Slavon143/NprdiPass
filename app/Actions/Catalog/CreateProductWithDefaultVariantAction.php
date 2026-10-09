@@ -13,6 +13,7 @@ use App\Enums\CompanyStatus;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogProductCapacity;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
@@ -26,6 +27,7 @@ class CreateProductWithDefaultVariantAction
         private readonly CatalogIdentifierNormalizer $normalizer,
         private readonly AuditLogger $auditLogger,
         private readonly ProductAggregateCreator $aggregateCreator,
+        private readonly CatalogProductCapacity $capacity,
     ) {}
 
     /**
@@ -45,7 +47,7 @@ class CreateProductWithDefaultVariantAction
         }
 
         $company = $freshCompany;
-        $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogCreate);
+        $this->authorizer->authorizeCatalogWrite($actor, $company, CompanyPermission::CatalogCreate);
 
         $name = trim((string) ($productData['name'] ?? ''));
         $slug = $this->normalizer->normalizeProductSlug((string) ($productData['slug'] ?? ''));
@@ -77,6 +79,10 @@ class CreateProductWithDefaultVariantAction
                 $gtin,
                 $mpn,
             ): Product {
+                $this->authorizer->authorizeCatalogWrite($actor, $company, CompanyPermission::CatalogCreate);
+                $company = Company::query()->whereKey($company->getKey())->sharedLock()->firstOrFail();
+                $this->capacity->assertPoolSlotAvailable($company);
+                $this->capacity->assertSlotAvailable($company);
                 $product = $this->aggregateCreator->create($actor, $company, [
                     ...$productData,
                     'name' => $name,

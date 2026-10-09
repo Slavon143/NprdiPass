@@ -1,0 +1,32 @@
+[
+  {
+    "manufacturer": "Hager",
+    "name": "NH-Sicherungs-Leiste E³ NH00 185mm V-Bett mit Klemme (2 Stk)",
+    "mpn": "38765-0900",
+    "gtin": "4049857139668",
+    "product_type": "electrical",
+    "source_file": "hager_artikelstamm_2026-10.xlsx",
+    "source_row": 3,
+    "source_sha256": "c373f98a1e4d1a5e7f16e0e009ebf99a50838f901bf82c25d9dd71b6984390ed"
+  },
+  {
+    "manufacturer": "Berker",
+    "name": "NV-5fach-Verteiler für Trafos Hauselektronik polarweiß",
+    "mpn": "162",
+    "gtin": "4011334230854",
+    "product_type": "electrical",
+    "source_file": "berker_artikelstamm_2026-10.xlsx",
+    "source_row": 3,
+    "source_sha256": "33f80d61c3a0d48cf09d4349493823abb44229a21a4eb5c659e20e357c25761f"
+  },
+  {
+    "manufacturer": "Elcom",
+    "name": "Senkkopfschraube Vollgew. M2,5X5, ISO10642, A4 Innensechskant",
+    "mpn": "330029",
+    "gtin": "4250111890052",
+    "product_type": "other",
+    "source_file": "elcom_artikelstamm_2026-10.xlsx",
+    "source_row": 3,
+    "source_sha256": "d1aad532f1b7805178981b5594f9fc3064dea65b4fd2bd5ec238ff59ed62c235"
+  }
+]

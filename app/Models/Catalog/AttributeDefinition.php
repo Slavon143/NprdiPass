@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $sort_order
  * @property AttributeDefinitionStatus $status
  * @property int|null $replaced_by_attribute_definition_id
+ * @property-read Collection<int, AttributeOption> $options
  */
 class AttributeDefinition extends Model
 {

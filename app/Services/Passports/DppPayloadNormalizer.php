@@ -54,9 +54,53 @@ class DppPayloadNormalizer
             'data' => $data,
             'translations' => $translations,
             'document_references' => $documentReferences,
+            'languages' => $this->normalizeLanguages($payload['languages'] ?? null),
         ];
 
+        if (array_key_exists('regulatory_context', $payload)) {
+            // Retain invalid persisted facts so readiness can reject them rather
+            // than silently converting them to an unclassified pilot passport.
+            $result['regulatory_context'] = $payload['regulatory_context'];
+        }
+
         return $result;
+    }
+
+    /**
+     * @return array{default: string|null, enabled: list<string>}|null
+     */
+    private function normalizeLanguages(mixed $languages): ?array
+    {
+        if (! is_array($languages)) {
+            return null;
+        }
+
+        $default = isset($languages['default']) && is_string($languages['default'])
+            ? trim($languages['default'])
+            : null;
+        $default = $default !== '' && $this->isValidLocale($default) ? $default : null;
+
+        $enabled = [];
+
+        if (is_array($languages['enabled'] ?? null)) {
+            foreach ($languages['enabled'] as $language) {
+                if (! is_string($language)) {
+                    continue;
+                }
+
+                $code = trim($language);
+
+                if ($code !== '' && $this->isValidLocale($code) && ! in_array($code, $enabled, true)) {
+                    $enabled[] = $code;
+                }
+            }
+        }
+
+        if ($default === null && $enabled === []) {
+            return null;
+        }
+
+        return ['default' => $default, 'enabled' => $enabled];
     }
 
     /**

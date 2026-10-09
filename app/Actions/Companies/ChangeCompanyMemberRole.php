@@ -38,15 +38,15 @@ class ChangeCompanyMemberRole
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $this->authorizeActiveCompany($actor, $company, CompanyPermission::MembersUpdateRole);
+
             $lockedMembership = CompanyMembership::query()
                 ->whereKey($membership->getKey())
                 ->where('company_id', $company->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $this->authorizeActiveCompany($actor, $company, CompanyPermission::MembersUpdateRole);
-
-            $actorMembership = $this->currentMembership->get($actor, $company)
+            $actorMembership = $this->currentMembership->getForAuthorization($actor, $company)
                 ?? throw new AuthorizationException;
             $actorRole = $this->roleOf($actorMembership);
             $targetRole = $this->roleOf($lockedMembership);

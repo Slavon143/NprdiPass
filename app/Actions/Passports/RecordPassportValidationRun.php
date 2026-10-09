@@ -3,14 +3,20 @@
 namespace App\Actions\Passports;
 
 use App\Data\Passports\Readiness\PassportReadinessResult;
+use App\Enums\CompanyStatus;
+use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\PassportValidationResult;
 use App\Models\Passports\PassportValidationRun;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Billing\CommercialAccessPolicy;
+use App\Services\Catalog\ManagedProductGate;
 use App\Services\Passports\CanonicalJsonEncoder;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RecordPassportValidationRun
 {
@@ -26,6 +32,20 @@ class RecordPassportValidationRun
         ?User $actor,
     ): PassportValidationRun {
         return DB::transaction(function () use ($company, $passport, $draft, $result, $actor): PassportValidationRun {
+            $currentCompany = Company::query()->whereKey($company->getKey())->sharedLock()->firstOrFail();
+            if ($currentCompany->status !== CompanyStatus::Active) {
+                throw new AuthorizationException;
+            }
+            app(CommercialAccessPolicy::class)->assertWritable($currentCompany);
+            $currentPassport = ProductPassport::query()->forCompany($currentCompany)->whereKey($passport->getKey())->sharedLock()->firstOrFail();
+            if ((int) $draft->company_id !== (int) $currentCompany->getKey()
+                || (int) $draft->passport_id !== (int) $currentPassport->getKey()) {
+                throw new NotFoundHttpException;
+            }
+            $currentProduct = Product::query()->forCompany($currentCompany)
+                ->whereKey($currentPassport->product_id)->sharedLock()->firstOrFail();
+            app(ManagedProductGate::class)->assertManaged($currentProduct);
+
             $breakdown = $result->scoreBreakdown;
             $sourceChecksum = $this->canonicalJsonEncoder->hash([
                 'passport_uuid' => $passport->uuid,
@@ -40,6 +60,7 @@ class RecordPassportValidationRun
                 'score_algorithm_version' => $result->scoreAlgorithmVersion,
                 'weights' => $breakdown->weights,
                 'payload' => $draft->payload,
+                'profile_details' => $result->profileDetails,
                 'rules' => array_map(fn ($rule): array => [
                     'code' => $rule->code,
                     'group' => $rule->group->value,
@@ -71,6 +92,8 @@ class RecordPassportValidationRun
                     'score_algorithm_version' => $result->scoreAlgorithmVersion,
                     'rule_set_fingerprint' => $result->ruleSetFingerprint,
                     'weights' => $breakdown->weights,
+                    'profile_details' => $result->profileDetails,
+                    'results' => array_map(fn ($rule) => get_object_vars($rule), $result->rules),
                 ],
                 'earned_points' => $breakdown->earnedPoints,
                 'applicable_points' => $breakdown->applicablePoints,

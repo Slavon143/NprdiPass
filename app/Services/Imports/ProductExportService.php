@@ -15,14 +15,11 @@ use App\Models\Catalog\ProductAttributeValue;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductExportService
 {
-    public const HEADERS = ['name', 'slug', 'short_description', 'description', 'brand', 'manufacturer', 'primary_category'];
+    public const HEADERS = ['name', 'slug', 'short_description', 'description', 'brand', 'manufacturer', 'primary_category', 'sku', 'gtin', 'mpn'];
 
     public function __construct(
         private readonly CompanyAuthorizer $authorizer,
@@ -66,22 +63,24 @@ class ProductExportService
     private function xlsx(Company $company, Collection $definitions, string $filename): StreamedResponse
     {
         return response()->streamDownload(function () use ($company, $definitions): void {
-            $spreadsheet = new Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-            foreach ($this->headers($definitions) as $column => $header) {
-                $sheet->setCellValueExplicit([$column + 1, 1], $header, DataType::TYPE_STRING);
+            $path = tempnam(sys_get_temp_dir(), 'np-export-');
+            if ($path === false) {
+                throw new \RuntimeException('Unable to allocate export archive.');
             }
-            $row = 2;
-            $this->query($company)->chunkById(500, function ($products) use ($sheet, &$row, $definitions): void {
-                foreach ($products as $product) {
-                    foreach ($this->row($product, $definitions) as $column => $value) {
-                        $sheet->setCellValueExplicit([$column + 1, $row], $value, DataType::TYPE_STRING);
+            try {
+                $rows = function () use ($company, $definitions): \Generator {
+                    yield $this->headers($definitions);
+                    foreach ($this->query($company)->lazyById(500) as $product) {
+                        yield $this->row($product, $definitions, xlsx: true);
                     }
-                    $row++;
+                };
+                app(StreamingXlsxWriter::class)->write($path, $rows());
+                readfile($path);
+            } finally {
+                if (is_file($path)) {
+                    unlink($path);
                 }
-            });
-            (new Xlsx($spreadsheet))->save('php://output');
-            $spreadsheet->disconnectWorksheets();
+            }
         }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'X-Content-Type-Options' => 'nosniff']);
     }
 
@@ -89,6 +88,7 @@ class ProductExportService
     {
         return Product::query()->forCompany($company)->with([
             'primaryCategory',
+            'defaultVariant' => fn ($query) => $query->where('company_id', $company->getKey()),
             'attributeValues.definition',
             'attributeValues.selectedOption',
             'attributeValues.selectedOptions',
@@ -102,11 +102,18 @@ class ProductExportService
     }
 
     /** @param Collection<int, AttributeDefinition> $definitions @return list<string> */
-    private function row(Product $product, Collection $definitions): array
+    private function row(Product $product, Collection $definitions, bool $xlsx = false): array
     {
-        $row = array_map(fn (string $field): string => $field === 'primary_category'
-            ? $this->safeCell($product->primaryCategory?->slug)
-            : $this->safeCell($product->getAttribute($field)), self::HEADERS);
+        $row = array_map(function (string $field) use ($product, $xlsx): string {
+            $identifier = in_array($field, ['sku', 'gtin', 'mpn'], true);
+            $value = $field === 'primary_category' ? $product->primaryCategory?->slug
+                : ($identifier
+                    ? ((int) $product->defaultVariant?->product_id === (int) $product->getKey() ? $product->defaultVariant?->getAttribute($field) : null)
+                    : $product->getAttribute($field));
+
+            // The XLSX writer uses explicit string cells; CSV keeps its formula guard.
+            return $xlsx && $identifier ? (string) ($value ?? '') : $this->safeCell($value);
+        }, self::HEADERS);
         $values = $product->attributeValues->keyBy('attribute_definition_id');
         foreach ($definitions as $definition) {
             $value = $values->get($definition->getKey());

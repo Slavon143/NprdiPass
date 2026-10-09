@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Catalog;
 use App\Actions\Imports\ApplyImportJobAction;
 use App\Actions\Imports\CreateImportJobAction;
 use App\Actions\Imports\PreviewImportJobAction;
+use App\Actions\Imports\StartImportJobAction;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyPermission;
+use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
 use App\Http\Controllers\Controller;
 use App\Models\Catalog\AttributeDefinition;
@@ -18,6 +20,7 @@ use App\Models\Imports\ImportMappingTemplate;
 use App\Models\User;
 use App\Services\Imports\ProductExportService;
 use App\Services\Imports\ProductImportRowPlanner;
+use App\Services\Jobs\JobStatusTracker;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ImportController extends Controller
 {
@@ -80,12 +84,38 @@ class ImportController extends Controller
         return back()->with('success', 'Preview generated. Review row errors before applying the import.');
     }
 
-    public function apply(Request $request, CurrentCompany $currentCompany, ApplyImportJobAction $action, string $importJob): RedirectResponse
+    public function apply(Request $request, CurrentCompany $currentCompany, ApplyImportJobAction $action, StartImportJobAction $start, JobStatusTracker $tracker, string $importJob): RedirectResponse
     {
-        $validated = $request->validate(['max_chunks' => ['nullable', 'integer', 'between:1,100']]);
-        $job = $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), (int) ($validated['max_chunks'] ?? 1));
+        $company = $currentCompany->require();
+        $actor = $this->actor($request);
+        $job = $this->job($company, $importJob);
+        [$job, $jobStatus, $queued] = $start->execute($actor, $company, $job);
+        if ($queued) {
 
-        return back()->with('success', $job->completed_at !== null ? 'Import completed.' : 'Chunk applied. Continue to resume from the saved cursor.');
+            return back()->with('success', 'Large import queued. Progress will update on this page.');
+        }
+
+        $tracker->markRunning($jobStatus);
+        try {
+            do {
+                $job = $action->execute($actor, $company, $job);
+                $tracker->markProgress($jobStatus, $job->processed_rows, $job->total_rows);
+            } while ($job->status === ImportJobStatus::Processing);
+            $tracker->markSucceeded($jobStatus, ['import_job_uuid' => $job->uuid, 'status' => $job->status->value]);
+        } catch (Throwable $exception) {
+            $tracker->markFailed($jobStatus, 'import_failed', $exception->getMessage());
+            throw $exception;
+        }
+
+        return back()->with('success', $job->completed_at !== null ? 'Import completed.' : 'Import stopped with errors. Review the recovery details.');
+    }
+
+    public function cancel(Request $request, CurrentCompany $currentCompany, StartImportJobAction $start, string $importJob): RedirectResponse
+    {
+        $job = $this->job($currentCompany->require(), $importJob);
+        $start->cancel($this->actor($request), $currentCompany->require(), $job);
+
+        return back()->with('success', 'Import cancellation requested.');
     }
 
     public function errors(CurrentCompany $currentCompany, string $importJob): StreamedResponse

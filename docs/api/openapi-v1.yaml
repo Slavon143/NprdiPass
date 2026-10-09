@@ -7,6 +7,13 @@ info:
     Provides programmatic access to Categories, Products, Variants,
     Attributes, Media, and lifecycle operations.
     Not intended as a public buyer-facing catalog.
+    Mutations revalidate the original token credential, tenant, active user/company,
+    membership, expiration and route-required abilities inside each persistence
+    transaction. Revocation waits for an already authorized transaction to finish;
+    subsequent transactions revalidate. Committed queued work is not canceled.
+    Subscribed outbound domain events are queued transactionally for the same
+    company and dispatched after commit. Delivery is at-least-once with a stable
+    event ID and Idempotency-Key; receivers must deduplicate repeated deliveries.
   contact:
     name: NordiPass
 servers:
@@ -19,13 +26,18 @@ security:
 paths:
   # ── Foundation ────────────────────────────────────────────────
   /health:
+    servers:
+      - url: /api/v1
     get:
       operationId: health
+      security: []
       summary: Health check
       tags: [Foundation]
       responses:
         "200": { $ref: "#/components/responses/Success" }
   /me:
+    servers:
+      - url: /api/v1
     get:
       operationId: me
       summary: Current authenticated user
@@ -36,6 +48,8 @@ paths:
         "200": { $ref: "#/components/responses/Success" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
   /company:
+    servers:
+      - url: /api/v1
     get:
       operationId: getCompany
       summary: Get current company
@@ -47,6 +61,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /company/members:
+    servers:
+      - url: /api/v1
     get:
       operationId: listCompanyMembers
       summary: List company members
@@ -645,6 +661,31 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /products/{product}/managed:
+    patch:
+      operationId: setProductManaged
+      summary: Enroll or remove a product from DPP management
+      tags: [Lifecycle]
+      security:
+        - bearerAuth: [catalog.write]
+      parameters:
+        - $ref: "#/components/parameters/ProductUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [managed]
+              properties:
+                managed: { type: boolean }
+      responses:
+        "200": { $ref: "#/components/responses/ProductResource" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
 
   /products/{product}/activate:
     post:
@@ -2072,6 +2113,7 @@ paths:
               properties:
                 mapping:
                   type: object
+                  description: Target-to-source mapping. Targets are name, slug, short_description, description, brand, manufacturer, sku, gtin, mpn, primary_category, or attribute:<code> for active product-compatible tenant attributes. Identifiers apply to the default variant; products match by normalized slug. SKU and checksum-valid GTIN are tenant-unique. Unmapped identifiers are preserved on update; mapped blanks clear them. Unsupported or unavailable targets return 422 before replacing the preview. Status, timestamps and document references are not targets. New products start as drafts; updates preserve status. Source updated_at is neither a persistence timestamp nor a freshness watermark. Document references do not trigger downloads or attachments. Unconsumed source columns remain internal source data; derive their headers from headers minus mapping values.
                   additionalProperties: { type: string }
       responses:
         "200": { $ref: "#/components/responses/Success" }
@@ -2079,8 +2121,8 @@ paths:
 
   /imports/{importJob}/apply:
     post:
-      operationId: applyImportChunk
-      summary: Apply or resume idempotent import chunks
+      operationId: applyImport
+      summary: Apply an import, queueing large imports after confirmation
       tags: [Imports]
       security:
         - bearerAuth: [imports.write]
@@ -2089,15 +2131,9 @@ paths:
           in: path
           required: true
           schema: { type: string, format: uuid }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                max_chunks: { type: integer, minimum: 1, maximum: 100, default: 1 }
       responses:
         "200": { $ref: "#/components/responses/Success" }
+        "202": { $ref: "#/components/responses/Success" }
         "409": { $ref: "#/components/responses/Conflict" }
 
   /imports/{importJob}/errors.csv:
@@ -2170,6 +2206,8 @@ paths:
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
 
   /fortnox/connection:
+    servers:
+      - url: /api/v1
     get:
       operationId: getFortnoxConnection
       summary: Fortnox connection status
@@ -2182,6 +2220,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /fortnox/syncs:
+    servers:
+      - url: /api/v1
     get:
       operationId: listFortnoxSyncs
       summary: Fortnox sync history
@@ -2208,6 +2248,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /fortnox/syncs/{syncRun}:
+    servers:
+      - url: /api/v1
     get:
       operationId: getFortnoxSync
       summary: Single Fortnox sync run with conflicts
@@ -2224,6 +2266,8 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   /fortnox/mappings:
+    servers:
+      - url: /api/v1
     get:
       operationId: listFortnoxMappings
       summary: Fortnox article to product/variant mappings
@@ -2234,6 +2278,8 @@ paths:
         "200": { $ref: "#/components/responses/Success" }
 
   /fortnox/conflicts:
+    servers:
+      - url: /api/v1
     get:
       operationId: listFortnoxConflicts
       summary: Fortnox sync conflicts
@@ -2244,6 +2290,8 @@ paths:
         "200": { $ref: "#/components/responses/Success" }
 
   /fortnox/conflicts/{conflict}/resolve:
+    servers:
+      - url: /api/v1
     post:
       operationId: resolveFortnoxConflict
       summary: Resolve an open Fortnox conflict
@@ -2270,6 +2318,8 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   /webhooks/endpoints:
+    servers:
+      - url: /api/v1
     get:
       operationId: listWebhookEndpoints
       summary: List webhook endpoints
@@ -2309,6 +2359,8 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   /webhooks/endpoints/{endpoint}:
+    servers:
+      - url: /api/v1
     patch:
       operationId: updateWebhookEndpoint
       summary: Update a webhook endpoint
@@ -2344,6 +2396,8 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   /webhooks/endpoints/{endpoint}/disable:
+    servers:
+      - url: /api/v1
     post:
       operationId: disableWebhookEndpoint
       summary: Disable a webhook endpoint
@@ -2362,6 +2416,8 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   /webhooks/deliveries:
+    servers:
+      - url: /api/v1
     get:
       operationId: listWebhookDeliveries
       summary: List webhook delivery attempts
@@ -2512,6 +2568,7 @@ components:
         manufacturer: { type: string, nullable: true }
         commerce: { $ref: "#/components/schemas/ProductCommerce" }
         status: { type: string }
+        managed: { type: boolean, description: Explicit DPP enrollment; product variants do not add slots }
         published_at: { type: string, format: date-time, nullable: true }
         primary_category: { $ref: "#/components/schemas/Category" }
         categories: { type: array, items: { $ref: "#/components/schemas/Category" } }
@@ -2734,6 +2791,7 @@ components:
         enabled_sections: { type: array, items: { type: string } }
         data: { type: object }
         translations: { type: object }
+        regulatory_context: { $ref: "#/components/schemas/DppRegulatoryContext" }
         document_references:
           type: array
           items:
@@ -2757,8 +2815,38 @@ components:
       type: object
       required: [settings, expected_revision]
       properties:
-        settings: { type: object }
+        settings:
+          type: object
+          properties:
+            enabled_sections: { type: array, items: { type: string } }
+            refresh_profile:
+              type: boolean
+              description: Explicitly freeze the currently assigned profiles and requirements in a new draft revision. Historical evaluations and publications are unchanged.
+            regulatory_context: { $ref: "#/components/schemas/DppRegulatoryContext" }
         expected_revision: { type: integer }
+
+    DppRegulatoryContext:
+      type: object
+      additionalProperties: false
+      required: [market, product_type, passport_level, assessment_source]
+      description: Operator-declared classification evidence; scope assessment only, not certification or proof of registry registration.
+      properties:
+        market: { type: string, enum: [EU, outside_EU] }
+        product_type: { type: string, enum: [electrical, ev_battery, lmt_battery, industrial_battery, portable_battery, other] }
+        battery_capacity_kwh:
+          type: [number, "null"]
+          exclusiveMinimum: 0
+          maximum: 1000000
+          description: Required for industrial batteries. Article 77 uses a strict greater-than-2-kWh threshold only for industrial batteries.
+        passport_level: { type: string, enum: [model, batch, item] }
+        model_identifier: { type: [string, "null"], maxLength: 200 }
+        item_identifier: { type: [string, "null"], maxLength: 200 }
+        assessment_source: { type: string, minLength: 1, maxLength: 1000 }
+        lifecycle_event: { type: string, enum: [initial_placement, putting_into_service, remanufacturing, repurposing], default: initial_placement }
+        market_event_date:
+          type: [string, "null"]
+          format: date
+          description: Date of the declared market or lifecycle event; required to determine covered battery applicability from 2027-02-18. Earlier events do not establish a retrospective passport obligation.
 
     DocumentReferencesPayload:
       type: object
@@ -2832,8 +2920,19 @@ components:
           $ref: "#/components/schemas/WebhookEventType"
         aggregate_type: { type: string, nullable: true }
         aggregate_uuid: { type: string, format: uuid, nullable: true }
-        status: { type: string, enum: [pending, delivered, failed] }
+        status: { type: string, enum: [pending, delivered, failed, dead_letter] }
         attempts: { type: integer }
+        attempt_history:
+          type: array
+          items:
+            type: object
+            properties:
+              attempt: { type: integer }
+              status: { type: string, enum: [started, delivered, failed] }
+              response_status: { type: integer, nullable: true }
+              error_code: { type: string, nullable: true }
+              started_at: { type: string, format: date-time, nullable: true }
+              finished_at: { type: string, format: date-time, nullable: true }
         response_status: { type: integer, nullable: true }
         last_attempt_at: { type: string, format: date-time, nullable: true }
         delivered_at: { type: string, format: date-time, nullable: true }
@@ -2850,8 +2949,21 @@ components:
         score_algorithm: { type: string }
         score_algorithm_version: { type: integer }
         rule_set_fingerprint: { type: string, pattern: "^[0-9a-f]{64}$" }
-        passport_uuid: { type: string, format: uuid }
-        draft_version_uuid: { type: string, format: uuid }
+        profile_details:
+          type: object
+          additionalProperties: true
+          properties:
+            execution: { $ref: "#/components/schemas/ReadinessExecutionManifest" }
+            draft_execution:
+              anyOf:
+                - { $ref: "#/components/schemas/ReadinessExecutionManifest" }
+                - { type: "null" }
+            execution_comparison: { type: string, enum: [matched, changed, legacy_unknown] }
+        passport_uuid:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string, const: "", description: Legacy sentinel when no passport exists. }
+        draft_version_uuid: { type: [string, "null"], format: uuid }
         passport_revision: { type: integer }
         status: { type: string }
         score: { type: integer }
@@ -2864,6 +2976,28 @@ components:
           items:
             $ref: "#/components/schemas/ReadinessRuleItem"
         evaluated_at: { type: string, format: date-time }
+
+    ReadinessExecutionManifest:
+      type: object
+      description: Build provenance; does not archive or replay historical PHP implementations.
+      properties:
+        version: { type: integer, const: 1 }
+        replay_guarantee: { type: string, enum: [provenance_only] }
+        fingerprint: { type: string, pattern: "^[0-9a-f]{64}$" }
+        release:
+          type: object
+          properties:
+            application_sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+            dependencies_sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+            php_version: { type: string }
+        handlers:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              class: { type: string }
+              source_sha256: { type: [string, "null"], pattern: "^[0-9a-f]{64}$" }
 
     ReadinessCounts:
       type: object
@@ -2901,6 +3035,23 @@ components:
         message_key: { type: string }
         section: { type: string, nullable: true }
         field: { type: string, nullable: true }
+        requirement_key: { type: string, nullable: true }
+        profile: { type: string, nullable: true }
+        profile_version: { type: integer, nullable: true }
+        requirement_level: { type: string, nullable: true, enum: [required, conditional, recommended] }
+        source: { type: string, nullable: true }
+        source_reference: { type: string, nullable: true }
+        applies_because: { type: string, nullable: true }
+        applicability: { type: string, enum: [applicable, not_applicable] }
+        applicability_reason: { type: string, nullable: true }
+        safe_context:
+          type: object
+          additionalProperties: true
+          properties:
+            requirement_source_version: { type: string, nullable: true }
+            requirement_effective_from: { type: string, format: date, nullable: true }
+            requirement_effective_to: { type: string, format: date, nullable: true }
+            applicability_checked_on: { type: string, format: date }
         navigation_target:
           $ref: "#/components/schemas/ReadinessNavigationTarget"
 
@@ -3178,7 +3329,15 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/PassportReadinessResult"
+            type: object
+            required: [data, meta, error]
+            properties:
+              data: { $ref: "#/components/schemas/PassportReadinessResult" }
+              meta:
+                type: object
+                properties:
+                  request_id: { type: string, format: uuid }
+              error: { type: "null" }
     PassportVersionCollection:
       description: Paginated list of published passport versions
       content:

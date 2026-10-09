@@ -21,6 +21,7 @@ use App\Services\Catalog\ProductCategoryService;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -154,6 +155,65 @@ test('product slug is unique per company while the same normalized slug is allow
     expect($other->slug)->toBe('shared-slug')->and(Product::query()->count())->toBe(2);
 });
 
+test('product creation returns refreshed state without reading the default variant twice at return', function (bool $withCategories) {
+    [$actor, $company] = r15ProductContext();
+    $primary = $withCategories ? r15ProductCategory($company, $actor, 'Primary') : null;
+    $additional = $withCategories ? r15ProductCategory($company, $actor, 'Additional') : null;
+
+    // Change persisted state after the aggregate's initial relation load.
+    // Removing refresh or reusing that cached variant must fail this regression.
+    AuditLog::query();
+    $dispatcher = AuditLog::getEventDispatcher();
+    AuditLog::setEventDispatcher(clone $dispatcher);
+    AuditLog::created(function (AuditLog $audit) use ($company, $primary): void {
+        if ($audit->company_id !== $company->id || $audit->event !== AuditEvent::CatalogProductCreated->value) {
+            return;
+        }
+
+        DB::table('products')->where('company_id', $company->id)
+            ->where('uuid', $audit->getProperty('product_uuid'))->update(['brand' => 'Refreshed brand']);
+        DB::table('product_variants')->where('company_id', $company->id)
+            ->where('uuid', $audit->getProperty('default_variant_uuid'))->update(['name' => 'Refreshed default']);
+
+        if ($primary !== null) {
+            DB::table('categories')->where('company_id', $company->id)
+                ->where('id', $primary->id)->update(['name' => 'Refreshed primary']);
+        }
+    });
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    try {
+        $product = app(CreateProductAction::class)->execute(
+            $actor,
+            $company,
+            r15ProductData(),
+            $primary?->uuid,
+            $additional === null ? [] : [$additional->uuid],
+        );
+        $variantReads = collect(DB::getQueryLog())->filter(fn (array $query): bool => str_starts_with($query['query'], 'select ') && str_contains($query['query'], 'from `product_variants`')
+        );
+
+        expect($product->brand)->toBe('Refreshed brand')
+            ->and($product->relationLoaded('defaultVariant'))->toBeTrue()
+            ->and($product->relationLoaded('primaryCategory'))->toBeTrue()
+            ->and($product->relationLoaded('categories'))->toBeTrue()
+            ->and($product->defaultVariant?->name)->toBe('Refreshed default')
+            ->and($product->defaultVariant?->company_id)->toBe($company->id)
+            ->and($product->defaultVariant?->product_id)->toBe($product->id)
+            ->and($product->primary_category_id)->toBe($primary?->id)
+            ->and($product->primaryCategory?->name)->toBe($withCategories ? 'Refreshed primary' : null)
+            ->and($product->categories->modelKeys())->toEqualCanonicalizing(
+                $withCategories ? [$primary->id, $additional->id] : [],
+            )
+            ->and($variantReads)->toHaveCount(2);
+    } finally {
+        DB::disableQueryLog();
+        DB::flushQueryLog();
+        AuditLog::setEventDispatcher($dispatcher);
+    }
+})->with(['without categories' => false, 'with categories' => true]);
+
 test('invalid category assignment rolls the product variant pivot and audit back together', function (string $case) {
     [$actor, $company] = r15ProductContext();
     $foreign = Company::factory()->create();
@@ -258,7 +318,7 @@ test('update changes managed fields and atomically replaces primary and addition
         'default_variant_id' => 999,
         'primary_media_id' => 999,
         'created_by' => 999,
-    ], $newPrimary->uuid, [$newAdditional->uuid, $newPrimary->uuid]);
+    ], $newPrimary->uuid, [$newAdditional->uuid, $newPrimary->uuid], syncCategories: true);
 
     expect($updated->name)->toBe('Updated Product')
         ->and($updated->slug)->toBe('angstrom-updated')
@@ -308,6 +368,56 @@ test('no-op update writes neither product nor audit', function () {
         ->and(AuditLog::query()->where('event', AuditEvent::CatalogProductUpdated->value)->count())->toBe(0);
 });
 
+test('update without category intent preserves taxonomy and explicit category sync replaces it', function () {
+    [$actor, $company] = r15ProductContext();
+    $oldPrimary = r15ProductCategory($company, $actor, 'Old primary');
+    $oldAdditional = r15ProductCategory($company, $actor, 'Old additional');
+    $newPrimary = r15ProductCategory($company, $actor, 'New primary');
+    $product = app(CreateProductAction::class)->execute($actor, $company, r15ProductData([
+        'name' => 'Original', 'slug' => 'original',
+    ]), $oldPrimary->uuid, [$oldAdditional->uuid]);
+
+    // Field-only update (e.g. the Fortnox applier writing name/description)
+    // must not touch primary or additional categories.
+    $updated = app(UpdateProductAction::class)->execute(
+        $actor,
+        $company,
+        $product,
+        ['name' => 'Renamed without category intent'],
+    );
+
+    expect($updated->name)->toBe('Renamed without category intent')
+        ->and($updated->primary_category_id)->toBe($oldPrimary->id)
+        ->and($updated->categories()->pluck('categories.id')->all())->toEqualCanonicalizing([$oldPrimary->id, $oldAdditional->id]);
+
+    // Explicit category intent still replaces the taxonomy, and empty lists clear it.
+    $cleared = app(UpdateProductAction::class)->execute(
+        $actor,
+        $company,
+        $product,
+        [],
+        null,
+        [],
+        true,
+    );
+
+    expect($cleared->primary_category_id)->toBeNull()
+        ->and($cleared->categories()->count())->toBe(0);
+
+    $replaced = app(UpdateProductAction::class)->execute(
+        $actor,
+        $company,
+        $product,
+        [],
+        $newPrimary->uuid,
+        [],
+        true,
+    );
+
+    expect($replaced->primary_category_id)->toBe($newPrimary->id)
+        ->and($replaced->categories()->pluck('categories.id')->all())->toBe([$newPrimary->id]);
+});
+
 test('duplicate slug and unavailable category roll the complete update back', function (string $case) {
     [$actor, $company] = r15ProductContext();
     $oldPrimary = r15ProductCategory($company, $actor, 'Old primary');
@@ -327,6 +437,8 @@ test('duplicate slug and unavailable category roll the complete update back', fu
         $product,
         r15ProductData(['name' => 'Must roll back', 'slug' => $newSlug]),
         $newPrimary,
+        [],
+        true,
     ))->toThrow(ProductOperationException::class)
         ->and($product->fresh()?->name)->toBe('Original')
         ->and($product->fresh()?->slug)->toBe('original')
@@ -353,6 +465,8 @@ test('audit failure rolls product fields category pointers and pivots back', fun
             $product,
             r15ProductData(['name' => 'Changed', 'slug' => 'changed']),
             $newPrimary->uuid,
+            [],
+            true,
         ))->toThrow(RuntimeException::class, 'Audit unavailable');
     } finally {
         app()->forgetInstance(AuditLogger::class);

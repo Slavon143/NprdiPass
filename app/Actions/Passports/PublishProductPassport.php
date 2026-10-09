@@ -14,7 +14,9 @@ use App\Enums\Passports\ProductPassportVersionStatus;
 use App\Enums\Passports\Readiness\PassportReadinessStatus;
 use App\Enums\Passports\Readiness\ReadinessRuleStatus;
 use App\Enums\Passports\Readiness\ReadinessSeverity;
+use App\Enums\Webhooks\WebhookEventType;
 use App\Events\Passports\ProductPassportPublished;
+use App\Exceptions\Passports\PublicationPostCommitException;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
@@ -24,13 +26,17 @@ use App\Models\Passports\ProductPassportVersion;
 use App\Models\Passports\PublicationIdempotencyRecord;
 use App\Models\User;
 use App\Services\Billing\EntitlementService;
+use App\Services\Catalog\ManagedProductGate;
 use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
+use App\Services\Dpp\DppDraftProfileSnapshot;
 use App\Services\Passports\CanonicalJsonEncoder;
 use App\Services\Passports\PassportSnapshotBuilder;
 use App\Services\Passports\PassportVersionNumberAllocator;
 use App\Services\Passports\Publication\PublicationAssetStager;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
+use App\Services\Storage\FileWriteCompensation;
+use App\Services\Webhooks\WebhookDeliveryService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +65,12 @@ class PublishProductPassport
         private readonly EntitlementService $entitlements,
     ) {}
 
+    /**
+     * Inside a caller-owned transaction, the result is provisional until its
+     * outermost commit. Post-commit failures propagate with the committed result.
+     *
+     * @throws PublicationPostCommitException
+     */
     public function handle(
         User $actor,
         Company $company,
@@ -68,6 +80,13 @@ class PublishProductPassport
         bool $acknowledgeWarnings = false,
         ?string $idempotencyKey = null,
     ): PublicationResult {
+        $company = $this->authorize($actor, $company);
+        if ((int) $product->company_id !== (int) $company->getKey()
+            || (int) $passport->company_id !== (int) $company->getKey()
+            || (int) $passport->product_id !== (int) $product->getKey()) {
+            throw new NotFoundHttpException;
+        }
+        $fingerprint = '';
         if ($idempotencyKey !== null) {
             $fingerprint = $this->computeFingerprint(
                 $company,
@@ -89,7 +108,28 @@ class PublishProductPassport
             }
         }
 
-        DB::beginTransaction();
+        $stagedPaths = [];
+        $promotedPaths = [];
+
+        $connection = DB::connection();
+        $initialTransactionLevel = $connection->transactionLevel();
+        $connection->beginTransaction();
+
+        app(FileWriteCompensation::class)->track(
+            function () use ($company, &$promotedPaths): bool {
+                return $this->hasCommittedAssets($company, $promotedPaths);
+            },
+            function () use (&$stagedPaths, &$promotedPaths): bool {
+                if (! $this->cleanupUnownedAssets($stagedPaths, $promotedPaths)) {
+                    return false;
+                }
+                $stagedPaths = [];
+                $promotedPaths = [];
+
+                return true;
+            },
+            ['operation' => 'passport_publication', 'company_id' => $company->getKey(), 'passport_uuid' => $passport->uuid],
+        );
 
         try {
             $freshCompany = $this->authorize($actor, $company);
@@ -107,6 +147,8 @@ class PublishProductPassport
                 ->whereKey($product->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            app(ManagedProductGate::class)->assertManaged($product);
 
             $draft = $passport->currentDraftVersion;
 
@@ -191,151 +233,207 @@ class PublishProductPassport
             $oldSchemaVersion = $draft->schema_version;
             $oldRevision = $draft->draft_revision;
 
+            // Legacy drafts created before language config moved into the
+            // payload get the current passport languages frozen into this
+            // snapshot (and the follow-up draft), keeping the published
+            // version immutable even if languages change later.
+            $oldPayload['languages'] ??= [
+                'default' => $passport->default_language ?? (string) config('passports.default_language', 'sv'),
+                'enabled' => array_values($passport->enabled_languages ?? [$passport->default_language ?? (string) config('passports.default_language', 'sv')]),
+            ];
+
             $versionNumber = $this->versionNumberAllocator->allocate($passport);
             $versionUuid = $draft->uuid;
 
-            $snapshot = $this->snapshotBuilder->build($oldPayload, $product);
+            $publicationPayload = $oldPayload;
+            $checkedDocuments = collect($readinessContext->referencedDocuments)->keyBy('uuid');
+            foreach ($publicationPayload['document_references'] ?? [] as $index => $reference) {
+                $checkedVersion = ($checkedDocuments[$reference['document_uuid']] ?? null)?->currentVersion;
+                if ($checkedVersion === null) {
+                    throw ValidationException::withMessages(['documents' => 'A referenced document has no checked publication version.']);
+                }
+                $publicationPayload['document_references'][$index]['document_version_uuid'] = $checkedVersion->uuid;
+            }
+            $snapshot = $this->snapshotBuilder->build($publicationPayload, $product);
 
             $assetManifest = $this->extractAssetManifest($snapshot, $passport, $versionUuid);
 
-            $stagedPaths = [];
             if ($assetManifest !== []) {
                 $stagedPaths = $this->assetStager->stageAssets($passport, $versionUuid, $assetManifest);
                 $passport->refresh();
             }
 
-            $promotedPaths = [];
-            try {
-                if ($stagedPaths !== []) {
-                    $promotedPaths = $this->assetStager->promoteAssets($stagedPaths, $versionUuid);
-                }
-
-                $assetUuidMap = $this->createImmutableAssetRecords(
-                    $passport,
-                    $draft,
-                    $freshCompany,
-                    $snapshot,
-                    $promotedPaths,
-                );
-                $this->markDocumentVersionsPublished($snapshot);
-
-                $snapshot = $this->updateSnapshotAssets($snapshot, $assetUuidMap);
-
-                $checksum = $this->canonicalJsonEncoder->hash($snapshot);
-
-                $draft->setAttribute('status', ProductPassportVersionStatus::Published);
-                $draft->setAttribute('version_number', $versionNumber);
-                $draft->setAttribute('payload', $snapshot);
-                $draft->setAttribute('content_checksum', $checksum);
-                $draft->setAttribute('readiness_profile', $readinessResult->profile);
-                $draft->setAttribute('readiness_profile_version', $readinessResult->profileVersion);
-                $draft->setAttribute('readiness_rule_set_fingerprint', $readinessResult->ruleSetFingerprint);
-                $draft->setAttribute('validation_run_id', $validationRun->getKey());
-                $draft->setAttribute('readiness_evidence', $readinessEvidence);
-                $draft->setAttribute('published_at', now());
-                $draft->setAttribute('published_by', $actor->getKey());
-                $draft->save();
-
-                $publishedVersion = $draft;
-
-                $previousPublished = ProductPassportVersion::query()
-                    ->where('passport_id', $passport->getKey())
-                    ->where('status', ProductPassportVersionStatus::Published->value)
-                    ->whereKeyNot($publishedVersion->getKey())
-                    ->first();
-
-                if ($previousPublished !== null) {
-                    $previousPublished->setAttribute('status', ProductPassportVersionStatus::Superseded);
-                    $previousPublished->setAttribute('superseded_at', now());
-                    $previousPublished->save();
-                }
-
-                $newDraft = new ProductPassportVersion;
-                $newDraft->setAttribute('company_id', $freshCompany->getKey());
-                $newDraft->setAttribute('passport_id', $passport->getKey());
-                $newDraft->setAttribute('status', ProductPassportVersionStatus::Draft);
-                $newDraft->setAttribute('draft_revision', $oldRevision + 1);
-                $newDraft->setAttribute('schema_version', $oldSchemaVersion);
-                $newDraft->setAttribute('payload', $oldPayload);
-                $activeProfile = $this->profileResolver->resolve($product);
-                $newDraft->setAttribute('readiness_profile', $activeProfile->code);
-                $newDraft->setAttribute('readiness_profile_version', $activeProfile->version);
-                $newDraft->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);
-                $newDraft->setAttribute('created_by', $actor->getKey());
-                $newDraft->save();
-
-                $wasPublishedBefore = $passport->isPublished();
-
-                $passport->setAttribute('current_published_version_id', $publishedVersion->getKey());
-                $passport->setAttribute('current_draft_version_id', $newDraft->getKey());
-                $passport->setAttribute('status', ProductPassportStatus::Published);
-
-                if (! $wasPublishedBefore) {
-                    $passport->setAttribute('first_published_at', now());
-                }
-
-                $passport->setAttribute('last_published_at', now());
-                $passport->setAttribute('updated_by', $actor->getKey());
-                $passport->save();
-
-                $this->auditLogger->logTenant(
-                    $freshCompany,
-                    AuditEvent::PassportPublished,
-                    $actor,
-                    $passport,
-                    [
-                        'product_uuid' => $product->getAttribute('uuid'),
-                        'passport_uuid' => $passport->getAttribute('uuid'),
-                        'published_version_uuid' => $publishedVersion->getAttribute('uuid'),
-                        'new_draft_version_uuid' => $newDraft->getAttribute('uuid'),
-                        'version_number' => $versionNumber,
-                        'draft_revision_before' => $oldRevision,
-                        'draft_revision_after' => $oldRevision + 1,
-                        'immutable_assets_count' => count($assetUuidMap),
-                    ],
-                );
-
-                if ($idempotencyKey !== null) {
-                    $this->completeIdempotencyRecord(
-                        $company,
-                        $idempotencyKey,
-                        $publishedVersion,
-                    );
-                }
-
-                DB::commit();
-
-                $passport->loadMissing(['currentDraftVersion', 'currentPublishedVersion']);
-
-                event(new ProductPassportPublished($passport, $publishedVersion, $actor));
-
-                $result = new PublicationResult(
-                    passport: $passport,
-                    publishedVersion: $publishedVersion,
-                    newDraftVersion: $newDraft,
-                    readinessResult: $readinessResult,
-                );
-
-                if ($idempotencyKey !== null) {
-                    $this->cacheIdempotencyResult(
-                        $idempotencyKey,
-                        $passport,
-                        $publishedVersion,
-                        $newDraft,
-                        $expectedRevision,
-                        $fingerprint,
-                    );
-                }
-
-                return $result;
-            } catch (\Throwable $e) {
-                $this->assetStager->cleanupStaging($stagedPaths);
-                throw $e;
+            if ($stagedPaths !== []) {
+                $promotedPaths = $this->assetStager->promoteAssets($stagedPaths, $versionUuid);
             }
+
+            $assetUuidMap = $this->createImmutableAssetRecords(
+                $passport,
+                $draft,
+                $freshCompany,
+                $snapshot,
+                $promotedPaths,
+            );
+            $this->markDocumentVersionsPublished($snapshot);
+
+            $snapshot = $this->updateSnapshotAssets($snapshot, $assetUuidMap);
+
+            $checksum = $this->canonicalJsonEncoder->hash($snapshot);
+
+            $draft->setAttribute('status', ProductPassportVersionStatus::Published);
+            $draft->setAttribute('version_number', $versionNumber);
+            $draft->setAttribute('payload', $snapshot);
+            $draft->setAttribute('content_checksum', $checksum);
+            $draft->setAttribute('readiness_profile', $readinessResult->profile);
+            $draft->setAttribute('readiness_profile_version', $readinessResult->profileVersion);
+            $draft->setAttribute('readiness_rule_set_fingerprint', $readinessResult->ruleSetFingerprint);
+            $draft->setAttribute('validation_run_id', $validationRun->getKey());
+            $draft->setAttribute('readiness_evidence', $readinessEvidence);
+            $draft->setAttribute('published_at', now());
+            $draft->setAttribute('published_by', $actor->getKey());
+            $draft->save();
+
+            $publishedVersion = $draft;
+
+            $previousPublished = ProductPassportVersion::query()
+                ->where('passport_id', $passport->getKey())
+                ->where('status', ProductPassportVersionStatus::Published->value)
+                ->whereKeyNot($publishedVersion->getKey())
+                ->first();
+
+            if ($previousPublished !== null) {
+                $previousPublished->setAttribute('status', ProductPassportVersionStatus::Superseded);
+                $previousPublished->setAttribute('superseded_at', now());
+                $previousPublished->save();
+            }
+
+            $newDraft = new ProductPassportVersion;
+            $newDraft->setAttribute('company_id', $freshCompany->getKey());
+            $newDraft->setAttribute('passport_id', $passport->getKey());
+            $newDraft->setAttribute('status', ProductPassportVersionStatus::Draft);
+            $newDraft->setAttribute('draft_revision', $oldRevision + 1);
+            $newDraft->setAttribute('schema_version', $oldSchemaVersion);
+            $newDraft->setAttribute('payload', $oldPayload);
+            $activeProfile = $this->profileResolver->resolve($product);
+            $newDraft->setAttribute('readiness_profile', $activeProfile->code);
+            $newDraft->setAttribute('readiness_profile_version', $activeProfile->version);
+            $newDraft->setAttribute('readiness_rule_set_fingerprint', $activeProfile->fingerprint);
+            $newDraft->setAttribute('readiness_profile_snapshot', app(DppDraftProfileSnapshot::class)->capture($product, $activeProfile));
+            $newDraft->setAttribute('created_by', $actor->getKey());
+            $newDraft->save();
+
+            $wasPublishedBefore = $passport->isPublished();
+
+            $passport->setAttribute('current_published_version_id', $publishedVersion->getKey());
+            $passport->setAttribute('current_draft_version_id', $newDraft->getKey());
+            $passport->setAttribute('status', ProductPassportStatus::Published);
+
+            if (! $wasPublishedBefore) {
+                $passport->setAttribute('first_published_at', now());
+            }
+
+            $passport->setAttribute('last_published_at', now());
+            $passport->setAttribute('updated_by', $actor->getKey());
+            $passport->save();
+
+            $this->auditLogger->logTenant(
+                $freshCompany,
+                AuditEvent::PassportPublished,
+                $actor,
+                $passport,
+                [
+                    'product_uuid' => $product->getAttribute('uuid'),
+                    'passport_uuid' => $passport->getAttribute('uuid'),
+                    'published_version_uuid' => $publishedVersion->getAttribute('uuid'),
+                    'new_draft_version_uuid' => $newDraft->getAttribute('uuid'),
+                    'version_number' => $versionNumber,
+                    'draft_revision_before' => $oldRevision,
+                    'draft_revision_after' => $oldRevision + 1,
+                    'immutable_assets_count' => count($assetUuidMap),
+                ],
+            );
+
+            app(WebhookDeliveryService::class)->enqueue($freshCompany,
+                WebhookEventType::PassportPublished,
+                ['passport_uuid' => $passport->uuid, 'published_version_uuid' => $publishedVersion->uuid, 'version_number' => $versionNumber],
+                'product_passport', $passport->uuid);
+
+            if ($idempotencyKey !== null) {
+                $this->completeIdempotencyRecord(
+                    $company,
+                    $idempotencyKey,
+                    $publishedVersion,
+                );
+            }
+
+            $result = new PublicationResult(
+                passport: $passport,
+                publishedVersion: $publishedVersion,
+                newDraftVersion: $newDraft,
+                readinessResult: $readinessResult,
+            );
+
+            $connection->afterCommit(function () use ($result, $actor, $idempotencyKey, $expectedRevision, $fingerprint): void {
+                $step = 'relations';
+                try {
+                    $result->passport->loadMissing(['currentDraftVersion', 'currentPublishedVersion']);
+
+                    $step = 'event';
+                    event(new ProductPassportPublished($result->passport, $result->publishedVersion, $actor));
+
+                    if ($idempotencyKey !== null) {
+                        $step = 'cache';
+                        $this->cacheIdempotencyResult(
+                            $idempotencyKey,
+                            $result->passport,
+                            $result->publishedVersion,
+                            $result->newDraftVersion,
+                            $expectedRevision,
+                            $fingerprint,
+                        );
+                    }
+                } catch (\Throwable $exception) {
+                    throw new PublicationPostCommitException($result, $step, $exception);
+                }
+            });
+
+            $connection->commit();
+
+            return $result;
         } catch (\Throwable $e) {
-            DB::rollBack();
+            // Commit callbacks can throw after PDO has committed. Only roll back
+            // a transaction/savepoint still owned by this call; never its caller.
+            if ($connection->transactionLevel() > $initialTransactionLevel) {
+                $connection->rollBack($initialTransactionLevel);
+            }
             throw $e;
         }
+    }
+
+    /** @param array<string, array{path: string, checksum: string}> $promoted */
+    private function hasCommittedAssets(Company $company, array $promoted): bool
+    {
+        return $promoted !== [] && ProductPassportAsset::query()
+            ->where('company_id', $company->getKey())
+            ->whereIn('storage_key', array_column($promoted, 'path'))
+            ->sharedLock()->exists();
+    }
+
+    /**
+     * @param  array<string, array{path: string, checksum: string}>  $staged
+     * @param  array<string, array{path: string, checksum: string}>  $promoted
+     */
+    private function cleanupUnownedAssets(array $staged, array $promoted): bool
+    {
+        $this->assetStager->cleanupStaging($staged);
+        $this->assetStager->cleanupPromoted($promoted);
+        foreach (array_merge($staged, $promoted) as $data) {
+            if (Storage::disk('passport_assets')->exists($data['path'])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -351,13 +449,11 @@ class PublishProductPassport
             $storagePath = $mediaItem['storage_path'] ?? '';
 
             if ($storagePath === '') {
-                continue;
+                throw new \RuntimeException('A source media storage path is missing at publish time.');
             }
 
             if (! Storage::disk('catalog_media')->exists($storagePath)) {
-                report(new \RuntimeException("Source media file missing at publish time: {$storagePath}"));
-
-                continue;
+                throw new \RuntimeException('A source media file is missing at publish time.');
             }
 
             $manifest[] = [
@@ -372,13 +468,11 @@ class PublishProductPassport
             $storageKey = $docItem['storage_key'] ?? '';
 
             if ($storageKey === '') {
-                continue;
+                throw new \RuntimeException('A source document storage path is missing at publish time.');
             }
 
             if (! Storage::disk('product_documents')->exists($storageKey)) {
-                report(new \RuntimeException("Source document file missing at publish time: {$storageKey}"));
-
-                continue;
+                throw new \RuntimeException('A source document file is missing at publish time.');
             }
 
             $manifest[] = [
@@ -411,7 +505,7 @@ class PublishProductPassport
             $promoted = $promotedPaths[$sourceUuid] ?? null;
 
             if ($promoted === null) {
-                continue;
+                throw new \RuntimeException('A publication media asset was not promoted.');
             }
 
             $immutableUuid = (string) str()->uuid();
@@ -444,7 +538,7 @@ class PublishProductPassport
             $promoted = $promotedPaths[$sourceUuid] ?? null;
 
             if ($promoted === null) {
-                continue;
+                throw new \RuntimeException('A publication document asset was not promoted.');
             }
 
             $immutableUuid = (string) str()->uuid();
@@ -561,7 +655,7 @@ class PublishProductPassport
         string $fingerprint,
         int $expectedRevision,
     ): ?PublicationResult {
-        $cacheKey = "passport_publish:{$idempotencyKey}";
+        $cacheKey = "passport_publish:{$company->getKey()}:{$idempotencyKey}";
         $cached = Cache::get($cacheKey);
 
         if ($cached !== null) {
@@ -578,6 +672,8 @@ class PublishProductPassport
             }
 
             $publishedVersion = ProductPassportVersion::query()
+                ->forCompany($company)
+                ->where('passport_id', $passport->getKey())
                 ->where('uuid', $cached['published_version_uuid'])
                 ->first();
 
@@ -617,6 +713,8 @@ class PublishProductPassport
 
         if ($existing->isCompleted()) {
             $publishedVersion = ProductPassportVersion::query()
+                ->forCompany($company)
+                ->where('passport_id', $passport->getKey())
                 ->where('id', $existing->published_version_id)
                 ->first();
 
@@ -722,7 +820,7 @@ class PublishProductPassport
         int $expectedRevision,
         string $fingerprint,
     ): void {
-        Cache::put("passport_publish:{$idempotencyKey}", [
+        Cache::put("passport_publish:{$passport->company_id}:{$idempotencyKey}", [
             'published_version_uuid' => $publishedVersion->uuid,
             'new_draft_version_uuid' => $newDraft->uuid,
             'passport_uuid' => $passport->uuid,

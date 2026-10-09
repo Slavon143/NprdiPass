@@ -7,8 +7,10 @@ use App\Data\Passports\DppSectionDefinition;
 use App\Enums\Documents\ProductDocumentType;
 use App\Enums\Passports\DppFieldType;
 use App\Models\Catalog\ProductDocument;
+use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
+use App\Services\Dpp\DppRegulatoryContext;
 use Illuminate\Validation\ValidationException;
 
 class DppPayloadValidator
@@ -34,13 +36,20 @@ class DppPayloadValidator
      *
      * @throws ValidationException
      */
-    public function validateFullPayload(array $payload, Company $company, ?ProductPassport $passport = null): array
+    public function validateFullPayload(array $payload, Company $company, ?ProductPassport $passport = null, ?array $documentBatch = null): array
     {
         $errors = [];
 
         $this->validateTopLevelStructure($payload, $errors);
+        if (array_key_exists('regulatory_context', $payload)) {
+            try {
+                app(DppRegulatoryContext::class)->validate($payload['regulatory_context']);
+            } catch (ValidationException $exception) {
+                $errors = array_merge($errors, $exception->errors());
+            }
+        }
         $this->validateEnabledSections($payload, $errors);
-        $this->validateDocumentReferences($payload['document_references'] ?? [], $company, $passport, $errors);
+        $this->validateDocumentReferences($payload['document_references'] ?? [], $company, $passport, $errors, $documentBatch);
 
         if ($passport !== null && isset($payload['translations'])) {
             $this->validateTranslations(
@@ -99,7 +108,7 @@ class DppPayloadValidator
      */
     private function validateTopLevelStructure(array $rawPayload, array &$errors): void
     {
-        $allowedTopLevelKeys = ['enabled_sections', 'data', 'translations', 'document_references'];
+        $allowedTopLevelKeys = ['enabled_sections', 'data', 'translations', 'document_references', 'languages', 'regulatory_context'];
 
         foreach (array_keys($rawPayload) as $key) {
             if (! in_array($key, $allowedTopLevelKeys, true)) {
@@ -109,6 +118,10 @@ class DppPayloadValidator
 
         if (isset($rawPayload['enabled_sections']) && ! is_array($rawPayload['enabled_sections'])) {
             $errors['enabled_sections'][] = 'enabled_sections must be an array.';
+        }
+
+        if (array_key_exists('languages', $rawPayload)) {
+            $this->validateLanguages($rawPayload['languages'], $errors);
         }
 
         if (isset($rawPayload['data'])) {
@@ -180,10 +193,49 @@ class DppPayloadValidator
     }
 
     /**
+     * @param  array<string, string[]>  $errors
+     */
+    private function validateLanguages(mixed $languages, array &$errors): void
+    {
+        if ($languages === null) {
+            return;
+        }
+
+        if (! is_array($languages)) {
+            $errors['languages'][] = 'languages must be an object or null.';
+
+            return;
+        }
+
+        $default = $languages['default'] ?? null;
+        $enabled = $languages['enabled'] ?? null;
+
+        if ($default !== null && (! is_string($default) || ! $this->isValidLocale($default))) {
+            $errors['languages'][] = 'languages.default must be a two-letter locale code.';
+        }
+
+        if (! is_array($enabled)) {
+            $errors['languages'][] = 'languages.enabled must be an array of locale codes.';
+
+            return;
+        }
+
+        foreach ($enabled as $index => $locale) {
+            if (! is_string($locale) || ! $this->isValidLocale($locale)) {
+                $errors['languages'][] = "languages.enabled item at index {$index} must be a two-letter locale code.";
+            }
+        }
+
+        if ($default !== null && ! in_array($default, $enabled, true)) {
+            $errors['languages'][] = 'languages.default must be present in languages.enabled.';
+        }
+    }
+
+    /**
      * @param  array<int, mixed>  $refs
      * @param  array<string, string[]>  $errors
      */
-    private function validateDocumentReferences(array $refs, Company $company, ?ProductPassport $passport, array &$errors): void
+    private function validateDocumentReferences(array $refs, Company $company, ?ProductPassport $passport, array &$errors, ?array $documentBatch = null): void
     {
         if (count($refs) > 100) {
             $errors['document_references'][] = 'Maximum 100 document references allowed.';
@@ -229,7 +281,21 @@ class DppPayloadValidator
             }
 
             if ($passport !== null) {
-                $this->validateDocumentBelongsToProduct($uuid, $company, $passport, $index, $errors);
+                $this->validateDocumentBelongsToProduct($uuid, $company, $passport, $index, $errors, $documentBatch);
+                $versionUuid = $ref['document_version_uuid'] ?? null;
+                $document = $documentBatch[$uuid] ?? null;
+                $versionExists = $documentBatch !== null
+                    ? $document !== null && (int) $document->company_id === (int) $company->getKey()
+                        && (int) $document->product_id === (int) $passport->product_id
+                        && $document->getRelation('readinessVersions')->contains(fn ($version) => $version->uuid === $versionUuid && (int) $version->company_id === (int) $company->getKey()
+                            && (int) $version->document_id === (int) $document->getKey())
+                    : ($versionUuid === null || (is_string($versionUuid) && ProductDocumentVersion::query()
+                        ->where('company_id', $company->getKey())->where('uuid', $versionUuid)
+                        ->whereHas('document', fn ($query) => $query->where('company_id', $company->getKey())
+                            ->where('product_id', $passport->product_id)->where('uuid', $uuid))->exists()));
+                if ($versionUuid !== null && (! is_string($versionUuid) || ! $versionExists)) {
+                    $errors['document_references'][] = "Document version does not belong to the referenced document at index {$index}.";
+                }
             }
         }
     }
@@ -237,14 +303,14 @@ class DppPayloadValidator
     /**
      * @param  array<string, string[]>  $errors
      */
-    private function validateDocumentBelongsToProduct(string $uuid, Company $company, ProductPassport $passport, int $index, array &$errors): void
+    private function validateDocumentBelongsToProduct(string $uuid, Company $company, ProductPassport $passport, int $index, array &$errors, ?array $documentBatch = null): void
     {
-        $document = ProductDocument::query()
+        $document = $documentBatch !== null ? ($documentBatch[$uuid] ?? null) : ProductDocument::query()
             ->where('uuid', $uuid)
             ->forCompany($company)
             ->first();
 
-        if ($document === null) {
+        if ($document === null || (int) $document->company_id !== (int) $company->getKey()) {
             $errors['document_references'][] = "Document '{$uuid}' not found at index {$index}.";
 
             return;

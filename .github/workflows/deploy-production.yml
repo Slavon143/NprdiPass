@@ -35,57 +35,57 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.release_run_id }}
 
-      - name: Verify artifact checksum
-        run: |
-          cd artifact
-          sha256sum -c nordipass-release.tar.gz.sha256
+      - name: Verify executable release
+        run: python3 deploy/scripts/release_artifact.py verify --artifact artifact/nordipass-release.tar.gz --checksum-file artifact/nordipass-release.tar.gz.sha256
 
       - name: Verify SSH host
+        env:
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
         run: |
+          umask 077
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_HOST_KEY }}" > ~/.ssh/known_hosts
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
 
       - name: Deploy via SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PAUSE_WRITERS: ${{ vars.DEPLOY_PAUSE_WRITERS }}
+          DEPLOY_VERIFY_WRITERS_STOPPED: ${{ vars.DEPLOY_VERIFY_WRITERS_STOPPED }}
+          DEPLOY_RESUME_WRITERS: ${{ vars.DEPLOY_RESUME_WRITERS }}
+          DEPLOY_VERIFY_BACKUP: ${{ vars.DEPLOY_VERIFY_BACKUP }}
         run: |
-          export DEPLOY_HOST="${{ secrets.DEPLOY_HOST }}"
-          export DEPLOY_PORT="${{ secrets.DEPLOY_PORT }}"
-          export DEPLOY_USER="${{ secrets.DEPLOY_USER }}"
-          export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-          export DEPLOY_HEALTH_URL="${{ secrets.DEPLOY_HEALTH_URL }}"
-
+          set -Eeuo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$DEPLOY_USER" =~ ^[a-zA-Z0-9._-]+$ ]]
+          [[ "${DEPLOY_PORT:-22}" =~ ^[0-9]{1,5}$ ]]
+          PORT=$((10#${DEPLOY_PORT:-22}))
+          (( PORT >= 1 && PORT <= 65535 ))
+          for path in "$DEPLOY_PATH" "$DEPLOY_PAUSE_WRITERS" "$DEPLOY_VERIFY_WRITERS_STOPPED" "$DEPLOY_RESUME_WRITERS" "$DEPLOY_VERIFY_BACKUP"; do
+            [[ "$path" =~ ^/[a-zA-Z0-9_./-]+$ && "$path" != / ]]
+          done
+          [[ "$DEPLOY_HEALTH_URL" =~ ^https?:// && "$DEPLOY_HEALTH_URL" != *[[:space:]]* ]]
           umask 077
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > deploy_key
-
-          ssh -i deploy_key \
-            -o StrictHostKeyChecking=yes \
-            -p "${DEPLOY_PORT:-22}" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "mkdir -p '${DEPLOY_PATH}/deploy/scripts'"
-
-          scp -i deploy_key \
-            -o StrictHostKeyChecking=yes \
-            -P "${DEPLOY_PORT:-22}" \
-            artifact/nordipass-release.tar.gz \
-            artifact/nordipass-release.tar.gz.sha256 \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
-
-          scp -i deploy_key \
-            -o StrictHostKeyChecking=yes \
-            -P "${DEPLOY_PORT:-22}" \
-            deploy/scripts/deploy.sh \
-            deploy/scripts/rollback.sh \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/scripts/"
-
-          ssh -i deploy_key \
-            -o StrictHostKeyChecking=yes \
-            -p "${DEPLOY_PORT:-22}" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "cd ${DEPLOY_PATH} && bash deploy/scripts/deploy.sh \
-              --release-id=$(date -u +%Y%m%d-%H%M%S)-${{ github.sha }} \
-              --artifact=nordipass-release.tar.gz \
-              --checksum-file=nordipass-release.tar.gz.sha256 \
-              --app-root=${DEPLOY_PATH} \
-              --health-url=${DEPLOY_HEALTH_URL}"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > deploy_key
+          trap 'rm -f deploy_key' EXIT
+          RELEASE_COMMIT=$(python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["commit"])' < <(python3 deploy/scripts/release_artifact.py verify --artifact artifact/nordipass-release.tar.gz --checksum-file artifact/nordipass-release.tar.gz.sha256))
+          RELEASE_ID="$(date -u +%Y%m%d-%H%M%S)-$RELEASE_COMMIT"
+          ssh -i deploy_key -o StrictHostKeyChecking=yes -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/deploy/scripts'"
+          scp -i deploy_key -o StrictHostKeyChecking=yes -P "${DEPLOY_PORT:-22}" \
+            artifact/nordipass-release.tar.gz artifact/nordipass-release.tar.gz.sha256 "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+          scp -i deploy_key -o StrictHostKeyChecking=yes -P "${DEPLOY_PORT:-22}" \
+            deploy/scripts/deploy.sh deploy/scripts/rollback.sh deploy/scripts/release-common.sh deploy/scripts/release_artifact.py \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/deploy/scripts/"
+          printf -v REMOTE_COMMAND '%q ' bash "$DEPLOY_PATH/deploy/scripts/deploy.sh" \
+            --release-id "$RELEASE_ID" --artifact "$DEPLOY_PATH/nordipass-release.tar.gz" \
+            --checksum-file "$DEPLOY_PATH/nordipass-release.tar.gz.sha256" --app-root "$DEPLOY_PATH" \
+            --health-url "$DEPLOY_HEALTH_URL" --pause-writers "$DEPLOY_PAUSE_WRITERS" \
+            --verify-writers-stopped "$DEPLOY_VERIFY_WRITERS_STOPPED" --resume-writers "$DEPLOY_RESUME_WRITERS" \
+            --verify-backup "$DEPLOY_VERIFY_BACKUP"
+          ssh -i deploy_key -o StrictHostKeyChecking=yes -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "$REMOTE_COMMAND"
         shell: bash
 
       - name: Cleanup deploy key

@@ -239,11 +239,13 @@ class PassportEditorUxTest extends TestCase
 
     public function test_viewer_sees_read_only_editor_without_controls(): void
     {
+        config(['security.csp_enabled' => true]);
+
         $this->actor->memberships()
             ->where('company_id', $this->company->getKey())
             ->update(['role' => CompanyRole::Viewer->value]);
 
-        $this->get(route('catalog.products.passport.edit', [
+        $response = $this->get(route('catalog.products.passport.edit', [
             'product' => $this->product->uuid,
             'section' => DppSectionKey::Safety->value,
         ]))
@@ -251,5 +253,16 @@ class PassportEditorUxTest extends TestCase
             ->assertSee('Read-only')
             ->assertDontSee('Save changes')
             ->assertDontSee('Enable section');
+
+        preg_match("/'nonce-([^']+)'/", (string) $response->headers->get('Content-Security-Policy'), $nonce);
+        preg_match_all('/<script\\b([^>]*)>/', $response->getContent(), $scripts);
+        $this->assertCount(2, $nonce);
+        foreach ($scripts[1] as $attributes) {
+            if (! str_contains($attributes, 'src=')) {
+                $this->assertStringContainsString('nonce="'.$nonce[1].'"', $attributes);
+            }
+        }
+        $response->assertSee('x-data="passportSection"', false)
+            ->assertSee('window.passportSection = function', false);
     }
 }

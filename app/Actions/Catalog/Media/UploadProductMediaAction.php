@@ -12,10 +12,12 @@ use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\Media\CatalogMediaStorage;
+use App\Services\Catalog\Media\MediaStorageFence;
+use App\Services\Storage\FileWriteCompensation;
+use App\Services\Storage\StorageQuotaAdmission;
 use App\Support\Catalog\Media\ImageUploadValidator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -38,9 +40,20 @@ class UploadProductMediaAction extends MediaAction
         $image = $this->validator->validate($file);
         $uuid = (string) Str::uuid();
         $path = $this->storage->path($company, $product, null, $uuid, $image->extension);
-        $this->storage->put($path, $image);
+        $lease = app(MediaStorageFence::class)->writer($this->storage->diskName());
+        $quota = app(StorageQuotaAdmission::class);
+        $reservation = $quota->reserve($company, $this->storage->diskName(), $path, $image->sizeBytes, $uuid);
+        $cleanup = app(FileWriteCompensation::class)->track(
+            fn (): bool => ProductMedia::withTrashed()->where('company_id', $company->getKey())
+                ->where('uuid', $uuid)->sharedLock()->exists(),
+            fn (): bool => $quota->compensate($company, $reservation, fn (): bool => $this->storage->delete($path)),
+            ['company_uuid' => $company->uuid, 'media_uuid' => $uuid, 'operation' => 'media_upload'],
+        );
 
         try {
+            $this->storage->put($path, $image);
+            $quota->written($company, $reservation);
+
             return DB::transaction(function () use ($actor, $company, $product, $image, $uuid, $path, $altText, $caption, $makePrimary, $sortOrder): ProductMedia {
                 $company = $this->authorize($actor, $company);
                 $product = Product::query()->forCompany($company)->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
@@ -76,13 +89,12 @@ class UploadProductMediaAction extends MediaAction
                 return $media;
             });
         } catch (Throwable $exception) {
-            try {
-                $this->storage->delete($path);
-            } catch (Throwable) {
-                Log::warning('Catalog media upload compensation failed.', ['company_uuid' => $company->uuid, 'product_uuid' => $product->uuid, 'media_uuid' => $uuid, 'operation' => 'upload_compensation', 'error_code' => 'delete_failed']);
-            }
-
+            $cleanup();
             throw $exception;
+        } finally {
+            if (DB::transactionLevel() === 0) {
+                $lease?->release();
+            }
         }
     }
 }

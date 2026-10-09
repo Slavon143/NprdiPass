@@ -5,6 +5,8 @@ namespace App\Data\Passports\Readiness;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Company;
+use App\Models\DppProfile;
+use App\Models\DppRequirement;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use Carbon\CarbonImmutable;
@@ -14,8 +16,10 @@ readonly class ReadinessEvaluationContext
     /**
      * @param  array<string, mixed>  $normalizedPayload
      * @param  array<int, ProductDocument>  $referencedDocuments
-     * @param  array<int, bool>  $storageExistenceResults
+     * @param  array<string, bool>  $storageExistenceResults
      * @param  array<string, mixed>  $config
+     * @param  array<int, DppProfile>  $dppProfiles
+     * @param  array<int, DppRequirement>  $effectiveRequirements
      */
     public function __construct(
         public Company $company,
@@ -28,6 +32,9 @@ readonly class ReadinessEvaluationContext
         public CarbonImmutable $evaluationDate,
         public ?ReadinessProfileDefinition $readinessProfile = null,
         public array $config = [],
+        public array $dppProfiles = [],
+        public array $effectiveRequirements = [],
+        public array $publicationProfileCheck = [],
     ) {}
 
     /** @return array<string, mixed> */

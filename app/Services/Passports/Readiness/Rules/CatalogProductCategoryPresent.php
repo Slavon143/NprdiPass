@@ -29,7 +29,8 @@ class CatalogProductCategoryPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $hasCategories = $context->product->categories()->count() > 0;
+        $hasCategories = $context->product->relationLoaded('categories')
+            ? $context->product->categories->isNotEmpty() : $context->product->categories()->exists();
 
         return new ReadinessRuleResult(
             code: $this->code(),

@@ -1,6 +1,6 @@
 # NordiPass
 
-NordiPass is a Laravel application for product catalogues and Digital Product Passports. **R3.16 SECURITY AND PRIVACY HARDENING IS IMPLEMENTED.** The current baseline includes tenant-aware catalogues, versioned Passport readiness, advanced DPP sections, document compliance workflows, immutable publication evidence, public Passport rendering, production import/export, the Fortnox integration foundation, Stripe billing with webhook inbox, analytics, QR label management, outbound webhooks with signed delivery logs, platform operations, and GDPR export/erasure workflows with CSP enforcement. Production promotion still requires environment-specific Stripe sandbox verification, staging, backup/restore, and deployment approvals described in the release gates.
+NordiPass is a Laravel application for product catalogues and Digital Product Passports. **R3 FINAL ACCEPTANCE VERIFICATION IS COMPLETE: `R3_ACCEPTED`.** The current baseline includes tenant-aware catalogues, versioned Passport readiness, advanced DPP sections, document compliance workflows, immutable publication evidence, public Passport rendering, production import/export, the Fortnox integration foundation, Stripe billing with webhook inbox, analytics, QR label management, outbound webhooks with signed delivery logs, platform operations, GDPR export/erasure workflows with CSP enforcement, PII-safe observability with SLO snapshots, and guided Public Beta onboarding with isolated sample data, entitlement-aware steps, help content, and support recovery paths. Production promotion still requires environment-specific Stripe sandbox verification, staging, backup/restore, and deployment approvals described in the release gates.
 
 ## Current R3 Documents
 
@@ -18,6 +18,12 @@ NordiPass is a Laravel application for product catalogues and Digital Product Pa
 - [R3.16 Security Runbooks](docs/security/runbooks/INCIDENT_RESPONSE.md)
 - [R3.16 Permission Matrix Review](docs/architecture/R3_PERMISSION_MATRIX.md)
 - [R3.16 Security Test Evidence](docs/testing/R3_16_SECURITY_TEST_EVIDENCE.md)
+- [R3.17 Performance and Observability](docs/releases/R3_17_PERFORMANCE_AND_OBSERVABILITY.md)
+- [R3.17 Performance and Observability Evidence](docs/testing/R3_17_PERFORMANCE_OBSERVABILITY_EVIDENCE.md)
+- [R3.18 Public Beta Onboarding](docs/releases/R3_18_PUBLIC_BETA_ONBOARDING.md)
+- [R3.18 Public Beta Onboarding Evidence](docs/testing/R3_18_PUBLIC_BETA_ONBOARDING_EVIDENCE.md)
+- [R3.19 Final Acceptance](docs/releases/R3_19_FINAL_ACCEPTANCE.md)
+- [R3.19 Final Acceptance Evidence](docs/testing/R3_19_FINAL_ACCEPTANCE_EVIDENCE.md)
 - [R3.7 Fortnox Test Evidence](docs/testing/R3_7_FORTNOX_TEST_EVIDENCE.md)
 - [R3.4.1 Release Hardening](docs/releases/R3_4_1_RELEASE_HARDENING.md)
 - [Readiness Editor Audit](docs/testing/R3_4_1_READINESS_EDITOR_AUDIT.md)

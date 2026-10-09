@@ -7,10 +7,12 @@ use App\Domain\Companies\Exceptions\LastCompanyOwnerCannotBeRemoved;
 use App\Enums\AuditEvent;
 use App\Enums\CompanyRole;
 use App\Enums\UserStatus;
+use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AccountErasureService
 {
@@ -31,7 +33,23 @@ class AccountErasureService
     public function erase(User $user): void
     {
         DB::transaction(function () use ($user): void {
-            $this->assertNotLastOwner($user);
+            // Discover without child locks, then follow the tenant -> User ->
+            // membership order used by mutation authorization. A current read
+            // below rejects tenants added behind an older transaction snapshot.
+            $companyIds = CompanyMembership::query()->where('user_id', $user->getKey())
+                ->orderBy('company_id')->pluck('company_id')->all();
+            foreach ($companyIds as $companyId) {
+                Company::query()->whereKey($companyId)->lockForUpdate()->firstOrFail();
+            }
+            $user = User::withTrashed()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+            $memberships = CompanyMembership::query()->where('user_id', $user->getKey())
+                ->orderBy('company_id')->lockForUpdate()->get();
+            if (array_diff($memberships->pluck('company_id')->all(), $companyIds) !== []) {
+                throw ValidationException::withMessages([
+                    'password' => 'Your company memberships changed. Try deleting your account again.',
+                ]);
+            }
+            $this->assertNotLastOwner($user, $memberships->where('role', CompanyRole::Owner)->pluck('company_id')->all());
 
             // Revoke all API tokens issued to the user.
             $user->tokens()->get()->each->delete();
@@ -60,13 +78,9 @@ class AccountErasureService
         });
     }
 
-    private function assertNotLastOwner(User $user): void
+    /** @param list<int> $ownedCompanyIds */
+    private function assertNotLastOwner(User $user, array $ownedCompanyIds): void
     {
-        $ownedCompanyIds = CompanyMembership::query()
-            ->where('user_id', $user->getKey())
-            ->where('role', CompanyRole::Owner->value)
-            ->pluck('company_id');
-
         foreach ($ownedCompanyIds as $companyId) {
             $otherOwnerExists = CompanyMembership::query()
                 ->where('company_id', $companyId)

@@ -29,6 +29,7 @@ class BulkArchiveProductsAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogArchive);
 
         return DB::transaction(function () use ($actor, $company, $uuids): array {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogArchive);
             $locked = Product::query()
                 ->forCompany($company)
                 ->whereIn('uuid', $uuids)

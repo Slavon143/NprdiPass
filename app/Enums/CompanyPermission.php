@@ -8,6 +8,7 @@ enum CompanyPermission: string
     case CompanyUpdate = 'company.update';
     case MembersView = 'members.view';
     case MembersInvite = 'members.invite';
+    case MembersCancelInvitation = 'members.cancel_invitation';
     case MembersUpdateRole = 'members.update_role';
     case MembersRemove = 'members.remove';
     case AuditView = 'audit.view';
@@ -32,6 +33,7 @@ enum CompanyPermission: string
     case PassportsView = 'passports.view';
     case PassportsManage = 'passports.manage';
     case PassportsPublish = 'passports.publish';
+    case PassportsUnpublish = 'passports.unpublish';
     case FortnoxManage = 'fortnox.manage';
     case BillingManage = 'billing.manage';
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\CheckConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -9,8 +10,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE attribute_definitions DROP CHECK attr_defs_status_check');
-        DB::statement('ALTER TABLE attribute_options DROP CHECK attr_options_status_check');
+        CheckConstraints::drop('attribute_definitions', 'attr_defs_status_check');
+        CheckConstraints::drop('attribute_options', 'attr_options_status_check');
 
         Schema::table('attribute_definitions', function (Blueprint $table): void {
             $table->boolean('vocabulary_controlled')->default(false)->after('searchable');
@@ -135,9 +136,9 @@ return new class extends Migration
         DB::statement('ALTER TABLE attribute_options DROP FOREIGN KEY attr_options_approved_by_fk');
         DB::statement('ALTER TABLE attribute_options DROP FOREIGN KEY attr_options_replacement_fk');
         DB::statement('ALTER TABLE attribute_definitions DROP FOREIGN KEY attr_defs_replacement_fk');
-        DB::statement('ALTER TABLE products DROP CHECK products_profile_override_check');
-        DB::statement('ALTER TABLE attribute_definitions DROP CHECK attr_defs_controlled_type_check');
-        DB::statement('ALTER TABLE attribute_options DROP CHECK attr_options_approval_check');
+        CheckConstraints::drop('products', 'products_profile_override_check');
+        CheckConstraints::drop('attribute_definitions', 'attr_defs_controlled_type_check');
+        CheckConstraints::drop('attribute_options', 'attr_options_approval_check');
 
         Schema::table('categories', function (Blueprint $table): void {
             $table->dropColumn('active_template_id');
@@ -161,8 +162,8 @@ return new class extends Migration
 
         DB::statement("UPDATE attribute_definitions SET status = 'archived' WHERE status = 'deprecated'");
         DB::statement("UPDATE attribute_options SET status = 'archived' WHERE status = 'deprecated'");
-        DB::statement('ALTER TABLE attribute_definitions DROP CHECK attr_defs_status_check');
-        DB::statement('ALTER TABLE attribute_options DROP CHECK attr_options_status_check');
+        CheckConstraints::drop('attribute_definitions', 'attr_defs_status_check');
+        CheckConstraints::drop('attribute_options', 'attr_options_status_check');
 
         Schema::table('attribute_definitions', function (Blueprint $table): void {
             $table->dropColumn(['vocabulary_controlled', 'replaced_by_attribute_definition_id']);

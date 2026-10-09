@@ -8,14 +8,20 @@ use App\Exceptions\Catalog\ProductOperationException;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Catalog\CatalogWriteTransaction;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 
 class UpdateProductAction extends ProductAction
 {
     /**
      * @param  array<string, mixed>  $data
      * @param  list<string>  $additionalCategoryUuids
+     *
+     * Category sync is opt-in: callers that do not manage taxonomy (for example
+     * the Fortnox article applier updating only name/description) must not pass
+     * $syncCategories, and the existing primary/additional categories are kept
+     * untouched. Passing $syncCategories=true replaces the product taxonomy with
+     * the provided UUIDs (empty lists clear it).
      */
     public function execute(
         User $actor,
@@ -24,18 +30,20 @@ class UpdateProductAction extends ProductAction
         array $data,
         ?string $primaryCategoryUuid = null,
         array $additionalCategoryUuids = [],
+        bool $syncCategories = false,
     ): Product {
         $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
         $this->assertTenant($company, $product);
 
         try {
-            return DB::transaction(function () use (
+            return app(CatalogWriteTransaction::class)->run(function () use (
                 $actor,
                 $company,
                 $product,
                 $data,
                 $primaryCategoryUuid,
                 $additionalCategoryUuids,
+                $syncCategories,
             ): Product {
                 $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
                 $product = Product::query()
@@ -69,22 +77,24 @@ class UpdateProductAction extends ProductAction
                     $product->forceFill(['updated_by' => $actor->getKey()])->save();
                 }
 
-                $categorySync = $this->categories->sync(
-                    $company,
-                    $product,
-                    $primaryCategoryUuid,
-                    $additionalCategoryUuids,
-                );
+                $categorySync = $syncCategories
+                    ? $this->categories->sync(
+                        $company,
+                        $product,
+                        $primaryCategoryUuid,
+                        $additionalCategoryUuids,
+                    )
+                    : null;
 
-                if ($categorySync['old_primary_uuid'] !== $categorySync['new_primary_uuid']) {
+                if ($categorySync !== null && $categorySync['old_primary_uuid'] !== $categorySync['new_primary_uuid']) {
                     $changedFields[] = 'primary_category';
                 }
 
-                if ($categorySync['old_category_ids'] !== $categorySync['new_category_ids']) {
+                if ($categorySync !== null && $categorySync['old_category_ids'] !== $categorySync['new_category_ids']) {
                     $changedFields[] = 'categories';
                 }
 
-                if ($categorySync['changed']) {
+                if ($categorySync !== null && $categorySync['changed']) {
                     $product->forceFill(['updated_by' => $actor->getKey()])->save();
                 }
 
@@ -100,10 +110,10 @@ class UpdateProductAction extends ProductAction
                     [
                         'product_uuid' => $product->uuid,
                         'changed_fields' => $changedFields,
-                        'old_primary_category_uuid' => $categorySync['old_primary_uuid'],
-                        'new_primary_category_uuid' => $categorySync['new_primary_uuid'],
-                        'old_category_count' => count($categorySync['old_category_ids']),
-                        'new_category_count' => count($categorySync['new_category_ids']),
+                        'old_primary_category_uuid' => $categorySync['old_primary_uuid'] ?? null,
+                        'new_primary_category_uuid' => $categorySync['new_primary_uuid'] ?? null,
+                        'old_category_count' => $categorySync !== null ? count($categorySync['old_category_ids']) : null,
+                        'new_category_count' => $categorySync !== null ? count($categorySync['new_category_ids']) : null,
                     ],
                 );
 

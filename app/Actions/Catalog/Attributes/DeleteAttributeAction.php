@@ -24,6 +24,7 @@ class DeleteAttributeAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
 
         return DB::transaction(function () use ($actor, $company, $definition): AttributeDefinition {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
             $locked = AttributeDefinition::query()
                 ->forCompany($company)
                 ->whereKey($definition->getKey())

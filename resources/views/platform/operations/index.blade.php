@@ -3,6 +3,7 @@
         <div>
             <p class="text-sm font-medium text-indigo-600">{{ __('Platform') }}</p>
             <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ __('Operations') }}</h1>
+            <a href="{{ route('platform.operations.feedback') }}" class="mt-3 inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-slate-50">{{ __('Customer feedback') }}</a>
         </div>
     </x-slot>
 

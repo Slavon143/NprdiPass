@@ -17,5 +17,9 @@ return [
 
     'require_async_queue' => filter_var(env('HEALTH_REQUIRE_ASYNC_QUEUE', false), FILTER_VALIDATE_BOOL),
 
+    'require_worker' => filter_var(env('HEALTH_REQUIRE_WORKER', false), FILTER_VALIDATE_BOOL),
+    'worker_max_age' => (int) env('HEALTH_WORKER_MAX_AGE', 180),
+
     'scheduler_heartbeat_key' => 'nordipass:infrastructure:scheduler:last_run',
+    'worker_heartbeat_key' => 'nordipass:infrastructure:worker:last_run',
 ];

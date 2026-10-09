@@ -20,14 +20,16 @@ class UpdateProductVariantAction extends VariantAction
         Product $product,
         ProductVariant $variant,
         array $data,
+        bool $imported = false,
     ): ProductVariant {
-        $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
+        $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate, $imported);
         $this->assertProductTenant($company, $product);
         $this->assertVariantOwner($company, $product, $variant);
 
         try {
-            return DB::transaction(function () use ($actor, $company, $product, $variant, $data): ProductVariant {
-                $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate);
+            return DB::transaction(function () use ($actor, $company, $product, $variant, $data, $imported): ProductVariant {
+                // Imports already hold the catalogue's shared company lock.
+                $company = $this->authorize($actor, $company, CompanyPermission::CatalogUpdate, $imported);
                 $lockedProduct = Product::query()
                     ->forCompany($company)
                     ->whereKey($product->getKey())

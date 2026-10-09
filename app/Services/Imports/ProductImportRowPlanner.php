@@ -9,20 +9,21 @@ use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Imports\ImportMode;
 use App\Exceptions\Catalog\AttributeOperationException;
+use App\Exceptions\Catalog\VariantOperationException;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Support\Catalog\AttributeValueValidator;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
+use App\Support\Catalog\VariantIdentifierNormalizer;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 class ProductImportRowPlanner
 {
-    public const FIELDS = ['name', 'slug', 'short_description', 'description', 'brand', 'manufacturer'];
-
-    /** @var array<int, Collection<string, AttributeDefinition>> */
-    private array $definitions = [];
+    public const FIELDS = ['name', 'slug', 'short_description', 'description', 'brand', 'manufacturer', ...VariantIdentifierNormalizer::FIELDS];
 
     public function __construct(
         private readonly CatalogIdentifierNormalizer $normalizer,
@@ -31,6 +32,77 @@ class ProductImportRowPlanner
 
     /** @param array<string, string|null> $source @param array<string, string> $mapping */
     public function plan(Company $company, array $source, array $mapping, ImportMode $mode): PlannedImportRow
+    {
+        return $this->planWithLookups($company, $source, $mapping, $mode);
+    }
+
+    /** @param array<int, array<string, string|null>> $sources @param array<string, string> $mapping @return array<int, PlannedImportRow> */
+    public function planBatch(Company $company, array $sources, array $mapping, ImportMode $mode): array
+    {
+        $slugs = [];
+        $categoryValues = [];
+        $categorySlugs = [];
+        foreach ($sources as $source) {
+            $name = $this->clean($source[$mapping['name']] ?? null) ?? '';
+            $slug = isset($mapping['slug']) ? $this->clean($source[$mapping['slug']] ?? null) : null;
+            $slugs[] = $this->productSlug($slug ?? $name) ?? '';
+            if (isset($mapping['primary_category'])) {
+                $raw = $this->clean($source[$mapping['primary_category']] ?? null);
+                if ($raw !== null) {
+                    $categoryValues[] = $raw;
+                    $categorySlugs[] = $this->categorySlug($raw) ?? '';
+                }
+            }
+        }
+        $hasIdentifiers = array_intersect(array_keys($mapping), VariantIdentifierNormalizer::FIELDS) !== [];
+        $productQuery = Product::query()->forCompany($company)->whereIn('slug_normalized', array_unique($slugs));
+        $owners = null;
+        if ($hasIdentifiers) {
+            $productQuery->with(['defaultVariant' => fn ($query) => $query->where('company_id', $company->getKey())]);
+            $skus = $gtins = [];
+            foreach ($sources as $source) {
+                $input = [];
+                foreach (VariantIdentifierNormalizer::FIELDS as $field) {
+                    if (isset($mapping[$field])) {
+                        $input[$field] = $source[$mapping[$field]] ?? null;
+                    }
+                }
+                try {
+                    $ids = app(VariantIdentifierNormalizer::class)->normalize($input);
+                    if ($ids['sku_normalized'] !== null) {
+                        $skus[] = $ids['sku_normalized'];
+                    }
+                    if ($ids['gtin'] !== null) {
+                        $gtins[] = $ids['gtin'];
+                    }
+                } catch (VariantOperationException) {
+                    // The row planner reports the invalid identifier below.
+                }
+            }
+            $owners = ProductVariant::query()->forCompany($company)
+                ->where(fn ($query) => $query->whereIn('sku_normalized', array_unique($skus))->orWhereIn('gtin', array_unique($gtins)))->get();
+        }
+        $products = $productQuery->get()->keyBy('slug_normalized');
+        $categories = Category::query()->forCompany($company)->where('status', CategoryStatus::Active->value)
+            ->where(fn ($query) => $query->whereIn('uuid', array_unique($categoryValues))
+                ->orWhereIn('slug_normalized', array_unique($categorySlugs)))
+            ->orderBy('id')->get();
+        $definitions = array_any(array_keys($mapping), fn ($field) => str_starts_with($field, 'attribute:'))
+            ? $this->definitionsFor($company) : collect();
+        $plans = [];
+        foreach ($sources as $number => $source) {
+            $plans[$number] = $this->planWithLookups($company, $source, $mapping, $mode, $products, $categories, $definitions, $owners);
+        }
+
+        return $plans;
+    }
+
+    /** @param array<string, string|null> $source @param array<string, string> $mapping
+     * @param  Collection<string, Product>|null  $products  @param Collection<int, Category>|null $categories
+     * @param  Collection<string, AttributeDefinition>|null  $definitions
+     */
+    private function planWithLookups(Company $company, array $source, array $mapping, ImportMode $mode,
+        ?Collection $products = null, ?Collection $categories = null, ?Collection $definitions = null, ?Collection $owners = null): PlannedImportRow
     {
         $mapped = [];
         foreach (self::FIELDS as $field) {
@@ -48,9 +120,12 @@ class ProductImportRowPlanner
             $errors[] = $this->error('name', 'max', 'Product name may not exceed 255 characters.');
         }
 
-        $slug = $this->normalizer->normalizeProductSlug(($mapped['slug'] ?? '') !== '' ? (string) $mapped['slug'] : $name);
+        $normalizedSlug = $this->productSlug(($mapped['slug'] ?? '') !== '' ? (string) $mapped['slug'] : $name);
+        $slug = $normalizedSlug ?? '';
         $mapped['slug'] = $slug;
-        if ($slug === '') {
+        if ($normalizedSlug === null) {
+            $errors[] = $this->error('slug', 'max', 'Product slug may not exceed 255 characters.');
+        } elseif ($slug === '') {
             $errors[] = $this->error('slug', 'invalid', 'Product slug could not be generated.');
         } elseif (mb_strlen($slug) > 255) {
             $errors[] = $this->error('slug', 'max', 'Product slug may not exceed 255 characters.');
@@ -66,11 +141,13 @@ class ProductImportRowPlanner
             $rawCategory = $this->clean($source[$mapping['primary_category']] ?? null);
             $mapped['primary_category_uuid'] = null;
             if ($rawCategory !== null) {
-                $categorySlug = $this->normalizer->normalizeCategorySlug($rawCategory);
-                $category = Category::query()->forCompany($company)
-                    ->where('status', CategoryStatus::Active->value)
-                    ->where(fn ($query) => $query->where('uuid', $rawCategory)->orWhere('slug_normalized', $categorySlug))
-                    ->first();
+                $categorySlug = $this->categorySlug($rawCategory);
+                $category = $categories !== null
+                    ? $categories->first(fn ($candidate) => strcasecmp($candidate->uuid, $rawCategory) === 0 || $candidate->slug_normalized === $categorySlug)
+                    : Category::query()->forCompany($company)
+                        ->where('status', CategoryStatus::Active->value)
+                        ->where(fn ($query) => $query->where('uuid', $rawCategory)->orWhere('slug_normalized', $categorySlug))
+                        ->first();
                 if ($category === null) {
                     $errors[] = $this->error('primary_category', 'not_found', 'The mapped primary category is not active or does not exist.');
                 } else {
@@ -85,7 +162,7 @@ class ProductImportRowPlanner
             ARRAY_FILTER_USE_BOTH,
         );
         if ($attributeMappings !== []) {
-            $definitions = $this->definitionsFor($company);
+            $definitions ??= $this->definitionsFor($company);
             foreach ($attributeMappings as $field => $header) {
                 $code = substr($field, strlen('attribute:'));
                 $definition = $definitions->get($code);
@@ -96,7 +173,7 @@ class ProductImportRowPlanner
                 }
                 try {
                     $raw = $this->attributeRawValue($definition, $source[$header] ?? null);
-                    $this->attributeValidator->normalize($company, $definition, AttributeScope::Product, $raw);
+                    $this->attributeValidator->normalize($company, $definition, AttributeScope::Product, $raw, $definition->options->all());
                     $mapped['attributes'][$definition->uuid] = $raw;
                 } catch (AttributeOperationException $exception) {
                     $errors[] = $this->error($field, 'invalid_attribute_value', $exception->getMessage());
@@ -104,8 +181,37 @@ class ProductImportRowPlanner
             }
         }
 
-        $product = $slug === '' ? null : Product::query()->forCompany($company)->where('slug_normalized', $slug)->first();
+        $product = $slug === '' ? null : ($products !== null ? $products->get($slug)
+            : Product::query()->forCompany($company)->where('slug_normalized', $slug)->first());
         $operation = $product === null ? 'create' : 'update';
+        $identifierInput = array_intersect_key($mapped, array_flip(VariantIdentifierNormalizer::FIELDS));
+        if ($identifierInput !== []) {
+            if ($product !== null) {
+                $product->loadMissing(['defaultVariant' => fn ($query) => $query->where('company_id', $company->getKey())]);
+                if ($product->defaultVariant === null || (int) $product->defaultVariant->product_id !== (int) $product->getKey()) {
+                    $errors[] = $this->error('variant', 'unavailable', 'The default variant is unavailable.');
+                }
+            }
+            try {
+                $ids = app(VariantIdentifierNormalizer::class)->normalize($identifierInput);
+                $mapped = array_replace($mapped, array_intersect_key($ids, $identifierInput));
+                foreach (['sku' => 'sku_normalized', 'gtin' => 'gtin'] as $field => $column) {
+                    $value = $ids[$column];
+                    if ($value === null) {
+                        continue;
+                    }
+                    $owner = $owners === null
+                        ? ProductVariant::query()->forCompany($company)->where($column, $value)->first()
+                        : $owners->first(fn (ProductVariant $variant) => $variant->getAttribute($column) === $value);
+                    $targetVariantId = $product === null ? 0 : (int) $product->default_variant_id;
+                    if ($owner !== null && (int) $owner->getKey() !== $targetVariantId) {
+                        $errors[] = $this->error($field, 'already_exists', 'The identifier is already assigned to a variant in this company.');
+                    }
+                }
+            } catch (VariantOperationException $exception) {
+                $errors[] = $this->error($exception->field, 'invalid_identifier', $exception->getMessage());
+            }
+        }
         if ($mode === ImportMode::Create && $product !== null) {
             $errors[] = $this->error('slug', 'already_exists', 'A product with this slug already exists.');
         }
@@ -114,6 +220,24 @@ class ProductImportRowPlanner
         }
 
         return new PlannedImportRow($mapped, $operation, $product?->getKey(), $errors);
+    }
+
+    private function productSlug(string $value): ?string
+    {
+        try {
+            return $this->normalizer->normalizeProductSlug($value);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+    }
+
+    private function categorySlug(string $value): ?string
+    {
+        try {
+            return $this->normalizer->normalizeCategorySlug($value);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
     }
 
     private function clean(?string $value): ?string
@@ -160,11 +284,11 @@ class ProductImportRowPlanner
     /** @return Collection<string, AttributeDefinition> */
     private function definitionsFor(Company $company): Collection
     {
-        return $this->definitions[$company->getKey()] ??= AttributeDefinition::query()->forCompany($company)
+        return AttributeDefinition::query()->forCompany($company)
             ->where('status', AttributeDefinitionStatus::Active->value)
             ->whereIn('scope', [AttributeScope::Product->value, AttributeScope::Both->value])
             ->with(['options' => fn ($query) => $query->selectable()->ordered()])
-            ->get()->keyBy('code');
+            ->get()->each(fn (AttributeDefinition $definition) => $definition->setRelation('options', $definition->options->keyBy('id')))->keyBy('code');
     }
 
     /** @return array{field: string|null, code: string, message: string} */

@@ -17,11 +17,13 @@ class AttributeValueValidator
 {
     public const MAX_MULTISELECT_OPTIONS = 200;
 
+    /** @param array<int, AttributeOption>|null $optionSnapshot Preview-only, fresh selectable options keyed by ID; mutations omit this snapshot. */
     public function normalize(
         Company $company,
         AttributeDefinition $definition,
         AttributeScope $targetScope,
         mixed $raw,
+        ?array $optionSnapshot = null,
     ): NormalizedAttributeValue {
         $this->assertDefinition($company, $definition, $targetScope);
 
@@ -31,8 +33,8 @@ class AttributeValueValidator
             AttributeDataType::Decimal => $this->decimal($definition, $raw),
             AttributeDataType::Boolean => $this->boolean($definition, $raw),
             AttributeDataType::Date => $this->date($definition, $raw),
-            AttributeDataType::Select => $this->select($company, $definition, $raw),
-            AttributeDataType::Multiselect => $this->multiselect($company, $definition, $raw),
+            AttributeDataType::Select => $this->select($company, $definition, $raw, $optionSnapshot),
+            AttributeDataType::Multiselect => $this->multiselect($company, $definition, $raw, $optionSnapshot),
         };
     }
 
@@ -231,7 +233,8 @@ class AttributeValueValidator
         return new NormalizedAttributeValue($definition, false, $this->columns(valueDate: $value));
     }
 
-    private function select(Company $company, AttributeDefinition $definition, mixed $raw): NormalizedAttributeValue
+    /** @param array<int, AttributeOption>|null $optionSnapshot */
+    private function select(Company $company, AttributeDefinition $definition, mixed $raw, ?array $optionSnapshot): NormalizedAttributeValue
     {
         if ($raw === null || $raw === '') {
             return $this->clear($definition);
@@ -242,12 +245,13 @@ class AttributeValueValidator
         }
 
         $id = (int) $raw;
-        $this->activeOptions($company, $definition, [$id]);
+        $this->activeOptions($company, $definition, [$id], $optionSnapshot);
 
         return new NormalizedAttributeValue($definition, false, $this->columns(valueOptionId: $id));
     }
 
-    private function multiselect(Company $company, AttributeDefinition $definition, mixed $raw): NormalizedAttributeValue
+    /** @param array<int, AttributeOption>|null $optionSnapshot */
+    private function multiselect(Company $company, AttributeDefinition $definition, mixed $raw, ?array $optionSnapshot): NormalizedAttributeValue
     {
         if ($raw === null || $raw === '' || $raw === []) {
             return $this->clear($definition);
@@ -281,23 +285,41 @@ class AttributeValueValidator
             throw AttributeOperationException::invalid($this->field($definition), 'The selected options do not satisfy the selection limits.');
         }
 
-        $this->activeOptions($company, $definition, $ids);
+        $this->activeOptions($company, $definition, $ids, $optionSnapshot);
 
         return new NormalizedAttributeValue($definition, false, $this->columns(), $ids);
     }
 
-    /** @param list<int> $ids */
-    private function activeOptions(Company $company, AttributeDefinition $definition, array $ids): void
+    /** @param list<int> $ids @param array<int, AttributeOption>|null $optionSnapshot */
+    private function activeOptions(Company $company, AttributeDefinition $definition, array $ids, ?array $optionSnapshot): void
     {
-        $count = AttributeOption::query()
+        if ($optionSnapshot !== null) {
+            foreach ($ids as $id) {
+                $option = $optionSnapshot[$id] ?? null;
+                if (! $option instanceof AttributeOption || (int) $option->getKey() !== $id
+                    || (int) $option->company_id !== (int) $company->getKey()
+                    || (int) $option->attribute_definition_id !== (int) $definition->getKey()
+                    || $option->status !== AttributeOptionStatus::Active
+                    || $option->approval_status !== AttributeOptionApprovalStatus::Approved) {
+                    throw AttributeOperationException::optionMismatch();
+                }
+            }
+
+            return;
+        }
+
+        $options = AttributeOption::query()
             ->forCompany($company)
             ->where('attribute_definition_id', $definition->getKey())
             ->where('status', AttributeOptionStatus::Active->value)
             ->where('approval_status', AttributeOptionApprovalStatus::Approved->value)
             ->whereKey($ids)
-            ->count();
+            ->orderBy('id')
+            // A locking read sees committed option changes even in an older outer snapshot.
+            ->sharedLock()
+            ->get(['id']);
 
-        if ($count !== count($ids)) {
+        if ($options->modelKeys() !== $ids) {
             throw AttributeOperationException::optionMismatch();
         }
     }

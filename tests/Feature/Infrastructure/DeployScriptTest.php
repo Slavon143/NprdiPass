@@ -32,14 +32,10 @@ test('deploy workflow downloads the artifact from an explicit release run', func
         ->toContain('actions: read');
 });
 
-test('deploy script fails the release when health checks do not pass', function () {
-    $script = file_get_contents(base_path('deploy/scripts/deploy.sh'));
+test('CI executes the release lifecycle scenarios on Linux', function () {
+    $workflow = file_get_contents(base_path('.github/workflows/ci.yml'));
 
-    expect($script)
-        ->toContain('up_ok=false')
-        ->toContain('ready_ok=false')
-        ->toContain('Deployment health checks failed')
-        ->toContain('exit 5');
+    expect($workflow)->toContain('python3 -m unittest discover -s tests/Release -v');
 });
 
 test('nvmrc exists with Node version', function () {

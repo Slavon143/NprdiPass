@@ -12,11 +12,20 @@ use App\Services\Billing\Contracts\StripeBillingProvider;
 
 class FakeStripeBillingProvider implements StripeBillingProvider
 {
-    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl): StripeCheckoutSession
+    public function createClaimedCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $idempotencyKey, string $interval = 'month'): StripeCheckoutSession
+    {
+        return $this->createCheckoutSession($company, $planKey, $successUrl, $cancelUrl, $interval);
+    }
+
+    public function expireCheckoutSession(string $sessionId): void {}
+
+    public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $interval = 'month'): StripeCheckoutSession
     {
         return new StripeCheckoutSession(
             id: 'cs_test_'.$company->uuid,
-            url: route('settings.billing.index', ['checkout' => 'fake', 'plan' => $planKey]),
+            url: route('settings.billing.index', ['checkout' => 'fake', 'plan' => $planKey,
+                ...($interval === 'year' ? ['interval' => $interval] : []),
+            ]),
         );
     }
 

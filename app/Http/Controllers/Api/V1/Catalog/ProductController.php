@@ -169,6 +169,7 @@ class ProductController extends Controller
             $validated,
             $primaryCategoryUuid,
             $categoryUuids,
+            syncCategories: true,
         );
 
         $product->load(['primaryCategory', 'categories', 'defaultVariant']);

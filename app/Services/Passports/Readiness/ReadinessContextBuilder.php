@@ -3,12 +3,19 @@
 namespace App\Services\Passports\Readiness;
 
 use App\Data\Passports\Readiness\ReadinessEvaluationContext;
+use App\Data\Passports\Readiness\ReadinessProfileDefinition;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Company;
+use App\Models\DppProfile;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
+use App\Services\Dpp\DppDraftProfileSnapshot;
+use App\Services\Dpp\DppProfileResolver;
+use App\Services\Dpp\DppPublicationProfileCheck;
+use App\Services\Dpp\DppReadinessProfileBatch;
+use App\Services\Dpp\EffectiveDppRequirementSet;
 use App\Services\Passports\DppPayloadNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -21,11 +28,14 @@ class ReadinessContextBuilder
         DppPayloadNormalizer $normalizer,
         private readonly ProductDocumentCurrentVersionResolver $documentVersionResolver,
         private readonly ReadinessProfileRepository $profileRepository,
+        private readonly DppProfileResolver $dppProfileResolver,
+        private readonly EffectiveDppRequirementSet $requirementSet,
     ) {
         $this->normalizer = $normalizer;
     }
 
-    public function build(Company $company, Product $product, ?CarbonImmutable $evaluationDate = null): ReadinessEvaluationContext
+    /** @param array<string, ProductDocument>|null $documentBatch */
+    public function build(Company $company, Product $product, ?CarbonImmutable $evaluationDate = null, ?array $documentBatch = null, ?DppReadinessProfileBatch $profileBatch = null): ReadinessEvaluationContext
     {
         $product->loadMissing([
             'categories',
@@ -63,43 +73,81 @@ class ReadinessContextBuilder
                     )));
 
                     if ($documentUuids !== []) {
-                        $documents = ProductDocument::query()
+                        $documents = $documentBatch !== null ? collect($documentBatch) : ProductDocument::query()
                             ->forCompany($company)
+                            ->where('product_id', $product->getKey())
                             ->with('currentVersion')
                             ->whereIn('uuid', $documentUuids)
                             ->get()
                             ->keyBy('uuid');
 
+                        $references = collect($normalizedPayload['document_references'])->keyBy('document_uuid');
                         foreach ($documentUuids as $uuid) {
                             $doc = $documents[$uuid] ?? null;
-                            if ($doc !== null) {
-                                $doc->setRelation('currentVersion', $this->documentVersionResolver->resolve($doc, false, $evaluationDate));
+                            if ($doc !== null && ((int) $doc->company_id !== (int) $company->getKey()
+                                || (int) $doc->product_id !== (int) $product->getKey())) {
+                                $doc = null;
                             }
-
-                            $referencedDocuments[] = $doc;
+                            if ($doc !== null) {
+                                $doc->setRelation('readinessLatestVersion', $this->documentVersionResolver->resolve($doc, true, $evaluationDate));
+                                $doc->setRelation('currentVersion', $this->documentVersionResolver->resolveReference(
+                                    $doc, $references[$uuid]['document_version_uuid'] ?? null, $evaluationDate,
+                                ));
+                                $referencedDocuments[] = $doc;
+                            }
                         }
 
                         foreach ($referencedDocuments as $doc) {
                             $exists = false;
 
-                            if ($doc !== null && $doc->currentVersion !== null) {
+                            if ($doc->currentVersion !== null) {
                                 $exists = Storage::disk('product_documents')->exists(
                                     $doc->currentVersion->storage_key,
                                 );
                             }
 
-                            $storageExistenceResults[] = $exists;
+                            $storageExistenceResults[$doc->uuid] = $exists;
                         }
                     }
                 }
             }
         }
 
-        $profile = $currentDraft instanceof ProductPassportVersion
-            && is_string($currentDraft->readiness_profile ?? null)
-            && is_int($currentDraft->readiness_profile_version ?? null)
-                ? $this->profileRepository->for($currentDraft->readiness_profile, $currentDraft->readiness_profile_version)
-                : $this->profileRepository->active();
+        $evaluationConfig = config('passport_readiness');
+        if (is_array($currentDraft?->readiness_profile_snapshot)) {
+            $snapshot = $currentDraft->readiness_profile_snapshot;
+            $profiles = app(DppDraftProfileSnapshot::class)->profiles($snapshot);
+            $profile = new ReadinessProfileDefinition(...$snapshot['definition']);
+            $evaluationConfig = $snapshot['config'];
+        } else {
+            $profiles = $this->dppProfileResolver->resolve($product, $profileBatch?->catalogue);
+            if ($currentDraft instanceof ProductPassportVersion
+                && is_string($currentDraft->readiness_profile ?? null)
+                && is_int($currentDraft->readiness_profile_version ?? null)) {
+                $historicalProfile = $profileBatch !== null
+                    ? ($profileBatch->catalogue[DppReadinessProfileBatch::key($currentDraft->readiness_profile, $currentDraft->readiness_profile_version)] ?? null)
+                    : DppProfile::query()
+                        ->where('key', $currentDraft->readiness_profile)
+                        ->where('version', $currentDraft->readiness_profile_version)
+                        ->first();
+
+                if ($historicalProfile instanceof DppProfile) {
+                    $profiles = [$historicalProfile, ...array_values(array_filter($profiles,
+                        fn ($selected) => $selected->key !== $historicalProfile->key || $selected->version !== $historicalProfile->version))];
+                }
+            }
+
+            $profile = $currentDraft instanceof ProductPassportVersion
+                && is_string($currentDraft->readiness_profile ?? null)
+                && is_int($currentDraft->readiness_profile_version ?? null)
+                    ? ($profileBatch?->definition($currentDraft->readiness_profile, $currentDraft->readiness_profile_version, $this->profileRepository)
+                        ?? $this->profileRepository->for($currentDraft->readiness_profile, $currentDraft->readiness_profile_version))
+                    : (($profiles[0] ?? null) instanceof DppProfile
+                        ? ($profileBatch?->definition($profiles[0]->key, $profiles[0]->version, $this->profileRepository)
+                            ?? $this->profileRepository->for($profiles[0]->key, $profiles[0]->version))
+                        : null);
+            $profile ??= $this->profileRepository->active();
+        }
 
         return new ReadinessEvaluationContext(
             company: $company,
@@ -111,7 +159,12 @@ class ReadinessContextBuilder
             storageExistenceResults: $storageExistenceResults,
             evaluationDate: $evaluationDate ?? new CarbonImmutable,
             readinessProfile: $profile,
-            config: config('passport_readiness'),
+            config: $evaluationConfig,
+            dppProfiles: $profiles,
+            effectiveRequirements: $this->requirementSet->resolve($profiles, refresh: $profileBatch === null),
+            publicationProfileCheck: $profileBatch === null && $documentBatch === null
+                ? app(DppPublicationProfileCheck::class)->check($product, $currentDraft, $profiles)
+                : ['status' => 'not_checked', 'reason' => 'batched_preview'],
         );
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Passports\ProductPassportStatus;
 use App\Enums\PlatformPermission;
 use App\Http\Controllers\AcceptCompanyInvitationController;
 use App\Http\Controllers\ApiTokenController;
@@ -21,11 +22,13 @@ use App\Http\Controllers\Catalog\ImportController;
 use App\Http\Controllers\Catalog\MediaContentController;
 use App\Http\Controllers\Catalog\PassportPublicationController;
 use App\Http\Controllers\Catalog\PassportReadinessController;
+use App\Http\Controllers\Catalog\PassportRegistryController;
 use App\Http\Controllers\Catalog\PassportVersionController;
 use App\Http\Controllers\Catalog\ProductAttributeController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Catalog\ProductDocumentController;
 use App\Http\Controllers\Catalog\ProductLifecycleController;
+use App\Http\Controllers\Catalog\ProductManagedController;
 use App\Http\Controllers\Catalog\ProductMediaController;
 use App\Http\Controllers\Catalog\ProductPassportController;
 use App\Http\Controllers\Catalog\ProductPassportQrController;
@@ -40,11 +43,14 @@ use App\Http\Controllers\CompanyMembersController;
 use App\Http\Controllers\CompanySelectionController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CompanySwitchController;
+use App\Http\Controllers\CreateCompanyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeedbackConversationController;
 use App\Http\Controllers\Integrations\FortnoxController;
 use App\Http\Controllers\JobCenterController;
 use App\Http\Controllers\NoCompanyController;
 use App\Http\Controllers\NotificationCenterController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Passports\PublicPassportAssetController;
 use App\Http\Controllers\Passports\PublicPassportController;
 use App\Http\Controllers\Platform\PlatformOperationsController;
@@ -56,10 +62,25 @@ use App\Http\Controllers\ShowCompanyInvitationController;
 use App\Http\Controllers\StoreCompanyInvitationController;
 use App\Http\Controllers\SuspendedCompanyController;
 use App\Http\Controllers\UpdateCompanyMemberRoleController;
+use App\Models\Passports\ProductPassport;
+use App\Services\Passports\Qr\PassportQrRenderer;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $demoPassport = ProductPassport::query()
+        ->where('status', ProductPassportStatus::Published->value)
+        ->whereNotNull('public_id')
+        ->latest('updated_at')
+        ->first();
+    $landingQrTarget = $demoPassport !== null
+        ? url("p/{$demoPassport->public_id}")
+        : route('register');
+
+    return view('welcome', [
+        'landingQrSvg' => app(PassportQrRenderer::class)->renderSvgForUrl($landingQrTarget),
+        'landingQrTarget' => $landingQrTarget,
+        'landingQrIsPassport' => $demoPassport !== null,
+    ]);
 });
 
 Route::post('/stripe/webhook', StripeWebhookController::class)
@@ -84,6 +105,8 @@ Route::post('/invitations/{invitation:uuid}/accept', AcceptCompanyInvitationCont
 Route::middleware(['auth', 'verified', 'company.resolve'])->group(function (): void {
     Route::get('/companies/select', CompanySelectionController::class)->name('companies.select');
     Route::get('/companies/none', NoCompanyController::class)->name('companies.none');
+    Route::get('/companies/create', [CreateCompanyController::class, 'create'])->name('companies.create');
+    Route::post('/companies/create', [CreateCompanyController::class, 'store'])->name('companies.create.store');
     Route::get('/company-suspended', SuspendedCompanyController::class)->name('company.suspended');
     Route::post('/companies/{company:uuid}/switch', CompanySwitchController::class)->name('companies.switch');
 });
@@ -97,7 +120,23 @@ Route::middleware([
     ->prefix('platform/operations')
     ->name('platform.operations.')
     ->group(function (): void {
-        Route::get('/', [PlatformOperationsController::class, 'index'])->name('index');
+        Route::get('/feedback', [PlatformOperationsController::class, 'feedback'])
+            ->middleware('platform.permission:'.PlatformPermission::FeedbackView->value)
+            ->name('feedback');
+        Route::get('/feedback/{feedback}', [FeedbackConversationController::class, 'supportShow'])
+            ->middleware('platform.permission:'.PlatformPermission::FeedbackView->value)
+            ->whereUuid('feedback')->name('feedback.show');
+        Route::post('/feedback/{feedback}/reply', [FeedbackConversationController::class, 'supportReply'])
+            ->middleware(['platform.permission:'.PlatformPermission::FeedbackManage->value, 'throttle:10,1'])
+            ->whereUuid('feedback')->name('feedback.reply');
+        Route::post('/feedback/{feedback}/resolve', [PlatformOperationsController::class, 'resolveFeedback'])
+            ->middleware('platform.permission:'.PlatformPermission::FeedbackManage->value)
+            ->whereUuid('feedback')->name('feedback.resolve');
+        Route::get('/', [PlatformOperationsController::class, 'index'])
+            ->middleware('platform.permission:'.PlatformPermission::CompaniesView->value)->name('index');
+        Route::get('/observability', [PlatformOperationsController::class, 'observability'])
+            ->middleware('platform.permission:'.PlatformPermission::AuditView->value)
+            ->name('observability');
         Route::get('/companies/{company:uuid}', [PlatformOperationsController::class, 'showCompany'])
             ->middleware('platform.permission:'.PlatformPermission::CompaniesView->value)
             ->name('companies.show');
@@ -129,6 +168,13 @@ Route::middleware([
     'company.active',
 ])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
+    Route::get('/onboarding/help', [OnboardingController::class, 'help'])->name('onboarding.help');
+    Route::get('/onboarding/support', [OnboardingController::class, 'support'])->name('onboarding.support');
+    Route::post('/onboarding/feedback', [OnboardingController::class, 'submitFeedback'])->middleware('throttle:5,1')->name('onboarding.feedback.store');
+    Route::get('/onboarding/feedback/{feedback}', [FeedbackConversationController::class, 'customerShow'])->whereUuid('feedback')->name('onboarding.feedback.show');
+    Route::post('/onboarding/feedback/{feedback}/reply', [FeedbackConversationController::class, 'customerReply'])->middleware('throttle:10,1')->whereUuid('feedback')->name('onboarding.feedback.reply');
+    Route::post('/onboarding/sample-product', [OnboardingController::class, 'createSampleProduct'])->name('onboarding.sample-product.store');
     Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-all-read', [NotificationCenterController::class, 'markAllRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/preferences', [NotificationCenterController::class, 'updatePreferences'])->name('notifications.preferences.update');
@@ -136,8 +182,6 @@ Route::middleware([
     Route::post('/notifications/{notification}/dismiss', [NotificationCenterController::class, 'dismiss'])->whereUuid('notification')->name('notifications.dismiss');
     Route::get('/job-center', [JobCenterController::class, 'index'])->name('job-center.index');
     Route::get('/job-center/{job}', [JobCenterController::class, 'show'])->whereUuid('job')->name('job-center.show');
-    Route::post('/job-center/{job}/cancel', [JobCenterController::class, 'cancel'])->whereUuid('job')->name('job-center.cancel');
-    Route::post('/job-center/{job}/retry', [JobCenterController::class, 'retry'])->whereUuid('job')->name('job-center.retry');
     Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
     Route::get('/catalog/audit', [CatalogAuditController::class, 'index'])->name('catalog.audit.index');
     Route::get('/catalog/audit/{auditEvent}', [CatalogAuditController::class, 'show'])->whereNumber('auditEvent')->name('catalog.audit.show');
@@ -152,6 +196,7 @@ Route::middleware([
         Route::get('/{importJob}', [ImportController::class, 'show'])->whereUuid('importJob')->name('show');
         Route::post('/{importJob}/preview', [ImportController::class, 'preview'])->whereUuid('importJob')->name('preview');
         Route::post('/{importJob}/apply', [ImportController::class, 'apply'])->whereUuid('importJob')->name('apply');
+        Route::post('/{importJob}/cancel', [ImportController::class, 'cancel'])->whereUuid('importJob')->name('cancel');
         Route::get('/{importJob}/errors.csv', [ImportController::class, 'errors'])->whereUuid('importJob')->name('errors');
     });
 
@@ -180,6 +225,7 @@ Route::middleware([
     Route::prefix('catalog/products')->name('catalog.products.')->group(function (): void {
         Route::post('/{product}/taxonomy/acknowledge', [ProductTaxonomyController::class, 'acknowledge'])->whereUuid('product')->name('taxonomy.acknowledge');
         Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/suggestions', [ProductController::class, 'suggestions'])->name('suggestions');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
         Route::patch('/bulk-status', [ProductController::class, 'bulkStatus'])->name('bulk-status');
@@ -229,6 +275,7 @@ Route::middleware([
         });
         Route::get('/{product}/attributes/edit', [ProductAttributeController::class, 'edit'])->whereUuid('product')->name('attributes.edit');
         Route::put('/{product}/attributes', [ProductAttributeController::class, 'update'])->whereUuid('product')->name('attributes.update');
+        Route::patch('/{product}/managed', [ProductManagedController::class, 'update'])->whereUuid('product')->name('managed');
         Route::post('/{product}/activate', [ProductLifecycleController::class, 'activate'])->whereUuid('product')->name('activate');
         Route::post('/{product}/return-to-draft', [ProductLifecycleController::class, 'returnToDraft'])->whereUuid('product')->name('return-to-draft');
         Route::post('/{product}/archive', [ProductLifecycleController::class, 'archive'])->whereUuid('product')->name('archive');
@@ -239,6 +286,9 @@ Route::middleware([
         Route::patch('/{product}', [ProductController::class, 'update'])->whereUuid('product')->name('update');
 
         Route::get('/{product}/passport/readiness', [PassportReadinessController::class, 'show'])->whereUuid('product')->name('passport.readiness');
+        Route::get('/{product}/passport/registry', [PassportRegistryController::class, 'show'])->whereUuid('product')->name('passport.registry');
+        Route::post('/{product}/passport/registry/prepare', [PassportRegistryController::class, 'prepare'])->whereUuid('product')->name('passport.registry.prepare');
+        Route::post('/{product}/passport/readiness/context', [PassportReadinessController::class, 'updateContext'])->whereUuid('product')->name('passport.readiness.context');
         Route::get('/{product}/passport/preview', [ProductPassportController::class, 'preview'])->whereUuid('product')->name('passport.preview');
         Route::get('/{product}/passport/publish-confirm', [PassportPublicationController::class, 'publishConfirm'])->whereUuid('product')->name('passport.publish-confirm');
         Route::post('/{product}/passport/publish', [PassportPublicationController::class, 'publish'])->whereUuid('product')->name('passport.publish');
@@ -289,6 +339,9 @@ Route::middleware([
             Route::post('/checkout', [BillingController::class, 'checkout'])
                 ->middleware('throttle:billing-checkout')
                 ->name('checkout');
+            Route::post('/checkout/cancel-pending', [BillingController::class, 'cancelPending'])
+                ->middleware('throttle:billing-checkout')
+                ->name('checkout.cancel-pending');
             Route::post('/portal', [BillingController::class, 'portal'])
                 ->middleware('throttle:billing-portal')
                 ->name('portal');

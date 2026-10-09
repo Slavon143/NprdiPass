@@ -125,6 +125,31 @@ return [
                 ],
             ],
         ],
+        'generic-espr' => [
+            'name' => 'Generic ESPR DPP',
+            'description' => 'Limited pilot regulatory profile based on the fields currently supported by NordiPass; it is not complete legal coverage.',
+            'scope' => 'system',
+            'status' => 'active',
+            'versions' => [
+                1 => [
+                    'status' => 'active',
+                    'rule_set_version' => 1,
+                    'score_algorithm' => 'weighted_ratio',
+                    'score_algorithm_version' => 1,
+                    'weights' => [
+                        'blocker' => 10,
+                        'warning' => 3,
+                        'recommendation' => 1,
+                    ],
+                    'metadata' => [
+                        'jurisdiction' => 'EU',
+                        'regulatory_scope' => 'Generic ESPR DPP pilot coverage',
+                        'coverage' => 'incomplete pilot regulatory coverage',
+                        'legal_disclaimer' => 'Not legal advice or complete regulatory coverage.',
+                    ],
+                ],
+            ],
+        ],
     ],
 
     'expiry_warning_days' => (int) env('READINESS_EXPIRY_WARNING_DAYS', 30),

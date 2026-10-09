@@ -10,9 +10,36 @@ use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class ProductDocumentCurrentVersionResolver
 {
+    public function resolveReference(
+        ProductDocument $document,
+        ?string $versionUuid,
+        ?CarbonImmutable $evaluationDate = null,
+    ): ?ProductDocumentVersion {
+        if ($versionUuid === null || $versionUuid === '') {
+            return $this->resolve($document, true, $evaluationDate);
+        }
+        if (! $document->isActive()) {
+            return null;
+        }
+
+        $version = $document->relationLoaded('readinessVersions')
+            ? $this->loadedEligibleVersions($document, true)->firstWhere('uuid', $versionUuid)
+            : $this->baseQuery($document, true)->where('uuid', $versionUuid)->first();
+        if ($version === null || in_array($version->expiryState($evaluationDate), [
+            ProductDocumentExpiryState::Expired,
+            ProductDocumentExpiryState::NotYetValid,
+            ProductDocumentExpiryState::Unknown,
+        ], true)) {
+            return null;
+        }
+
+        return $version;
+    }
+
     public function resolve(
         ProductDocument $document,
         bool $publicOnly = false,
@@ -22,9 +49,9 @@ class ProductDocumentCurrentVersionResolver
             return null;
         }
 
-        $versions = $this->baseQuery($document, $publicOnly)
-            ->orderByDesc('version_number')
-            ->get();
+        $versions = $document->relationLoaded('readinessVersions')
+            ? $this->loadedEligibleVersions($document, $publicOnly)->sortByDesc('version_number')
+            : $this->baseQuery($document, $publicOnly)->orderByDesc('version_number')->get();
 
         foreach ($versions as $version) {
             if (in_array($version->expiryState($evaluationDate), [
@@ -58,5 +85,15 @@ class ProductDocumentCurrentVersionResolver
         }
 
         return $query;
+    }
+
+    private function loadedEligibleVersions(ProductDocument $document, bool $publicOnly): Collection
+    {
+        return $document->getRelation('readinessVersions')->filter(fn (ProductDocumentVersion $version): bool => (int) $version->company_id === (int) $document->company_id
+            && (int) $version->document_id === (int) $document->getKey()
+            && $version->review_status === ProductDocumentReviewStatus::Approved
+            && $version->approval_status === ProductDocumentApprovalStatus::Approved
+            && $version->file_available
+            && (! $publicOnly || $version->visibility === ProductDocumentVisibility::PassportPublic));
     }
 }

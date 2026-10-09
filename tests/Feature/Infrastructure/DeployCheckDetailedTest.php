@@ -4,13 +4,25 @@ namespace Tests\Feature\Infrastructure;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Config::set('app.env', 'testing');
     Config::set('app.debug', true);
     Config::set('app.key', 'base64:'.base64_encode(random_bytes(32)));
     Config::set('database.default', 'mysql');
-    Config::set('database.connections.mysql.database', 'nordipass_testing');
+    Config::set('backup.enabled', true);
+    Config::set('backup.disk', 'local');
+    Config::set('backup.path', 'deploy-detailed-fixture');
+    $disk = Storage::fake('local');
+    $artifacts = [];
+    foreach (['database' => 'database.sql.gz', 'files' => 'files.tar.gz'] as $type => $name) {
+        $disk->put('deploy-detailed-fixture/set/'.$name, 'fixture');
+        $artifacts[$type] = ['path' => $name, 'size' => 7, 'sha256' => hash('sha256', 'fixture')];
+    }
+    $disk->put('deploy-detailed-fixture/set/manifest.json', json_encode(['version' => 2, 'status' => 'complete',
+        'created_at' => now()->toIso8601String(), 'scope' => ['database' => true, 'files' => true],
+        'artifacts' => $artifacts], JSON_THROW_ON_ERROR));
 });
 
 afterEach(function () {

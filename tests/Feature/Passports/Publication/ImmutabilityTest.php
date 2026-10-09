@@ -4,6 +4,7 @@ namespace Tests\Feature\Passports\Publication;
 
 use App\Actions\Passports\CreateProductPassportDraftAction;
 use App\Actions\Passports\PublishProductPassport;
+use App\Actions\Passports\UpdatePassportLanguagesAction;
 use App\Actions\Passports\UpdateProductPassportSectionAction;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Catalog\ProductStatus;
@@ -20,9 +21,11 @@ use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\Passports\PassportValidationRun;
 use App\Models\Passports\ProductPassport;
+use App\Models\Passports\ProductPassportAsset;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Passports\Public\PublicPassportResolver;
 use App\Services\Passports\Readiness\PassportReadinessRuleRegistry;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Database\QueryException;
@@ -254,6 +257,165 @@ class ImmutabilityTest extends TestCase
         $draft->save();
 
         $this->revision = $newRevision;
+    }
+
+    private function passport(): ProductPassport
+    {
+        return ProductPassport::query()
+            ->forCompany($this->company)
+            ->where('product_id', $this->product->getKey())
+            ->first()
+            ->fresh(['currentDraftVersion', 'currentPublishedVersion']);
+    }
+
+    public function test_published_language_config_is_frozen_in_the_snapshot(): void
+    {
+        $passport = $this->passport();
+        $resolver = app(PublicPassportResolver::class);
+
+        $before = $resolver->resolve($passport->public_id);
+        $checksumBefore = $this->publishedVersion->fresh()->content_checksum;
+
+        $this->assertSame('sv', $before->defaultLanguage);
+        $this->assertSame(['sv'], $before->enabledLocales);
+
+        $revisionBefore = $passport->currentDraftVersion->draft_revision;
+
+        app(UpdatePassportLanguagesAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport->fresh(),
+            'en',
+            ['en', 'sv'],
+        );
+
+        $after = $resolver->resolve($passport->public_id);
+
+        $this->assertSame('sv', $after->defaultLanguage, 'V1 must keep the language it was published with.');
+        $this->assertSame(['sv'], $after->enabledLocales, 'V1 enabled languages must stay frozen.');
+        $this->assertSame($checksumBefore, $this->publishedVersion->fresh()->content_checksum, 'V1 checksum must not change.');
+
+        $draft = $this->passport()->currentDraftVersion;
+        $this->assertSame('en', $draft->payload['languages']['default'] ?? null);
+        $this->assertSame(['en', 'sv'], $draft->payload['languages']['enabled'] ?? null);
+        $this->assertSame($revisionBefore + 1, $draft->draft_revision, 'Language changes must bump the draft revision.');
+    }
+
+    public function test_republication_snapshots_new_languages_while_v1_payload_stays_identical(): void
+    {
+        $v1PayloadJson = json_encode($this->publishedVersion->fresh()->payload, JSON_THROW_ON_ERROR);
+        $v1Checksum = $this->publishedVersion->fresh()->content_checksum;
+
+        app(UpdatePassportLanguagesAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $this->passport()->fresh(),
+            'en',
+            ['en', 'sv'],
+        );
+
+        $passport = $this->passport();
+        app(UpdateProductPassportSectionAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport->fresh(),
+            DppSectionKey::Identity->value,
+            ['public_name' => 'EN Name', 'public_description' => 'EN description'],
+            $passport->currentDraftVersion->draft_revision,
+            'en',
+        );
+
+        $passport = $this->passport();
+        $result = app(PublishProductPassport::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport,
+            $passport->currentDraftVersion->draft_revision,
+            true,
+        );
+
+        $v2 = app(PublicPassportResolver::class)->resolve($passport->public_id);
+
+        $this->assertSame('en', $v2->defaultLanguage);
+        $this->assertSame(['en', 'sv'], $v2->enabledLocales);
+        $this->assertNotSame($v1Checksum, $result->publishedVersion->content_checksum, 'V2 checksum must reflect the new languages.');
+        $this->assertSame(
+            $v1PayloadJson,
+            json_encode($this->publishedVersion->fresh()->payload, JSON_THROW_ON_ERROR),
+            'The V1 snapshot must remain byte-identical after V2 is published.',
+        );
+    }
+
+    public function test_public_page_etag_stays_stable_after_draft_language_change(): void
+    {
+        $passport = $this->passport();
+        $url = route('public.passports.show', ['publicId' => $passport->public_id]);
+
+        $first = $this->get($url);
+        $first->assertOk();
+        $etagV1 = $first->headers->get('ETag');
+        $this->assertIsString($etagV1);
+
+        app(UpdatePassportLanguagesAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport->fresh(),
+            'en',
+            ['en', 'sv'],
+        );
+
+        $second = $this->get($url);
+        $this->assertSame($etagV1, $second->headers->get('ETag'), 'V1 ETag must not change when only the draft languages change.');
+
+        $this->get($url, ['If-None-Match' => $etagV1])->assertNotModified();
+
+        $passport = $this->passport();
+        app(UpdateProductPassportSectionAction::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport->fresh(),
+            DppSectionKey::Identity->value,
+            ['public_name' => 'EN Name', 'public_description' => 'EN description'],
+            $passport->currentDraftVersion->draft_revision,
+            'en',
+        );
+
+        $passport = $this->passport();
+        app(PublishProductPassport::class)->handle(
+            $this->actor,
+            $this->company,
+            $this->product,
+            $passport,
+            $passport->currentDraftVersion->draft_revision,
+            true,
+        );
+
+        $third = $this->get($url);
+        $this->assertNotSame($etagV1, $third->headers->get('ETag'), 'V2 must get a new ETag reflecting the new languages.');
+    }
+
+    public function test_asset_scanner_reports_missing_and_corrupted_published_assets(): void
+    {
+        $this->artisan('passports:scan-assets', ['--company' => $this->company->uuid, '--format' => 'json'])
+            ->assertExitCode(0);
+
+        $asset = ProductPassportAsset::query()->firstOrFail();
+
+        Storage::disk('passport_assets')->put($asset->storage_key, 'tampered bytes');
+
+        $this->artisan('passports:scan-assets', ['--company' => $this->company->uuid, '--format' => 'json'])
+            ->assertExitCode(1);
+
+        Storage::disk('passport_assets')->delete($asset->storage_key);
+
+        $this->artisan('passports:scan-assets', ['--company' => $this->company->uuid, '--format' => 'json'])
+            ->assertExitCode(1);
     }
 
     public function test_cannot_update_snapshot_via_eloquent(): void

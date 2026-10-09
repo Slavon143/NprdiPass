@@ -4,6 +4,7 @@ namespace App\Services\Catalog\Taxonomy;
 
 use App\Data\Passports\Readiness\ReadinessProfileDefinition;
 use App\Models\Catalog\Product;
+use App\Services\Dpp\DppProfileResolver;
 use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Illuminate\Validation\ValidationException;
 
@@ -13,7 +14,14 @@ class ProductReadinessProfileResolver
 
     public function resolve(Product $product): ReadinessProfileDefinition
     {
+        $assigned = $product->dppProfiles()->orderByPivot('priority')->orderBy('dpp_profiles.id')->first();
+        if ($assigned !== null) {
+            app(DppProfileResolver::class)->assertApplicable($assigned);
+
+            return $this->profiles->for($assigned->key, $assigned->version);
+        }
         $product->loadMissing('primaryCategory.activeTemplate');
+        app(DppProfileResolver::class)->assertCompleteSelection($product->readiness_profile_override, $product->readiness_profile_version_override);
 
         if (is_string($product->readiness_profile_override) && $product->readiness_profile_version_override !== null) {
             return $this->verified(

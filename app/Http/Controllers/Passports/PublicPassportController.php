@@ -6,6 +6,7 @@ use App\Enums\Analytics\AnalyticsEventType;
 use App\Http\Controllers\Controller;
 use App\Jobs\Analytics\RecordAnalyticsEventJob;
 use App\Services\Analytics\AnalyticsClassifier;
+use App\Services\Passports\Public\PublicPassportData;
 use App\Services\Passports\Public\PublicPassportResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -23,11 +24,17 @@ class PublicPassportController extends Controller
         $requestedLocale = $request->query('lang');
         $viewModel = $resolver->resolve($publicId, $requestedLocale);
 
-        $etag = '"'.$viewModel->snapshotChecksum.':'.$viewModel->requestedLocale.'"';
+        $json = $request->wantsJson();
+        $etag = '"'.$viewModel->snapshotChecksum.':'.$viewModel->requestedLocale.($json ? ':json-v1' : '').'"';
         $headers = $this->publicHeaders($etag, $viewModel->publishedAt);
 
         if ($request->headers->get('If-None-Match') === $etag) {
             return response('', 304, $headers)
+                ->withoutCookie((string) config('session.cookie'));
+        }
+
+        if ($json) {
+            return response()->json(app(PublicPassportData::class)->serialize($viewModel), 200, $headers)
                 ->withoutCookie((string) config('session.cookie'));
         }
 
@@ -64,7 +71,7 @@ class PublicPassportController extends Controller
             'ETag' => $etag,
             'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(), payment=()',
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
-            'Vary' => 'Accept-Encoding',
+            'Vary' => 'Accept, Accept-Encoding',
             'X-Content-Type-Options' => 'nosniff',
             'X-Robots-Tag' => 'index, follow',
         ];

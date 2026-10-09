@@ -1,4 +1,11 @@
 <x-app-layout>
+    @if ($readinessHistorical ?? false)
+        <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                {{ __('Stored readiness evaluation from :date. This result may be out of date. An active subscription and a managed product are required to recalculate or publish.', ['date' => $readiness->evaluatedAt->toDateTimeString()]) }}
+            </div>
+        </div>
+    @endif
     @php
         $rulePresenter = app(\App\Support\Passports\ReadinessRulePresenter::class);
 
@@ -42,7 +49,7 @@
                 : __('All checks passed.'));
 
         $user = auth()->user();
-        $canPublish = $user && ($user->can(\App\Enums\CompanyPermission::PassportsPublish->value, [$company]) || $user->can(\App\Enums\CompanyPermission::PassportsManage->value, [$company]));
+        $canPublish = ! ($readinessHistorical ?? false) && $user && ($user->can(\App\Enums\CompanyPermission::PassportsPublish->value, [$company]) || $user->can(\App\Enums\CompanyPermission::PassportsManage->value, [$company]));
     @endphp
 
     <x-slot name="header">
@@ -53,6 +60,9 @@
                 <p class="mt-1 text-sm text-slate-500">{{ __('Checks the passport draft against the active readiness profile. The score is a quality indicator; only blocking issues prevent publication.') }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
+                @if ($passport)
+                    <a href="{{ route('catalog.products.passport.registry', $product->uuid) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('EU registry and battery fields') }}</a>
+                @endif
                 <a href="{{ route('catalog.products.passport.edit', $product->uuid) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Passport editor') }}</a>
                 <a href="{{ route('catalog.products.show', $product->uuid) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Product') }}</a>
             </div>
@@ -60,6 +70,7 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8" data-testid="passport-readiness-page">
+        @include('passports.partials.regulatory-context')
         {{-- Publication status --}}
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm" data-testid="readiness-status-card">
             <div class="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between">
@@ -123,6 +134,27 @@
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('Passed') }}</p>
                 </div>
             </div>
+        </section>
+
+        <section class="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5" data-testid="dpp-profile-card">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-700">{{ __('DPP profile') }}</p>
+                    <h2 class="mt-1 text-lg font-bold text-slate-900">{{ $readiness->profileDetails['name'] ?? $readiness->profile }}</h2>
+                    <p class="mt-1 text-sm text-slate-600">{{ $readiness->profileDetails['description'] ?? __('Regulatory and operational requirements selected for this product.') }}</p>
+                </div>
+                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-indigo-700">{{ $readiness->profile }} v{{ $readiness->profileVersion }}</span>
+            </div>
+            @if (($readiness->profileDetails['jurisdiction'] ?? null) || ($readiness->profileDetails['product_scope'] ?? null))
+                <div class="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-600">
+                    @if ($readiness->profileDetails['jurisdiction'] ?? null)
+                        <span><strong>{{ __('Jurisdiction') }}:</strong> {{ $readiness->profileDetails['jurisdiction'] }}</span>
+                    @endif
+                    @if ($readiness->profileDetails['product_scope'] ?? null)
+                        <span><strong>{{ __('Product scope') }}:</strong> {{ $readiness->profileDetails['product_scope'] }}</span>
+                    @endif
+                </div>
+            @endif
         </section>
 
         {{-- Blockers --}}

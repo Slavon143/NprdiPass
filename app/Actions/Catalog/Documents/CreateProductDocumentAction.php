@@ -17,6 +17,8 @@ use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\Documents\DocumentFileStorage;
 use App\Services\Catalog\Documents\PdfDocumentValidator;
+use App\Services\Storage\FileWriteCompensation;
+use App\Services\Storage\StorageQuotaAdmission;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -49,10 +51,20 @@ class CreateProductDocumentAction extends DocumentAction
             throw new \RuntimeException('A file already exists at the target storage location.');
         }
 
-        $this->storage->put($storageKey, $pdf);
-        $this->storage->verifyChecksum($storageKey, $pdf->checksum);
+        $quota = app(StorageQuotaAdmission::class);
+        $reservation = $quota->reserve($company, $this->storage->diskName(), $storageKey, $pdf->sizeBytes, $versionUuid);
+        $cleanup = app(FileWriteCompensation::class)->track(
+            fn (): bool => ProductDocumentVersion::query()->where('company_id', $company->getKey())
+                ->where('uuid', $versionUuid)->sharedLock()->exists(),
+            fn (): bool => $quota->compensate($company, $reservation, fn (): bool => $this->storage->delete($storageKey)),
+            ['company_uuid' => $company->uuid, 'version_uuid' => $versionUuid, 'operation' => 'document_upload'],
+        );
 
         try {
+            $this->storage->put($storageKey, $pdf);
+            $this->storage->verifyChecksum($storageKey, $pdf->checksum);
+            $quota->written($company, $reservation);
+
             return DB::transaction(function () use ($actor, $company, $product, $data, $pdf, $documentUuid, $versionUuid, $storageKey): ProductDocument {
                 $this->authorize($actor, $company, CompanyPermission::CatalogManageDocuments);
 
@@ -136,9 +148,7 @@ class CreateProductDocumentAction extends DocumentAction
                 return $document->load('currentVersion');
             });
         } catch (\Throwable $e) {
-            if ($this->storage->exists($storageKey)) {
-                $this->storage->delete($storageKey);
-            }
+            $cleanup();
             throw $e;
         }
     }

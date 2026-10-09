@@ -37,6 +37,8 @@ class FortnoxConnection extends Model
 
     protected $guarded = ['id'];
 
+    protected $hidden = ['token_payload'];
+
     protected function casts(): array
     {
         return [

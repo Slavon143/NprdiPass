@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $draft_version_id
  * @property string $score_algorithm
  * @property string|null $rule_set_fingerprint
+ * @property array<string, mixed>|null $profile_snapshot
  * @property array $weights_snapshot
  * @property int $earned_points
  * @property int $applicable_points
@@ -60,6 +61,7 @@ class PassportValidationRun extends Model
         return $this->belongsTo(ProductPassport::class, 'passport_id');
     }
 
+    /** @return BelongsTo<ProductPassportVersion, $this> */
     public function draftVersion(): BelongsTo
     {
         return $this->belongsTo(ProductPassportVersion::class, 'draft_version_id');
@@ -70,6 +72,7 @@ class PassportValidationRun extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<PassportValidationResult, $this> */
     public function results(): HasMany
     {
         return $this->hasMany(PassportValidationResult::class, 'validation_run_id');

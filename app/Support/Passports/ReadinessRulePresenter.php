@@ -162,6 +162,15 @@ class ReadinessRulePresenter
 
     public function requirementLabel(ReadinessRuleResult $rule): string
     {
+        if ($rule->requirementLevel !== null) {
+            return match ($rule->requirementLevel) {
+                'required' => __('Required before publication'),
+                'conditional' => __('Conditional requirement'),
+                'recommended' => __('Recommended improvement'),
+                default => Str::headline($rule->requirementLevel),
+            };
+        }
+
         return match ($rule->severity) {
             ReadinessSeverity::Blocker => __('Required before publication'),
             ReadinessSeverity::Warning => __('Important warning'),

@@ -9,6 +9,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 /**
  * @property BillingSubscriptionStatus $status
@@ -64,7 +65,21 @@ class CompanySubscription extends Model
 
     public function grantsEntitlements(): bool
     {
-        if (in_array($this->status, [BillingSubscriptionStatus::Trialing, BillingSubscriptionStatus::Active], true)) {
+        if (($this->metadata['commercial_model'] ?? null) === 'unknown') {
+            return false;
+        }
+
+        if ($this->status === BillingSubscriptionStatus::Pending) {
+            return $this->localTrialBeforeCheckout()?->grantsEntitlements() ?? false;
+        }
+
+        if ($this->status === BillingSubscriptionStatus::Trialing) {
+            return $this->trial_ends_at instanceof CarbonInterface
+                ? $this->trial_ends_at->isFuture()
+                : ($this->metadata['commercial_model'] ?? null) !== 'v1';
+        }
+
+        if ($this->status === BillingSubscriptionStatus::Active) {
             return true;
         }
 
@@ -74,12 +89,45 @@ class CompanySubscription extends Model
 
         $graceEndsAt = $this->grace_ends_at;
 
-        return ! $graceEndsAt instanceof CarbonInterface || $graceEndsAt->isFuture();
+        return $graceEndsAt instanceof CarbonInterface
+            ? $graceEndsAt->isFuture()
+            : ($this->metadata['commercial_model'] ?? null) !== 'v1';
     }
 
     public function isNonTerminal(): bool
     {
         return $this->status->isNonTerminal();
+    }
+
+    public function localTrialBeforeCheckout(): ?self
+    {
+        // Only the nested snapshot written by our durable checkout claim can
+        // retain a local license. Stripe metadata values are scalar strings.
+        $metadata = $this->metadata ?? [];
+        $pending = $metadata['pending_checkout'] ?? null;
+        if ($this->status !== BillingSubscriptionStatus::Pending
+            || ($metadata['commercial_model'] ?? null) !== 'v1'
+            || ($metadata['source'] ?? null) !== 'self_serve_registration'
+            || ! is_array($pending) || ! is_string($pending['claim_id'] ?? null)
+            || ! Str::isUuid($pending['claim_id'])) {
+            return null;
+        }
+        $previous = $pending['previous_state'] ?? null;
+        if (! is_array($previous) || ($previous['status'] ?? null) !== BillingSubscriptionStatus::Trialing->value
+            || ($previous['metadata']['commercial_model'] ?? null) !== 'v1'
+            || ($previous['metadata']['source'] ?? null) !== 'self_serve_registration'
+            || ($previous['stripe_subscription_id'] ?? null) !== null
+            || ($previous['stripe_customer_id'] ?? null) !== null
+            || ! is_string($previous['trial_ends_at'] ?? null)) {
+            return null;
+        }
+        try {
+            $trial = new self($previous);
+
+            return $trial->trial_ends_at instanceof CarbonInterface ? $trial : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function company(): BelongsTo

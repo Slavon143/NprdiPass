@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserStatus;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class EnsurePlatformPermission
     {
         $user = $request->user();
 
-        abort_unless($user instanceof User && $user->can($permission), 403);
+        abort_unless($user instanceof User && $user->status === UserStatus::Active && $user->can($permission), 403);
 
         return $next($request);
     }

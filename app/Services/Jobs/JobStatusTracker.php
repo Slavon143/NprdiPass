@@ -6,8 +6,6 @@ use App\Enums\Jobs\JobStatusState;
 use App\Models\Company;
 use App\Models\Jobs\JobStatus;
 use App\Models\User;
-use Illuminate\Support\Str;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class JobStatusTracker
 {
@@ -47,6 +45,21 @@ class JobStatusTracker
             'status' => JobStatusState::Running,
             'attempts' => $job->attempts + 1,
             'started_at' => $job->started_at ?? now(),
+            'failed_at' => null,
+            'failure_code' => null,
+            'failure_message' => null,
+            'completed_at' => null,
+            'result_summary' => null,
+        ])->save();
+
+        return $job;
+    }
+
+    public function markProgress(JobStatus $job, int $current, ?int $total = null): JobStatus
+    {
+        $job->forceFill([
+            'progress_current' => max(0, $current),
+            'progress_total' => $total ?? $job->progress_total,
         ])->save();
 
         return $job;
@@ -61,6 +74,9 @@ class JobStatusTracker
             'status' => JobStatusState::Succeeded,
             'result_summary' => $resultSummary,
             'completed_at' => now(),
+            'failed_at' => null,
+            'failure_code' => null,
+            'failure_message' => null,
         ])->save();
 
         return $job;
@@ -76,49 +92,5 @@ class JobStatusTracker
         ])->save();
 
         return $job;
-    }
-
-    public function requestCancel(JobStatus $job): JobStatus
-    {
-        if (in_array($job->status, [JobStatusState::Succeeded, JobStatusState::Failed, JobStatusState::Cancelled], true)) {
-            throw new ConflictHttpException('Completed jobs cannot be cancelled.');
-        }
-
-        $job->forceFill([
-            'status' => JobStatusState::CancelRequested,
-            'cancel_requested_at' => $job->cancel_requested_at ?? now(),
-        ])->save();
-
-        return $job;
-    }
-
-    public function markCancelled(JobStatus $job): JobStatus
-    {
-        $job->forceFill([
-            'status' => JobStatusState::Cancelled,
-            'completed_at' => now(),
-        ])->save();
-
-        return $job;
-    }
-
-    public function retry(JobStatus $job, ?User $user = null): JobStatus
-    {
-        if (! in_array($job->status, [JobStatusState::Failed, JobStatusState::Cancelled, JobStatusState::Skipped], true)) {
-            throw new ConflictHttpException('Only failed, cancelled, or skipped jobs can be retried.');
-        }
-
-        return JobStatus::query()->create([
-            'company_id' => $job->company_id,
-            'user_id' => $user?->getKey() ?? $job->user_id,
-            'retry_of_id' => $job->getKey(),
-            'name' => $job->name,
-            'type' => $job->type,
-            'queue' => $job->queue,
-            'status' => JobStatusState::Pending,
-            'progress_total' => $job->progress_total,
-            'payload_summary' => $job->payload_summary,
-            'idempotency_key' => $job->idempotency_key.':retry:'.Str::uuid(),
-        ]);
     }
 }

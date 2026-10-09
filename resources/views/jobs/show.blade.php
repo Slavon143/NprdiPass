@@ -6,20 +6,6 @@
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">{{ $job->name }}</h1>
                 <p class="mt-1 text-sm text-slate-500">{{ $job->uuid }}</p>
             </div>
-            <div class="flex gap-2">
-                @if(in_array($job->status, [\App\Enums\Jobs\JobStatusState::Pending, \App\Enums\Jobs\JobStatusState::Running], true))
-                    <form method="POST" action="{{ route('job-center.cancel', $job) }}">
-                        @csrf
-                        <button type="submit" class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">{{ __('Cancel') }}</button>
-                    </form>
-                @endif
-                @if(in_array($job->status, [\App\Enums\Jobs\JobStatusState::Failed, \App\Enums\Jobs\JobStatusState::Cancelled, \App\Enums\Jobs\JobStatusState::Skipped], true))
-                    <form method="POST" action="{{ route('job-center.retry', $job) }}">
-                        @csrf
-                        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{{ __('Retry') }}</button>
-                    </form>
-                @endif
-            </div>
         </div>
     </x-slot>
 

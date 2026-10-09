@@ -11,24 +11,85 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-slate-50 font-sans text-slate-900 antialiased">
-        <div class="min-h-screen" x-data="{ sidebarOpen: false }">
+        @php
+            $flashMessages = function (mixed $message): array {
+                if ($message === null || $message === false || $message === '') {
+                    return [];
+                }
+
+                if ($message instanceof \Illuminate\Support\MessageBag) {
+                    return $message->all();
+                }
+
+                if (is_array($message)) {
+                    return collect($message)
+                        ->flatten()
+                        ->filter(fn (mixed $value): bool => is_scalar($value) || $value instanceof \Stringable)
+                        ->map(fn (mixed $value): string => (string) $value)
+                        ->values()
+                        ->all();
+                }
+
+                if (is_scalar($message) || $message instanceof \Stringable) {
+                    return [(string) $message];
+                }
+
+                return [];
+            };
+
+            $successMessages = $flashMessages(session('success'));
+            $errorMessages = $flashMessages(session('error'));
+            $warningMessages = $flashMessages(session('warning'));
+        @endphp
+
+        <div class="app-shell min-h-screen" x-data="appShell" :data-sidebar-collapsed="sidebarCollapsed" @keydown.escape.window="closeMobileSidebar">
             @include('layouts.navigation')
 
-            <div class="lg:pl-64">
+            <div class="app-shell-content lg:pl-64">
                 @include('layouts.header')
 
-                @if (session('success') || session('error') || session('warning') || $errors->any())
+                @if ($successMessages !== [] || $errorMessages !== [] || $warningMessages !== [] || $errors->any())
                     <div class="mx-auto max-w-7xl space-y-3 px-4 pt-5 sm:px-6 lg:px-8">
-                        @if (session('success'))
-                            <x-alert type="success">{{ session('success') }}</x-alert>
+                        @if ($successMessages !== [])
+                            <x-alert type="success">
+                                @if (count($successMessages) === 1)
+                                    {{ $successMessages[0] }}
+                                @else
+                                    <ul class="list-inside list-disc">
+                                        @foreach ($successMessages as $message)
+                                            <li>{{ $message }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </x-alert>
                         @endif
 
-                        @if (session('error'))
-                            <x-alert type="error">{{ session('error') }}</x-alert>
+                        @if ($errorMessages !== [])
+                            <x-alert type="error">
+                                @if (count($errorMessages) === 1)
+                                    {{ $errorMessages[0] }}
+                                @else
+                                    <ul class="list-inside list-disc">
+                                        @foreach ($errorMessages as $message)
+                                            <li>{{ $message }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </x-alert>
                         @endif
 
-                        @if (session('warning'))
-                            <x-alert type="warning">{{ session('warning') }}</x-alert>
+                        @if ($warningMessages !== [])
+                            <x-alert type="warning">
+                                @if (count($warningMessages) === 1)
+                                    {{ $warningMessages[0] }}
+                                @else
+                                    <ul class="list-inside list-disc">
+                                        @foreach ($warningMessages as $message)
+                                            <li>{{ $message }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </x-alert>
                         @endif
 
                         @if ($errors->any())

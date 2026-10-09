@@ -12,6 +12,13 @@ test('backup config loads correctly', function () {
         ->and(config('backup.disk'))->toBe('local')
         ->and(config('backup.database.enabled'))->toBeTrue()
         ->and(config('backup.files.enabled'))->toBeTrue()
+        ->and(config('backup.files.disks'))->toBe([
+            'production_imports',
+            'product_documents',
+            'catalog_media',
+            'passport_assets',
+        ])
+        ->and(config('backup.temporary_path'))->toBeString()
         ->and(config('backup.retention.daily'))->toBeInt()
         ->and(config('backup.retention.weekly'))->toBeInt()
         ->and(config('backup.retention.monthly'))->toBeInt()

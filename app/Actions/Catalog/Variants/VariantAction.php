@@ -14,9 +14,9 @@ use App\Models\User;
 use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\ProductVariantService;
 use App\Support\Catalog\CatalogIdentifierNormalizer;
+use App\Support\Catalog\VariantIdentifierNormalizer;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
-use InvalidArgumentException;
 
 abstract class VariantAction
 {
@@ -28,7 +28,7 @@ abstract class VariantAction
         protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
-    protected function authorize(User $actor, Company $company, CompanyPermission $permission): Company
+    protected function authorize(User $actor, Company $company, CompanyPermission $permission, bool $sharedCatalog = false): Company
     {
         $freshCompany = Company::query()->find($company->getKey());
 
@@ -36,7 +36,11 @@ abstract class VariantAction
             throw new AuthorizationException;
         }
 
-        $this->authorizer->authorize($actor, $freshCompany, $permission);
+        if ($sharedCatalog) {
+            $this->authorizer->authorizeCatalogWrite($actor, $freshCompany, $permission);
+        } else {
+            $this->authorizer->authorize($actor, $freshCompany, $permission);
+        }
 
         return $freshCompany;
     }
@@ -75,57 +79,18 @@ abstract class VariantAction
             throw VariantOperationException::invalid('name', 'The name field may not exceed 255 characters.');
         }
 
-        $sku = $this->nullableString($data, 'sku', $fallback);
-
-        if ($sku !== null && mb_strlen($sku) > 100) {
-            throw VariantOperationException::invalid('sku', 'The SKU field may not exceed 100 characters.');
-        }
-
-        try {
-            $skuNormalized = $sku === null ? null : $this->normalizer->normalizeSku($sku);
-        } catch (InvalidArgumentException $exception) {
-            throw VariantOperationException::invalid('sku', $exception->getMessage());
-        }
-
-        $gtinValue = $this->nullableString($data, 'gtin', $fallback);
-
-        try {
-            $gtin = $this->normalizer->normalizeGtin($gtinValue);
-        } catch (InvalidArgumentException $exception) {
-            throw VariantOperationException::invalid('gtin', $exception->getMessage());
-        }
-
-        $mpnValue = $this->nullableString($data, 'mpn', $fallback);
-
-        try {
-            $mpn = $this->normalizer->normalizeMpn($mpnValue);
-        } catch (InvalidArgumentException $exception) {
-            throw VariantOperationException::invalid('mpn', $exception->getMessage());
-        }
+        $identifiers = app(VariantIdentifierNormalizer::class)->normalize($data, $fallback);
 
         return [
             'name' => $name,
-            'sku' => $sku,
-            'sku_normalized' => $skuNormalized === '' ? null : $skuNormalized,
-            'gtin' => $gtin,
-            'mpn' => $mpn,
+            ...$identifiers,
             'sort_order' => $this->sortOrder($data, $fallback),
         ];
     }
 
     protected function mapConstraint(QueryException $exception): ?VariantOperationException
     {
-        if ((int) ($exception->errorInfo[1] ?? 0) !== 1062) {
-            return null;
-        }
-
-        $driverMessage = (string) ($exception->errorInfo[2] ?? '');
-
-        return match (true) {
-            str_contains($driverMessage, 'variants_company_sku_unique') => VariantOperationException::skuConflict($exception),
-            str_contains($driverMessage, 'variants_company_gtin_unique') => VariantOperationException::gtinConflict($exception),
-            default => null,
-        };
+        return app(VariantIdentifierNormalizer::class)->conflict($exception);
     }
 
     /** @param array<string, mixed> $data */

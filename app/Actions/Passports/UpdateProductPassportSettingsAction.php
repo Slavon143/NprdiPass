@@ -13,9 +13,15 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use App\Services\Catalog\ManagedProductGate;
+use App\Services\Dpp\DppDraftProfileSnapshot;
+use App\Services\Dpp\DppProfileResolver;
+use App\Services\Dpp\DppRegulatoryContext;
 use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Passports\Readiness\ReadinessProfileRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -44,12 +50,14 @@ class UpdateProductPassportSettingsAction
         try {
             $freshCompany = $this->authorize($actor, $company);
             $this->assertProductBelongsToCompany($freshCompany, $product);
+            $product = app(ManagedProductGate::class)->forMutation($freshCompany, $product);
             $this->assertPassportBelongsToProduct($passport, $product);
 
             $passport = ProductPassport::query()
+                ->forCompany($freshCompany)
                 ->whereKey($passport->getKey())
                 ->lockForUpdate()
-                ->first();
+                ->firstOrFail();
 
             $draft = $passport->currentDraftVersion;
 
@@ -64,6 +72,26 @@ class UpdateProductPassportSettingsAction
             }
 
             $payload = $draft->payload ?? [];
+            $refreshProfile = false;
+            if (array_key_exists('refresh_profile', $settings)) {
+                $flag = Validator::make(['refresh_profile' => $settings['refresh_profile']], [
+                    'refresh_profile' => ['required', 'boolean'],
+                ])->validate();
+                $refreshProfile = (bool) $flag['refresh_profile'];
+            }
+
+            if (array_key_exists('regulatory_context', $settings)) {
+                $payload['regulatory_context'] = app(DppRegulatoryContext::class)->validate($settings['regulatory_context']);
+            }
+            if ($refreshProfile) {
+                $profiles = app(DppProfileResolver::class)->resolve($product);
+                $repository = app(ReadinessProfileRepository::class);
+                $profile = $profiles === [] ? $repository->active() : $repository->for($profiles[0]->key, $profiles[0]->version);
+                $draft->setAttribute('readiness_profile', $profile->code);
+                $draft->setAttribute('readiness_profile_version', $profile->version);
+                $draft->setAttribute('readiness_rule_set_fingerprint', $profile->fingerprint);
+                $draft->setAttribute('readiness_profile_snapshot', app(DppDraftProfileSnapshot::class)->capture($product, $profile));
+            }
 
             if (isset($settings['enabled_sections']) && is_array($settings['enabled_sections'])) {
                 $newEnabled = $settings['enabled_sections'];
@@ -111,6 +139,8 @@ class UpdateProductPassportSettingsAction
                     'changed_sections' => array_values($normalized['enabled_sections'] ?? []),
                     'old_revision' => $oldRevision,
                     'new_revision' => $newRevision,
+                    'regulatory_context_updated' => array_key_exists('regulatory_context', $settings),
+                    'readiness_profile_refreshed' => $refreshProfile,
                 ],
             );
 
@@ -145,7 +175,8 @@ class UpdateProductPassportSettingsAction
 
     private function assertPassportBelongsToProduct(ProductPassport $passport, Product $product): void
     {
-        if ((int) $passport->getAttribute('product_id') !== (int) $product->getKey()) {
+        if ((int) $passport->getAttribute('product_id') !== (int) $product->getKey()
+            || (int) $passport->company_id !== (int) $product->company_id) {
             throw new NotFoundHttpException;
         }
     }

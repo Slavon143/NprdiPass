@@ -32,8 +32,8 @@ test('owner and admin can open token management and create a company scoped toke
     $this->get(route('settings.api-tokens.index'))
         ->assertOk()
         ->assertSee('API tokens')
-        ->assertSee(ApiTokenAbility::CompanyRead->value)
-        ->assertSee(ApiTokenAbility::MembersRead->value);
+        ->assertSee(ApiTokenAbility::CompanyRead->label())
+        ->assertSee(ApiTokenAbility::MembersRead->label());
 
     $response = $this->post(route('settings.api-tokens.store'), [
         'name' => 'Warehouse sync',

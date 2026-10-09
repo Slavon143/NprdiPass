@@ -29,7 +29,8 @@ class CatalogProductDefaultVariantPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $hasVariants = $context->product->variants()->count() > 0;
+        $hasVariants = $context->product->relationLoaded('variants')
+            ? $context->product->variants->isNotEmpty() : $context->product->variants()->exists();
         $hasDefault = $context->product->defaultVariant !== null;
 
         $passed = ! $hasVariants || $hasDefault;

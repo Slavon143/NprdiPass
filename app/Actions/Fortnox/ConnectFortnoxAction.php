@@ -28,6 +28,7 @@ class ConnectFortnoxAction
         $ttl = max(1, (int) config('fortnox.oauth_state_ttl_minutes'));
 
         DB::transaction(function () use ($actor, $company, $state, $ttl): void {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
             FortnoxOAuthState::query()->create([
                 'company_id' => $company->getKey(),
                 'user_id' => $actor->getKey(),

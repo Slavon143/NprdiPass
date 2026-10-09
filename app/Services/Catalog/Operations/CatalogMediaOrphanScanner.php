@@ -4,8 +4,11 @@ namespace App\Services\Catalog\Operations;
 
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductMedia;
+use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
 use App\Services\Catalog\Media\CatalogMediaStorage;
+use Generator;
+use League\Flysystem\FileAttributes;
 use Throwable;
 
 class CatalogMediaOrphanScanner
@@ -14,48 +17,60 @@ class CatalogMediaOrphanScanner
         private readonly CatalogMediaStorage $mediaStorage,
     ) {}
 
-    /**
-     * @return string[]
-     */
+    /** @return string[] */
     public function scanOrphans(Company $company, int $olderThanHours = 24): array
     {
-        $companyPrefix = $company->uuid.'/';
-        $cutoff = now()->subHours($olderThanHours);
+        return iterator_to_array($this->iterateOrphans($company, $olderThanHours), false);
+    }
+
+    /** @return Generator<int, string> */
+    public function iterateOrphans(Company $company, int $olderThanHours = 24): Generator
+    {
+        $prefix = $company->uuid.'/';
+        $cutoff = now()->subHours($olderThanHours)->timestamp;
         $disk = $this->mediaStorage->disk();
+        $batch = [];
 
-        $knownPaths = ProductMedia::withTrashed()
-            ->select('storage_path')
-            ->pluck('storage_path')
-            ->filter(fn (mixed $value): bool => is_string($value) && $value !== '')
-            ->toArray();
-
-        $knownMap = array_flip($knownPaths);
-        $orphans = [];
-
-        $allFiles = $disk->allFiles();
-
-        foreach ($allFiles as $path) {
-            if (! str_starts_with($path, $companyPrefix)) {
-                continue;
-            }
-
-            if (array_key_exists($path, $knownMap)) {
+        foreach ($disk->getDriver()->listContents($prefix, true) as $entry) {
+            if (! $entry instanceof FileAttributes || ! str_starts_with($entry->path(), $prefix)) {
                 continue;
             }
 
             try {
-                $lastModified = $disk->lastModified($path);
-                if ($lastModified > $cutoff->timestamp) {
-                    continue;
-                }
+                $modified = $entry->lastModified() ?? $disk->lastModified($entry->path());
             } catch (Throwable) {
                 continue;
             }
 
-            $orphans[] = $path;
+            if ($modified > $cutoff) {
+                continue;
+            }
+
+            $batch[] = $entry->path();
+            if (count($batch) === 500) {
+                yield from $this->unreferenced($company, $batch);
+                $batch = [];
+            }
         }
 
-        return $orphans;
+        if ($batch !== []) {
+            yield from $this->unreferenced($company, $batch);
+        }
+    }
+
+    /** @param list<string> $paths
+     * @return Generator<int, string>
+     */
+    private function unreferenced(Company $company, array $paths): Generator
+    {
+        $known = ProductMedia::withTrashed()->forCompany($company)
+            ->whereIn('storage_path', $paths)->pluck('storage_path')->all();
+        $knownMap = array_fill_keys($known, true);
+        foreach ($paths as $path) {
+            if (! isset($knownMap[$path])) {
+                yield $path;
+            }
+        }
     }
 
     /**
@@ -63,41 +78,31 @@ class CatalogMediaOrphanScanner
      */
     public function scanMissingFiles(Company $company): array
     {
-        $mediaRows = ProductMedia::query()
-            ->forCompany($company)
-            ->whereNull('deleted_at')
-            ->whereNotNull('storage_path')
-            ->where('storage_path', '!=', '')
-            ->select('uuid', 'storage_path', 'product_id', 'product_variant_id')
-            ->get();
-
+        $mediaRows = ProductMedia::query()->forCompany($company)
+            ->whereNotNull('storage_path')->where('storage_path', '!=', '')
+            ->select('id', 'uuid', 'storage_path', 'product_id', 'product_variant_id')
+            ->with([
+                'product' => fn ($query) => $query->where('company_id', $company->id)->select('id', 'uuid'),
+                'variant' => fn ($query) => $query->where('company_id', $company->id)->select('id', 'uuid', 'product_id'),
+            ])->lazyById(500);
         $missing = [];
 
         foreach ($mediaRows as $row) {
-            if (! $this->fileExists($row->storage_path)) {
-                $productUuid = Product::query()
-                    ->whereKey($row->product_id)
-                    ->value('uuid') ?? '';
-                $variantUuid = '';
-
-                $missing[] = [
-                    'uuid' => $row->uuid,
-                    'storage_path' => $row->storage_path,
-                    'product_uuid' => $productUuid,
-                    'variant_uuid' => $variantUuid,
-                ];
+            // Storage failures must not be presented as confirmed missing files.
+            if ($this->mediaStorage->exists($row->storage_path)) {
+                continue;
             }
+
+            $product = $row->product;
+            $variant = $row->variant;
+            $missing[] = [
+                'uuid' => $row->uuid,
+                'storage_path' => $row->storage_path,
+                'product_uuid' => $product instanceof Product ? $product->uuid : '',
+                'variant_uuid' => $variant instanceof ProductVariant && $variant->product_id === $row->product_id ? $variant->uuid : null,
+            ];
         }
 
         return $missing;
-    }
-
-    private function fileExists(string $path): bool
-    {
-        try {
-            return $this->mediaStorage->exists($path);
-        } catch (Throwable) {
-            return false;
-        }
     }
 }

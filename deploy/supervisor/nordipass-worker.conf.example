@@ -8,12 +8,12 @@
 ;   - Replace /var/www/nordipass with the actual project root
 ;   - Replace www-data with the actual system user
 ;   - Replace /var/log/supervisor/ with an existing log directory
-;   - For production, change queue:work database to queue:work redis
+;   - Keep Redis for staging/production; use database only for local development
 
 [program:nordipass-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=/usr/bin/php /var/www/nordipass/artisan queue:work redis --queue=mail,maintenance,default --sleep=3 --tries=3 --timeout=300 --max-time=3600
-directory=/var/www/nordipass
+command=/usr/bin/php /var/www/nordipass/current/artisan queue:work redis --queue=webhooks,imports,mail,analytics,maintenance,default --sleep=3 --tries=5 --timeout=300 --max-time=3600
+directory=/var/www/nordipass/current
 autostart=true
 autorestart=true
 stopasgroup=true

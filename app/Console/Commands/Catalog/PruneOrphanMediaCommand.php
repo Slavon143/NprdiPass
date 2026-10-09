@@ -2,20 +2,19 @@
 
 namespace App\Console\Commands\Catalog;
 
-use App\Models\Catalog\ProductMedia;
+use App\Models\Company;
 use App\Services\Catalog\Media\CatalogMediaStorage;
-use App\Support\Catalog\Media\MediaPathGuard;
+use App\Services\Catalog\Operations\CatalogMediaCleanupService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PruneOrphanMediaCommand extends Command
 {
     protected $signature = 'catalog:prune-orphan-media {--delete : Delete eligible files} {--older-than=24 : Minimum file age in hours} {--limit=500 : Maximum files to inspect for deletion}';
 
-    protected $description = 'Report or delete old orphan catalog images and retry files for soft-deleted media.';
+    protected $description = 'Report or delete old tenant catalog images and retry files for soft-deleted media.';
 
-    public function handle(CatalogMediaStorage $storage, MediaPathGuard $pathGuard): int
+    public function handle(CatalogMediaStorage $storage, CatalogMediaCleanupService $cleanup): int
     {
         $delete = (bool) $this->option('delete');
         $hours = filter_var($this->option('older-than'), FILTER_VALIDATE_INT);
@@ -30,67 +29,24 @@ class PruneOrphanMediaCommand extends Command
 
             return self::FAILURE;
         }
-
-        $cutoff = now()->subHours($hours);
-        $known = ProductMedia::withTrashed()->pluck('storage_path')
-            ->filter(fn (mixed $value): bool => is_string($value))->flip();
-        $candidates = [];
-
-        foreach ($storage->disk()->allFiles() as $path) {
-            if (count($candidates) >= $limit) {
-                break;
-            }
-            try {
-                $path = $pathGuard->assertSafeRelative($path);
-            } catch (Throwable) {
-                $this->warn('Skipped an unsafe media path.');
-
-                continue;
-            }
-            if ($known->has($path)) {
-                continue;
-            }
-            try {
-                if ($storage->disk()->lastModified($path) > $cutoff->timestamp) {
-                    continue;
+        $candidates = $deleted = $failed = 0;
+        try {
+            foreach (Company::withTrashed()->lazyById(500) as $company) {
+                if ($candidates >= $limit) {
+                    break;
                 }
-            } catch (Throwable) {
-                continue;
+                $report = $cleanup->cleanup($company, ! $delete, $hours, $limit - $candidates, true);
+                $candidates += $report->candidates;
+                $deleted += $report->deleted;
+                $failed += $report->failed;
             }
-            $candidates[$path] = 'orphan';
-        }
+        } catch (Throwable) {
+            $this->error('Media cleanup could not acquire safe storage access; no further files were deleted.');
 
-        $remaining = $limit - count($candidates);
-        if ($remaining > 0) {
-            ProductMedia::onlyTrashed()->where('deleted_at', '<=', $cutoff)->orderBy('id')->limit($remaining)->get()->each(function (ProductMedia $media) use (&$candidates, $storage, $pathGuard): void {
-                try {
-                    $path = $pathGuard->assertSafeRelative($media->storage_path);
-                    if ($storage->exists($path)) {
-                        $candidates[$path] = 'soft-deleted';
-                    }
-                } catch (Throwable) { /* unsafe persisted paths are reported, never deleted */
-                }
-            });
-        }
-
-        $deleted = 0;
-        $failed = 0;
-        if ($delete) {
-            foreach ($candidates as $path => $kind) {
-                try {
-                    if ($storage->delete($path)) {
-                        $deleted++;
-                    } else {
-                        $failed++;
-                    }
-                } catch (Throwable) {
-                    $failed++;
-                    Log::warning('Catalog media cleanup deletion failed.', ['operation' => 'cleanup', 'error_code' => 'delete_failed', 'candidate_type' => $kind]);
-                }
-            }
+            return self::FAILURE;
         }
         $mode = $delete ? 'delete' : 'dry-run';
-        $this->info("Catalog media cleanup {$mode}: candidates=".count($candidates).", deleted={$deleted}, failed={$failed}.");
+        $this->info("Catalog media cleanup {$mode}: candidates={$candidates}, deleted={$deleted}, failed={$failed}.");
 
         return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }

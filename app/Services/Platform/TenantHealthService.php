@@ -25,6 +25,7 @@ class TenantHealthService
         $openIncidents = PlatformIncident::query()
             ->where('company_id', $company->getKey())
             ->where('status', PlatformIncidentStatus::Open->value)
+            ->where('type', '!=', 'customer_feedback')
             ->count();
 
         $status = match (true) {

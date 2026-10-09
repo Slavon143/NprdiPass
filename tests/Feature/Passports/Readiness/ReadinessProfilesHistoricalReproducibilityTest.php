@@ -21,6 +21,7 @@ use App\Models\CompanyMembership;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Dpp\DppDraftProfileSnapshot;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
@@ -401,6 +402,7 @@ class ReadinessProfilesHistoricalReproducibilityTest extends TestCase
             'readiness_profile' => $profile->code,
             'readiness_profile_version' => $profile->version,
             'readiness_rule_set_fingerprint' => $profile->fingerprint,
+            'readiness_profile_snapshot' => app(DppDraftProfileSnapshot::class)->capture($this->product, $profile),
             'updated_by' => $this->actor->getKey(),
         ])->save();
     }

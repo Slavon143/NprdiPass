@@ -75,6 +75,22 @@ class DppApiTest extends TestCase
         return $res->json('data', []);
     }
 
+    public function test_regulatory_context_is_validated_and_available_in_readiness_without_forging_scope(): void
+    {
+        $this->createDraftViaApi();
+        $token = $this->issueToken([ApiTokenAbility::PassportsWrite->value, ApiTokenAbility::PassportsRead->value]);
+        $url = "/api/v1/catalog/products/{$this->product->uuid}/passport/settings";
+        $facts = ['market' => 'EU', 'product_type' => 'electrical', 'passport_level' => 'model', 'assessment_source' => 'Manufacturer data'];
+        $this->withToken($token)->putJson($url, ['expected_revision' => 1,
+            'settings' => ['regulatory_context' => $facts + ['company_id' => 999]]])->assertUnprocessable()->assertHeader('X-Request-ID');
+        $this->withToken($token)->putJson($url, ['expected_revision' => 1,
+            'settings' => ['regulatory_context' => $facts, 'refresh_profile' => true]])
+            ->assertOk()->assertJsonPath('data.draft_revision', 2)->assertJsonPath('data.payload.regulatory_context.market', 'EU');
+        $this->withToken($token)->getJson("/api/v1/catalog/products/{$this->product->uuid}/passport/readiness")
+            ->assertOk()->assertJsonPath('data.profile_details.regulatory_scope.status', 'sector_assessment_required')
+            ->assertJsonPath('data.profile_details.regulatory_scope.registry_required', null);
+    }
+
     // ── GET passport ──────────────────────────────────────────────
 
     public function test_get_passport_returns_editor_data(): void

@@ -34,6 +34,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class DocumentContractTest extends TestCase
@@ -462,14 +463,9 @@ class DocumentContractTest extends TestCase
             ],
         ];
 
-        $snapshot = app(PassportSnapshotBuilder::class)->build($payload, $this->product);
-
-        $this->assertArrayNotHasKey(
-            'document_version_uuid',
-            $snapshot['document_references'][0],
-            'Foreign document version UUID must be stripped instead of pinned into this product snapshot.',
-        );
-        $this->assertSame([], $snapshot['_catalog_context']['documents']);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('A referenced document is unavailable.');
+        app(PassportSnapshotBuilder::class)->build($payload, $this->product);
     }
 
     public function test_new_document_version_does_not_change_draft_reference(): void

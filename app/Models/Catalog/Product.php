@@ -6,6 +6,7 @@ use App\Enums\Catalog\ProductStatus;
 use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
 use App\Models\Concerns\HasUuid;
+use App\Models\DppProfile;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property int $id
  * @property string $uuid
+ * @property bool $managed
  * @property int $company_id
  * @property int|null $primary_category_id
  * @property int|null $taxonomy_template_id
@@ -51,6 +53,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Collection<int, ProductVariant> $variants
  * @property-read Collection<int, ProductAttributeValue> $attributeValues
  * @property ProductMedia|null $primaryMedia
+ * @property-read ProductPassport|null $passport
+ * @property-read Collection<int, DppProfile> $dppProfiles
  */
 class Product extends Model
 {
@@ -72,6 +76,7 @@ class Product extends Model
     {
         return [
             'status' => ProductStatus::class,
+            'managed' => 'boolean',
             'commerce' => 'array',
             'published_at' => 'immutable_datetime',
             'taxonomy_needs_review' => 'boolean',
@@ -109,6 +114,14 @@ class Product extends Model
     public function taxonomyTemplate(): BelongsTo
     {
         return $this->belongsTo(CategoryTemplate::class, 'taxonomy_template_id');
+    }
+
+    /** @return BelongsToMany<DppProfile, $this> */
+    public function dppProfiles(): BelongsToMany
+    {
+        return $this->belongsToMany(DppProfile::class, 'product_dpp_profiles')
+            ->withPivot(['priority', 'assignment_reason'])
+            ->withTimestamps();
     }
 
     public function attributeValues(): HasMany

@@ -30,17 +30,16 @@ class CancelCompanyInvitation
                 ->whereKey($snapshot->getAttribute('company_id'))
                 ->lockForUpdate()
                 ->firstOrFail();
+            if ($company->status !== CompanyStatus::Active) {
+                throw new AuthorizationException;
+            }
+            $this->authorizer->authorizeCancellation($actor, $snapshot);
+
             $lockedInvitation = CompanyInvitation::query()
                 ->whereKey($snapshot->getKey())
                 ->where('company_id', $company->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
-
-            if ($company->status !== CompanyStatus::Active) {
-                throw new AuthorizationException;
-            }
-
-            $this->authorizer->authorizeManage($actor, $lockedInvitation);
 
             if (! $lockedInvitation->isPending()) {
                 throw new InvitationCannotBeCancelled;

@@ -45,7 +45,7 @@ class DocumentsFileAvailable implements PassportReadinessRule
 
         foreach ($context->referencedDocuments as $document) {
             $docUuid = $document->uuid;
-            if (isset($context->storageExistenceResults[$docUuid]) && $context->storageExistenceResults[$docUuid] !== true) {
+            if (($context->storageExistenceResults[$docUuid] ?? false) !== true) {
                 $missingFiles[] = $docUuid;
             }
         }

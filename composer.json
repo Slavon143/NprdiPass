@@ -16,6 +16,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "phpoffice/phpspreadsheet": "^5.9",
+        "predis/predis": "^3.4",
         "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^8.3"
     },
@@ -57,7 +58,10 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
         ],
-        "test": "php artisan test",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "php artisan test"
+        ],
         "lint": "pint",
         "analyse": "phpstan analyse",
         "quality": [

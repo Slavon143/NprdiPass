@@ -2,16 +2,14 @@
 
 namespace App\Services\Passports;
 
-use App\Enums\Documents\ProductDocumentApprovalStatus;
-use App\Enums\Documents\ProductDocumentReviewStatus;
 use App\Enums\Documents\ProductDocumentStatus;
-use App\Enums\Documents\ProductDocumentVisibility;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
+use Illuminate\Validation\ValidationException;
 
 class PassportSnapshotBuilder
 {
@@ -41,6 +39,11 @@ class PassportSnapshotBuilder
      */
     private function resolveDocumentReferencesForProduct(array $normalized, Product $product): array
     {
+        $documents = ProductDocument::query()
+            ->where('company_id', $product->company_id)
+            ->where('product_id', $product->getKey())
+            ->whereIn('uuid', array_column($normalized['document_references'], 'document_uuid'))
+            ->get()->keyBy('uuid');
         foreach ($normalized['document_references'] as &$ref) {
             $documentUuid = $ref['document_uuid'] ?? null;
 
@@ -50,44 +53,19 @@ class PassportSnapshotBuilder
                 continue;
             }
 
-            $document = ProductDocument::query()
-                ->where('company_id', $product->company_id)
-                ->where('product_id', $product->getKey())
-                ->where('uuid', $documentUuid)
-                ->active()
-                ->with('currentVersion')
-                ->first();
+            $document = $documents[$documentUuid] ?? null;
 
             if ($document === null) {
-                unset($ref['document_version_uuid']);
-
-                continue;
+                throw ValidationException::withMessages(['documents' => 'A referenced document is unavailable.']);
             }
 
             $versionUuid = $ref['document_version_uuid'] ?? null;
 
-            if (! is_string($versionUuid) || $versionUuid === '') {
-                $resolvedVersion = $this->documentVersionResolver->resolve($document, true);
-                if ($resolvedVersion !== null) {
-                    $ref['document_version_uuid'] = $resolvedVersion->uuid;
-                }
-
-                continue;
+            $version = $this->documentVersionResolver->resolveReference($document, $versionUuid);
+            if ($version === null) {
+                throw ValidationException::withMessages(['documents' => 'A referenced document version is not approved, public, or currently valid.']);
             }
-
-            $versionBelongsToDocument = ProductDocumentVersion::query()
-                ->where('company_id', $product->company_id)
-                ->where('document_id', $document->getKey())
-                ->where('uuid', $versionUuid)
-                ->where('visibility', ProductDocumentVisibility::PassportPublic->value)
-                ->where('review_status', ProductDocumentReviewStatus::Approved->value)
-                ->where('approval_status', ProductDocumentApprovalStatus::Approved->value)
-                ->where('file_available', true)
-                ->exists();
-
-            if (! $versionBelongsToDocument) {
-                unset($ref['document_version_uuid']);
-            }
+            $ref['document_version_uuid'] = $version->uuid;
         }
         unset($ref);
 

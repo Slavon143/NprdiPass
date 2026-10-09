@@ -23,6 +23,7 @@ class RevokeCompanyApiToken
         $this->authorizer->authorize($actor, $company, CompanyPermission::ApiTokensRevoke);
 
         DB::transaction(function () use ($actor, $company, $token): void {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::ApiTokensRevoke);
             $lockedToken = PersonalAccessToken::query()
                 ->whereKey($token->getKey())
                 ->where('company_id', $company->getKey())

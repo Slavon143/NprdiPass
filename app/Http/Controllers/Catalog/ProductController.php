@@ -30,10 +30,12 @@ use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
 use App\Queries\Catalog\ProductCatalogQuery;
+use App\Services\Billing\CommercialAccessPolicy;
 use App\Services\Catalog\CategoryHierarchyService;
 use App\Services\Catalog\ProductActivationReadinessService;
 use App\Services\Catalog\Taxonomy\ProductReadinessProfileResolver;
 use App\Services\Catalog\Taxonomy\ProductTaxonomyDiagnosticsService;
+use App\Services\Passports\Readiness\PassportReadinessDisplay;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ProductIndexReadinessProvider;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
@@ -42,6 +44,7 @@ use App\Support\Catalog\ProductIndexReturnUrl;
 use App\Support\Catalog\Search\CatalogSearchStringNormalizer;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -79,6 +82,33 @@ class ProductController extends Controller
             'canArchive' => $request->user()?->can(CompanyPermission::CatalogArchive->value, $company) === true,
             'canPublish' => $request->user()?->can(CompanyPermission::CatalogPublish->value, $company) === true,
             'canManagePassports' => $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true,
+        ]);
+    }
+
+    public function suggestions(
+        SearchProductsRequest $request,
+        CurrentCompany $currentCompany,
+        ProductCatalogQuery $catalogQuery,
+        CatalogSearchStringNormalizer $searchNormalizer,
+    ): JsonResponse {
+        $query = $searchNormalizer->normalize($request->validated('q') ?? '');
+
+        if (mb_strlen($query) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $company = $currentCompany->require();
+        $products = $catalogQuery
+            ->build($company, new CatalogProductSearchCriteria(query: $query, sort: 'relevance'))
+            ->limit(6)
+            ->get();
+
+        return response()->json([
+            'data' => $products->map(fn (Product $product): array => [
+                'name' => $product->name,
+                'brand' => $product->brand,
+                'url' => route('catalog.products.show', $product->uuid),
+            ])->all(),
         ]);
     }
 
@@ -152,12 +182,12 @@ class ProductController extends Controller
 
         $passport = $product->passport;
         $passportReadiness = null;
-        $canManagePassports = $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true;
-        $canViewPassports = $canManagePassports || $request->user()?->can(CompanyPermission::PassportsView->value, $company) === true;
+        $hasPassportManagePermission = $request->user()?->can(CompanyPermission::PassportsManage->value, $company) === true;
+        $canManagePassports = $hasPassportManagePermission && $product->managed && ! $isArchived;
+        $canViewPassports = $hasPassportManagePermission || $request->user()?->can(CompanyPermission::PassportsView->value, $company) === true;
 
         if ($passport instanceof ProductPassport) {
-            $passportContext = $passportContextBuilder->build($company, $product->fresh() ?? $product);
-            $passportReadiness = $passportEvaluator->evaluate($passportContext);
+            $passportReadiness = app(PassportReadinessDisplay::class)->result($company, $product);
         }
 
         $documents = ProductDocument::query()->forCompany($company)
@@ -188,8 +218,13 @@ class ProductController extends Controller
             'effectiveReadinessProfile' => $effectiveReadinessProfile,
             'passport' => $passport,
             'passportReadiness' => $passportReadiness,
+            'passportReadinessHistorical' => ! app(PassportReadinessDisplay::class)->canEvaluate($company, $product),
             'canManagePassports' => $canManagePassports,
             'canViewPassports' => $canViewPassports,
+            'canEnrollInDpp' => ! $product->managed && ! $isArchived
+                && $company->commercial_model_version === 1
+                && $request->user()?->can('update', $product) === true
+                && ! app(CommercialAccessPolicy::class)->isReadOnly($company),
             'attributeDefinitions' => $attributeDefinitions,
             'attributeValues' => $product->attributeValues->keyBy('attribute_definition_id'),
             'archivedAttributeValues' => $product->attributeValues->filter(fn (ProductAttributeValue $value): bool => $value->definition->status === AttributeDefinitionStatus::Archived),
@@ -238,6 +273,7 @@ class ProductController extends Controller
             $validated,
             $this->primaryCategoryUuid($validated),
             $this->categoryUuids($validated),
+            syncCategories: true,
         );
 
         $routeParameters = ['product' => $updated->uuid];

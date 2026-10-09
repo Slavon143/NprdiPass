@@ -29,7 +29,8 @@ class CatalogProductAttributesPresent implements PassportReadinessRule
 
     public function evaluate(ReadinessEvaluationContext $context): ReadinessRuleResult
     {
-        $hasAttributes = $context->product->attributeValues()->count() > 0;
+        $hasAttributes = $context->product->relationLoaded('attributeValues')
+            ? $context->product->attributeValues->isNotEmpty() : $context->product->attributeValues()->exists();
 
         return new ReadinessRuleResult(
             code: $this->code(),

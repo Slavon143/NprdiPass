@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Services\Catalog\CatalogLifecycleGuard;
 use App\Services\Catalog\Media\CatalogMediaStorage;
+use App\Services\Storage\TenantStorageLedger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -46,10 +47,15 @@ class DeleteVariantMediaAction extends MediaAction
 
             return [$media->storage_path, $media->uuid];
         });
-        try {
-            $this->storage->delete($path);
-        } catch (Throwable) {
-            Log::warning('Catalog media physical deletion failed.', ['company_uuid' => $company->uuid, 'product_uuid' => $product->uuid, 'variant_uuid' => $variant->uuid, 'media_uuid' => $uuid, 'operation' => 'delete', 'error_code' => 'physical_delete_failed']);
-        }
+        DB::afterCommit(function () use ($company, $product, $variant, $uuid, $path): void {
+            try {
+                if (! $this->storage->delete($path)) {
+                    throw new \RuntimeException('Physical deletion was not confirmed.');
+                }
+                app(TenantStorageLedger::class)->releaseRemovedKey($company, $this->storage->diskName(), $path);
+            } catch (Throwable) {
+                Log::warning('Catalog media physical deletion failed.', ['company_uuid' => $company->uuid, 'product_uuid' => $product->uuid, 'variant_uuid' => $variant->uuid, 'media_uuid' => $uuid, 'operation' => 'delete', 'error_code' => 'physical_delete_failed']);
+            }
+        });
     }
 }

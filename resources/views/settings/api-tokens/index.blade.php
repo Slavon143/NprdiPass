@@ -26,7 +26,7 @@
                         @foreach ($abilities as $ability)
                             <label class="flex items-center gap-2 text-sm text-slate-700">
                                 <input type="checkbox" name="abilities[]" value="{{ $ability->value }}" @checked(in_array($ability->value, old('abilities', []), true)) class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                <span>{{ $ability->value }}</span>
+                                <span>{{ __($ability->label()) }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -77,13 +77,15 @@
                                 <tr class="align-top">
                                     <td class="px-5 py-4 text-sm font-semibold text-slate-900">{{ $token->name }}</td>
                                     <td class="px-5 py-4 text-sm text-slate-600">{{ $token->tokenable?->name ?: __('Former user') }}</td>
-                                    <td class="px-5 py-4 text-sm text-slate-600">{{ implode(', ', $token->abilities) }}</td>
+                                    <td class="px-5 py-4 text-sm text-slate-600">
+                                        {{ collect($token->abilities)->map(fn (string $ability): string => __((\App\Enums\ApiTokenAbility::tryFrom($ability))?->label() ?? 'Unknown ability'))->join(', ') }}
+                                    </td>
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{{ $token->created_at?->format('Y-m-d H:i') }}</td>
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{{ $token->last_used_at?->format('Y-m-d H:i') ?: __('Never') }}</td>
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{{ $token->expires_at?->format('Y-m-d H:i') ?: __('Never') }}</td>
                                     <td class="px-5 py-4"><x-badge :tone="$expired ? 'red' : 'emerald'">{{ $expired ? __('expired') : __('active') }}</x-badge></td>
                                     <td class="px-5 py-4 text-right">
-                                        <form method="POST" action="{{ route('settings.api-tokens.destroy', ['token' => $token->getKey()]) }}" x-data="{ message: @js(__('Revoke token :name?', ['name' => $token->name])) }" @submit.prevent="if (window.confirm(message)) $el.submit()">
+                                        <form method="POST" action="{{ route('settings.api-tokens.destroy', ['token' => $token->getKey()]) }}" x-data="confirmSubmit" data-confirm-message="{{ __('Revoke token :name?', ['name' => $token->name]) }}" @submit.prevent="submit">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500">{{ __('Revoke') }}</button>

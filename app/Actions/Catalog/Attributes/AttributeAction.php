@@ -37,7 +37,7 @@ abstract class AttributeAction
         protected readonly CatalogLifecycleGuard $lifecycle,
     ) {}
 
-    protected function authorize(User $actor, Company $company, CompanyPermission $permission = CompanyPermission::CatalogManageAttributes): Company
+    protected function authorize(User $actor, Company $company, CompanyPermission $permission = CompanyPermission::CatalogManageAttributes, bool $catalogWrite = false): Company
     {
         $freshCompany = Company::query()->find($company->getKey());
 
@@ -45,7 +45,11 @@ abstract class AttributeAction
             throw new AuthorizationException;
         }
 
-        $this->authorizer->authorize($actor, $freshCompany, $permission);
+        if ($catalogWrite) {
+            $this->authorizer->authorizeCatalogWrite($actor, $freshCompany, $permission);
+        } else {
+            $this->authorizer->authorize($actor, $freshCompany, $permission);
+        }
 
         return $freshCompany;
     }

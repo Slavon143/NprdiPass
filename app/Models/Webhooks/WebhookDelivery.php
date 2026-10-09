@@ -8,8 +8,10 @@ use App\Models\Company;
 use App\Models\Concerns\HasUuid;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -24,9 +26,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $attempts
  * @property int|null $response_status
  * @property CarbonImmutable|null $last_attempt_at
+ * @property CarbonImmutable|null $next_attempt_at
  * @property CarbonImmutable|null $delivered_at
  * @property string $idempotency_key
  * @property-read WebhookEndpoint|null $endpoint
+ * @property-read Collection<int, WebhookDeliveryAttempt> $attemptsLog
  */
 class WebhookDelivery extends Model
 {
@@ -77,5 +81,10 @@ class WebhookDelivery extends Model
             $query->qualifyColumn('company_id'),
             $company instanceof Company ? $company->id : $company,
         );
+    }
+
+    public function attemptsLog(): HasMany
+    {
+        return $this->hasMany(WebhookDeliveryAttempt::class);
     }
 }

@@ -29,6 +29,7 @@ class BulkArchiveAttributesAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
 
         return DB::transaction(function () use ($actor, $company, $uuids): array {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageAttributes);
             $locked = AttributeDefinition::query()
                 ->forCompany($company)
                 ->whereIn('uuid', $uuids)

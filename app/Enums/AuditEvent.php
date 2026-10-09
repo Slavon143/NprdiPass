@@ -20,6 +20,7 @@ enum AuditEvent: string
     case PlatformRoleAssigned = 'platform.role_assigned';
     case PlatformRoleRemoved = 'platform.role_removed';
     case PlatformAction = 'platform.action';
+    case FeedbackSubmitted = 'feedback.submitted';
     case ApiTokenCreated = 'api_token.created';
     case ApiTokenRevoked = 'api_token.revoked';
     case CatalogCategoryCreated = 'catalog.category.created';
@@ -33,7 +34,9 @@ enum AuditEvent: string
     case CatalogCategoryTemplateActivated = 'catalog.category_template.activated';
     case CatalogProductTaxonomyAcknowledged = 'catalog.product.taxonomy_acknowledged';
     case CatalogProductReadinessProfileOverridden = 'catalog.product.readiness_profile_overridden';
+    case CatalogProductManagedChanged = 'catalog.product.managed_changed';
     case CatalogProductCreated = 'catalog.product.created';
+    case CatalogCapacityReconciled = 'catalog.capacity.reconciled';
     case CatalogProductUpdated = 'catalog.product.updated';
     case CatalogProductActivated = 'catalog.product.activated';
     case CatalogProductReturnedToDraft = 'catalog.product.returned_to_draft';
@@ -79,6 +82,7 @@ enum AuditEvent: string
     case ExportDownloaded = 'export.downloaded';
     case PassportCreated = 'passport.created';
     case PassportDraftUpdated = 'passport.draft.updated';
+    case PassportRegistryPrepared = 'passport.registry.prepared';
     case PassportPublicationApprovalRequested = 'passport.publication_approval.requested';
     case PassportPublicationApprovalApproved = 'passport.publication_approval.approved';
     case PassportPublished = 'passport.published';
@@ -91,6 +95,8 @@ enum AuditEvent: string
     case FortnoxSyncCompleted = 'fortnox.sync.completed';
     case FortnoxSyncFailed = 'fortnox.sync.failed';
     case FortnoxConflictResolved = 'fortnox.conflict.resolved';
+    case FortnoxReconciled = 'fortnox.reconciled';
+    case FortnoxResyncRequested = 'fortnox.resync.requested';
     case BillingSubscriptionUpdated = 'billing.subscription.updated';
     case GdprDataExport = 'gdpr.data_export';
     case GdprErasure = 'gdpr.erasure';
@@ -114,6 +120,7 @@ enum AuditEvent: string
             self::PlatformRoleAssigned => 'Platform role assigned',
             self::PlatformRoleRemoved => 'Platform role removed',
             self::PlatformAction => 'Platform action',
+            self::FeedbackSubmitted => 'Feedback submitted',
             self::ApiTokenCreated => 'API token created',
             self::ApiTokenRevoked => 'API token revoked',
             self::CatalogCategoryCreated => 'Catalog category created',
@@ -127,7 +134,9 @@ enum AuditEvent: string
             self::CatalogCategoryTemplateActivated => 'Catalog category template activated',
             self::CatalogProductTaxonomyAcknowledged => 'Catalog product taxonomy acknowledged',
             self::CatalogProductReadinessProfileOverridden => 'Catalog product readiness profile overridden',
+            self::CatalogProductManagedChanged => 'Catalog product managed status changed',
             self::CatalogProductCreated => 'Catalog product created',
+            self::CatalogCapacityReconciled => 'Catalog capacity reconciled',
             self::CatalogProductUpdated => 'Catalog product updated',
             self::CatalogProductActivated => 'Catalog product activated',
             self::CatalogProductReturnedToDraft => 'Catalog product returned to draft',
@@ -173,6 +182,7 @@ enum AuditEvent: string
             self::ExportDownloaded => 'Export downloaded',
             self::PassportCreated => 'Passport created',
             self::PassportDraftUpdated => 'Passport draft updated',
+            self::PassportRegistryPrepared => 'Passport registry preparation recorded',
             self::PassportPublicationApprovalRequested => 'Passport publication approval requested',
             self::PassportPublicationApprovalApproved => 'Passport publication approval approved',
             self::PassportPublished => 'Passport published',
@@ -185,6 +195,8 @@ enum AuditEvent: string
             self::FortnoxSyncCompleted => 'Fortnox sync completed',
             self::FortnoxSyncFailed => 'Fortnox sync failed',
             self::FortnoxConflictResolved => 'Fortnox conflict resolved',
+            self::FortnoxReconciled => 'Fortnox reconciliation performed',
+            self::FortnoxResyncRequested => 'Fortnox resync requested',
             self::BillingSubscriptionUpdated => 'Billing subscription updated',
             self::GdprDataExport => 'GDPR data export',
             self::GdprErasure => 'GDPR erasure request',

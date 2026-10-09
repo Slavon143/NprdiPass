@@ -64,6 +64,19 @@ test('oauth state is single use and rejected on replay', function () {
         ->and(FortnoxConnection::query()->forCompany($company)->first()?->token_payload['access_token'] ?? null)->toStartWith('fake-access-');
 });
 
+test('active fortnox connection renders a working reconnect submit form', function () {
+    fortnoxConnected();
+    $response = $this->get(route('settings.integrations.fortnox.index'))->assertOk();
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $forms = $xpath->query('//form[@action="'.route('settings.integrations.fortnox.connect').'"]');
+
+    expect($forms->length)->toBe(1)
+        ->and($forms->item(0)->getAttribute('method'))->toBe('POST')
+        ->and($xpath->query('.//button[@type="submit"]', $forms->item(0))->length)->toBe(1);
+});
+
 test('oauth state from another tenant cannot complete a connection', function () {
     [$owner, $first] = fortnoxContext();
     $url = app(ConnectFortnoxAction::class)->execute($owner, $first);

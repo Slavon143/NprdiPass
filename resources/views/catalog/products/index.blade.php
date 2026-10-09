@@ -27,11 +27,11 @@
     @endphp
 
     <div id="catalog-products-page" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="products-page" x-data="{ filtersOpen: false }">
-        <form id="catalog-products-filter-form" method="GET" action="{{ route('catalog.products.index') }}" data-ajax-products-form oninput="clearTimeout(window.__nordipassProductsFilterTimer); window.__nordipassProductsFilterTimer = setTimeout(() => this.requestSubmit(), 300)">
+        <form id="catalog-products-filter-form" method="GET" action="{{ route('catalog.products.index') }}" data-ajax-products-form>
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <div class="flex-1">
                     <x-input-label for="q" :value="__('Search')" class="sr-only" />
-                    <x-text-input id="q" name="q" type="search" class="block w-full" :value="$criteria->query" placeholder="Search products, SKU, GTIN…" oninput="clearTimeout(window.__nordipassProductsFilterTimer); window.__nordipassProductsFilterTimer = setTimeout(() => this.form.requestSubmit(), 300)" />
+                    <x-text-input id="q" name="q" type="search" class="block w-full" :value="$criteria->query" placeholder="Search products, SKU, GTIN…" />
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -240,7 +240,7 @@
                 <p>{{ trans_choice(':count product|:count products', $products->total(), ['count' => $products->total()]) }}</p>
                 <div class="flex items-center gap-2">
                     <label for="per_page" class="text-xs font-medium text-slate-500">{{ __('Per page') }}</label>
-                    <select id="per_page" name="per_page" form="catalog-products-filter-form" onchange="this.form.requestSubmit()" class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="per_page" name="per_page" form="catalog-products-filter-form" class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @foreach ([25, 50, 100] as $perPage)
                             <option value="{{ $perPage }}" @selected($criteria->perPage === $perPage)>{{ $perPage }}</option>
                         @endforeach
@@ -423,6 +423,9 @@
                                                     @if ($blockers > 0)
                                                         <span class="text-xs text-slate-500"> · {{ trans_choice(':count blocker|:count blockers', $blockers, ['count' => $blockers]) }}</span>
                                                     @endif
+                                                    @if (($summary['readiness_source'] ?? null) === 'stored')
+                                                        <span class="mt-0.5 block text-xs text-slate-500">{{ __('Stored readiness evaluation') }}</span>
+                                                    @endif
                                                     @if ($passportStatus === 'published')
                                                         <span class="mt-0.5 block text-xs text-slate-400">{{ __('Public version live') }}</span>
                                                     @endif
@@ -438,8 +441,8 @@
                                             <time datetime="{{ $updatedAt?->toAtomString() }}">{{ $updatedLabel }}</time>
                                         </td>
                                         <td class="px-5 py-4">
-                                            <div class="relative" x-data="{ open: false }">
-                                                <button type="button" x-ref="button" @click="open = !open; if (open) { const r = $refs.button.getBoundingClientRect(); const m = $refs.menu; m.style.top = (r.bottom + 4) + 'px'; m.style.left = Math.max(8, Math.min(r.right - 224, window.innerWidth - 232)) + 'px'; }" :aria-expanded="open" aria-haspopup="menu" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="{{ __('Actions for :product', ['product' => $product->name]) }}">
+                                            <div class="relative" x-data="positionedMenu">
+                                                <button type="button" x-ref="button" @click="toggle" :aria-expanded="open" aria-haspopup="menu" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="{{ __('Actions for :product', ['product' => $product->name]) }}">
                                                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                         <path d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
                                                     </svg>
@@ -841,6 +844,16 @@
                     }
 
                     form.dataset.ajaxFiltersBound = '1';
+
+                    var filterTimer = null;
+                    form.addEventListener('input', function () {
+                        clearTimeout(filterTimer);
+                        filterTimer = setTimeout(function () { form.requestSubmit(); }, 300);
+                    });
+                    document.getElementById('per_page')?.addEventListener('change', function () {
+                        clearTimeout(filterTimer);
+                        form.requestSubmit();
+                    });
 
                     form.addEventListener('submit', function (event) {
                         event.preventDefault();

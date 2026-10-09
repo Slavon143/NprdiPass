@@ -48,6 +48,7 @@ class CreateCompanyApiToken
             $abilityValues,
             $expiresAt,
         ): NewAccessToken {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::ApiTokensCreate);
             $newToken = $actor->createToken($name, $abilityValues, $expiresAt);
             $accessToken = $newToken->accessToken;
 

@@ -162,21 +162,22 @@ test('Viewer sees galleries but mutation controls and uploads are denied', funct
 });
 
 test('orphan cleanup defaults to dry run and requires explicit delete', function () {
-    r18Context();
-    Storage::disk('catalog_media')->put('safe/orphan.png', r18Bytes());
+    [, $company] = r18Context();
+    $path = $company->uuid.'/orphan.png';
+    Storage::disk('catalog_media')->put($path, r18Bytes());
     $this->artisan('catalog:prune-orphan-media', ['--older-than' => 0, '--limit' => 10])->assertSuccessful();
-    Storage::disk('catalog_media')->assertExists('safe/orphan.png');
+    Storage::disk('catalog_media')->assertExists($path);
     $this->artisan('catalog:prune-orphan-media', ['--delete' => true, '--older-than' => 0, '--limit' => 10])->assertSuccessful();
-    Storage::disk('catalog_media')->assertMissing('safe/orphan.png');
+    Storage::disk('catalog_media')->assertMissing($path);
 });
 
-test('cleanup retries physical files retained for soft-deleted media', function () {
+test('cleanup refuses files of an upload whose enclosing transaction is still open', function () {
     [$user, $company, $product] = r18Context();
     $media = app(UploadProductMediaAction::class)->execute($user, $company, $product, r18File());
     $product->forceFill(['primary_media_id' => null])->save();
     $media->delete();
     Storage::disk('catalog_media')->assertExists($media->storage_path);
-    $this->artisan('catalog:prune-orphan-media', ['--delete' => true, '--older-than' => 0, '--limit' => 10])->assertSuccessful();
-    Storage::disk('catalog_media')->assertMissing($media->storage_path);
+    $this->artisan('catalog:prune-orphan-media', ['--delete' => true, '--older-than' => 0, '--limit' => 10])->assertFailed();
+    Storage::disk('catalog_media')->assertExists($media->storage_path);
     expect(ProductMedia::withTrashed()->find($media->id)?->trashed())->toBeTrue();
 });

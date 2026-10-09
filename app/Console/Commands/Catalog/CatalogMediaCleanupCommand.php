@@ -172,9 +172,9 @@ class CatalogMediaCleanupCommand extends Command
                 ));
             }
 
-            return 0;
+            return collect($reports)->contains(fn ($report): bool => $report->failed > 0) ? self::FAILURE : self::SUCCESS;
         } catch (\Throwable $e) {
-            $this->error(sprintf('Operational failure: %s', $e->getMessage()));
+            $this->error('Media cleanup could not acquire safe storage access or complete its scan.');
 
             return 3;
         }

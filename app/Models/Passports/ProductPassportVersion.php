@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $readiness_rule_set_fingerprint
  * @property int|null $validation_run_id
  * @property array|null $readiness_evidence
+ * @property array|null $readiness_profile_snapshot
  * @property CarbonImmutable|null $published_at
  * @property int|null $published_by
  * @property CarbonImmutable|null $superseded_at
@@ -79,6 +80,7 @@ class ProductPassportVersion extends Model
             'payload' => 'array',
             'readiness_profile_version' => 'integer',
             'readiness_evidence' => 'array',
+            'readiness_profile_snapshot' => 'array',
             'published_at' => 'immutable_datetime',
             'superseded_at' => 'immutable_datetime',
             'withdrawn_at' => 'immutable_datetime',
@@ -166,7 +168,7 @@ class ProductPassportVersion extends Model
     protected static function booted(): void
     {
         static::updating(function (self $version): void {
-            $original = $version->getOriginal('status');
+            $original = $version->getRawOriginal('status');
 
             if ($original === ProductPassportVersionStatus::Superseded->value
                 || $original === ProductPassportVersionStatus::Withdrawn->value) {
@@ -199,7 +201,7 @@ class ProductPassportVersion extends Model
         });
 
         static::deleting(function (self $version): void {
-            if ($version->getOriginal('status') !== ProductPassportVersionStatus::Draft->value) {
+            if ($version->getRawOriginal('status') !== ProductPassportVersionStatus::Draft->value) {
                 throw new \RuntimeException('Published, superseded, and withdrawn passport versions cannot be deleted.');
             }
         });

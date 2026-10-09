@@ -25,6 +25,7 @@ use App\Services\Passports\DppCatalogContextProvider;
 use App\Services\Passports\DppSchemaRegistry;
 use App\Services\Passports\PassportSnapshotBuilder;
 use App\Services\Passports\Public\PublicPassportResolver;
+use App\Services\Passports\Readiness\PassportReadinessDisplay;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Tenancy\Contracts\CurrentCompany;
@@ -99,7 +100,8 @@ class ProductPassportController extends Controller
         $catalogContext = $contextProvider->context($product, $company);
         $sections = $schemaRegistry->sections();
         $sectionKeys = $schemaRegistry->sectionKeysInOrder();
-        $readiness = $readinessEvaluator->evaluate($readinessContextBuilder->build($company, $product));
+        $readinessHistorical = ! app(PassportReadinessDisplay::class)->canEvaluate($company, $product);
+        $readiness = app(PassportReadinessDisplay::class)->result($company, $product);
         $canManage = $request->user()?->can(CompanyPermission::PassportsManage->value, [$company]) === true;
         $canPublish = $request->user()?->can(CompanyPermission::PassportsPublish->value, [$company]) === true;
 
@@ -112,8 +114,10 @@ class ProductPassportController extends Controller
             'sections' => $sections,
             'sectionKeys' => $sectionKeys,
             'readiness' => $readiness,
-            'canManage' => $canManage,
-            'canPublish' => $canPublish,
+            'canManage' => $canManage && ! $readinessHistorical,
+            'readinessHistorical' => $readinessHistorical,
+            'canUnpublish' => $request->user()?->can(CompanyPermission::PassportsUnpublish->value, [$company]) === true,
+            'canPublish' => $canPublish && ! $readinessHistorical,
         ]);
     }
 
@@ -126,11 +130,21 @@ class ProductPassportController extends Controller
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
 
-        $passport = $action->handle(
-            $this->actor($request),
-            $company,
-            $product,
-        );
+        try {
+            $action->handle(
+                $this->actor($request),
+                $company,
+                $product,
+            );
+        } catch (ConflictHttpException $exception) {
+            if ($request->expectsJson()) {
+                throw $exception;
+            }
+
+            return redirect()
+                ->route('catalog.products.show', ['product' => $product->uuid, 'tab' => 'passport'])
+                ->withErrors(['passport' => $exception->getMessage()]);
+        }
 
         return redirect()
             ->route('catalog.products.passport.edit', ['product' => $product->uuid])
@@ -146,9 +160,13 @@ class ProductPassportController extends Controller
         ReadinessContextBuilder $readinessContextBuilder,
         PassportReadinessEvaluator $readinessEvaluator,
         Request $request,
-    ): View {
+    ): View|RedirectResponse {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
+
+        if (! app(PassportReadinessDisplay::class)->canEvaluate($company, $product)) {
+            return redirect()->route('catalog.products.passport.show', ['product' => $product->uuid]);
+        }
 
         $passport = $this->resolvePassport($product);
         $editorData = $editorQuery->editorData($passport);
@@ -202,8 +220,7 @@ class ProductPassportController extends Controller
             );
 
             $draft = $updated->currentDraftVersion;
-            $readinessContext = $readinessContextBuilder->build($company, $product);
-            $readinessResult = $readinessEvaluator->evaluate($readinessContext);
+            $readinessResult = app(PassportReadinessDisplay::class)->result($company, $product);
 
             return response()->json([
                 'data' => [
@@ -213,7 +230,7 @@ class ProductPassportController extends Controller
                     'draft_revision' => $draft?->getAttribute('draft_revision'),
                     'saved_at' => now()->toISOString(),
                     'payload' => $draft?->getAttribute('payload'),
-                    'readiness' => [
+                    'readiness' => $readinessResult === null ? null : [
                         'score' => $readinessResult->score,
                         'status' => $readinessResult->status->value,
                         'blockers' => $readinessResult->counts->blockers,
@@ -331,8 +348,7 @@ class ProductPassportController extends Controller
             );
 
             $draft = $updated->currentDraftVersion;
-            $readinessContext = $readinessContextBuilder->build($company, $product);
-            $readinessResult = $readinessEvaluator->evaluate($readinessContext);
+            $readinessResult = app(PassportReadinessDisplay::class)->result($company, $product);
 
             return response()->json([
                 'data' => [
@@ -342,7 +358,7 @@ class ProductPassportController extends Controller
                     'draft_revision' => $draft?->getAttribute('draft_revision'),
                     'saved_at' => now()->toISOString(),
                     'payload' => $draft?->getAttribute('payload'),
-                    'readiness' => [
+                    'readiness' => $readinessResult === null ? null : [
                         'score' => $readinessResult->score,
                         'status' => $readinessResult->status->value,
                         'blockers' => $readinessResult->counts->blockers,

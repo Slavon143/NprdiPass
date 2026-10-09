@@ -38,14 +38,14 @@ class SyncVariantAttributeValuesAction extends AttributeAction
                 ->forCompany($company)
                 ->where('status', AttributeDefinitionStatus::Active->value)
                 ->whereIn('scope', [AttributeScope::Variant->value, AttributeScope::Both->value])
-                ->with(['options' => fn ($query) => $query->ordered()])
+                ->with(['options' => fn ($query) => $query->forCompany($company)->ordered()->sharedLock()])
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
             $existing = VariantAttributeValue::query()
                 ->forCompany($company)
                 ->where('product_variant_id', $variant->getKey())
-                ->with('selectedOptions')
+                ->with(['selectedOptions' => fn ($query) => $query->forCompany($company)->orderBy('attribute_options.id')->sharedLock()])
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
@@ -111,7 +111,14 @@ class SyncVariantAttributeValuesAction extends AttributeAction
                 ]);
             }
 
-            return $variant->refresh()->load(['attributeValues.definition', 'attributeValues.selectedOption', 'attributeValues.selectedOptions']);
+            // A no-op must also return current state rather than the outer transaction's old snapshot.
+            return ProductVariant::query()->forCompany($company)->whereKey($variant->getKey())->lockForUpdate()->firstOrFail()
+                ->load([
+                    'attributeValues' => fn ($query) => $query->forCompany($company)->orderBy('id')->sharedLock(),
+                    'attributeValues.definition' => fn ($query) => $query->forCompany($company)->sharedLock(),
+                    'attributeValues.selectedOption' => fn ($query) => $query->forCompany($company)->sharedLock(),
+                    'attributeValues.selectedOptions' => fn ($query) => $query->forCompany($company)->orderBy('attribute_options.id')->sharedLock(),
+                ]);
         });
     }
 
@@ -128,6 +135,7 @@ class SyncVariantAttributeValuesAction extends AttributeAction
     private function sameColumns(VariantAttributeValue $value, array $columns): bool
     {
         foreach ($columns as $column => $expected) {
+            $expected = is_bool($expected) ? (int) $expected : $expected;
             $actual = $value->getRawOriginal($column);
 
             if (($actual === null) !== ($expected === null) || ($actual !== null && (string) $actual !== (string) $expected)) {

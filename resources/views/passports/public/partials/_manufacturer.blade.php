@@ -23,6 +23,18 @@
     @if(!empty($fields['responsible_operator_website']))
         <div><dt class="font-semibold text-slate-700">Operator Website</dt><dd class="text-slate-600"><a href="{{ $fields['responsible_operator_website'] }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">{{ $fields['responsible_operator_website'] }}</a></dd></div>
     @endif
+    @if(!empty($fields['responsible_operator_role']))
+        <div><dt class="font-semibold text-slate-700">Operator Role</dt><dd class="text-slate-600">{{ $fields['responsible_operator_role'] }}</dd></div>
+    @endif
+    @if(!empty($fields['responsible_operator_address']))
+        <div><dt class="font-semibold text-slate-700">Operator Address</dt><dd class="text-slate-600">{!! nl2br(e($fields['responsible_operator_address'])) !!}</dd></div>
+    @endif
+    @if(!empty($fields['responsible_operator_phone']))
+        <div><dt class="font-semibold text-slate-700">Operator Phone</dt><dd class="text-slate-600">{{ $fields['responsible_operator_phone'] }}</dd></div>
+    @endif
+    @if(!empty($fields['responsible_operator_registration_id']))
+        <div><dt class="font-semibold text-slate-700">Operator Registration ID</dt><dd class="text-slate-600">{{ $fields['responsible_operator_registration_id'] }}</dd></div>
+    @endif
     @if(!empty($fields['contact_notes']))
         <div class="sm:col-span-2"><dt class="font-semibold text-slate-700">Contact Notes</dt><dd class="text-slate-600">{!! nl2br(e($fields['contact_notes'])) !!}</dd></div>
     @endif

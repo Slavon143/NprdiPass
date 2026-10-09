@@ -9,11 +9,13 @@ use App\Enums\CompanyPermission;
 use App\Enums\CompanyStatus;
 use App\Enums\Passports\ProductPassportStatus;
 use App\Enums\Passports\ProductPassportVersionStatus;
+use App\Enums\Webhooks\WebhookEventType;
 use App\Events\Passports\ProductPassportUnpublished;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use App\Services\Webhooks\WebhookDeliveryService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -32,17 +34,17 @@ class UnpublishProductPassport
         Product $product,
         ProductPassport $passport,
     ): ProductPassport {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function () use ($actor, $company, $product, $passport): ProductPassport {
             $freshCompany = $this->authorize($actor, $company);
             $this->assertProductBelongsToCompany($freshCompany, $product);
             $this->assertPassportBelongsToProduct($passport, $product);
 
             $passport = ProductPassport::query()
+                ->forCompany($freshCompany)
+                ->where('product_id', $product->getKey())
                 ->whereKey($passport->getKey())
                 ->lockForUpdate()
-                ->first();
+                ->firstOrFail();
 
             $publishedVersion = $passport->currentPublishedVersion;
 
@@ -60,6 +62,10 @@ class UnpublishProductPassport
             $passport->setAttribute('updated_by', $actor->getKey());
             $passport->save();
 
+            app(WebhookDeliveryService::class)->enqueue($freshCompany,
+                WebhookEventType::PassportUnpublished,
+                ['passport_uuid' => $passport->uuid, 'published_version_uuid' => $publishedVersion->uuid], 'product_passport', $passport->uuid);
+
             $this->auditLogger->logTenant(
                 $freshCompany,
                 AuditEvent::PassportUnpublished,
@@ -73,17 +79,10 @@ class UnpublishProductPassport
                 ],
             );
 
-            DB::commit();
-
-            $passport->loadMissing(['currentDraftVersion', 'currentPublishedVersion']);
-
-            event(new ProductPassportUnpublished($passport, $publishedVersion, $actor));
+            DB::afterCommit(fn () => event(new ProductPassportUnpublished($passport, $publishedVersion, $actor)));
 
             return $passport->fresh(['currentDraftVersion', 'currentPublishedVersion']);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     private function authorize(User $actor, Company $company): Company
@@ -94,7 +93,7 @@ class UnpublishProductPassport
             throw new AuthorizationException;
         }
 
-        $this->authorizer->authorize($actor, $freshCompany, CompanyPermission::PassportsManage);
+        $this->authorizer->authorize($actor, $freshCompany, CompanyPermission::PassportsUnpublish);
 
         return $freshCompany;
     }

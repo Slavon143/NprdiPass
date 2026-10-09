@@ -6,10 +6,12 @@ use App\Enums\AuditEvent;
 use App\Enums\CompanyPermission;
 use App\Enums\Documents\ProductDocumentApprovalStatus;
 use App\Enums\Documents\ProductDocumentReviewStatus;
+use App\Enums\Webhooks\WebhookEventType;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Webhooks\WebhookDeliveryService;
 use Illuminate\Support\Facades\DB;
 
 class ApproveProductDocumentVersionAction extends SubmitProductDocumentVersionForReviewAction
@@ -25,6 +27,7 @@ class ApproveProductDocumentVersionAction extends SubmitProductDocumentVersionFo
         }
 
         return DB::transaction(function () use ($actor, $company, $document, $version, $comment): ProductDocumentVersion {
+            $this->authorize($actor, $company, CompanyPermission::CatalogApproveDocuments);
             $lockedDocument = ProductDocument::query()->whereKey($document->getKey())->lockForUpdate()->firstOrFail();
             $lockedVersion = ProductDocumentVersion::query()->whereKey($version->getKey())->lockForUpdate()->firstOrFail();
 
@@ -53,6 +56,10 @@ class ApproveProductDocumentVersionAction extends SubmitProductDocumentVersionFo
             ])->save();
 
             $this->recordDecision($company, $lockedDocument, $lockedVersion, $actor, 'approved', $previousReview, $previousApproval, ProductDocumentReviewStatus::Approved->value, ProductDocumentApprovalStatus::Approved->value, $comment);
+
+            app(WebhookDeliveryService::class)->enqueue($company,
+                WebhookEventType::DocumentApproved,
+                ['document_uuid' => $lockedDocument->uuid, 'version_uuid' => $lockedVersion->uuid], 'product_document', $lockedDocument->uuid);
 
             $this->auditLogger->logTenant($company, AuditEvent::CatalogDocumentApproved, $actor, $lockedDocument, [
                 'document_uuid' => $lockedDocument->uuid,

@@ -4,14 +4,13 @@ namespace App\Services\Imports;
 
 use Generator;
 use Illuminate\Validation\ValidationException;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\IReader;
 use SplFileObject;
 use ZipArchive;
 
 class ImportFileReader
 {
+    public function __construct(private readonly StreamingXlsxReader $xlsx) {}
+
     /** @return Generator<int, array<string, string|null>> */
     public function rows(string $path, string $format): Generator
     {
@@ -85,41 +84,17 @@ class ImportFileReader
     private function xlsxRows(string $path): Generator
     {
         $this->assertSafeXlsx($path);
-        $reader = IOFactory::createReader('Xlsx');
-        $this->configureReader($reader);
-        $spreadsheet = $reader->load($path);
-        $sheet = $spreadsheet->getSheet(0);
         $headers = null;
+        foreach ($this->xlsx->rows($path) as $number => $values) {
+            if ($headers === null) {
+                $headers = $this->normalizeHeaders($values);
 
-        try {
-            foreach ($sheet->getRowIterator() as $row) {
-                $values = [];
-                foreach ($row->getCellIterator('A', $sheet->getHighestDataColumn()) as $cell) {
-                    if ($cell->getDataType() === DataType::TYPE_FORMULA) {
-                        throw ValidationException::withMessages(['file' => "Formulas are not allowed in import files (row {$row->getRowIndex()})."]);
-                    }
-                    $values[] = trim($cell->getFormattedValue());
-                }
-                if ($headers === null) {
-                    $headers = $this->normalizeHeaders($values);
-
-                    continue;
-                }
-                if ($this->emptyRow($values)) {
-                    continue;
-                }
-                yield $row->getRowIndex() => $this->combine($headers, $values);
+                continue;
             }
-        } finally {
-            $spreadsheet->disconnectWorksheets();
+            if (! $this->emptyRow($values)) {
+                yield $number => $this->combine($headers, $values);
+            }
         }
-    }
-
-    private function configureReader(IReader $reader): void
-    {
-        $reader->setReadDataOnly(false);
-        $reader->setReadEmptyCells(false);
-        $reader->setIncludeCharts(false);
     }
 
     /** @param list<mixed> $values @return list<string> */

@@ -15,7 +15,7 @@ permissions:
 env:
   CI: true
   DB_CONNECTION: mysql
-  DB_HOST: mysql
+  DB_HOST: 127.0.0.1
   DB_PORT: 3306
   DB_DATABASE: nordipass_testing
   DB_USERNAME: root
@@ -47,8 +47,11 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo, pdo_mysql, fileinfo
+          extensions: mbstring, pdo, pdo_mysql, fileinfo, zip, xmlreader, xmlwriter
           tools: composer:v2
+
+      - name: Verify release tooling and lifecycle failures
+        run: python3 -m unittest discover -s tests/Release -v
 
       - name: Validate composer
         run: composer validate --strict
@@ -226,6 +229,9 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
+
+      - name: Verify frontend regressions
+        run: node --test tests/Js/*.test.mjs
 
       - name: Audit frontend dependencies
         run: npm audit --omit=dev --audit-level=high

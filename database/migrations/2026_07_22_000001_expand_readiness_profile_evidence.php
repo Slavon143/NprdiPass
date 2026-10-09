@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\CheckConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -37,8 +38,8 @@ return new class extends Migration
     public function down(): void
     {
         DB::unprepared('DROP TRIGGER IF EXISTS product_passport_versions_prevent_published_update');
-        DB::statement('ALTER TABLE product_passport_versions DROP CHECK ppv_readiness_fingerprint_check');
-        DB::statement('ALTER TABLE passport_validation_runs DROP CHECK pvr_rule_set_fingerprint_check');
+        CheckConstraints::drop('product_passport_versions', 'ppv_readiness_fingerprint_check');
+        CheckConstraints::drop('passport_validation_runs', 'pvr_rule_set_fingerprint_check');
 
         Schema::table('product_passport_versions', function (Blueprint $table): void {
             $table->dropColumn([

@@ -5,6 +5,8 @@ namespace App\Enums;
 enum PlatformPermission: string
 {
     case PlatformAccess = 'platform.access';
+    case FeedbackView = 'platform.feedback.view';
+    case FeedbackManage = 'platform.feedback.manage';
     case CompaniesView = 'platform.companies.view';
     case CompaniesManage = 'platform.companies.manage';
     case UsersView = 'platform.users.view';

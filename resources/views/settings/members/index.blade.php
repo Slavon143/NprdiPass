@@ -83,7 +83,7 @@
                                                         </form>
                                                     @endcan
                                                     @can('delete', $invitation)
-                                                        <form method="POST" action="{{ route('settings.members.invitations.destroy', ['invitation' => $invitation->uuid]) }}" x-data="{ message: @js(__('Cancel the invitation for :email?', ['email' => $invitation->email])) }" @submit.prevent="if (window.confirm(message)) $el.submit()">
+                                                        <form method="POST" action="{{ route('settings.members.invitations.destroy', ['invitation' => $invitation->uuid]) }}" x-data="confirmSubmit" data-confirm-message="{{ __('Cancel the invitation for :email?', ['email' => $invitation->email]) }}" @submit.prevent="submit">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">{{ __('Cancel') }}</button>
@@ -173,7 +173,7 @@
                                             @endcan
 
                                             @can('remove', $membership)
-                                                <form method="POST" action="{{ route('settings.members.destroy', ['membership' => $membership->getKey()]) }}" x-data="{ message: @js(__('Remove :name from this company?', ['name' => $membership->user->name])) }" @submit.prevent="if (window.confirm(message)) $el.submit()">
+                                                <form method="POST" action="{{ route('settings.members.destroy', ['membership' => $membership->getKey()]) }}" x-data="confirmSubmit" data-confirm-message="{{ __('Remove :name from this company?', ['name' => $membership->user->name]) }}" @submit.prevent="submit">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">{{ __('Remove') }}</button>

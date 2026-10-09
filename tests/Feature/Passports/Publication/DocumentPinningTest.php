@@ -16,6 +16,7 @@ use App\Enums\Documents\ProductDocumentStatus;
 use App\Enums\Documents\ProductDocumentType;
 use App\Enums\Documents\ProductDocumentVisibility;
 use App\Enums\Passports\DppSectionKey;
+use App\Enums\Passports\Readiness\ReadinessRuleStatus;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
@@ -27,10 +28,16 @@ use App\Models\CompanyMembership;
 use App\Models\Passports\ProductPassport;
 use App\Models\Passports\ProductPassportVersion;
 use App\Models\User;
+use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
 use App\Services\Passports\DppPayloadNormalizer;
+use App\Services\Passports\PassportSnapshotBuilder;
+use App\Services\Passports\Readiness\ReadinessContextBuilder;
+use App\Services\Passports\Readiness\Rules\DocumentsFileAvailable;
+use App\Services\Passports\Readiness\Rules\DocumentsReferencedCurrentVersion;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class DocumentPinningTest extends TestCase
@@ -339,6 +346,98 @@ class DocumentPinningTest extends TestCase
         $this->assertCount(1, $refs);
         $this->assertArrayHasKey('document_version_uuid', $refs[0]);
         $this->assertSame($this->docVersion2->uuid, $refs[0]['document_version_uuid']);
+    }
+
+    public function test_missing_pinned_file_blocks_publication_and_keeps_draft(): void
+    {
+        $this->fillCoreSections();
+        $this->syncDocumentReferences([[
+            'document_uuid' => $this->document->uuid,
+            'document_version_uuid' => $this->docVersion2->uuid,
+            'role' => 'certificate',
+        ]]);
+        Storage::disk('product_documents')->delete($this->docVersion2->storage_key);
+        $passport = $this->passport->fresh(['currentDraftVersion']);
+        $context = app(ReadinessContextBuilder::class)->build($this->company, $this->product->fresh());
+        $rule = app(DocumentsFileAvailable::class)->evaluate($context);
+        $this->assertSame(ReadinessRuleStatus::Failed, $rule->status);
+        try {
+            $this->publish($passport, $this->revision);
+            $this->fail('Missing document bytes must block publication.');
+        } catch (ValidationException $exception) {
+            $this->assertNull($passport->fresh()->current_published_version_id);
+        }
+    }
+
+    public function test_publication_pins_the_readiness_choice_when_a_new_document_version_appears_after_evaluation(): void
+    {
+        $this->fillCoreSections();
+        $this->syncDocumentReferences([['document_uuid' => $this->document->uuid, 'role' => 'certificate']]);
+        $realBuilder = new PassportSnapshotBuilder(
+            app(DppPayloadNormalizer::class),
+            app(ProductDocumentCurrentVersionResolver::class));
+        $mock = \Mockery::mock(PassportSnapshotBuilder::class);
+        $mock->shouldReceive('build')->once()->andReturnUsing(function (array $payload, $product) use ($realBuilder): array {
+            $newer = $this->docVersion2->replicate(['uuid', 'version_number', 'storage_key']);
+            $newer->forceFill(['uuid' => (string) str()->uuid(), 'version_number' => 3, 'storage_key' => 'test/newer-v3.pdf'])->save();
+            $this->document->forceFill(['current_version_id' => $newer->id])->save();
+            $this->assertSame($this->docVersion2->uuid, $payload['document_references'][0]['document_version_uuid']);
+
+            return $realBuilder->build($payload, $product);
+        });
+        app()->instance(PassportSnapshotBuilder::class, $mock);
+        $passport = ProductPassport::query()->forCompany($this->company)->where('product_id', $this->product->id)->first()->fresh(['currentDraftVersion']);
+        $result = $this->publish($passport, $this->revision);
+        $this->assertSame($this->docVersion2->uuid, $result->publishedVersion->payload['document_references'][0]['document_version_uuid']);
+        $this->assertSame($this->docVersion2->uuid, $result->publishedVersion->payload['_catalog_context']['documents'][0]['version_uuid']);
+    }
+
+    public function test_unknown_pin_is_not_replaced_with_another_document_version(): void
+    {
+        $this->fillCoreSections();
+        $draft = $this->passport->fresh(['currentDraftVersion'])->currentDraftVersion;
+        $payload = $draft->payload;
+        $payload['document_references'] = [[
+            'document_uuid' => $this->document->uuid,
+            'document_version_uuid' => (string) str()->uuid(),
+            'role' => 'certificate', 'display_order' => 0,
+        ]];
+        $draft->forceFill(['payload' => $payload])->save();
+        $this->expectException(ValidationException::class);
+        $this->publish($this->passport->fresh(['currentDraftVersion']), $this->revision);
+    }
+
+    public function test_expired_pin_blocks_publication_even_with_a_valid_current_version(): void
+    {
+        $this->fillCoreSections();
+        $expired = $this->docVersion1->replicate(['uuid']);
+        $expired->forceFill([
+            'uuid' => (string) str()->uuid(), 'version_number' => 3,
+            'storage_key' => 'test/expired-pin.pdf',
+            'valid_until' => now()->subDay(), 'expires_at' => now()->subDay(),
+        ])->save();
+        $this->syncDocumentReferences([[
+            'document_uuid' => $this->document->uuid,
+            'document_version_uuid' => $expired->uuid, 'role' => 'certificate',
+        ]]);
+        $this->expectException(ValidationException::class);
+        $this->publish($this->passport->fresh(['currentDraftVersion']), $this->revision);
+    }
+
+    public function test_old_pin_produces_warning_but_keeps_exact_bytes(): void
+    {
+        $this->fillCoreSections();
+        $this->syncDocumentReferences([[
+            'document_uuid' => $this->document->uuid,
+            'document_version_uuid' => $this->docVersion1->uuid,
+            'role' => 'certificate',
+        ]]);
+        $context = app(ReadinessContextBuilder::class)->build($this->company, $this->product->fresh());
+        $rule = app(DocumentsReferencedCurrentVersion::class)->evaluate($context);
+        $this->assertSame(ReadinessRuleStatus::Failed, $rule->status);
+        $result = $this->publish($this->passport->fresh(['currentDraftVersion']), $this->revision);
+        $asset = $result->publishedVersion->assets()->where('kind', 'document')->sole();
+        $this->assertSame('fake pdf v1 content', Storage::disk('passport_assets')->get($asset->storage_key));
     }
 
     public function test_new_document_version_does_not_affect_published_passport(): void

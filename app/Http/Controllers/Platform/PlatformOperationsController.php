@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Actions\Platform\PlatformOperations;
+use App\Actions\Platform\ResolveFeedbackAction;
 use App\Enums\Platform\PlatformIncidentSeverity;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -10,6 +11,7 @@ use App\Models\Platform\FeatureFlagOverride;
 use App\Models\Platform\PlatformIncident;
 use App\Models\Platform\SupportAccessGrant;
 use App\Models\User;
+use App\Services\Observability\ObservabilitySnapshotService;
 use App\Services\Platform\FeatureFlagManager;
 use App\Services\Platform\TenantHealthService;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +21,22 @@ use Illuminate\View\View;
 
 class PlatformOperationsController extends Controller
 {
+    public function feedback(): View
+    {
+        return view('platform.operations.feedback', [
+            'feedback' => PlatformIncident::query()->where('type', 'customer_feedback')
+                ->with(['company', 'reporter'])->orderByRaw("case when status = 'open' then 0 else 1 end")
+                ->latest('updated_at')->latest('id')->paginate(20),
+        ]);
+    }
+
+    public function resolveFeedback(Request $request, string $feedback, ResolveFeedbackAction $action): RedirectResponse
+    {
+        $action->execute($this->actor($request), $feedback);
+
+        return redirect()->route('platform.operations.feedback')->with('success', __('Feedback marked as resolved.'));
+    }
+
     public function index(TenantHealthService $health): View
     {
         $companies = Company::query()->latest()->limit(25)->get();
@@ -27,6 +45,13 @@ class PlatformOperationsController extends Controller
             'companies' => $companies,
             'health' => $companies->mapWithKeys(fn (Company $company): array => [$company->uuid => $health->snapshot($company)]),
             'openIncidents' => PlatformIncident::query()->where('status', 'open')->latest()->limit(10)->get(),
+        ]);
+    }
+
+    public function observability(ObservabilitySnapshotService $observability): View
+    {
+        return view('platform.operations.observability', [
+            'snapshot' => $observability->snapshot(),
         ]);
     }
 

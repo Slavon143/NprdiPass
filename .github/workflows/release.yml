@@ -25,7 +25,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo, pdo_mysql, fileinfo
+          extensions: mbstring, pdo, pdo_mysql, fileinfo, zip, xmlreader, xmlwriter
           tools: composer:v2
 
       - name: Get composer cache directory
@@ -54,41 +54,19 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
+      - name: Verify release tooling
+        run: python3 -m unittest discover -s tests/Release -v
+
       - name: Create release artifact
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
+          RELEASE_REF: ${{ github.ref_name }}
         run: |
-          RELEASE_DIR="nordipass-release"
-          mkdir -p "$RELEASE_DIR"
-
-          rsync -a \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.gitignore' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            --exclude='storage/logs' \
-            --exclude='storage/framework/cache' \
-            --exclude='storage/framework/sessions' \
-            --exclude='storage/framework/views' \
-            --exclude='storage/app/private/nordipass' \
-            --exclude='deploy' \
-            --exclude='docs' \
-            . "$RELEASE_DIR/"
-
-          cat > "$RELEASE_DIR/RELEASE.json" <<-EOF
-          {
-            "application": "NordiPass",
-            "commit": "${{ github.sha }}",
-            "ref": "${{ github.ref_name }}",
-            "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "php_version": "8.4",
-            "node_version": "22.x"
-          }
-          EOF
-
-          tar -czf nordipass-release.tar.gz "$RELEASE_DIR/"
-          sha256sum nordipass-release.tar.gz > nordipass-release.tar.gz.sha256
+          python3 deploy/scripts/release_artifact.py build \
+            --source . --artifact nordipass-release.tar.gz \
+            --commit "$RELEASE_COMMIT" --ref "$RELEASE_REF" \
+            --php-version "$(php -r 'echo PHP_VERSION;')" \
+            --built-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -101,5 +79,4 @@ jobs:
 
       - name: Verify artifact
         run: |
-          sha256sum -c nordipass-release.tar.gz.sha256
-          tar -tzf nordipass-release.tar.gz | head -20
+          python3 deploy/scripts/release_artifact.py verify --artifact nordipass-release.tar.gz --checksum-file nordipass-release.tar.gz.sha256

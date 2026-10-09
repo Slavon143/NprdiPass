@@ -12,7 +12,7 @@ test('import api enforces dedicated abilities and completes preview apply workfl
     [$user, $company] = apiCatalogContext();
     $token = apiToken($user, $company, [ApiTokenAbility::ImportsWrite->value, ApiTokenAbility::ImportsRead->value]);
     $upload = test()->withToken($token)->post(apiUrl('imports'), [
-        'file' => UploadedFile::fake()->createWithContent('products.csv', "name,slug\nAPI Product,api-product"),
+        'file' => UploadedFile::fake()->createWithContent('products.csv', "name,slug,sku,gtin,mpn\nAPI Product,api-product,001-API,07351000000006,MP-API"),
         'mode' => 'upsert', 'chunk_size' => 10,
     ]);
     $upload->assertCreated()->assertJsonPath('data.status', 'uploaded');
@@ -20,18 +20,53 @@ test('import api enforces dedicated abilities and completes preview apply workfl
 
     test()->withToken($token)->getJson(apiUrl("imports/{$uuid}"))
         ->assertOk()->assertJsonPath('data.source_filename', 'products.csv');
-    test()->withToken($token)->postJson(apiUrl("imports/{$uuid}/preview"), ['mapping' => ['name' => 'name', 'slug' => 'slug']])
+    test()->withToken($token)->postJson(apiUrl("imports/{$uuid}/preview"), ['mapping' => ['name' => 'name', 'slug' => 'slug', 'sku' => 'sku', 'gtin' => 'gtin', 'mpn' => 'mpn']])
         ->assertOk()->assertJsonPath('data.valid_rows', 1)->assertJsonPath('data.records.0.operation', 'create');
     test()->withToken($token)->get(apiUrl("imports/{$uuid}/errors.csv"))
         ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
     test()->withToken($token)->postJson(apiUrl("imports/{$uuid}/apply"))
         ->assertOk()->assertJsonPath('data.status', 'completed')->assertJsonPath('data.created_rows', 1);
 
+    $variant = $company->products()->sole()->defaultVariant;
+    expect($variant->sku)->toBe('001-API')->and($variant->gtin)->toBe('07351000000006')->and($variant->mpn)->toBe('MP-API');
+    $updateUuid = test()->withToken($token)->post(apiUrl('imports'), [
+        'file' => UploadedFile::fake()->createWithContent('update.csv', "name,slug,mpn\nAPI Updated,api-product,NEW-MP"),
+        'mode' => 'update', 'chunk_size' => 10,
+    ])->assertCreated()->json('data.uuid');
+    test()->withToken($token)->postJson(apiUrl("imports/{$updateUuid}/preview"), ['mapping' => ['name' => 'name', 'slug' => 'slug', 'mpn' => 'mpn']])->assertOk();
+    test()->withToken($token)->postJson(apiUrl("imports/{$updateUuid}/apply"))->assertOk()->assertJsonPath('data.updated_rows', 1);
+    expect($variant->fresh()->mpn)->toBe('NEW-MP')->and($variant->fresh()->sku)->toBe('001-API');
+
     app('auth')->forgetGuards();
     [$limitedUser, $limitedCompany] = apiCatalogContext();
     test()->withToken(apiToken($limitedUser, $limitedCompany, [ApiTokenAbility::CatalogWrite->value]))
         ->post(apiUrl('imports'), ['file' => UploadedFile::fake()->createWithContent('products.csv', "name\nDenied"), 'mode' => 'create'])
         ->assertForbidden()->assertJsonPath('error.code', 'token_ability_missing');
+});
+
+test('unsupported import target returns API validation error without discarding persisted preview', function () {
+    Storage::fake('production_imports');
+    [$user, $company] = apiCatalogContext();
+    $token = apiToken($user, $company, [ApiTokenAbility::ImportsWrite->value]);
+    $uuid = test()->withToken($token)->post(apiUrl('imports'), [
+        'file' => UploadedFile::fake()->createWithContent('products.csv', "name,slug\nOne,one"),
+        'mode' => 'create',
+    ])->assertCreated()->json('data.uuid');
+    test()->withToken($token)->postJson(apiUrl("imports/{$uuid}/preview"), [
+        'mapping' => ['name' => 'name', 'slug' => 'slug'],
+    ])->assertOk();
+    $job = ImportJob::query()->forCompany($company)->where('uuid', $uuid)->sole();
+    $before = $job->records()->sole()->getAttributes();
+
+    foreach (['status', 'updated_at', 'document_ref'] as $target) {
+        test()->withToken($token)->postJson(apiUrl("imports/{$uuid}/preview"), [
+            'mapping' => ['name' => 'name', 'slug' => 'slug', $target => 'slug'],
+        ])->assertUnprocessable()->assertHeader('X-Request-ID')->assertJsonPath('error.code', 'validation_error');
+    }
+
+    expect($job->records()->sole()->getAttributes())->toBe($before)
+        ->and($job->fresh()->valid_rows)->toBe(1)
+        ->and($company->products()->count())->toBe(0);
 });
 
 test('import API resources are hidden across tenants', function () {

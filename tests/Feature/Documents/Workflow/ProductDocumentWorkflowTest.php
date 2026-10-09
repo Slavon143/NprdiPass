@@ -20,9 +20,12 @@ use App\Models\Catalog\ProductDocumentVersion;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
+use App\Models\Webhooks\WebhookDelivery;
+use App\Models\Webhooks\WebhookEndpoint;
 use App\Services\Catalog\Documents\ProductDocumentCurrentVersionResolver;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 function workflowUser(Company $company, CompanyRole $role): User
@@ -65,9 +68,14 @@ describe('R3.4 document workflow', function () {
     });
 
     test('document version can be submitted and approved with audit and decision trail', function () {
+        Queue::fake();
         $company = Company::factory()->create();
         $creator = workflowUser($company, CompanyRole::Editor);
         $reviewer = workflowUser($company, CompanyRole::Owner);
+        WebhookEndpoint::create([
+            'company_id' => $company->id, 'url' => 'https://example.test/documents', 'secret' => 'fixture-secret',
+            'events' => ['document.approved'], 'status' => 'active',
+        ]);
         $product = workflowProduct($company, $creator);
 
         test()->actingAs($creator);
@@ -102,6 +110,8 @@ describe('R3.4 document workflow', function () {
         expect($approved->approval_status)->toBe(ProductDocumentApprovalStatus::Approved);
         expect(ProductDocumentReviewDecision::query()->where('version_id', $version->getKey())->count())->toBe(2);
         expect(AuditLog::query()->where('event', AuditEvent::CatalogDocumentApproved->value)->exists())->toBeTrue();
+        $delivery = WebhookDelivery::query()->sole();
+        expect($delivery->payload['data'])->toEqual(['document_uuid' => $document->uuid, 'version_uuid' => $approved->uuid]);
     });
 
     test('creator self approval is blocked by default', function () {

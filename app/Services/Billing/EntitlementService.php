@@ -5,30 +5,64 @@ namespace App\Services\Billing;
 use App\Models\Billing\CompanySubscription;
 use App\Models\Billing\EntitlementOverride;
 use App\Models\Company;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 class EntitlementService
 {
     public function value(Company $company, string $key): mixed
     {
-        $override = EntitlementOverride::query()
+        return $this->resolveValue($company, $key, false);
+    }
+
+    public function valueForMutation(Company $company, string $key, bool $sharedCompany = false): mixed
+    {
+        if (DB::transactionLevel() === 0) {
+            throw new LogicException('Entitlement mutation reads require a transaction.');
+        }
+        $companies = Company::query()->whereKey($company->getKey());
+        ($sharedCompany ? $companies->sharedLock() : $companies->lockForUpdate())->firstOrFail();
+
+        return $this->resolveValue($company, $key, true);
+    }
+
+    public function limitForMutation(Company $company, string $key, bool $sharedCompany = false): ?int
+    {
+        if (DB::transactionLevel() === 0) {
+            throw new LogicException('Entitlement mutation reads require a transaction.');
+        }
+        // Keep Company first, including callers with an older outer snapshot.
+        // The selected policy must remain stable until the admitted write commits.
+        $companies = Company::query()->whereKey($company->getKey());
+        ($sharedCompany ? $companies->sharedLock() : $companies->lockForUpdate())->firstOrFail();
+        $value = $this->resolveValue($company, $key, true, true);
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
+    private function resolveValue(Company $company, string $key, bool $currentRead, bool $numericLimit = false): mixed
+    {
+        $overrides = EntitlementOverride::query()
             ->forCompany($company)
             ->active()
             ->where('key', $key)
-            ->latest()
-            ->first();
+            ->latest();
+        $override = ($currentRead ? $overrides->sharedLock() : $overrides)->first();
 
         if ($override instanceof EntitlementOverride) {
             return $override->getAttribute('value');
         }
 
-        $subscription = $company->subscription()->first();
+        $subscriptions = $company->subscription();
+        $subscription = ($currentRead ? $subscriptions->sharedLock() : $subscriptions)->first();
         if ($subscription instanceof CompanySubscription) {
             if (! $subscription->grantsEntitlements()) {
-                return null;
+                return $numericLimit ? 0 : null;
             }
 
-            $entitlements = $subscription->entitlements ?? [];
+            $license = $subscription->localTrialBeforeCheckout() ?? $subscription;
+            $entitlements = $license->entitlements ?? [];
 
             return $entitlements[$key] ?? null;
         }
@@ -54,7 +88,7 @@ class EntitlementService
 
     public function limit(Company $company, string $key): ?int
     {
-        $value = $this->value($company, $key);
+        $value = $this->resolveValue($company, $key, false, true);
 
         return is_numeric($value) ? (int) $value : null;
     }

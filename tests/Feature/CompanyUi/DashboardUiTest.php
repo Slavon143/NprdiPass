@@ -1,5 +1,9 @@
 <?php
 
+use App\Enums\Billing\BillingSubscriptionStatus;
+use App\Enums\Catalog\ProductStatus;
+use App\Models\Billing\CompanySubscription;
+use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
@@ -33,6 +37,79 @@ test('company member sees real current company data and role on dashboard', func
         ->assertDontSee('Scans')
         ->assertDontSee('Revenue')
         ->assertDontSee('Storage usage');
+});
+
+test('empty dashboard does not render the marketing sample product as company data', function () {
+    $user = User::factory()->create(['name' => 'Empty Dashboard User']);
+    $company = Company::factory()->create(['name' => 'Empty Dashboard Company']);
+    CompanyMembership::factory()->owner()->create([
+        'user_id' => $user,
+        'company_id' => $company,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('No products yet')
+        ->assertDontSee('Industrial Storage Case');
+});
+
+test('dashboard renders readiness for a company with a product', function () {
+    $user = User::factory()->create();
+    $company = Company::factory()->create();
+    CompanyMembership::factory()->owner()->create([
+        'user_id' => $user,
+        'company_id' => $company,
+    ]);
+
+    $product = new Product;
+    $product->forceFill([
+        'company_id' => $company->getKey(),
+        'name' => 'Readiness test product',
+        'slug' => 'readiness-test-product',
+        'slug_normalized' => 'readiness-test-product',
+        'status' => ProductStatus::Active,
+        'created_by' => $user->getKey(),
+    ])->save();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Readiness test product')
+        ->assertSee('No image')
+        ->assertDontSee('industrial-storage-case.png')
+        ->assertSee('Readiness: Not Evaluated');
+});
+
+test('dashboard shell renders billing summary from the current subscription', function () {
+    config()->set('features.billing', true);
+
+    $user = User::factory()->create(['name' => 'Billing Dashboard User']);
+    $company = Company::factory()->create(['name' => 'Billing Dashboard Company']);
+    CompanyMembership::factory()->owner()->create([
+        'user_id' => $user,
+        'company_id' => $company,
+    ]);
+    CompanySubscription::query()->create([
+        'company_id' => $company->getKey(),
+        'plan_key' => 'growth',
+        'status' => BillingSubscriptionStatus::Trialing,
+        'entitlements' => [
+            'catalog.products.max' => 123,
+        ],
+        'trial_ends_at' => now()->addDays(6),
+        'current_period_start' => now(),
+        'current_period_end' => now()->addDays(6),
+    ]);
+    $trialEndDate = now()->addDays(6)->format('Y-m-d');
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Plan: Growth')
+        ->assertSee('Trial ends '.$trialEndDate)
+        ->assertSee('0 / 123 products')
+        ->assertDontSee('0 / 100 products');
 });
 
 test('dashboard does not expose data from another company', function () {

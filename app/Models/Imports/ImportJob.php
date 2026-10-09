@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $skipped_rows
  * @property CarbonImmutable|null $started_at
  * @property CarbonImmutable|null $completed_at
+ * @property CarbonImmutable|null $cancel_requested_at
  * @property Carbon|null $created_at
  * @property-read Collection<int, ImportRecord> $records
  */
@@ -58,6 +59,7 @@ class ImportJob extends Model
             'previewed_at' => 'immutable_datetime',
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
+            'cancel_requested_at' => 'immutable_datetime',
         ];
     }
 

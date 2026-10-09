@@ -21,6 +21,7 @@ use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use App\Services\Passports\Readiness\PassportReadinessDisplay;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
 use App\Tenancy\Contracts\CurrentCompany;
@@ -232,9 +233,13 @@ class PassportPublicationController extends Controller
         CurrentCompany $currentCompany,
         ReadinessContextBuilder $builder,
         PassportReadinessEvaluator $evaluator,
-    ): View {
+    ): View|RedirectResponse {
         $company = $this->resolveCompany($currentCompany);
         $this->assertProductBelongsToCompany($company, $product);
+
+        if (! app(PassportReadinessDisplay::class)->canEvaluate($company, $product)) {
+            return redirect()->route('catalog.products.passport.readiness', ['product' => $product->uuid]);
+        }
 
         $passport = $this->resolvePassport($product);
 

@@ -23,6 +23,11 @@ use Illuminate\Support\Carbon;
  * @property FortnoxSyncTrigger $trigger_type
  * @property FortnoxSyncRunStatus $status
  * @property string $idempotency_key
+ * @property string|null $dedupe_key
+ * @property CarbonImmutable|null $watermark_before
+ * @property CarbonImmutable|null $watermark_observed
+ * @property int|null $cursor_page
+ * @property bool $pagination_complete
  * @property int $attempts
  * @property int $articles_fetched
  * @property int $articles_created
@@ -53,6 +58,10 @@ class FortnoxSyncRun extends Model
             'status' => FortnoxSyncRunStatus::class,
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
+            'watermark_before' => 'immutable_datetime',
+            'watermark_observed' => 'immutable_datetime',
+            'cursor_page' => 'integer',
+            'pagination_complete' => 'boolean',
         ];
     }
 

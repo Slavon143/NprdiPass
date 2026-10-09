@@ -11,6 +11,24 @@
 
         <!-- Email Address -->
         <div class="mt-4">
+            <x-input-label for="company_name" :value="__('Organization name')" />
+            <x-text-input id="company_name" class="block mt-1 w-full" type="text" name="company_name" :value="old('company_name')" required autocomplete="organization" />
+            <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="organization_number" :value="__('Organization number (optional)')" />
+            <x-text-input id="organization_number" class="block mt-1 w-full" type="text" name="organization_number" :value="old('organization_number')" autocomplete="organization" />
+            <x-input-error :messages="$errors->get('organization_number')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="country_code" :value="__('Country code')" />
+            <x-text-input id="country_code" class="block mt-1 w-full" type="text" name="country_code" :value="old('country_code', 'SE')" maxlength="2" required autocomplete="country" />
+            <x-input-error :messages="$errors->get('country_code')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />

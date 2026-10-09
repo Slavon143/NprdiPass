@@ -16,11 +16,14 @@ use App\Models\Billing\StripeWebhookEvent;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\User;
+use App\Models\Webhooks\WebhookDelivery;
+use App\Models\Webhooks\WebhookEndpoint;
 use App\Services\Billing\Contracts\StripeBillingProvider;
 use App\Services\Billing\EntitlementService;
 use App\Services\Billing\FakeStripeBillingProvider;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 
 function billingContext(CompanyRole $role = CompanyRole::Owner): array
@@ -71,6 +74,47 @@ test('owner can view billing and start checkout through fake provider', function
     $this->actingAs($actor)
         ->post(route('settings.billing.checkout'), ['plan' => 'pilot'])
         ->assertRedirect(route('settings.billing.index', ['checkout' => 'fake', 'plan' => 'pilot']));
+});
+
+test('owner can start checkout for another plan during the local trial', function () {
+    config()->set('features.billing', true);
+
+    [$actor, $company] = billingContext();
+    CompanySubscription::query()->create([
+        'company_id' => $company->getKey(),
+        'plan_key' => 'pilot',
+        'status' => BillingSubscriptionStatus::Trialing,
+        'entitlements' => config('billing.plans.pilot.entitlements'),
+        'trial_ends_at' => now()->addDays(10),
+        'current_period_start' => now(),
+        'current_period_end' => now()->addDays(10),
+    ]);
+
+    $this->actingAs($actor)
+        ->post(route('settings.billing.checkout'), ['plan' => 'growth'])
+        ->assertRedirect(route('settings.billing.index', ['checkout' => 'fake', 'plan' => 'growth']));
+});
+
+test('billing index shows an active switch button for another plan during the local trial', function () {
+    config()->set('features.billing', true);
+
+    [$actor, $company] = billingContext();
+    CompanySubscription::query()->create([
+        'company_id' => $company->getKey(),
+        'plan_key' => 'pilot',
+        'status' => BillingSubscriptionStatus::Trialing,
+        'entitlements' => config('billing.plans.pilot.entitlements'),
+        'trial_ends_at' => now()->addDays(10),
+        'current_period_start' => now(),
+        'current_period_end' => now()->addDays(10),
+    ]);
+
+    $this->actingAs($actor)
+        ->get(route('settings.billing.index'))
+        ->assertOk()
+        ->assertSee('Current plan')
+        ->assertSee('Switch to Growth')
+        ->assertSee('name="plan" value="growth"', false);
 });
 
 test('billing index renders checkout return feedback', function () {
@@ -129,11 +173,16 @@ test('stripe webhook rejects invalid signature', function () {
 });
 
 test('stripe subscription webhook is idempotent and updates company projection', function () {
+    Queue::fake();
     config()->set('features.billing', true);
     config()->set('billing.stripe_webhook_secret', 'whsec_test');
     config()->set('billing.plans.pilot.stripe_price_id', 'price_pilot');
 
     $company = Company::factory()->create();
+    WebhookEndpoint::create([
+        'company_id' => $company->id, 'url' => 'https://example.test/billing', 'secret' => 'fixture-secret',
+        'events' => ['billing.subscription.updated'], 'status' => 'active',
+    ]);
     $payload = [
         'id' => 'evt_subscription_updated',
         'type' => 'customer.subscription.updated',
@@ -182,6 +231,9 @@ test('stripe subscription webhook is idempotent and updates company projection',
         ->and($subscription->stripe_subscription_id)->toBe('sub_123')
         ->and($subscription->status)->toBe(BillingSubscriptionStatus::Active)
         ->and($subscription->entitlements)->toHaveKey('catalog.products.max');
+    $delivery = WebhookDelivery::query()->sole();
+    expect($delivery->payload['data'])->toBe(['status' => 'active', 'plan_key' => 'pilot'])
+        ->and(json_encode($delivery->payload))->not->toContain('cus_123')->not->toContain('sub_123');
 });
 
 test('billing reconcile command refreshes local projections', function () {
@@ -191,7 +243,7 @@ test('billing reconcile command refreshes local projections', function () {
     $company = Company::factory()->create();
     CompanySubscription::query()->create([
         'company_id' => $company->getKey(),
-        'stripe_customer_id' => 'cus_old',
+        'stripe_customer_id' => 'cus_fake',
         'stripe_subscription_id' => 'sub_reconcile',
         'stripe_price_id' => 'price_old',
         'plan_key' => 'pilot',
@@ -535,7 +587,7 @@ test('checkout claim is released when the provider fails', function () {
 
     app()->instance(StripeBillingProvider::class, new class extends FakeStripeBillingProvider
     {
-        public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl): StripeCheckoutSession
+        public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $interval = 'month'): StripeCheckoutSession
         {
             throw new BillingProviderException('Stripe is unavailable.');
         }
@@ -556,7 +608,7 @@ test('second checkout attempt is blocked by the pending claim from the first', f
 
     app()->instance(StripeBillingProvider::class, new class extends FakeStripeBillingProvider
     {
-        public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl): StripeCheckoutSession
+        public function createCheckoutSession(Company $company, string $planKey, string $successUrl, string $cancelUrl, string $interval = 'month'): StripeCheckoutSession
         {
             return new StripeCheckoutSession(
                 id: 'cs_claim_'.$company->uuid,
@@ -595,6 +647,45 @@ test('billing index shows confirming state for a pending subscription', function
         ->assertSee('Checkout completed')
         ->assertSee('Confirming subscription…')
         ->assertDontSee('No subscription');
+});
+
+test('owner can cancel a local pending checkout and choose a plan again', function () {
+    config()->set('features.billing', true);
+
+    [$actor, $company] = billingContext();
+    CompanySubscription::query()->create([
+        'company_id' => $company->getKey(),
+        'stripe_customer_id' => null,
+        'stripe_subscription_id' => null,
+        'plan_key' => 'growth',
+        'status' => BillingSubscriptionStatus::Pending,
+        'entitlements' => config('billing.plans.pilot.entitlements'),
+        'trial_ends_at' => now()->addDays(10),
+        'current_period_start' => now(),
+        'current_period_end' => now()->addDays(10),
+    ]);
+
+    $this->actingAs($actor)
+        ->get(route('settings.billing.index'))
+        ->assertOk()
+        ->assertSee('Cancel pending checkout')
+        ->assertSee('Confirming subscription…');
+
+    $this->actingAs($actor)
+        ->post(route('settings.billing.checkout.cancel-pending'))
+        ->assertSessionHas('success');
+
+    $subscription = CompanySubscription::query()->forCompany($company)->firstOrFail();
+
+    expect($subscription->status)->toBe(BillingSubscriptionStatus::Trialing)
+        ->and($subscription->plan_key)->toBe('pilot')
+        ->and($subscription->grantsEntitlements())->toBeTrue();
+
+    $this->actingAs($actor)
+        ->get(route('settings.billing.index'))
+        ->assertOk()
+        ->assertSee('Switch to Growth')
+        ->assertDontSee('Cancel pending checkout');
 });
 
 test('billing index shows no plan and no product limit without a subscription', function () {
@@ -831,7 +922,7 @@ test('subscription deleted webhook cancels the projection', function () {
         ->and($subscription->grantsEntitlements())->toBeFalse();
 });
 
-test('checkout session expired webhook releases the pending claim', function () {
+test('correlated checkout session expired webhook releases the pending claim', function () {
     config()->set('features.billing', true);
     config()->set('billing.stripe_webhook_secret', 'whsec_test');
 
@@ -842,6 +933,7 @@ test('checkout session expired webhook releases the pending claim', function () 
         'stripe_subscription_id' => null,
         'plan_key' => 'pilot',
         'status' => BillingSubscriptionStatus::Pending,
+        'metadata' => ['pending_checkout' => ['session_id' => 'cs_expired']],
     ]);
 
     $payload = [
@@ -871,7 +963,7 @@ test('checkout session expired webhook releases the pending claim', function () 
     expect(CompanySubscription::query()->forCompany($company)->first())->toBeNull();
 });
 
-test('checkout session expired restores a canceled subscription instead of dropping its customer', function () {
+test('correlated checkout session expired restores a canceled subscription instead of dropping its customer', function () {
     config()->set('features.billing', true);
     config()->set('billing.stripe_webhook_secret', 'whsec_test');
 
@@ -882,6 +974,7 @@ test('checkout session expired restores a canceled subscription instead of dropp
         'stripe_subscription_id' => null,
         'plan_key' => 'pilot',
         'status' => BillingSubscriptionStatus::Pending,
+        'metadata' => ['pending_checkout' => ['session_id' => 'cs_expired_2']],
     ]);
 
     $payload = [

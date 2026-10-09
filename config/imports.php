@@ -6,4 +6,5 @@ return [
     'default_chunk_size' => (int) env('IMPORTS_CHUNK_SIZE', 250),
     'preview_rows' => (int) env('IMPORTS_PREVIEW_ROWS', 100),
     'max_rows' => (int) env('IMPORTS_MAX_ROWS', 100000),
+    'queue_threshold_rows' => (int) env('IMPORTS_QUEUE_THRESHOLD_ROWS', 500),
 ];

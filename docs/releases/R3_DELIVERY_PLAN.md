@@ -110,3 +110,21 @@ Sequential ordering assumes:
 - R3.16-R3.17: hardening (~1-2 units each)
 - R3.18: onboarding (~1 unit)
 - R3.19: verification (~1 unit)
+
+## 6. After release — additional ERP connectors
+
+Recorded by user request on 2026-10-04. Start after the current release and its mandatory acceptance gates are complete. These connectors are a post-release roadmap, not requirements for the current release.
+
+Planned sequence:
+
+1. Business Central
+2. Monitor ERP
+3. Visma
+4. SAP
+5. Odoo
+
+Deliver one connector at a time. Complete and accept the current connector before starting the next; do not develop five unfinished connectors in parallel. For each connector, define the supported product/version and integration scope, then verify tenant authorization, credential handling, mapping, pagination, idempotency, conflict handling, retry/recovery and operational documentation before marking it complete. Reuse established catalogue and DPP domain operations.
+
+## 7. After release — development dependency remediation
+
+On 2026-10-05 the user explicitly accepted the documented `braces` build/development risk for the current release. Track a compatible Tailwind/toolchain migration or verified upstream fix after release; keep the advisory visible and repeat dependency audits. Acceptance is specific to this release and does not authorize deployment or indefinite retention. See `2026_10_05_DEV_DEPENDENCY_RISK.md` for scope and evidence. This task does not change the one-at-a-time ERP connector policy above.

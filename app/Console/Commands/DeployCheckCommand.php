@@ -76,6 +76,10 @@ class DeployCheckCommand extends Command
             return ! $isProduction || config('session.secure', false) === true;
         });
 
+        $checks[] = $this->check('HSTS is enabled in production', function () use ($isProduction) {
+            return ! $isProduction || config('security.hsts_enabled', false) === true;
+        });
+
         $checks[] = $this->check('Queue connection is not sync when async required', function () {
             if (! config('health.require_async_queue', false)) {
                 return true;
@@ -114,43 +118,63 @@ class DeployCheckCommand extends Command
             return ! $isProduction || config('health.require_scheduler', false) === true;
         });
 
-        $checks[] = $this->check('Backup freshness', function () {
-            $enabled = config('backup.enabled', true);
-            $disk = config('backup.disk', 'local');
-            $path = config('backup.path', 'nordipass/backups');
-
-            if (! $enabled) {
-                return true;
+        $checks[] = $this->check('Backup freshness', function () use ($isProduction) {
+            if (! config('backup.enabled', true)) {
+                return ! $isProduction;
             }
-
             try {
-                $files = Storage::disk($disk)->files($path);
+                $disk = Storage::disk(config('backup.disk', 'local'));
+                $path = config('backup.path', 'nordipass/backups');
+                $maxAge = (int) config('backup.max_age_hours', 26) * 3600;
+                if ($maxAge <= 0) {
+                    return false;
+                }
+                $manifests = [];
+                foreach ($disk->directories($path) as $directory) {
+                    if ($disk->exists($directory.'/manifest.json')) {
+                        $manifests[] = $directory.'/manifest.json';
+                    }
+                }
+                // Development without backups keeps its existing optional check.
+                if ($manifests === []) {
+                    return ! $isProduction;
+                }
+                foreach ($manifests as $manifestPath) {
+                    try {
+                        $data = json_decode($disk->get($manifestPath), true, flags: JSON_THROW_ON_ERROR);
+                        if (! is_array($data) || ($data['version'] ?? null) !== 2
+                            || ($data['status'] ?? null) !== 'complete'
+                            || ! is_string($data['created_at'] ?? null)) {
+                            continue;
+                        }
+                        $createdAt = strtotime($data['created_at']);
+                        if ($createdAt === false || $createdAt > time() || time() - $createdAt > $maxAge) {
+                            continue;
+                        }
+                        // This proves declared backup coverage and presence, not
+                        // restore success. The deployment hook must verify both.
+                        foreach (['database' => 'database.sql.gz', 'files' => 'files.tar.gz'] as $type => $file) {
+                            $artifact = $data['artifacts'][$type] ?? null;
+                            if (($data['scope'][$type] ?? null) !== true || ! is_array($artifact)
+                                || ($artifact['path'] ?? null) !== $file
+                                || ! is_int($artifact['size'] ?? null) || $artifact['size'] <= 0
+                                || ! is_string($artifact['sha256'] ?? null)
+                                || ! preg_match('/^[a-f0-9]{64}$/D', $artifact['sha256'])
+                                || ! $disk->exists(dirname($manifestPath).'/'.$file)
+                                || $disk->size(dirname($manifestPath).'/'.$file) !== $artifact['size']) {
+                                continue 2;
+                            }
+                        }
 
-                if (empty($files)) {
-                    return true;
+                        return true;
+                    } catch (\Throwable) {
+                        // One broken set cannot hide another fresh complete set.
+                    }
                 }
 
-                $manifests = array_filter($files, fn ($f) => str_ends_with($f, 'manifest.json'));
-                if (empty($manifests)) {
-                    return true;
-                }
-
-                rsort($manifests);
-                $latestManifest = $manifests[0];
-                $content = Storage::disk($disk)->get($latestManifest);
-                $data = json_decode($content, true);
-
-                if (! is_array($data) || ! isset($data['created_at'])) {
-                    return true;
-                }
-
-                $createdAt = strtotime($data['created_at']);
-                $maxAge = config('backup.max_age_hours', 24) * 3600;
-                $age = time() - $createdAt;
-
-                return $age <= $maxAge;
+                return false;
             } catch (\Throwable) {
-                return true;
+                return ! $isProduction;
             }
         });
 

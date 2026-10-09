@@ -25,6 +25,7 @@ class DeleteCategoryAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
 
         return DB::transaction(function () use ($actor, $company, $category): Category {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::CatalogManageCategories);
             $locked = Category::query()
                 ->forCompany($company)
                 ->whereKey($category->getKey())

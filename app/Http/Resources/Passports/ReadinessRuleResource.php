@@ -29,6 +29,15 @@ class ReadinessRuleResource extends JsonResource
                 'label' => $this->navigationTarget->label,
             ]),
             'safe_context' => $this->safeContext,
+            'requirement_key' => $this->requirementKey,
+            'profile' => $this->profile,
+            'profile_version' => $this->profileVersion,
+            'requirement_level' => $this->requirementLevel,
+            'source' => $this->source,
+            'source_reference' => $this->sourceReference,
+            'applies_because' => $this->appliesBecause,
+            'applicability' => $this->applicability,
+            'applicability_reason' => $this->applicabilityReason,
         ];
     }
 }

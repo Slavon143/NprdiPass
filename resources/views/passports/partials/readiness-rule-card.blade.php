@@ -28,13 +28,31 @@
                 <dd class="break-all font-mono text-slate-700">{{ $rule->code }}</dd>
             </div>
             <div class="grid grid-cols-[7rem_1fr] gap-2">
-                <dt class="font-semibold text-slate-500">{{ __('Source') }}</dt>
+                <dt class="font-semibold text-slate-500">{{ __('Requirement group') }}</dt>
                 <dd>{{ $rulePresenter->groupLabel($rule->group) }}</dd>
             </div>
+            @if ($rule->source !== null)
+                <div class="grid grid-cols-[7rem_1fr] gap-2">
+                    <dt class="font-semibold text-slate-500">{{ __('Source') }}</dt>
+                    <dd>{{ $rule->source }}@if ($rule->sourceReference) · {{ $rule->sourceReference }}@endif</dd>
+                </div>
+            @endif
             <div class="grid grid-cols-[7rem_1fr] gap-2">
                 <dt class="font-semibold text-slate-500">{{ __('Requirement level') }}</dt>
                 <dd>{{ $rulePresenter->requirementLabel($rule) }}</dd>
             </div>
+            @if ($rule->appliesBecause !== null)
+                <div class="grid grid-cols-[7rem_1fr] gap-2">
+                    <dt class="font-semibold text-slate-500">{{ __('Applies because') }}</dt>
+                    <dd>{{ $rule->appliesBecause }}</dd>
+                </div>
+            @endif
+            @if ($rule->applicability === 'not_applicable')
+                <div class="grid grid-cols-[7rem_1fr] gap-2">
+                    <dt class="font-semibold text-slate-500">{{ __('Applicability') }}</dt>
+                    <dd>{{ $rule->applicabilityReason ?? __('Not applicable for this product.') }}</dd>
+                </div>
+            @endif
             @if ($rule->safeContext !== [])
                 <div class="grid grid-cols-[7rem_1fr] gap-2">
                     <dt class="font-semibold text-slate-500">{{ __('Actual values') }}</dt>

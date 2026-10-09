@@ -25,6 +25,7 @@ class DisconnectFortnoxAction
         $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
 
         return DB::transaction(function () use ($actor, $company): FortnoxConnection {
+            $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
             $connection = FortnoxConnection::query()
                 ->forCompany($company)
                 ->lockForUpdate()

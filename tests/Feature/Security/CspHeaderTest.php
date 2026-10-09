@@ -24,6 +24,7 @@ test('CSP header is enforced with strict directives when enabled', function () {
 
     expect($header)->toContain("default-src 'self'")
         ->and($header)->toContain("script-src 'self' 'nonce-")
+        ->and($header)->not->toContain("'unsafe-eval'")
         ->and($header)->toContain("style-src 'self' 'unsafe-inline'")
         ->and($header)->toContain("object-src 'none'")
         ->and($header)->toContain("frame-ancestors 'self'")

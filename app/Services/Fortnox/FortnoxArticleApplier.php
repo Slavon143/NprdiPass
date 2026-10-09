@@ -99,6 +99,13 @@ class FortnoxArticleApplier
             ->first();
 
         if ($existing !== null) {
+            $product = Product::query()->forCompany($company)->whereKey($existing->product_id)->lockForUpdate()->first();
+            $variant = $product !== null && $existing->variant_id !== null
+                ? ProductVariant::query()->forCompany($company)->where('product_id', $product->getKey())->whereKey($existing->variant_id)->lockForUpdate()->first()
+                : null;
+            $existing->setRelation('product', $product);
+            $existing->setRelation('variant', $variant);
+
             return [$existing, false];
         }
 
@@ -106,17 +113,18 @@ class FortnoxArticleApplier
         $matchedVariant = ProductVariant::query()
             ->forCompany($company)
             ->where('sku_normalized', $skuNormalized)
-            ->lockForUpdate()
             ->first();
 
         $product = $matchedVariant === null
             ? null
-            : Product::query()->forCompany($company)->whereKey($matchedVariant->product_id)->first();
+            : Product::query()->forCompany($company)->whereKey($matchedVariant->product_id)->lockForUpdate()->first();
 
-        $variant = $matchedVariant;
+        $variant = $product === null ? null : ProductVariant::query()
+            ->forCompany($company)->where('product_id', $product->getKey())->whereKey($matchedVariant->getKey())
+            ->where('sku_normalized', $skuNormalized)->lockForUpdate()->first();
         $newProduct = false;
 
-        if ($variant === null || $product === null) {
+        if ($variant === null) {
             $product = $this->createProduct($actor, $company, $article);
             $variant = $product->defaultVariant;
             $newProduct = true;
@@ -159,7 +167,7 @@ class FortnoxArticleApplier
         ];
 
         try {
-            return $this->createProduct->execute($actor, $company, $data);
+            return $this->createProduct->execute($actor, $company, $data, imported: true);
         } catch (ProductOperationException $exception) {
             if ($exception->errorCode !== 'product_slug_conflict') {
                 throw $exception;
@@ -167,7 +175,7 @@ class FortnoxArticleApplier
 
             $data['name'] = mb_substr($name, 0, 240).' - '.Str::lower(Str::random(6));
 
-            return $this->createProduct->execute($actor, $company, $data);
+            return $this->createProduct->execute($actor, $company, $data, imported: true);
         }
     }
 
@@ -253,21 +261,23 @@ class FortnoxArticleApplier
                 FortnoxField::Gtin => $variant !== null && (bool) $this->updateVariant->execute($actor, $company, $product, $variant, ['gtin' => $incoming]),
                 default => false,
             };
-        } catch (LifecycleOperationException|ProductOperationException) {
-            return false;
+        } catch (LifecycleOperationException|ProductOperationException $exception) {
+            throw $exception;
         }
     }
 
     private function raiseConflict(Company $company, FortnoxSyncRun $run, FortnoxArticleMapping $mapping, FortnoxField $field, ?string $incoming, mixed $current): void
     {
-        $openExists = FortnoxSyncConflict::query()
+        $open = FortnoxSyncConflict::query()
             ->forCompany($company)
             ->where('mapping_id', $mapping->getKey())
             ->where('field', $field->value)
             ->where('status', FortnoxConflictStatus::Open->value)
-            ->exists();
+            ->lockForUpdate()->first();
 
-        if ($openExists) {
+        if ($open !== null) {
+            $open->forceFill(['fortnox_value' => ['value' => $incoming], 'nordipass_value' => ['value' => $current], 'sync_run_id' => $run->getKey()])->save();
+
             return;
         }
 
