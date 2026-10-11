@@ -44,6 +44,12 @@ test('limited product and passport display paths never execute the readiness eva
         ->assertSee($history ? 'Stored readiness evaluation' : 'No stored readiness evaluation')
         ->assertViewHas('readiness', fn ($result) => $history ? $result->score === $run->score : $result === null)
         ->assertViewHas('canManage', false)->assertViewHas('canPublish', false);
+    if ($history) {
+        $this->get(route('catalog.products.passport.readiness', $this->product->uuid))->assertOk()
+            ->assertSee('Recalculate readiness before making a publication decision.')
+            ->assertDontSee('Run readiness check')->assertDontSee('Publish Passport')
+            ->assertDontSee(route('catalog.products.passport.publish-confirm', $this->product->uuid), false);
+    }
     $this->get(route('catalog.products.passport.edit', $this->product->uuid))
         ->assertRedirect(route('catalog.products.passport.show', $this->product->uuid));
     $this->get(route('catalog.products.passport.publish-confirm', $this->product->uuid))

@@ -9,9 +9,11 @@ use App\Enums\Catalog\ProductStatus;
 use App\Enums\Catalog\ProductVariantStatus;
 use App\Enums\CompanyRole;
 use App\Enums\CompanyStatus;
+use App\Enums\Documents\ProductDocumentStatus;
 use App\Enums\Passports\DppSectionKey;
 use App\Models\Catalog\Category;
 use App\Models\Catalog\Product;
+use App\Models\Catalog\ProductDocument;
 use App\Models\Catalog\ProductMedia;
 use App\Models\Catalog\ProductVariant;
 use App\Models\Company;
@@ -148,14 +150,36 @@ class PassportReadinessWebTest extends TestCase
 
     public function test_readiness_page_loads(): void
     {
-        $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]))
-            ->assertOk();
+        ProductDocument::factory()->create([
+            'company_id' => $this->company->id, 'product_id' => $this->product->id,
+            'created_by_user_id' => $this->actor->id,
+        ]);
+        ProductDocument::factory()->create([
+            'company_id' => $this->company->id, 'product_id' => $this->product->id,
+            'created_by_user_id' => $this->actor->id,
+            'status' => ProductDocumentStatus::Archived,
+        ]);
+        $response = $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]))
+            ->assertOk()->assertSee('PRODUCT WORKSPACE')->assertSee('READINESS OVERVIEW')
+            ->assertSee($this->product->name)->assertSee('SKU-WEBR-001')
+            ->assertSee('Run readiness check')->assertDontSee('Industrial Storage Case');
+        $result = $response->viewData('readiness');
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame((string) $result->score, $xpath->evaluate('string(//*[@role="progressbar"]/@aria-valuenow)'));
+        $this->assertSame((string) $result->counts->blockers, trim($xpath->evaluate('string(//*[@data-testid="count-blockers"]/strong)')));
+        $this->assertSame(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " readiness-grid ")]/aside[@data-testid="readiness-status-card"]')->length);
+        $this->assertSame(1, $xpath->query('//a[@aria-current="page"]')->length);
+        $this->assertSame('1', trim($xpath->evaluate('string(//nav[@aria-label="Product workspace"]/a[contains(@href, "tab=documents")]/span)')));
+        $this->assertSame(0, $xpath->query('//a[contains(@href, "publish-confirm")]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-testid="readiness-publication-actions"]/button[@disabled]')->length);
     }
 
     public function test_page_contains_passport_uuid(): void
     {
         $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]))
-            ->assertOk();
+            ->assertOk()->assertSee($this->passport->uuid);
     }
 
     public function test_page_contains_score_placeholder(): void
@@ -190,7 +214,10 @@ class PassportReadinessWebTest extends TestCase
         $membership->forceFill(['role' => CompanyRole::Viewer])->save();
 
         $this->get(route('catalog.products.passport.readiness', ['product' => $this->product->uuid]))
-            ->assertOk();
+            ->assertOk()
+            ->assertDontSee('Import data')
+            ->assertDontSee('Passport editor')
+            ->assertDontSee('Publish Passport');
     }
 
     public function test_wrong_tenant_returns_404(): void
