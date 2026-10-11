@@ -1,0 +1,14 @@
+{
+  "committed_at": "2026-10-11T07:39:25.078409+00:00",
+  "commit": "4e7c48f4985d2db71f5463987cd9f38b2df6e0f3",
+  "parent": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "files": 36,
+  "approved_scope_matches": true,
+  "committed_blobs_match_reviewed_lf_sha256": true,
+  "new_commit_count": 1,
+  "push_performed": false,
+  "production_deployment_performed": false,
+  "new_oauth_performed": false,
+  "paid_actions_performed": false,
+  "authorization": "User explicitly approved one local commit of the 36 reviewed files without push."
+}

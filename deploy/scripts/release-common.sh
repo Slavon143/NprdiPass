@@ -63,6 +63,9 @@ build_release_caches() {
 }
 
 activate_and_check() {
+    # Private operator umask must not make checksum-verified static assets
+    # unreadable to the web server, including an explicit historical recovery.
+    python3 "$SCRIPT_DIR/release_artifact.py" prepare-public --release-dir "$RELEASE_DIR" --archive-root "$ARCHIVE_DIR"
     ln -sfn "$RELEASE_DIR" "$CURRENT_LINK.new"
     mv -T "$CURRENT_LINK.new" "$CURRENT_LINK"
     # The site hook starts fresh processes with the new current path; queue:restart

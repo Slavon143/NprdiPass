@@ -213,6 +213,46 @@ def verify_tree(release_dir, archive_root):
     return manifest
 
 
+def prepare_public(release_dir, archive_root):
+    """Expose only verified public bytes, independent of the operator's umask."""
+    directory = Path(release_dir).absolute()
+    if directory.is_symlink() or directory.resolve(strict=True) != directory:
+        raise ValueError('Public preparation requires an explicit nonsymlink release')
+    verify_tree(directory, archive_root)
+    public = directory / 'public'
+    if not public.is_dir() or public.is_symlink():
+        raise ValueError('Missing regular public directory')
+    directories, files = [public], []
+    # Validate the complete public walk before changing any permissions. Never
+    # follow or chmod runtime public/storage, shared storage or private inputs.
+    for parent, dirs, names in os.walk(public, followlinks=False):
+        for name in list(dirs):
+            path = Path(parent) / name
+            key = path.relative_to(directory).as_posix()
+            if key == 'public/storage':
+                dirs.remove(name)
+                continue
+            if not allowed(key) or path.is_symlink():
+                raise ValueError('Unreviewed public directory')
+            directories.append(path)
+        for name in names:
+            path = Path(parent) / name
+            key = path.relative_to(directory).as_posix()
+            if key == 'public/storage':
+                continue
+            if not allowed(key) or path.is_symlink() or not path.is_file() or path.stat().st_nlink != 1:
+                raise ValueError('Unreviewed public file')
+            files.append(path)
+    # Static workers can traverse the release, but cannot list its private root.
+    # Application directories, .env, cache, backups and storage retain their modes.
+    directory.chmod(0o711)
+    for path in directories:
+        path.chmod(0o755)
+    for path in files:
+        path.chmod(0o644)
+    return {'public_permissions_prepared': True, 'directories': len(directories), 'files': len(files)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -228,6 +268,9 @@ def main():
     tree = sub.add_parser('verify-tree')
     tree.add_argument('--release-dir', required=True)
     tree.add_argument('--archive-root', required=True)
+    public = sub.add_parser('prepare-public')
+    public.add_argument('--release-dir', required=True)
+    public.add_argument('--archive-root', required=True)
     arguments = vars(parser.parse_args())
     command = arguments.pop("command")
     try:

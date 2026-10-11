@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-10-11T08:08:08.479518+00:00",
+  "application_commit": "4e7c48f4985d2db71f5463987cd9f38b2df6e0f3",
+  "contains_private_backups": false,
+  "files": {
+    "final-result.json": "1cd10655b8731f5446083074a9d7cfec6a1f8fe9df1bb83365d65af71bcf1566",
+    "source-commit.json": "d0458cb66f9c8005ecb102a29404564d86fa9d617ec4c6986f10b9fb781dda7b",
+    "executable.json": "44ebec27cf4728eae730129e32c6e6e58a02da9862d9dfc8b84c2b5c76270744"
+  }
+}

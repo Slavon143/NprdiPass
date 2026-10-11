@@ -1,0 +1,25 @@
+{
+  "commit": "4e7c48f4985d2db71f5463987cd9f38b2df6e0f3",
+  "source_blobs_exact": true,
+  "source_inputs": 1064,
+  "node_version": "22.23.3",
+  "artifact": "D:\\laravel\\nordipass\\storage\\framework\\release-20261011\\nordipass-20261011-4e7c48f4985d.tar.gz",
+  "sha256": "4c14da3491bb2a6a5796709fa44801e1c50812f19e886f39c4eda53e9129e22c",
+  "bytes": 10066305,
+  "manifest": {
+    "application": "NordiPass",
+    "format_version": 2,
+    "commit": "4e7c48f4985d2db71f5463987cd9f38b2df6e0f3",
+    "ref": "master",
+    "built_at": "2026-10-11T07:41:01.331160+00:00",
+    "php_version": "8.4.21",
+    "node_version": "22.23.3",
+    "catalog_capacity_schema": "table-v1",
+    "application_sha256": "23cbeb089bee74750783a742d8cabf89c4482fad0a80bf346f1df48c8694ab4d",
+    "dependencies_sha256": "39f8dd9af9dfe698f8a0bae498afd0574fae825b9f3a408425c96c228dc64f5e"
+  },
+  "backend_and_frontend_payload_matches_tested_node22_candidate": true,
+  "packaging_tool_committed": true,
+  "push_performed": false,
+  "production_changed": false
+}

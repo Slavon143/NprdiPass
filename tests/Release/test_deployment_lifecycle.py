@@ -3,6 +3,7 @@ import importlib.util
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tempfile
 import unittest
@@ -60,7 +61,7 @@ class DeploymentLifecycleTest(unittest.TestCase):
     def events(self):
         return self.log.read_text().splitlines() if self.log.exists() else []
 
-    def run_script(self, script, release_id, extra=(), environment=None):
+    def run_script(self, script, release_id, extra=(), environment=None, umask=-1):
         command = ['bash', str(REPO / 'deploy/scripts' / script), '--release-id', release_id,
                    '--app-root', str(self.app), '--health-url', 'http://fixture.invalid',
                    '--pause-writers', str(self.hooks['pause']), '--verify-writers-stopped', str(self.hooks['stopped']),
@@ -68,7 +69,24 @@ class DeploymentLifecycleTest(unittest.TestCase):
                    '--verify-release', str(self.hooks['release'])]
         if script == 'deploy.sh':
             command.extend(['--artifact', str(self.artifact), '--checksum-file', str(self.checksum)])
-        return subprocess.run(command + list(extra), env=environment or self.environment, capture_output=True, text=True, timeout=60)
+        return subprocess.run(command + list(extra), env=environment or self.environment, capture_output=True, text=True, timeout=60, umask=umask)
+
+    def test_private_operator_umask_does_not_hide_assets_after_deploy_or_rollback(self):
+        original_env_mode = stat.S_IMODE((self.app / 'shared/.env').stat().st_mode)
+        for identity in ('first', 'second'):
+            result = self.run_script('deploy.sh', identity, umask=0o077)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        first = self.app / 'releases/first'
+        first.chmod(0o700)
+        (first / 'public/build').chmod(0o700)
+        (first / 'public/build/manifest.json').chmod(0o600)
+        result = self.run_script('rollback.sh', 'first', ['--force'], umask=0o077)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(stat.S_IMODE(first.stat().st_mode), 0o711)
+        self.assertEqual(stat.S_IMODE((first / 'public/build').stat().st_mode), 0o755)
+        self.assertEqual(stat.S_IMODE((first / 'public/build/manifest.json').stat().st_mode), 0o644)
+        self.assertEqual(stat.S_IMODE((first / 'app').stat().st_mode), 0o700)
+        self.assertEqual(stat.S_IMODE((self.app / 'shared/.env').stat().st_mode), original_env_mode)
 
     def test_deploy_orders_drain_backup_schema_and_fresh_workers_and_retains_original(self):
         result = self.run_script('deploy.sh', 'first')

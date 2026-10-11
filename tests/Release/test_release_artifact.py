@@ -2,6 +2,8 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -239,6 +241,63 @@ class ReleaseArtifactTest(unittest.TestCase):
         (installed / 'public/backdoor.php').write_text('<?php')
         with self.assertRaisesRegex(ValueError, 'file set or content changed'):
             release.verify_tree(installed, self.root / 'archive')
+
+    @unittest.skipUnless(os.name == 'posix', 'Native Unix file permission contract')
+    def test_private_release_prepares_public_assets_without_exposing_private_or_shared_inputs(self):
+        installed = self.installed_release()
+        for parent, dirs, files in os.walk(installed):
+            Path(parent).chmod(0o700)
+            for name in files:
+                (Path(parent) / name).chmod(0o600)
+        (installed / '.env').write_text('private')
+        (installed / '.env').chmod(0o600)
+        shared = self.root / 'shared-private'
+        shared.mkdir(mode=0o700)
+        secret = shared / 'secret.txt'
+        secret.write_text('private')
+        secret.chmod(0o600)
+        (installed / 'public/storage').symlink_to(shared, target_is_directory=True)
+        release.prepare_public(installed, self.root / 'archive')
+        mode = lambda path: stat.S_IMODE(path.stat().st_mode)
+        self.assertEqual(mode(installed), 0o711)
+        self.assertEqual(mode(installed / 'public/build'), 0o755)
+        self.assertEqual(mode(installed / 'public/build/manifest.json'), 0o644)
+        for path, expected in ((installed / '.env', 0o600), (installed / 'app', 0o700),
+                               (installed / 'app/Rule.php', 0o600), (installed / 'storage', 0o700),
+                               (shared, 0o700), (secret, 0o600)):
+            self.assertEqual(mode(path), expected)
+        release.verify_tree(installed, self.root / 'archive')
+
+    @unittest.skipUnless(os.name == 'posix', 'Native Unix file permission contract')
+    def test_public_runtime_secret_rejects_preparation_before_any_permission_change(self):
+        installed = self.installed_release()
+        installed.chmod(0o700)
+        secret = installed / 'public/.env'
+        secret.write_text('private')
+        secret.chmod(0o600)
+        with self.assertRaisesRegex(ValueError, 'Unreviewed public file'):
+            release.prepare_public(installed, self.root / 'archive')
+        self.assertEqual(stat.S_IMODE(installed.stat().st_mode), 0o700)
+        self.assertEqual(stat.S_IMODE(secret.stat().st_mode), 0o600)
+
+    @unittest.skipUnless(os.name == 'posix', 'Native Unix file permission contract')
+    def test_public_preparation_rejects_alias_release_before_chmod(self):
+        installed = self.installed_release()
+        installed.chmod(0o700)
+        alias = self.root / 'current'
+        alias.symlink_to(installed, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'explicit nonsymlink'):
+            release.prepare_public(alias, self.root / 'archive')
+        self.assertEqual(stat.S_IMODE(installed.stat().st_mode), 0o700)
+
+    @unittest.skipUnless(os.name == 'posix', 'Native Unix file permission contract')
+    def test_public_preparation_rejects_changed_bytes_before_chmod(self):
+        installed = self.installed_release()
+        installed.chmod(0o700)
+        (installed / 'public/build/manifest.json').write_text('changed')
+        with self.assertRaisesRegex(ValueError, 'file set or content changed'):
+            release.prepare_public(installed, self.root / 'archive')
+        self.assertEqual(stat.S_IMODE(installed.stat().st_mode), 0o700)
 
 
 if __name__ == "__main__":
