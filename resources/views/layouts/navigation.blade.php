@@ -7,7 +7,7 @@
     <div class="sidebar-brand flex h-[72px] shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-4">
         <a href="{{ route('dashboard') }}" aria-label="NordiPass" class="flex min-w-0 items-center gap-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
             <x-application-logo class="h-8 w-8 shrink-0 text-emerald-700" aria-hidden="true" />
-            <span class="sidebar-brand-name text-2xl font-bold tracking-tight text-slate-900">NordiPass</span>
+            <span class="sidebar-brand-name text-2xl font-bold tracking-tight text-slate-900">NordiPass<span class="text-emerald-800">.</span></span>
         </a>
         <button type="button" @click="toggleSidebar" :aria-expanded="!sidebarCollapsed" aria-controls="desktop-navigation" title="{{ __('Toggle sidebar') }}" class="sidebar-toggle rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-700" data-testid="sidebar-toggle">
             <span class="sr-only">{{ __('Toggle sidebar') }}</span>
@@ -17,6 +17,12 @@
         </button>
     </div>
 
+    @if($currentCompany)
+        <a href="{{ route('settings.company.edit') }}" class="company-switch auth-company-switch">
+            <span class="company-avatar">{{ mb_strtoupper(mb_substr($companyName($currentCompany), 0, 2)) }}</span>
+            <span><strong>{{ $companyName($currentCompany) }}</strong><small>{{ $currentMembership?->role->value }}</small></span>
+        </a>
+    @endif
     @include('layouts.partials.sidebar-nav')
 </aside>
 

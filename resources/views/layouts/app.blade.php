@@ -10,7 +10,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="bg-slate-50 font-sans text-slate-900 antialiased">
+    <body class="np-prototype np-auth bg-slate-50 text-slate-900 antialiased">
         @php
             $flashMessages = function (mixed $message): array {
                 if ($message === null || $message === false || $message === '') {
@@ -42,7 +42,7 @@
             $warningMessages = $flashMessages(session('warning'));
         @endphp
 
-        <div class="app-shell min-h-screen" x-data="appShell" :data-sidebar-collapsed="sidebarCollapsed" @keydown.escape.window="closeMobileSidebar">
+        <div class="np-site app-shell min-h-screen" x-data="appShell" :data-sidebar-collapsed="sidebarCollapsed" @keydown.escape.window="closeMobileSidebar">
             @include('layouts.navigation')
 
             <div class="app-shell-content lg:pl-64">

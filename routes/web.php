@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Passports\ProductPassportStatus;
 use App\Enums\PlatformPermission;
 use App\Http\Controllers\AcceptCompanyInvitationController;
 use App\Http\Controllers\ApiTokenController;
@@ -58,29 +57,24 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RemoveCompanyMemberController;
 use App\Http\Controllers\ResendCompanyInvitationController;
+use App\Http\Controllers\ShowcaseController;
 use App\Http\Controllers\ShowCompanyInvitationController;
 use App\Http\Controllers\StoreCompanyInvitationController;
 use App\Http\Controllers\SuspendedCompanyController;
 use App\Http\Controllers\UpdateCompanyMemberRoleController;
-use App\Models\Passports\ProductPassport;
-use App\Services\Passports\Qr\PassportQrRenderer;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-Route::get('/', function () {
-    $demoPassport = ProductPassport::query()
-        ->where('status', ProductPassportStatus::Published->value)
-        ->whereNotNull('public_id')
-        ->latest('updated_at')
-        ->first();
-    $landingQrTarget = $demoPassport !== null
-        ? url("p/{$demoPassport->public_id}")
-        : route('register');
-
-    return view('welcome', [
-        'landingQrSvg' => app(PassportQrRenderer::class)->renderSvgForUrl($landingQrTarget),
-        'landingQrTarget' => $landingQrTarget,
-        'landingQrIsPassport' => $demoPassport !== null,
-    ]);
+// Public examples never resolve a company or use a shared demo login/session.
+Route::withoutMiddleware([
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    PreventRequestForgery::class,
+])->group(function (): void {
+    Route::get('/', [ShowcaseController::class, 'home'])->name('home');
+    Route::get('/demo', [ShowcaseController::class, 'demo'])->name('demo');
 });
 
 Route::post('/stripe/webhook', StripeWebhookController::class)

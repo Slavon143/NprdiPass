@@ -37,6 +37,7 @@ test('company member sees real current company data and role on dashboard', func
         ->assertDontSee('Scans')
         ->assertDontSee('Revenue')
         ->assertDontSee('Storage usage');
+    $response->assertDontSee('Average readiness')->assertDontSee('% this month');
 });
 
 test('empty dashboard does not render the marketing sample product as company data', function () {

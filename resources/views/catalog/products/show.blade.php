@@ -61,7 +61,7 @@
             : __('Not synced');
     @endphp
 
-    <div class="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8" data-testid="product-show-page" x-data="{ tab: '{{ $initialTab }}' }">
+    <div class="np-workspace mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8" data-testid="product-show-page" x-data="{ tab: '{{ $initialTab }}' }">
         <div class="border-b border-slate-200 pb-6">
             <nav class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500" aria-label="{{ __('Breadcrumb') }}">
                 <a href="{{ route('catalog.products.index') }}" class="hover:text-emerald-800">{{ __('Catalog') }}</a>
@@ -227,16 +227,17 @@
                         <x-badge :tone="$passport->status->value === 'published' ? 'emerald' : ($passport->status->value === 'draft' ? 'indigo' : 'slate')">{{ $passportStatusLabel }}</x-badge>
                     </div>
 
+                    @if ($passportBlockers > 0)
+                        <p class="np-callout mt-4 font-semibold">{{ trans_choice(':count blocker must be resolved before this draft can be published.|:count blockers must be resolved before this draft can be published.', $passportBlockers, ['count' => $passportBlockers]) }}</p>
+                    @endif
                     <div class="mt-4 flex items-baseline gap-3">
                         <span class="text-3xl font-bold tracking-tight {{ $passportScoreTone }}">{{ $passportReadinessScore !== null ? $passportReadinessScore.'%' : '—' }}</span>
                         <span class="text-sm font-semibold {{ $passportReady ? 'text-emerald-700' : 'text-amber-700' }}">{{ $passportReady ? __('Ready') : __('Needs attention') }}</span>
                     </div>
 
-                    @if ($passportBlockers > 0)
-                        <p class="mt-2 text-sm text-slate-600">{{ trans_choice(':count blocker must be resolved before this draft can be published.|:count blockers must be resolved before this draft can be published.', $passportBlockers, ['count' => $passportBlockers]) }}</p>
-                    @elseif (! $passportReady)
+                    @if ($passportBlockers === 0 && ! $passportReady)
                         <p class="mt-2 text-sm text-slate-600">{{ __('Warnings and recommendations should be reviewed before publishing.') }}</p>
-                    @else
+                    @elseif ($passportReady)
                         <p class="mt-2 text-sm text-slate-600">{{ __('The current draft is ready for publication.') }}</p>
                     @endif
 

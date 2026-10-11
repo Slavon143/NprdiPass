@@ -65,13 +65,14 @@
         }
     </style>
 </head>
-<body class="bg-white font-sans text-slate-900 antialiased" data-public-passport-v2="true">
+<body class="np-prototype np-public-passport bg-white antialiased" data-public-passport-v2="true">
+<div class="np-site">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">Skip to main content</a>
 
     <header class="border-b border-slate-200 bg-slate-50" role="banner">
         <div class="mx-auto max-w-4xl px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            <div class="text-sm text-slate-500">Digital Product Passport</div>
-            <div class="text-xs text-slate-400">Powered by NordiPass</div>
+            <a href="{{ route('home') }}" class="np-brand"><x-application-logo class="h-9 w-9 text-emerald-800" aria-hidden="true" /><span>NordiPass<span class="text-emerald-800">.</span></span></a>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">Digital Product Passport</div>
         </div>
     </header>
 
@@ -93,5 +94,6 @@
             @endunless
         </div>
     </footer>
+</div>
 </body>
 </html>

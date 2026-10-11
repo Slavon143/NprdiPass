@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Catalog\ProductStatus;
 use App\Enums\Passports\ProductPassportStatus;
 use App\Models\Billing\CompanySubscription;
 use App\Models\Catalog\Product;
@@ -55,17 +54,6 @@ class DashboardController extends Controller
         );
         $passportSummaries = $readinessProvider->loadSummaries($company, $recentProductPaginator);
 
-        $catalogPassports = ProductPassport::query()
-            ->forCompany($company)
-            ->whereHas('product', fn ($query) => $query->whereIn('status', [ProductStatus::Draft->value, ProductStatus::Active->value]));
-        $catalogPassportCount = (clone $catalogPassports)->count();
-        $readyCount = (clone $catalogPassports)->where('status', ProductPassportStatus::Published->value)->count();
-        $inProgressCount = max($catalogPassportCount - $readyCount, 0);
-        $needsAttentionCount = max($productCount - $catalogPassportCount, 0);
-        $averageReadiness = $productCount > 0
-            ? (int) round((($readyCount * 100) + ($inProgressCount * 62) + ($needsAttentionCount * 35)) / $productCount)
-            : 0;
-
         return view()->make('dashboard.index', [
             'company' => $company,
             'membership' => $membership,
@@ -77,10 +65,6 @@ class DashboardController extends Controller
             'documentCount' => $documentCount,
             'recentProducts' => $recentProducts,
             'passportSummaries' => $passportSummaries,
-            'averageReadiness' => $averageReadiness,
-            'readyCount' => $readyCount,
-            'inProgressCount' => $inProgressCount,
-            'needsAttentionCount' => $needsAttentionCount,
             'subscription' => CompanySubscription::query()->forCompany($company)->first(),
             'plans' => config('billing.plans'),
             'productLimit' => $entitlements->limit($company, 'catalog.products.max'),

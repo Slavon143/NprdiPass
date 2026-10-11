@@ -69,7 +69,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8" data-testid="passport-readiness-page">
+    <div class="np-workspace mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8" data-testid="passport-readiness-page">
         @include('passports.partials.regulatory-context')
         {{-- Publication status --}}
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm" data-testid="readiness-status-card">
@@ -110,7 +110,7 @@
                         @if ($isNotReady)
                             <button type="button" class="inline-flex cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-4 py-2.5 text-sm font-semibold text-white" disabled>{{ __('Publish Passport') }}</button>
                         @else
-                            <a href="{{ route('catalog.products.passport.publish-confirm', $product->uuid) }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">{{ __('Publish Passport') }}</a>
+                            <a href="{{ route('catalog.products.passport.publish-confirm', $product->uuid) }}" class="np-btn">{{ __('Publish Passport') }}</a>
                         @endif
                     @endif
                 </div>

@@ -5,7 +5,10 @@ use App\Models\User;
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertSee('New to NordiPass?')
+        ->assertSee('Create an account')
+        ->assertSee('href="'.route('register').'"', false);
 });
 
 test('users can authenticate using the login screen', function () {

@@ -1,3 +1,5 @@
+@import './showcase-reference.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,7 +8,91 @@
     display: none !important;
 }
 
+@layer components {
+    .np-btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-transparent bg-emerald-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-600; }
+    .np-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-700 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2; }
+    .np-card { @apply rounded-2xl border border-slate-200 bg-white; }
+    .np-eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em] text-slate-600; }
+    .np-heading { @apply text-3xl font-medium leading-tight tracking-tight sm:text-4xl; }
+    .np-badge { @apply inline-flex rounded-md bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900; }
+    .np-callout { @apply rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950; }
+}
+
+.np-theme { color: #203238; background: #f7faf8; }
+.np-theme h1, .np-theme h2, .np-theme h3 { color: #203238; letter-spacing: -0.025em; }
+.np-theme .app-shell-content { background: #f7faf8; }
+.np-workspace > section, .np-workspace > div > section { border-radius: 1rem; box-shadow: none; }
+.np-container { width: min(100% - 3rem, 76rem); margin-inline: auto; }
+.np-public { background: white; }
+.np-public-header { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,.97); border-bottom: 1px solid #e4eae6; }
+.np-brand { display: inline-flex; align-items: center; gap: .6rem; font-size: 1.5rem; font-weight: 700; letter-spacing: -.06em; }
+.np-language { display: inline-flex; gap: .25rem; border: 1px solid #e2e8f0; border-radius: .5rem; padding: .25rem; font-size: .75rem; font-weight: 600; }
+.np-language a { padding: .5rem; border-radius: .25rem; }
+.np-language [aria-current] { background: #eaf4ee; color: #14543e; }
+.np-skip { position: absolute; top: 0; left: 1rem; z-index: 60; padding: 1rem; background: white; transform: translateY(-120%); }
+.np-skip:focus { transform: translateY(0); outline: 2px solid #166347; }
+.np-hero { display: grid; gap: 3rem; align-items: center; padding-block: 5rem; }
+.np-hero-stage { padding: 1.75rem; border-radius: 1.25rem; background: #eaf3ed; }
+.np-section { padding-block: 5rem; }
+.np-surface { background: #eef5f0; }
+.np-public-footer { border-top: 1px solid #e4eae6; color: #475569; }
+.landing-qr svg { display: block; width: 100%; height: auto; }
+.np-demo-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem; border: 1px solid #b9d7c4; border-radius: .75rem; background: #edf6ef; color: #234838; }
+.np-demo-nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; border-bottom: 1px solid #e2e8f0; margin-block: 1.5rem 2rem; font-size: .875rem; }
+.np-demo-nav a { padding-block: .9rem; border-bottom: 2px solid transparent; color: #475569; }
+.np-demo-nav [aria-current] { color: #166347; border-bottom-color: #166347; font-weight: 600; }
+.np-demo-stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; margin-top: 1.75rem; }
+.np-demo-table { width: 100%; text-align: left; font-size: .875rem; }
+.np-demo-table th { padding: 1rem 1.5rem; color: #475569; font-weight: 500; background: #fafcfb; }
+.np-demo-table td { padding: 1.1rem 1.5rem; border-top: 1px solid #e5ece8; }
+.np-demo-facts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.5rem; }
+.np-demo-facts dt { color: #52645b; font-size: .8rem; margin-bottom: .4rem; }
+.np-demo-facts dd { font-size: .95rem; overflow-wrap: anywhere; }
+.np-progress { height: .5rem; overflow: hidden; border: none; border-radius: 1rem; background: #e2e8f0; accent-color: #a06e20; }
+.np-progress::-webkit-progress-bar { background: #e2e8f0; }
+.np-progress::-webkit-progress-value { background: #a06e20; border-radius: 1rem; }
+.np-progress::-moz-progress-bar { background: #a06e20; border-radius: 1rem; }
+.np-progress[data-ready="true"] { accent-color: #176347; }
+.np-progress[data-ready="true"]::-webkit-progress-value { background: #176347; }
+.np-progress[data-ready="true"]::-moz-progress-bar { background: #176347; }
+.np-demo-document { padding: 1rem; border: 1px solid #e2e8f0; border-radius: .75rem; }
+.np-demo-document summary { font-size: .875rem; font-weight: 600; color: #176347; cursor: pointer; }
+.np-theme :focus-visible { outline-offset: 3px; }
+.np-theme [hidden] { display: none !important; }
+.np-public-passport .passport-section { border: 1px solid #e4eae6; border-radius: 1rem; padding: 1.5rem; }
+.np-public-passport .passport-section h2 { border-color: #e4eae6; font-weight: 600; }
+.np-public-passport .document-card .download-link { background: #176347; }
+.np-public-passport .document-card .download-link:hover { background: #104a34; }
+.np-passport-hero { background: #eef5f0; border-radius: 1rem; padding: 1.5rem; }
+@media (min-width: 1024px) { .np-hero { grid-template-columns: 1.1fr 1fr; } .np-demo-stats { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 480px) { .np-container { width: calc(100% - 2rem); } .np-hero, .np-section { padding-block: 2.5rem; } .np-hero-stage { padding: 1rem; } .np-demo-banner { flex-direction: column; align-items: flex-start; } .np-demo-facts { grid-template-columns: 1fr; } .np-demo-table td, .np-demo-table th { padding: .85rem; } }
+
 .sidebar-plan > summary { list-style: none; }
+.np-auth { font-family: Arial, Helvetica, sans-serif; }
+html:has(body.np-prototype) { scroll-padding-top:100px; }
+.np-prototype dialog.import-wizard[open] { display:grid; }
+.np-prototype .step-label { min-width:0; font-weight:400; overflow-wrap:anywhere; hyphens:auto; }
+.np-auth .app-shell-content { background:#f8faf9; }
+.np-auth .app-shell-content > header { border-color:#e1e9e3; }
+.np-auth .app-content { padding:32px; }
+.np-auth .dashboard-empty { padding:32px 0; display:grid; gap:18px; justify-items:start; }
+.np-auth .data-grid dd { margin:0; }
+.np-auth .auth-progress { height:6px; overflow:hidden; border-radius:4px; background:#e7eee9; margin:12px 0; }
+.np-auth .auth-progress > div { height:100%; background:#126344; }
+.np-auth .auth-progress > .blocked { background:#b08c48; }
+.np-auth .desktop-sidebar { width:244px; padding:25px 16px 16px; }
+.np-auth .sidebar-brand { height:auto; border:0; padding:3px 9px 28px; }
+.np-auth .sidebar-brand-name { letter-spacing:-.065em; font-family:Arial,Helvetica,sans-serif; }
+.np-auth .desktop-sidebar > nav { padding:12px 0; }
+.np-auth .desktop-sidebar > nav a { min-height:43px; border-radius:6px; font-size:14px; }
+.np-auth .desktop-sidebar > nav a:not(.bg-emerald-50) { font-weight:400; color:#566a5e; }
+.np-auth .auth-company-switch { margin-bottom:8px; }
+.np-auth .app-shell[data-sidebar-collapsed="true"] .auth-company-switch { display:none; }
+.np-auth .np-btn { background:#126344; border-radius:6px; }
+.np-auth .np-btn:hover { background:#0e5239; }
+.np-auth .np-btn:disabled { background:#e2e8f0; }
+@media(min-width:1024px) { .np-auth .app-shell:not([data-sidebar-collapsed="true"]) .app-shell-content { padding-left:244px; } }
+@media(max-width:540px) { .np-auth .app-content { padding:22px 16px; } }
 .sidebar-plan > summary::-webkit-details-marker { display: none; }
 .sidebar-plan[open] .sidebar-plan-chevron { transform: rotate(180deg); }
 
@@ -52,4 +138,22 @@
 
 @media (prefers-reduced-motion: reduce) {
     .desktop-sidebar, .app-shell-content { transition: none; }
+}
+
+.np-prototype .mobile-nav:not([hidden]) {
+    display: grid;
+    gap: 4px;
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid #e3eae6;
+}
+.np-prototype .mobile-nav a {
+    padding: 10px 4px;
+    color: #176348;
+    font-size: 14px;
+    font-weight: 600;
+}
+.np-prototype .mobile-nav a:focus-visible {
+    outline: 2px solid #176348;
+    outline-offset: 2px;
 }

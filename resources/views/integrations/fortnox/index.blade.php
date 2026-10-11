@@ -8,6 +8,13 @@
     <div class="space-y-6">
         <section class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('Connection') }}</h2>
+            <dl class="np-surface mt-4 grid gap-4 rounded-xl p-4 text-sm sm:grid-cols-3" data-testid="fortnox-account-context">
+                <div><dt class="text-slate-600">{{ __('Company') }}</dt><dd class="mt-1 font-semibold">{{ app(\App\Tenancy\Contracts\CurrentCompany::class)->require()->name }}</dd></div>
+                <div><dt class="text-slate-600">{{ __('Environment') }}</dt><dd class="mt-1 font-semibold">{{ app()->environment() }}</dd></div>
+                @if(app(\App\Services\Fortnox\FortnoxSubscriptionGuard::class)->isProtectedEnvironment())
+                    <div><dt class="text-slate-600">{{ __('Permitted test account') }}</dt><dd class="mt-1 font-semibold">{{ config('fortnox.nonproduction_tenant_id') ?: __('Not configured') }}</dd></div>
+                @endif
+            </dl>
             @if ($authorizationBlocked)
                 <p class="mt-3 text-sm text-amber-700" data-testid="fortnox-authorization-blocked">{{ __('New Fortnox connections are blocked in this environment. Contact your administrator to verify the permitted test account.') }}</p>
             @endif

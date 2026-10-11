@@ -2,7 +2,7 @@
 
 @section('content')
 {{-- Product Hero --}}
-<section id="overview" class="mb-8" aria-labelledby="passport-title">
+<section id="overview" class="np-passport-hero mb-8" aria-labelledby="passport-title">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @php
             $primaryMedia = $passport->media[0] ?? null;

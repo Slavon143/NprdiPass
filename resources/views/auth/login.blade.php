@@ -45,4 +45,11 @@
             </x-primary-button>
         </div>
     </form>
+
+    <div class="mt-6 border-t border-gray-200 pt-5 text-center text-sm text-gray-600">
+        <p>{{ __('New to NordiPass?') }}</p>
+        <a class="mt-2 inline-block font-semibold text-emerald-800 underline rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600" href="{{ route('register') }}" data-testid="login-register-link">
+            {{ __('Create an account') }}
+        </a>
+    </div>
 </x-guest-layout>

@@ -26,7 +26,7 @@
         </button>
 
         <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 lg:hidden">
-            <x-application-logo class="h-8 w-8 text-indigo-600" />
+            <x-application-logo class="h-8 w-8 text-emerald-800" />
             <span class="text-lg font-bold tracking-tight text-slate-900">NordiPass</span>
         </a>
     </div>
