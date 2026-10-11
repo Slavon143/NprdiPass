@@ -174,6 +174,8 @@ class PassportReadinessWebTest extends TestCase
         $this->assertSame('1', trim($xpath->evaluate('string(//nav[@aria-label="Product workspace"]/a[contains(@href, "tab=documents")]/span)')));
         $this->assertSame(0, $xpath->query('//a[contains(@href, "publish-confirm")]')->length);
         $this->assertSame(1, $xpath->query('//*[@data-testid="readiness-publication-actions"]/button[@disabled]')->length);
+        $this->assertSame(0, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " requirement-card ")]//*[@data-testid="rule-details"]')->length);
+        $this->assertGreaterThan(0, $xpath->query('//*[@data-testid="readiness-technical-details"]//*[@data-testid="rule-details"]')->length);
     }
 
     public function test_page_contains_passport_uuid(): void

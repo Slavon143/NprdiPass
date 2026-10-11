@@ -2,7 +2,10 @@
 
 namespace App\Services\Passports\Readiness;
 
+use App\Enums\Catalog\AttributeDefinitionStatus;
+use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\ProductStatus;
+use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Product;
 use App\Models\Catalog\ProductDocument;
 use App\Models\Company;
@@ -49,6 +52,10 @@ class ProductIndexReadinessProvider
         $legacy = $eligible->filter(fn ($product) => $product->passport !== null
             && ! is_array($product->passport->currentDraftVersion?->readiness_profile_snapshot));
         $profileBatch = $legacy->isEmpty() ? null : DppReadinessProfileBatch::load($legacy);
+        $productAttributeDefinitionIds = $eligible->isEmpty() ? [] : AttributeDefinition::query()->forCompany($company)
+            ->where('status', AttributeDefinitionStatus::Active->value)
+            ->whereIn('scope', [AttributeScope::Product->value, AttributeScope::Both->value])
+            ->pluck('id')->map(fn ($id): int => (int) $id)->all();
 
         $summaries = [];
         $documentUuids = [];
@@ -111,7 +118,7 @@ class ProductIndexReadinessProvider
                 continue;
             }
 
-            $context = $this->contextBuilder->build($company, $product, documentBatch: $documents, profileBatch: $profileBatch);
+            $context = $this->contextBuilder->build($company, $product, documentBatch: $documents, profileBatch: $profileBatch, productAttributeDefinitionIds: $productAttributeDefinitionIds);
             $result = $this->evaluator->evaluate($context);
 
             $summaries[$product->uuid] = [

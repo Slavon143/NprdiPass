@@ -7,8 +7,7 @@
         <span class="status status-amber">{{ $blocker ? __('Required before publication') : $rulePresenter->statusLabel($rule) }}</span>
         <h3>{{ $rulePresenter->title($rule) }}</h3>
         <p>{{ $rulePresenter->message($rule) }}</p>
-        <span class="requirement-source">{{ $rulePresenter->groupLabel($rule->group) }} · {{ $rulePresenter->statusHelp($rule) }}</span>
-        @include('passports.partials.workspace-rule-details')
+        <span class="requirement-source">{{ $rulePresenter->groupLabel($rule->group) }} · {{ $blocker ? $rulePresenter->statusHelp($rule) : __('Does not block publication.') }}</span>
     </div>
     @if ($actionUrl !== null)
         <a class="btn btn-outline" href="{{ $actionUrl }}">{{ $rulePresenter->actionLabel($rule) }}</a>

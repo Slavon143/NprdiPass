@@ -34,8 +34,11 @@ class ReadinessContextBuilder
         $this->normalizer = $normalizer;
     }
 
-    /** @param array<string, ProductDocument>|null $documentBatch */
-    public function build(Company $company, Product $product, ?CarbonImmutable $evaluationDate = null, ?array $documentBatch = null, ?DppReadinessProfileBatch $profileBatch = null): ReadinessEvaluationContext
+    /**
+     * @param  array<string, ProductDocument>|null  $documentBatch
+     * @param  array<int, int>|null  $productAttributeDefinitionIds
+     */
+    public function build(Company $company, Product $product, ?CarbonImmutable $evaluationDate = null, ?array $documentBatch = null, ?DppReadinessProfileBatch $profileBatch = null, ?array $productAttributeDefinitionIds = null): ReadinessEvaluationContext
     {
         $product->loadMissing([
             'categories',
@@ -165,6 +168,7 @@ class ReadinessContextBuilder
             publicationProfileCheck: $profileBatch === null && $documentBatch === null
                 ? app(DppPublicationProfileCheck::class)->check($product, $currentDraft, $profiles)
                 : ['status' => 'not_checked', 'reason' => 'batched_preview'],
+            productAttributeDefinitionIds: $productAttributeDefinitionIds,
         );
     }
 }

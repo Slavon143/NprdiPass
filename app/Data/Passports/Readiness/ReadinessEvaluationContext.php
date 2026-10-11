@@ -20,6 +20,7 @@ readonly class ReadinessEvaluationContext
      * @param  array<string, mixed>  $config
      * @param  array<int, DppProfile>  $dppProfiles
      * @param  array<int, DppRequirement>  $effectiveRequirements
+     * @param  array<int, int>|null  $productAttributeDefinitionIds
      */
     public function __construct(
         public Company $company,
@@ -35,6 +36,7 @@ readonly class ReadinessEvaluationContext
         public array $dppProfiles = [],
         public array $effectiveRequirements = [],
         public array $publicationProfileCheck = [],
+        public ?array $productAttributeDefinitionIds = null,
     ) {}
 
     /** @return array<string, mixed> */

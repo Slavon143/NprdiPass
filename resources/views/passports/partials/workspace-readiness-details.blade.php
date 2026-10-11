@@ -64,6 +64,11 @@
                 <div><dt class="font-semibold text-slate-500">{{ __('Draft Version UUID') }}</dt><dd class="mt-0.5 font-mono text-xs text-slate-700">{{ $readiness->draftVersionUuid ?? 'N/A' }}</dd></div>
                 <div><dt class="font-semibold text-slate-500">{{ __('Passport Revision') }}</dt><dd class="mt-0.5 text-slate-900">{{ $readiness->passportRevision }}</dd></div>
                 <div><dt class="font-semibold text-slate-500">{{ __('Evaluated at') }}</dt><dd class="mt-0.5 text-slate-900">{{ $readiness->evaluatedAt->toISOString() }}</dd></div>
+                <div class="sm:col-span-2 space-y-4" data-testid="readiness-rule-diagnostics">
+                    @foreach (array_filter($readiness->rules, fn ($rule) => $rule->status->value === 'failed') as $rule)
+                        <div><h3 class="font-semibold">{{ $rulePresenter->title($rule) }}</h3>@include('passports.partials.workspace-rule-details')</div>
+                    @endforeach
+                </div>
             </div>
         </details>
 

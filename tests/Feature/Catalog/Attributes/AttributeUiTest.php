@@ -1,15 +1,25 @@
 <?php
 
+use App\Actions\Catalog\Attributes\SyncProductAttributeValuesAction;
 use App\Actions\Catalog\Products\ProductAggregateCreator;
+use App\Data\Passports\Readiness\ReadinessEvaluationContext;
 use App\Enums\Catalog\AttributeDataType;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyRole;
+use App\Enums\DppRequirementLevel;
+use App\Enums\Passports\Readiness\ReadinessRuleStatus;
+use App\Enums\Passports\Readiness\ReadinessSeverity;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Catalog\Product;
 use App\Models\Company;
 use App\Models\CompanyMembership;
+use App\Models\DppProfile;
+use App\Models\DppRequirement;
 use App\Models\User;
+use App\Services\Dpp\DppRequirementEvaluator;
+use App\Services\Passports\Readiness\Rules\CatalogProductAttributesPresent;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /** @return array{User, Company, Product} */
@@ -169,4 +179,61 @@ test('attribute index query count stays bounded as definition rows grow', functi
 
     expect($twentyRowQueries)->toBeLessThanOrEqual(50)
         ->and($twentyRowQueries)->toBeLessThanOrEqual($singleRowQueries + 2);
+});
+
+test('empty product attributes explain setup and do not offer a meaningless save', function () {
+    [$owner, $company, $product] = r17UiContext();
+    r17UiDefinition($company, $owner, 'variant_only', AttributeScope::Variant);
+    $archived = r17UiDefinition($company, $owner, 'archived_product', AttributeScope::Product);
+    $archived->forceFill(['status' => AttributeDefinitionStatus::Archived])->save();
+    $response = $this->actingAs($owner)->get(route('catalog.products.attributes.edit', $product->uuid))
+        ->assertOk()->assertSee('No product attributes are configured')->assertSee('There are no fields to fill in.')
+        ->assertSee(route('catalog.attributes.create'), false)->assertDontSee('Save attributes');
+    $this->assertDatabaseCount('product_attribute_values', 0);
+});
+
+test('optional product attribute readiness applies only to active fields in the current company', function () {
+    [$actor, $company, $product] = r17UiContext();
+    $rule = app(CatalogProductAttributesPresent::class);
+    $context = new ReadinessEvaluationContext(
+        $company, $product, null, null, [], [], [], CarbonImmutable::now(),
+    );
+    $foreign = Company::factory()->create();
+    r17UiDefinition($foreign, $actor, 'foreign_field', AttributeScope::Product);
+    r17UiDefinition($company, $actor, 'variant_field', AttributeScope::Variant);
+    $definition = r17UiDefinition($company, $actor, 'old_field', AttributeScope::Product);
+    $definition->forceFill(['status' => AttributeDefinitionStatus::Archived])->save();
+    $result = $rule->evaluate($context);
+    expect($result->status)->toBe(ReadinessRuleStatus::NotApplicable)
+        ->and($result->navigationTarget)->toBeNull();
+
+    $definition->forceFill(['status' => AttributeDefinitionStatus::Active])->save();
+    $result = $rule->evaluate($context);
+    expect($result->status)->toBe(ReadinessRuleStatus::Failed)
+        ->and($result->severity)->toBe(ReadinessSeverity::Warning);
+    $this->actingAs($actor)->get(route($result->navigationTarget->routeName, $result->navigationTarget->routeParameters))
+        ->assertOk()->assertSee($definition->name)->assertSee('Save attributes');
+    app(SyncProductAttributeValuesAction::class)->execute($actor, $company, $product, [$definition->uuid => 'Actual value']);
+    $product->refresh()->load('attributeValues');
+    expect($rule->evaluate($context)->status)->toBe(ReadinessRuleStatus::Passed);
+    $definition->forceFill(['status' => AttributeDefinitionStatus::Archived])->save();
+    expect($rule->evaluate($context)->status)->toBe(ReadinessRuleStatus::NotApplicable);
+});
+
+test('explicitly required attribute profile cannot be bypassed by removing field definitions', function () {
+    [$actor, $company, $product] = r17UiContext();
+    $profile = new DppProfile(['key' => 'required-attributes', 'version' => 1]);
+    $requirement = new DppRequirement([
+        'key' => 'catalog.product.attributes.present', 'rule_code' => 'catalog.product.attributes.present',
+        'rule_class' => CatalogProductAttributesPresent::class,
+        'level' => DppRequirementLevel::Required,
+    ]);
+    $requirement->setRelation('profile', $profile);
+    $context = new ReadinessEvaluationContext(
+        $company, $product, null, null, [], [], [], CarbonImmutable::now(), effectiveRequirements: [$requirement],
+    );
+    $result = app(DppRequirementEvaluator::class)->evaluate($requirement, $context, []);
+    expect($result->status)->toBe(ReadinessRuleStatus::Failed)
+        ->and($result->severity)->toBe(ReadinessSeverity::Blocker)
+        ->and($result->navigationTarget?->routeName)->toBe('catalog.attributes.index');
 });

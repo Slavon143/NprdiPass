@@ -262,6 +262,8 @@ return [
         'message' => 'The product has attribute values.',
         'passed' => 'The product has attribute values.',
         'failed' => 'Add the product attribute values used for filtering and passport enrichment.',
+        'not_applicable' => 'No product attribute fields are configured. This optional check does not affect readiness.',
+        'setup_required' => 'This profile requires product attributes. Configure product attribute fields before entering their values.',
     ],
     'passport.optional_sections.none' => [
         'title' => 'Optional sections enabled',
