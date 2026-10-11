@@ -1,0 +1,65 @@
+{
+  "created_at": "2026-10-09T23:20:20.362053+00:00",
+  "commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "parent": "3e6ae56ba20585b9fd17a82e1b94967e39467f02",
+  "files": 43,
+  "manifest_sha256": "d1159b7d8c6b5805455aeda355ab63ce25c56f3970cdc6377425690718c394fd",
+  "push_performed": false,
+  "production_changed": false,
+  "authorization": "User instructed to proceed after the concrete 43-file commit request and release checklist.",
+  "initial_commit_before_metadata_normalization": "8474d7368dafca7344abfa700f11a6456157509f",
+  "corrected_at": "2026-10-09T23:25:43.372313+00:00",
+  "other_42_blobs_match_tested_manifest": true,
+  "evidence_manifest_matches_committed_bytes": true,
+  "normalization": [
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/live-test-read.json",
+      "original_transport_sha256": "19cd5266328d65324100227a77ad792492bd69d5b1735289ec9fcc113598286a",
+      "committed_lf_sha256": "d8a265e273a5d465ae8eacc28539a8a7d2ee6f7f5d6289584c681483d803403d",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/local-log-classification.json",
+      "original_transport_sha256": "d6003ef1ff8421aa883c75f5bcdd5bcc44ce844fead7a83182dbd4275ab38e39",
+      "committed_lf_sha256": "259a4a27882f617974504952f5dc9d6f6f67faded3ea8b48248ed88b2ae58016",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/local-log-window-inventory.json",
+      "original_transport_sha256": "f36c11b6314e8888e3bf3f0f8043e275a1711f8d157e0de8ce3ed7dde1756d20",
+      "committed_lf_sha256": "57160f1b5947460beab1f42df8d607daaa5589984f2a69953e437fe7c090e38f",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/local-readonly.json",
+      "original_transport_sha256": "5f82ae86d6d2ba056d58c626c897173c39520dd99f354065bf04fe722cb4a9d6",
+      "committed_lf_sha256": "895fc13d8b2cd4af6234b549ebd4756f747b7746a78ffb09129a2300895db227",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/staging-oauth-pause.json",
+      "original_transport_sha256": "f62bef6494a24002a5f68f9fc8e062d84c46da3b8cc23e01a33e255484450c65",
+      "committed_lf_sha256": "97ec8fc912998472b5ced0e677c78933cdad8450f78ce6d9c7d1b8ba0d82c45a",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/staging-readonly.json",
+      "original_transport_sha256": "077b7178367fe0469cd2f4b4aff06a755bc2e365de2b9a00b388feac51ab58e6",
+      "committed_lf_sha256": "0bd87f74e20b3b7419915cb58ec353587ae2894a385475e019f4eefd5126e818",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    },
+    {
+      "file": "docs/releases/evidence/2026_10_09_fortnox_oauth_audit/verification.json",
+      "original_transport_sha256": "687aafc1234195e557c55f2ed4bfe9e744ffb2d86a7357014ee6e85670e3886c",
+      "committed_lf_sha256": "23a964c0e1071fff67e699b1aa4b82b2a40b6c21a96588e62430139b3802b738",
+      "change": "CRLF-to-LF only",
+      "same_json_data": true
+    }
+  ]
+}

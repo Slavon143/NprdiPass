@@ -1,0 +1,28 @@
+{
+  "recorded_at": "2026-10-11T07:38:11.222096+00:00",
+  "application_commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "node22_archive_sha256": "5fdce6f2d5e2455c5d18dc9d596097d06779908a18e70aea4167da9ec64726f9",
+  "native_tests": 59,
+  "frontend_tests": 12,
+  "yaml_workflow_checks_passed": true,
+  "source_matches_tested_package": true,
+  "installed_policy_matches_tested_package": true,
+  "new_oauth_performed": false,
+  "paid_actions_performed": false,
+  "production_changed": false,
+  "changes_uncommitted": true,
+  "files": {
+    "target-safety.json": {
+      "sha256": "dd6ecab9cc25e4b3184d01eb12135d69096012afa02aea100a5d837be57f579c",
+      "bytes": 5039
+    },
+    "node22-build.json": {
+      "sha256": "d48e7cccbcf83316d9d5efe22921225b8a4d32d79591aecedf516c950b7e12ca",
+      "bytes": 3549
+    },
+    "tested-package.json": {
+      "sha256": "da21f4c03b6172cfe31eb89bead837964f91ababdbc7b33a5657ee84e560a2ae",
+      "bytes": 2757
+    }
+  }
+}

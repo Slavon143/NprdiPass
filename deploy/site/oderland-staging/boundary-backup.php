@@ -33,14 +33,15 @@ if (! $app->environment('staging') || DB::connection()->getDatabaseName() !== 'c
 config(['cache.default' => 'array', 'logging.default' => 'null', 'queue.default' => 'sync',
     'mail.default' => 'array', 'fortnox.provider' => 'fake', 'billing.provider' => 'fake']);
 umask(0077);
-$workspace = $base.'/shared/acceptance/boundary-backup-20261009-'.$pauseId;
+$workspace = $base.'/shared/acceptance/boundary-backup-20261009-'.$pauseId.'-'.bin2hex(random_bytes(8));
 if (file_exists($workspace) || is_link($workspace)) {
     throw new RuntimeException('Backup boundary already exists; inspect it before retry');
 }
 mkdir($workspace, 0700);
 $proof = ['kind' => 'actual_post_drain_staging_backup_and_restore', 'pause_id' => $pauseId,
     'started_at' => gmdate('c'), 'source_release' => basename($root), 'target_database' => $targetDatabase, 'completed' => false];
-$check = static function (bool $condition, string $name): void {
+$check = static function (bool $condition, string $name) use (&$proof): void {
+    $proof['checks'][$name] = $condition;
     if (! $condition) {
         throw new RuntimeException('Boundary acceptance failed: '.$name);
     }
@@ -155,6 +156,8 @@ try {
     $restored = $content($target);
     $restoredTriggers = $triggers($target);
     $check($restored === $before && $restoredTriggers === $beforeTriggers, 'every_row_and_trigger_restored');
+    $proof['restored_tables'] = $restored;
+    $proof['restored_triggers'] = $restoredTriggers;
     $stores = $app->make(PersistentFileArchive::class)->create($workspace.'/verified-files.tar.gz');
     foreach ($manifest['artifacts']['files']['stores'] as $store) {
         $actual = collect($stores)->firstWhere('disk', $store['disk']);
@@ -164,7 +167,15 @@ try {
     $check($content($source) === $before && $triggers($source) === $beforeTriggers, 'main_database_unchanged');
     DB::setDefaultConnection('boundary_restore');
     $check(Artisan::call('release:verify-schema') === 0, 'restored_native_schema');
-    $check(Artisan::call('catalog:capacity-reconcile', ['--all-companies' => true]) === 0, 'restored_capacity_without_repair');
+    $capacityState = require __DIR__.'/capacity-state.php';
+    $proof['capacity_state'] = $capacityState($target->select("SELECT cap.company_id AS capacity_company_id,
+        cap.products_count AS stored_managed, cap.total_products_count AS stored_total,
+        (SELECT COUNT(*) FROM products p WHERE p.company_id=c.id AND p.managed=1
+            AND p.status IN ('draft','active') AND p.deleted_at IS NULL) AS actual_managed,
+        (SELECT COUNT(*) FROM products p WHERE p.company_id=c.id) AS actual_total
+        FROM companies c LEFT JOIN catalog_product_capacities cap ON cap.company_id=c.id ORDER BY c.id"));
+    $check($proof['capacity_state']['valid'], 'restored_capacity_without_repair');
+    $check($content($target) === $restored && $triggers($target) === $restoredTriggers, 'restore_validation_is_read_only');
     $check(realpath($base.'/current') === $root, 'source_release_unchanged');
     $proof['restored_tables'] = $restored;
     $proof['restored_triggers'] = $restoredTriggers;

@@ -1,0 +1,1372 @@
+{
+  "initial_deployment": {
+    "checked_at": "2026-10-10T00:23:17+00:00",
+    "kind": "fresh_process_actual_canonical_staging_acceptance",
+    "release": "staging-20261010-fab8ee1ea47f",
+    "artifact_sha256": "62e311429dc0d16ac48840b05da181e9a28218d349e76e0cebbe712c765fa7f3",
+    "writers_paused": false,
+    "schema_exit": 0,
+    "capacity": {
+      "valid": true,
+      "companies": 5,
+      "uninitialized_managed": 0,
+      "uninitialized_total": 0,
+      "missing_rows": 0,
+      "drift_rows": 0
+    },
+    "fortnox_guard": {
+      "protected_environment": true,
+      "new_authorization_disabled": true,
+      "expected_test_subscription": "1854146",
+      "no_external_requests_performed": true,
+      "tenant_outcomes": {
+        "1853390": "blocked",
+        "1854146": "accepted",
+        "unknown": "blocked",
+        "9999999": "blocked"
+      },
+      "new_authorization": "blocked"
+    },
+    "fortnox_connection_metadata_unchanged": true,
+    "october_9_migrations_applied": 2,
+    "registry_preparation_rows": 0,
+    "health": {
+      "up": 200,
+      "ready": 200
+    },
+    "completed": true
+  },
+  "failed_health": {
+    "checked_at": "2026-10-11T07:02:47+00:00",
+    "kind": "actual_staging_failed_health_after_compatible_same_artifact_switch",
+    "exit": 5,
+    "current_release": "recovery-20261010-fab8ee1ea47f",
+    "writers_paused": true,
+    "health_failure_observed": true,
+    "older_source_version_rollback_claimed": false,
+    "database_migrations_reverted": false,
+    "application_automatic_rollback_claimed": false,
+    "failure_pause_id": "1791702167297454208",
+    "verified_failure_drain": true,
+    "post_failure_writer_counts": {
+      "scoped_cli_writers": 0,
+      "other_database_connections": 0,
+      "database_events": 0,
+      "reserved_jobs": 0
+    },
+    "expected_failure_boundary_passed": true
+  },
+  "hooks_installation": {
+    "kind": "staging_hooks_v6_installed_during_verified_pause",
+    "package_sha256": "c56658fb5a7d2a499802be5b835187a6b0d527d5eb6247ca1d865fdd5ed141c9",
+    "native_tests": 24,
+    "checked_at": "2026-10-10T00:15:16+00:00",
+    "files": {
+      "site-control.py": "7ff01cf1c285fb7ceceed4a0ba23b3fa44c55cd306b7a50cce2cab770a75ee35",
+      "inspect-state.php": "ad8eae39e475b91374e487fdb68106bbb6de3fddbbef3d8c231bafc16dff2981",
+      "heartbeat-state.php": "bb08d195597af2997c083b0fbff039d7e8aac2cf1b71bea34a9ce7eac448e95c",
+      "capacity-state.php": "0261cae84ed9bf8d43ca1c62fbd5ef9bec11dcafa60509ab8cbb4c47963f3063",
+      "boundary-backup.php": "0075e70e41acb85c50c1d5987c1123ad99ca132ba691270caed335a96fe8710d",
+      "pause-writers": "706ee1fa611cfc48f6da006b378864ffb7057a90df1b79b85e86fd7a09daa1bd",
+      "verify-writers-stopped": "45d02a990ada51c504565a0ec354a95d3221f1c72dbca5c45ace8febdd4b1e74",
+      "resume-writers": "ef8637a1cd6babfb581a45023fd4d49af24412f88a34b8d040e68f7595ae77ce",
+      "verify-backup": "be4a31e1218bcead37fc339e5f0df708cfe136ecec70fa9dee9b8fc5159edfa9"
+    },
+    "native_syntax_passed": true,
+    "legacy_web_processes_pending": [],
+    "writers_paused": true,
+    "current_release_unchanged": true,
+    "production_changed": false
+  },
+  "writer_tests": {
+    "checked_at": "2026-10-10T00:13:41+00:00",
+    "package_sha256": "c56658fb5a7d2a499802be5b835187a6b0d527d5eb6247ca1d865fdd5ed141c9",
+    "native_php_and_flock": true,
+    "tests": 24,
+    "exit": 0,
+    "no_skips": true,
+    "live_application_mutated": false,
+    "current_release_unchanged": true,
+    "passed": true
+  },
+  "lsapi_observation": {
+    "kind": "read_only_lsapi_parent_classification_observations",
+    "checked_at": "2026-10-09T23:59:58.409303+00:00",
+    "samples": [
+      {
+        "parent": {
+          "pid": 2924994,
+          "start": "252578698",
+          "ppid": 1
+        },
+        "syscall": 23,
+        "select_nfds": 5,
+        "children": [],
+        "parent_seen": false
+      },
+      {
+        "parent": {
+          "pid": 2924994,
+          "start": "252578698",
+          "ppid": 1
+        },
+        "syscall": 23,
+        "select_nfds": 5,
+        "children": [
+          {
+            "pid": 2431928,
+            "start": "268774642",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431929,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431930,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431931,
+            "start": "268774644",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          }
+        ],
+        "parent_seen": false
+      },
+      {
+        "parent": {
+          "pid": 2924994,
+          "start": "252578698",
+          "ppid": 1
+        },
+        "syscall": 23,
+        "select_nfds": 5,
+        "children": [
+          {
+            "pid": 2431928,
+            "start": "268774642",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431929,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431930,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431931,
+            "start": "268774644",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          }
+        ],
+        "parent_seen": false
+      },
+      {
+        "parent": {
+          "pid": 2924994,
+          "start": "252578698",
+          "ppid": 1
+        },
+        "syscall": 23,
+        "select_nfds": 5,
+        "children": [
+          {
+            "pid": 2431928,
+            "start": "268774642",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431929,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431930,
+            "start": "268774643",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          },
+          {
+            "pid": 2431931,
+            "start": "268774644",
+            "ppid": 2924994,
+            "observed_through_staging_gate": true
+          }
+        ],
+        "parent_seen": false
+      }
+    ],
+    "health_statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ]
+  },
+  "lsapi_classification": {
+    "pid": 2924994,
+    "start": "252578698",
+    "classification": "LSAPI prefork parent, not a PHP application request executor",
+    "classified_at": "2026-10-10T00:01:50.286925+00:00",
+    "observation_sha256": "cc9dfa1086d3fff0295d62681b828e1d85bcb569ad1e5323ab3b4104cb131504",
+    "basis": "Single listening socket fd4; select(5) prefork signature; LSAPI_CHILDREN=70; actual child processes pass the staging admission gate; parent retains identity and never executes the gate",
+    "process_terminated": false,
+    "seen_marker_fabricated": false,
+    "other_applications_changed": false
+  },
+  "representative_restore": {
+    "kind": "cross_account_fixture_native_target_restore",
+    "original_backup_id": "5f63fd56-9fa8-410e-87f1-f116fad65e4a",
+    "ddl_owner_policy": "target current user",
+    "database": "codecraf_np_boundary_20261009",
+    "backup_id": "533a0240-0d38-4a0d-b3ee-085de520c7b4",
+    "completed": true,
+    "checks": {
+      "isolated_database_identity": true,
+      "restored_root_production_imports": true,
+      "restored_root_product_documents": true,
+      "restored_root_catalog_media": true,
+      "restored_root_passport_assets": true,
+      "retained_native_restore_succeeded": true,
+      "complete_table_inventory": true,
+      "primary_key_activity_log": true,
+      "all_rows_activity_log": true,
+      "primary_key_analytics_daily_aggregates": true,
+      "all_rows_analytics_daily_aggregates": true,
+      "primary_key_analytics_events": true,
+      "all_rows_analytics_events": true,
+      "primary_key_analytics_monthly_aggregates": true,
+      "all_rows_analytics_monthly_aggregates": true,
+      "primary_key_attribute_definitions": true,
+      "all_rows_attribute_definitions": true,
+      "primary_key_attribute_options": true,
+      "all_rows_attribute_options": true,
+      "primary_key_cache": true,
+      "all_rows_cache": true,
+      "primary_key_cache_locks": true,
+      "all_rows_cache_locks": true,
+      "primary_key_catalog_product_capacities": true,
+      "all_rows_catalog_product_capacities": true,
+      "primary_key_categories": true,
+      "all_rows_categories": true,
+      "primary_key_category_product": true,
+      "all_rows_category_product": true,
+      "primary_key_category_template_attributes": true,
+      "all_rows_category_template_attributes": true,
+      "primary_key_category_template_dpp_defaults": true,
+      "all_rows_category_template_dpp_defaults": true,
+      "primary_key_category_templates": true,
+      "all_rows_category_templates": true,
+      "primary_key_commercial_storage_balances": true,
+      "all_rows_commercial_storage_balances": true,
+      "primary_key_commercial_storage_objects": true,
+      "all_rows_commercial_storage_objects": true,
+      "primary_key_commercial_usage_buckets": true,
+      "all_rows_commercial_usage_buckets": true,
+      "primary_key_commercial_usage_events": true,
+      "all_rows_commercial_usage_events": true,
+      "primary_key_companies": true,
+      "all_rows_companies": true,
+      "primary_key_company_invitations": true,
+      "all_rows_company_invitations": true,
+      "primary_key_company_subscriptions": true,
+      "all_rows_company_subscriptions": true,
+      "primary_key_company_user": true,
+      "all_rows_company_user": true,
+      "primary_key_dpp_profiles": true,
+      "all_rows_dpp_profiles": true,
+      "primary_key_dpp_registry_preparations": true,
+      "all_rows_dpp_registry_preparations": true,
+      "primary_key_dpp_requirements": true,
+      "all_rows_dpp_requirements": true,
+      "primary_key_entitlement_overrides": true,
+      "all_rows_entitlement_overrides": true,
+      "primary_key_failed_jobs": true,
+      "all_rows_failed_jobs": true,
+      "primary_key_feedback_replies": true,
+      "all_rows_feedback_replies": true,
+      "primary_key_fortnox_article_mappings": true,
+      "all_rows_fortnox_article_mappings": true,
+      "primary_key_fortnox_connections": true,
+      "all_rows_fortnox_connections": true,
+      "primary_key_fortnox_field_overrides": true,
+      "all_rows_fortnox_field_overrides": true,
+      "primary_key_fortnox_oauth_states": true,
+      "all_rows_fortnox_oauth_states": true,
+      "primary_key_fortnox_sync_conflicts": true,
+      "all_rows_fortnox_sync_conflicts": true,
+      "primary_key_fortnox_sync_runs": true,
+      "all_rows_fortnox_sync_runs": true,
+      "primary_key_import_errors": true,
+      "all_rows_import_errors": true,
+      "primary_key_import_jobs": true,
+      "all_rows_import_jobs": true,
+      "primary_key_import_mapping_templates": true,
+      "all_rows_import_mapping_templates": true,
+      "primary_key_import_records": true,
+      "all_rows_import_records": true,
+      "primary_key_job_batches": true,
+      "all_rows_job_batches": true,
+      "primary_key_job_statuses": true,
+      "all_rows_job_statuses": true,
+      "primary_key_jobs": true,
+      "all_rows_jobs": true,
+      "primary_key_migrations": true,
+      "all_rows_migrations": true,
+      "primary_key_model_has_permissions": true,
+      "all_rows_model_has_permissions": true,
+      "primary_key_model_has_roles": true,
+      "all_rows_model_has_roles": true,
+      "primary_key_notification_preferences": true,
+      "all_rows_notification_preferences": true,
+      "primary_key_notifications": true,
+      "all_rows_notifications": true,
+      "primary_key_passport_publication_approvals": true,
+      "all_rows_passport_publication_approvals": true,
+      "primary_key_passport_validation_results": true,
+      "all_rows_passport_validation_results": true,
+      "primary_key_passport_validation_runs": true,
+      "all_rows_passport_validation_runs": true,
+      "primary_key_password_reset_tokens": true,
+      "all_rows_password_reset_tokens": true,
+      "primary_key_permissions": true,
+      "all_rows_permissions": true,
+      "primary_key_personal_access_tokens": true,
+      "all_rows_personal_access_tokens": true,
+      "primary_key_platform_abuse_events": true,
+      "all_rows_platform_abuse_events": true,
+      "primary_key_platform_feature_flag_overrides": true,
+      "all_rows_platform_feature_flag_overrides": true,
+      "primary_key_platform_incidents": true,
+      "all_rows_platform_incidents": true,
+      "primary_key_platform_support_access_grants": true,
+      "all_rows_platform_support_access_grants": true,
+      "primary_key_product_attribute_value_options": true,
+      "all_rows_product_attribute_value_options": true,
+      "primary_key_product_attribute_values": true,
+      "all_rows_product_attribute_values": true,
+      "primary_key_product_document_review_decisions": true,
+      "all_rows_product_document_review_decisions": true,
+      "primary_key_product_document_variant": true,
+      "all_rows_product_document_variant": true,
+      "primary_key_product_document_versions": true,
+      "all_rows_product_document_versions": true,
+      "primary_key_product_documents": true,
+      "all_rows_product_documents": true,
+      "primary_key_product_dpp_profiles": true,
+      "all_rows_product_dpp_profiles": true,
+      "primary_key_product_media": true,
+      "all_rows_product_media": true,
+      "primary_key_product_passport_assets": true,
+      "all_rows_product_passport_assets": true,
+      "primary_key_product_passport_versions": true,
+      "all_rows_product_passport_versions": true,
+      "primary_key_product_passports": true,
+      "all_rows_product_passports": true,
+      "primary_key_product_variants": true,
+      "all_rows_product_variants": true,
+      "primary_key_products": true,
+      "all_rows_products": true,
+      "primary_key_publication_idempotency_records": true,
+      "all_rows_publication_idempotency_records": true,
+      "primary_key_role_has_permissions": true,
+      "all_rows_role_has_permissions": true,
+      "primary_key_roles": true,
+      "all_rows_roles": true,
+      "primary_key_sessions": true,
+      "all_rows_sessions": true,
+      "primary_key_stripe_webhook_events": true,
+      "all_rows_stripe_webhook_events": true,
+      "primary_key_users": true,
+      "all_rows_users": true,
+      "primary_key_variant_attribute_value_options": true,
+      "all_rows_variant_attribute_value_options": true,
+      "primary_key_variant_attribute_values": true,
+      "all_rows_variant_attribute_values": true,
+      "primary_key_webhook_deliveries": true,
+      "all_rows_webhook_deliveries": true,
+      "primary_key_webhook_delivery_attempts": true,
+      "all_rows_webhook_delivery_attempts": true,
+      "primary_key_webhook_endpoints": true,
+      "all_rows_webhook_endpoints": true,
+      "scoped_trigger_owner_attr_defs_prevent_self_replacement": true,
+      "scoped_trigger_owner_attr_options_prevent_self_replacement": true,
+      "scoped_trigger_owner_categories_prevent_self_parent_insert": true,
+      "scoped_trigger_owner_categories_prevent_self_parent_update": true,
+      "scoped_trigger_owner_category_template_attributes_draft_delete": true,
+      "scoped_trigger_owner_category_template_attributes_draft_insert": true,
+      "scoped_trigger_owner_category_template_attributes_draft_update": true,
+      "scoped_trigger_owner_category_template_dpp_defaults_draft_delete": true,
+      "scoped_trigger_owner_category_template_dpp_defaults_draft_insert": true,
+      "scoped_trigger_owner_category_template_dpp_defaults_draft_update": true,
+      "scoped_trigger_owner_cat_tpl_immutable_update": true,
+      "scoped_trigger_owner_companies_catalog_capacity_insert": true,
+      "scoped_trigger_owner_dpp_registry_preparations_no_delete": true,
+      "scoped_trigger_owner_dpp_registry_preparations_no_update": true,
+      "scoped_trigger_owner_passport_profile_snapshot_immutable": true,
+      "scoped_trigger_owner_passport_validation_results_prevent_delete": true,
+      "scoped_trigger_owner_passport_validation_results_prevent_update": true,
+      "scoped_trigger_owner_passport_validation_runs_prevent_delete": true,
+      "scoped_trigger_owner_passport_validation_runs_prevent_update": true,
+      "scoped_trigger_owner_products_capacity_delete": true,
+      "scoped_trigger_owner_products_capacity_insert": true,
+      "scoped_trigger_owner_products_capacity_update": true,
+      "scoped_trigger_owner_product_documents_prevent_identity_update": true,
+      "scoped_trigger_owner_product_document_versions_prevent_delete": true,
+      "scoped_trigger_owner_product_document_versions_prevent_update": true,
+      "scoped_trigger_owner_product_passports_prevent_identity_update": true,
+      "scoped_trigger_owner_product_passport_assets_prevent_published_delete": true,
+      "scoped_trigger_owner_product_passport_assets_prevent_update": true,
+      "scoped_trigger_owner_product_passport_versions_prevent_published_delete": true,
+      "scoped_trigger_owner_product_passport_versions_prevent_published_update": true,
+      "complete_trigger_definitions": true,
+      "restored_store_production_imports": true,
+      "restored_store_product_documents": true,
+      "restored_store_catalog_media": true,
+      "restored_store_passport_assets": true,
+      "main_unchanged_users": true,
+      "main_unchanged_companies": true,
+      "main_unchanged_products": true,
+      "main_unchanged_product_passports": true,
+      "main_unchanged_product_passport_versions": true,
+      "restored_native_schema_with_expected_migration_inventory": true,
+      "restored_native_capacity_without_repair": true,
+      "active_release_unchanged": true
+    },
+    "tables": {
+      "activity_log": {
+        "rows": 38800,
+        "sha256": "734c676b59c47f1366b2f82163e2ea47a1c6e9adf5741da4592197a3cf83a5f9"
+      },
+      "analytics_daily_aggregates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "analytics_events": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "analytics_monthly_aggregates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attribute_definitions": {
+        "rows": 7,
+        "sha256": "ef11013c62d0d678c61d5b6a2bd0dbe960f08eabdb8842305ea7babca8306be3"
+      },
+      "attribute_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "cache": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "cache_locks": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "catalog_product_capacities": {
+        "rows": 1,
+        "sha256": "4c67ff0bd588c69440d940fac6b6fd3d3b3c06729500c8aee01c83f660c2977b"
+      },
+      "categories": {
+        "rows": 24,
+        "sha256": "742af4c3645744770f0430ee213ee8e6bd2c3d43f9daa0739205a69ba438444a"
+      },
+      "category_product": {
+        "rows": 405,
+        "sha256": "18932ecfc47a8fea0c890626b486ea2a617d1a9ea524ff1f7982c3edb7c9ba92"
+      },
+      "category_template_attributes": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_template_dpp_defaults": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_templates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "commercial_storage_balances": {
+        "rows": 1,
+        "sha256": "11200d48e41901fe95922d2a1979bdc5481eca731ad4ec09fd31cb9269efac53"
+      },
+      "commercial_storage_objects": {
+        "rows": 5,
+        "sha256": "1f26860c685458a6efbce69d6abc3608ebd467707b738e72981e1f018acc3185"
+      },
+      "commercial_usage_buckets": {
+        "rows": 1,
+        "sha256": "5a2c1415595bab9676c449f63f3854d7c64b271942b0dfedb77b5142cc45c77d"
+      },
+      "commercial_usage_events": {
+        "rows": 4,
+        "sha256": "6886f36e01eddc5ed9f6b4da4eb5232662983fc7c7c01ecec3cc481d825151fd"
+      },
+      "companies": {
+        "rows": 1,
+        "sha256": "be77fb196d0def809b8d5790db59a93e6441adb8d5f5a72a1002d344be1b0429"
+      },
+      "company_invitations": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "company_subscriptions": {
+        "rows": 1,
+        "sha256": "832aab9e872e9fe671c5241aade610221fdf475fc791a76eae650eae4db60d35"
+      },
+      "company_user": {
+        "rows": 1,
+        "sha256": "a02910d21d9beaba1cb3b0aae0a6f2e3b812a2044f78ec4ba571e72921374260"
+      },
+      "dpp_profiles": {
+        "rows": 2,
+        "sha256": "8960d4f60c55a9505043d574af4127d0d64173b827c7f2254dcd6eacfd0c6ff9"
+      },
+      "dpp_registry_preparations": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "dpp_requirements": {
+        "rows": 102,
+        "sha256": "50f8e5436df3e8bfcc2cb3445f39d151fbe9d139a4a35f706d33048b59b6590f"
+      },
+      "entitlement_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "failed_jobs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "feedback_replies": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_article_mappings": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_connections": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_field_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_oauth_states": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_sync_conflicts": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_sync_runs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "import_errors": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "import_jobs": {
+        "rows": 4,
+        "sha256": "4e6e12368e551a9f4e32ca694326ab3be4701032f5efb0b13a87dd69946d8f93"
+      },
+      "import_mapping_templates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "import_records": {
+        "rows": 19539,
+        "sha256": "9d6f97f9b8187a52373ccf0310e7d829ce7a04848d1eb86a1f73ecf16229426d"
+      },
+      "job_batches": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "job_statuses": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "jobs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "migrations": {
+        "rows": 67,
+        "sha256": "83c016d97455efcef370c70250fd981bf292733086beb3c055e129a1325e143c"
+      },
+      "model_has_permissions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "model_has_roles": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "notification_preferences": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "notifications": {
+        "rows": 4,
+        "sha256": "16c8b7d229639395afbb2dee964b8af7860477a175424785f29d54355a918bed"
+      },
+      "passport_publication_approvals": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "passport_validation_results": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "passport_validation_runs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "password_reset_tokens": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "permissions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "personal_access_tokens": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_abuse_events": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_feature_flag_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_incidents": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_support_access_grants": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_attribute_value_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_attribute_values": {
+        "rows": 133938,
+        "sha256": "5ccddd47bc386675324c7ed514fa1d640bf610c57ae844951accdb86fc106f59"
+      },
+      "product_document_review_decisions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_document_variant": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_document_versions": {
+        "rows": 1,
+        "sha256": "af4a688422070ba776a4336d1edf27962bc16c139ba0b9a7cbf8a6a5202fa2b8"
+      },
+      "product_documents": {
+        "rows": 1,
+        "sha256": "7c7f68bcf629bbd4ea0955bfa3583abd13e0a9a4efcc7757a0277c8c23ffabba"
+      },
+      "product_dpp_profiles": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_media": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_passport_assets": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_passport_versions": {
+        "rows": 1,
+        "sha256": "1e7c0510a1ba3fd556eddf7b7f963fa0844dd3a9528e1885cc82f6ba2dd0dd31"
+      },
+      "product_passports": {
+        "rows": 1,
+        "sha256": "1a59501c71e5322a3dd3112c7ce9138fa16e2630e56a82cc366c54331af138b4"
+      },
+      "product_variants": {
+        "rows": 19135,
+        "sha256": "bb10948cebd289fbe3381bc3644b17b796a9e766b8f953e9cc45557626286d25"
+      },
+      "products": {
+        "rows": 19135,
+        "sha256": "5d5949c44b8c03514069ed4ef41df6279637ad7098fd6965f0af7f242de0c588"
+      },
+      "publication_idempotency_records": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "role_has_permissions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "roles": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sessions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stripe_webhook_events": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "users": {
+        "rows": 1,
+        "sha256": "e9581017a81d847939f95004e69f19bcef3a1f6d11313b37b728286314f13464"
+      },
+      "variant_attribute_value_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "variant_attribute_values": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "webhook_deliveries": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "webhook_delivery_attempts": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "webhook_endpoints": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "triggers": {
+      "count": 30,
+      "sha256": "be564cc9b65ce17a59feb30ca00d9acf11109db51ae0215f6414813ee0e99a24",
+      "normalization": "CRLF line endings only"
+    },
+    "persistent_stores": [
+      {
+        "disk": "production_imports",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/representative-recovery-20261009-mariadb-a1f3/restored/production_imports",
+        "archive_root": "stores/production_imports",
+        "file_count": 4,
+        "total_bytes": 4246193,
+        "content_sha256": "f578f5bd441ff8a57abb14525de30d4da849a3ce7676556e1d90f7bcaec78cb7"
+      },
+      {
+        "disk": "product_documents",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/representative-recovery-20261009-mariadb-a1f3/restored/product_documents",
+        "archive_root": "stores/product_documents",
+        "file_count": 1,
+        "total_bytes": 124326,
+        "content_sha256": "91f0e7264877f2d107cacbac631b448fa8faae27a6906ae9ae948f6d2738ae08"
+      },
+      {
+        "disk": "catalog_media",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/representative-recovery-20261009-mariadb-a1f3/restored/catalog_media",
+        "archive_root": "stores/catalog_media",
+        "file_count": 0,
+        "total_bytes": 0,
+        "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "disk": "passport_assets",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/representative-recovery-20261009-mariadb-a1f3/restored/passport_assets",
+        "archive_root": "stores/passport_assets",
+        "file_count": 0,
+        "total_bytes": 0,
+        "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "completed_at": "2026-10-10T00:00:08+00:00"
+  },
+  "recovery_prepared": {
+    "kind": "compatible_same_artifact_recovery_release_prepared",
+    "release_id": "recovery-20261010-fab8ee1ea47f",
+    "artifact_sha256": "62e311429dc0d16ac48840b05da181e9a28218d349e76e0cebbe712c765fa7f3",
+    "older_source_version_rollback_claimed": false,
+    "fortnox_guard_preserved": true,
+    "current_unchanged": true
+  },
+  "successful_return": {
+    "checked_at": "2026-10-11T07:06:14+00:00",
+    "kind": "actual_staging_successful_return_after_failed_health",
+    "exit": 0,
+    "current_release": "staging-20261010-fab8ee1ea47f",
+    "writers_paused": false,
+    "health_failure_observed": false,
+    "older_source_version_rollback_claimed": false,
+    "database_migrations_reverted": false,
+    "application_automatic_rollback_claimed": false,
+    "successful_return_passed": true
+  },
+  "final_acceptance": {
+    "checked_at": "2026-10-11T07:06:47+00:00",
+    "kind": "fresh_process_actual_canonical_staging_acceptance",
+    "release": "staging-20261010-fab8ee1ea47f",
+    "artifact_sha256": "62e311429dc0d16ac48840b05da181e9a28218d349e76e0cebbe712c765fa7f3",
+    "writers_paused": false,
+    "schema_exit": 0,
+    "capacity": {
+      "valid": true,
+      "companies": 5,
+      "uninitialized_managed": 0,
+      "uninitialized_total": 0,
+      "missing_rows": 0,
+      "drift_rows": 0
+    },
+    "fortnox_guard": {
+      "protected_environment": true,
+      "new_authorization_disabled": true,
+      "expected_test_subscription": "1854146",
+      "no_external_requests_performed": true,
+      "tenant_outcomes": {
+        "1853390": "blocked",
+        "1854146": "accepted",
+        "unknown": "blocked",
+        "9999999": "blocked"
+      },
+      "new_authorization": "blocked"
+    },
+    "fortnox_connection_metadata_unchanged": true,
+    "october_9_migrations_applied": 2,
+    "registry_preparation_rows": 0,
+    "health": {
+      "up": 200,
+      "ready": 200
+    },
+    "completed": true
+  },
+  "writers_resumed": {
+    "kind": "staging_writers_resumed",
+    "checked_at": "2026-10-11T07:06:14.133999+00:00",
+    "pause_id": "1791702167297454208",
+    "state": {
+      "checked_at": "2026-10-11T07:06:14+00:00",
+      "environment": "staging",
+      "release": "staging-20261010-fab8ee1ea47f",
+      "scoped_cli_writers": 0,
+      "database": "codecraf_nordipass_staging",
+      "other_database_connections": 0,
+      "database_events": 0,
+      "reserved_jobs": 0,
+      "pending_jobs": 0,
+      "failed_jobs": 0,
+      "scheduler_heartbeat": {
+        "last_run": "2026-10-11T07:06:11+00:00",
+        "age_seconds": 3,
+        "expires_at": 2107062371,
+        "fresh": true
+      },
+      "worker_heartbeat": {
+        "last_run": "2026-10-11T07:06:12+00:00",
+        "age_seconds": 2,
+        "expires_at": 2107062372,
+        "fresh": true
+      }
+    }
+  },
+  "latest_backup": {
+    "kind": "actual_post_drain_staging_backup_and_restore",
+    "pause_id": "1791702167297454208",
+    "started_at": "2026-10-11T07:03:09+00:00",
+    "source_release": "recovery-20261010-fab8ee1ea47f",
+    "target_database": "codecraf_np_boundary_20261009",
+    "completed": true,
+    "checks": {
+      "no_database_events": true,
+      "isolated_target_identity": true,
+      "explicit_precreated_target": true,
+      "no_target_events": true,
+      "owned_boundary_fixture": true,
+      "fixture_has_no_unreviewed_changes": true,
+      "prior_fixture_backup_retained": true,
+      "no_unexpected_views": true,
+      "safe_fixture_identifier": true,
+      "target_empty_for_native_restore": true,
+      "native_complete_backup": true,
+      "one_new_backup_set": true,
+      "complete_backup_scope": true,
+      "backup_artifact_integrity": true,
+      "source_unchanged_during_backup": true,
+      "native_complete_isolated_restore": true,
+      "every_row_and_trigger_restored": true,
+      "persistent_store_restored_production_imports": true,
+      "persistent_store_restored_product_documents": true,
+      "persistent_store_restored_catalog_media": true,
+      "persistent_store_restored_passport_assets": true,
+      "main_database_unchanged": true,
+      "restored_native_schema": true,
+      "restored_capacity_without_repair": true,
+      "restore_validation_is_read_only": true,
+      "source_release_unchanged": true
+    },
+    "backup_id": "2d008f85-02e1-46ac-bccb-c3bef159ce16",
+    "retained_artifacts": [
+      {
+        "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/backups/sets/2d008f85-02e1-46ac-bccb-c3bef159ce16/database.sql.gz",
+        "sha256": "b568a256a84770a43bc1a751f7c60e459a05899e43212f7eea5d975ddefe577c",
+        "bytes": 336012
+      },
+      {
+        "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/backups/sets/2d008f85-02e1-46ac-bccb-c3bef159ce16/files.tar.gz",
+        "sha256": "f3ca6a161c26ba725dd25559a4813f971132f66b048a26dafca3dd3334d6b362",
+        "bytes": 6827
+      }
+    ],
+    "restored_tables": {
+      "activity_log": {
+        "rows": 983,
+        "sha256": "d17b61e5578e87a47a44a11adfccc53032fb61222339f9552a5c6a8fb909e515"
+      },
+      "analytics_daily_aggregates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "analytics_events": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "analytics_monthly_aggregates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attribute_definitions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attribute_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "cache": {
+        "rows": 2,
+        "sha256": "0a816bd96c3a55ab291f68de46c0758c6b12700edbfda0345573de9d4e2ec418"
+      },
+      "cache_locks": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "catalog_product_capacities": {
+        "rows": 5,
+        "sha256": "44bead4efe08f9d45ffcecd757ec4144e3a79f776d75a37ad4a92c583c2c4601"
+      },
+      "categories": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_product": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_templates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_template_attributes": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "category_template_dpp_defaults": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "commercial_storage_balances": {
+        "rows": 3,
+        "sha256": "86103ff7bf0ddb8a2714bd2caf7002ff92ad4a0722bbb0fc14cc1dc468948bfc"
+      },
+      "commercial_storage_objects": {
+        "rows": 6,
+        "sha256": "23dcd93566b5d73f9ffa0e8db13ca8e5c048602cb7a808ccc51edf35fade46ac"
+      },
+      "commercial_usage_buckets": {
+        "rows": 2,
+        "sha256": "21efc0ef346b106ed1968061bdc2e044db339fa7b5d8144ad59285e3b19465f9"
+      },
+      "commercial_usage_events": {
+        "rows": 6,
+        "sha256": "df24ef615ed4d5762d90652540de6f2583ef9d9e46619fcc6de1111faa13f290"
+      },
+      "companies": {
+        "rows": 5,
+        "sha256": "4b53620ebd8579a71079cc38faf74256c6d4a272c0cafd1a3ad0a2e0e48ba67b"
+      },
+      "company_invitations": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "company_subscriptions": {
+        "rows": 5,
+        "sha256": "e6df82121619abf6407894f517400e2c93b75d5c798dd67fc587093e85b9bd62"
+      },
+      "company_user": {
+        "rows": 5,
+        "sha256": "1d56eb9a53d86b59cfe0e907d529ab59087cd2f0ae7f0ba13a44bc356bf1d506"
+      },
+      "dpp_profiles": {
+        "rows": 2,
+        "sha256": "988725bd7a9bd0faf3de3640277d5c590e998f8334788612debb47bb9a0a054d"
+      },
+      "dpp_registry_preparations": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "dpp_requirements": {
+        "rows": 102,
+        "sha256": "c9cc908a1d710fcec1659723984ee7b0dc38c6a2f627398b631e7072d864bccb"
+      },
+      "entitlement_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "failed_jobs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "feedback_replies": {
+        "rows": 3,
+        "sha256": "8add24f83632fcd266bf1b719f71ed82dd050755734180dcf72658efbd8cae5b"
+      },
+      "fortnox_article_mappings": {
+        "rows": 104,
+        "sha256": "5242aafa9d18387ae5ab28ec057767d2ad2be065bd9e2ad3b74d496fbd1ac6ed"
+      },
+      "fortnox_connections": {
+        "rows": 1,
+        "sha256": "e09a5a97978d93dedb96f72e82701e87cb09bffbab20faa55725e456b29b8f30"
+      },
+      "fortnox_field_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fortnox_oauth_states": {
+        "rows": 3,
+        "sha256": "e56ffd95d0e253c6bf3b3389d80d9caf0eeda71a7e61c18bd4cc7dd7d68dabfe"
+      },
+      "fortnox_sync_conflicts": {
+        "rows": 1,
+        "sha256": "b55b91f872225fc5670ed96dece50e689766168081a12e382714a552c6b38638"
+      },
+      "fortnox_sync_runs": {
+        "rows": 74,
+        "sha256": "f22fb3b664734dbe795880ad28e945e0a780a9d231276a2f30c45ad3193bd7c5"
+      },
+      "import_errors": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "import_jobs": {
+        "rows": 1,
+        "sha256": "cb932696c4aa55edd59189e73e1f0dee7c2106f84685fa0dc5b11a6a7876aba2"
+      },
+      "import_mapping_templates": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "import_records": {
+        "rows": 500,
+        "sha256": "3e6a769994e3bd08683b13cc25e6d31127374034fc1b3fcaa9df1bec1bf57008"
+      },
+      "jobs": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "job_batches": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "job_statuses": {
+        "rows": 1,
+        "sha256": "f98f6a5e60104ef42735aeb897867aa6a959996210312a2a7f277a5b650d5f5d"
+      },
+      "migrations": {
+        "rows": 67,
+        "sha256": "cee66706c6c45f482dc18e9e0dc4859e6c6736d8f556ff4e6e22202aab2e1fc2"
+      },
+      "model_has_permissions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "model_has_roles": {
+        "rows": 1,
+        "sha256": "b5d03243791d7b8fa36ee26b73d8a3b8c7e27d2778d79d4cc80bd698136c6ba2"
+      },
+      "notifications": {
+        "rows": 4,
+        "sha256": "63d50670216759b4184a8e29d6d1a77ceddc08be696c34f285a0b35423d9bd89"
+      },
+      "notification_preferences": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "passport_publication_approvals": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "passport_validation_results": {
+        "rows": 264,
+        "sha256": "c7b488f67834ec26e1d24e050ef2a65b9d2220917d28e6fefa32eb19442e296d"
+      },
+      "passport_validation_runs": {
+        "rows": 4,
+        "sha256": "9918070072122c2c2fa96ef09e58941f61635f963ffbb791b7eff68d9fe3cb17"
+      },
+      "password_reset_tokens": {
+        "rows": 1,
+        "sha256": "7cbc6a44fea34d4c005429b4dad81e1094e040e324fbb8a377aa4d0822b1862d"
+      },
+      "permissions": {
+        "rows": 9,
+        "sha256": "ea3fe65e07a13aa24c83fec0f5c0a332f092bf00813eab6e4f1d2db8fd4a2ec6"
+      },
+      "personal_access_tokens": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_abuse_events": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_feature_flag_overrides": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "platform_incidents": {
+        "rows": 4,
+        "sha256": "9eacd018487e907e33a49ce839dbe6a96f958aaae92ca4b0454fcaf914acafde"
+      },
+      "platform_support_access_grants": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "products": {
+        "rows": 607,
+        "sha256": "dc89451f922e827322d99eb19791e1a6c32c11d1ee2b1e30664ebf83c9a78e85"
+      },
+      "product_attribute_values": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_attribute_value_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_documents": {
+        "rows": 3,
+        "sha256": "57ed61f2ccfa93e2a00cfa43ae9b1f83f9a4a7f780672489d1200e87a643ed38"
+      },
+      "product_document_review_decisions": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_document_variant": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_document_versions": {
+        "rows": 3,
+        "sha256": "bca9202d80df0f1b331301a38a4337a462df1f1944d129c2d634d7c92636a735"
+      },
+      "product_dpp_profiles": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_media": {
+        "rows": 1,
+        "sha256": "28ff6c5785a10f1518ed6f71248d164221b6dadb2ab1a71f26fdd0a91f0fa770"
+      },
+      "product_passports": {
+        "rows": 2,
+        "sha256": "16c12e592ba39664d72b3ab85cf57b3f181d518eadee47fad9bd73f3b7a1dc19"
+      },
+      "product_passport_assets": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "product_passport_versions": {
+        "rows": 2,
+        "sha256": "3eae9b6f91e679fe0ba5d897c953d1de3b9f598b9a9d0339e0983d1284f51022"
+      },
+      "product_variants": {
+        "rows": 607,
+        "sha256": "eea405da03c09e8588427f35e6b05bb271c02ec3dd4aee8c8720c4e58f5e5a05"
+      },
+      "publication_idempotency_records": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "roles": {
+        "rows": 2,
+        "sha256": "95345f6cab15cc0089710edeb62d41e527a6e8ed411547faf4e5fa2af2acfbfc"
+      },
+      "role_has_permissions": {
+        "rows": 12,
+        "sha256": "a59a198118d97e47ea050b730a5b7cfa292d205de470b3ad2e4de2d43540196d"
+      },
+      "sessions": {
+        "rows": 12,
+        "sha256": "71726038cc4363eb663409b12f874ce16f560c4dd4bf90cf610f321b89fe7875"
+      },
+      "stripe_webhook_events": {
+        "rows": 9,
+        "sha256": "88e43b78d603d5764934377d23c3aef462a6a84ce7899a84c2d2bb5785abf887"
+      },
+      "users": {
+        "rows": 4,
+        "sha256": "5bb7f8920a023d8320620972b21862222601652dc6393918eaaebc5bb2eb4014"
+      },
+      "variant_attribute_values": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "variant_attribute_value_options": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "webhook_deliveries": {
+        "rows": 3,
+        "sha256": "935064a2f891a24cda2bdc940c211dfa50815c433271eb82728a32f4dfe419ea"
+      },
+      "webhook_delivery_attempts": {
+        "rows": 5,
+        "sha256": "1e6105d0489d6b8d8d1460c2e0d911fd7659e54d08886ee3f833edaba2d9b351"
+      },
+      "webhook_endpoints": {
+        "rows": 1,
+        "sha256": "97a559fe3aaad2be76d53f15ebd4f5436bd2b56bc8a58a08f4c4e852045181e3"
+      }
+    },
+    "restored_triggers": {
+      "count": 30,
+      "sha256": "be564cc9b65ce17a59feb30ca00d9acf11109db51ae0215f6414813ee0e99a24"
+    },
+    "capacity_state": {
+      "valid": true,
+      "companies": 5,
+      "uninitialized_managed": 0,
+      "uninitialized_total": 0,
+      "missing_rows": 0,
+      "drift_rows": 0
+    },
+    "restored_stores": [
+      {
+        "disk": "production_imports",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/restored/production_imports",
+        "archive_root": "stores/production_imports",
+        "file_count": 2,
+        "total_bytes": 39586,
+        "content_sha256": "71e36e3c3765e1aae599565ac1503bc28b76535376536a31b996d40c242d9ecb"
+      },
+      {
+        "disk": "product_documents",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/restored/product_documents",
+        "archive_root": "stores/product_documents",
+        "file_count": 3,
+        "total_bytes": 771,
+        "content_sha256": "7afb2e79871cc21012dc7977fd7e60ad7c4affabc35c1637b3eeedc5c4dbd151"
+      },
+      {
+        "disk": "catalog_media",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/restored/catalog_media",
+        "archive_root": "stores/catalog_media",
+        "file_count": 2,
+        "total_bytes": 2888,
+        "content_sha256": "d1b5ce0a541a90a9542925684bb59b7eac3a856b606c250580183ebeaa5477aa"
+      },
+      {
+        "disk": "passport_assets",
+        "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/restored/passport_assets",
+        "archive_root": "stores/passport_assets",
+        "file_count": 1,
+        "total_bytes": 68,
+        "content_sha256": "f15c8297aaaa32f79c00c4aad23110e75599da972bf67a368e74e6327d43a495"
+      }
+    ],
+    "completed_at": "2026-10-11T07:03:15+00:00"
+  },
+  "latest_offhost_receipt": {
+    "off_host_verified": true,
+    "pause_id": "1791702167297454208",
+    "backup_id": "2d008f85-02e1-46ac-bccb-c3bef159ce16",
+    "artifacts": [
+      {
+        "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/backups/sets/2d008f85-02e1-46ac-bccb-c3bef159ce16/database.sql.gz",
+        "sha256": "b568a256a84770a43bc1a751f7c60e459a05899e43212f7eea5d975ddefe577c",
+        "bytes": 336012
+      },
+      {
+        "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791702167297454208-358a90f75852df14/backups/sets/2d008f85-02e1-46ac-bccb-c3bef159ce16/files.tar.gz",
+        "sha256": "f3ca6a161c26ba725dd25559a4813f971132f66b048a26dafca3dd3334d6b362",
+        "bytes": 6827
+      }
+    ],
+    "checked_at": "2026-10-11T07:05:09.972753+00:00",
+    "retained_local_directory": "D:\\laravel\\nordipass\\storage\\framework\\release-20261010\\offhost-backups\\2d008f85-02e1-46ac-bccb-c3bef159ce16"
+  },
+  "cron_sha256": {
+    "scheduler": "fc2fc01cfdfcd6e8c4f71572ee99820e911e979e7bea16f1bf5fba90d4887023",
+    "worker": "8292dd26e91e592ca9366414bff6f0f2df2ab3514c1241337531cf6123869ed7"
+  },
+  "fresh_runtime_state": {
+    "checked_at": "2026-10-11T07:07:12+00:00",
+    "environment": "staging",
+    "release": "staging-20261010-fab8ee1ea47f",
+    "scoped_cli_writers": 0,
+    "database": "codecraf_nordipass_staging",
+    "other_database_connections": 0,
+    "database_events": 0,
+    "reserved_jobs": 0,
+    "pending_jobs": 1,
+    "failed_jobs": 0,
+    "scheduler_heartbeat": {
+      "last_run": "2026-10-11T07:07:02+00:00",
+      "age_seconds": 10,
+      "expires_at": 2107062422,
+      "fresh": true
+    },
+    "worker_heartbeat": {
+      "last_run": "2026-10-11T07:06:12+00:00",
+      "age_seconds": 60,
+      "expires_at": 2107062372,
+      "fresh": true
+    }
+  },
+  "collected_at": "2026-10-11T07:07:12.958300+00:00"
+}

@@ -3,16 +3,17 @@ set -Eeuo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$SCRIPT_DIR/release-common.sh"
 RELEASE_ID="" ARTIFACT="" CHECKSUM_FILE="" APP_ROOT="" HEALTH_URL=""
-PAUSE_WRITERS="" VERIFY_STOPPED="" RESUME_WRITERS="" VERIFY_BACKUP=""
+PAUSE_WRITERS="" VERIFY_STOPPED="" RESUME_WRITERS="" VERIFY_BACKUP="" VERIFY_RELEASE=""
 DRY_RUN=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --release-id|--artifact|--checksum-file|--app-root|--health-url|--pause-writers|--verify-writers-stopped|--resume-writers|--verify-backup)
+        --release-id|--artifact|--checksum-file|--app-root|--health-url|--pause-writers|--verify-writers-stopped|--resume-writers|--verify-backup|--verify-release)
             [[ $# -ge 2 && -n "$2" ]] || fail "Missing value for $1."
             case "$1" in
                 --release-id) RELEASE_ID="$2";; --artifact) ARTIFACT="$2";; --checksum-file) CHECKSUM_FILE="$2";;
                 --app-root) APP_ROOT="$2";; --health-url) HEALTH_URL="${2%/}";; --pause-writers) PAUSE_WRITERS="$2";;
                 --verify-writers-stopped) VERIFY_STOPPED="$2";; --resume-writers) RESUME_WRITERS="$2";; --verify-backup) VERIFY_BACKUP="$2";;
+                --verify-release) VERIFY_RELEASE="$2";;
             esac
             shift 2;;
         --dry-run) DRY_RUN=true; shift;;
@@ -41,6 +42,7 @@ for directory in app framework logs; do
     rm -rf -- "$RELEASE_DIR/storage/$directory"
     ln -s "$SHARED_DIR/storage/$directory" "$RELEASE_DIR/storage/$directory"
 done
+"$VERIFY_RELEASE" "$APP_ROOT" "$RELEASE_DIR"
 php "$RELEASE_DIR/artisan" migrate --force
 php "$RELEASE_DIR/artisan" release:verify-schema
 php "$RELEASE_DIR/artisan" catalog:capacity-reconcile --all-companies --repair

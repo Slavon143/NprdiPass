@@ -12,7 +12,11 @@ Release Build installs locked production dependencies, compiles assets, and uses
 code, configuration, migrations, views, routes, vendor, artisan and build assets.
 It excludes credentials, runtime caches, all storage, public/storage, public/hot,
 and development directories. FILES.json hashes every payload file; RELEASE.json
-identifies commit/ref, timestamp, PHP, source digest and schema contract.
+identifies commit/ref, timestamp, PHP, source digest and schema contract. New
+format-2 archives require the exact observed Node 22 version through
+`--node-version "$(node -p 'process.versions.node')"`; a wildcard or another major
+version is rejected before artifact creation. Format-1 archives remain verifiable
+for historical recovery, but their `22.x` value is not measured build provenance.
 Verification rejects missing runtime files, checksum/manifest changes, duplicate
 paths, traversal, symlinks and special files.
 
@@ -45,8 +49,9 @@ Only a trusted deployment operator may write code, archives and hook executables
 
 ## Required site hooks
 
-All operations require four absolute executable hook paths. Each receives the
-verified application root as its sole argument and must return nonzero on failure.
+All operations require five absolute executable hook paths. Writer/backup hooks
+receive the verified application root; `verify-release` receives both that root
+and the candidate release directory. Every hook must return nonzero on failure.
 These depend on the actual proxy/supervisor/scheduler topology and must be
 configured and rehearsed at the target site.
 
@@ -56,6 +61,7 @@ configured and rehearsed at the target site.
 | verify-writers-stopped | Independently prove HTTP, workers, scheduled tasks, DB events and other writers are stopped; pending jobs may remain unreserved. |
 | verify-backup | Verify a backup made after the drain, its checksum, schema/triggers, actual isolated restore evidence, file recovery and off-host executable-archive recovery. A file-exists check is insufficient. |
 | resume-writers | Start fresh web/queue/scheduler processes against current, verify supervisor state, then reopen writes. Existing long-lived workers must not continue with old code. |
+| verify-release | Read-only site integration/environment policy. Reject a candidate that loses required account restrictions or enables unintended external authorizations. Do not buy licenses, exchange/renew tokens or change connections. |
 
 Laravel maintenance mode and queue:restart alone do not establish this boundary.
 The hooks must suppress secrets in logs. Health URLs test only HTTP readiness;
@@ -69,7 +75,7 @@ the archive and pinned SSH host key, then transfers all four script files. Serve
 1. Validate paths/hooks, release ID and archive; take a nonblocking flock.
 2. Retain the verified executable archive; stop writers, verify drain and backup.
 3. Create a new release directory, extract the retained archive, verify its tree.
-4. Link shared environment/storage and run migrate --force.
+4. Link shared environment/storage, verify the site release policy and run migrate --force.
 5. Run release:verify-schema, repair capacity counters under the stopped boundary,
    then run catalog:capacity-reconcile --all-companies without repair to prove zero drift.
 6. Link storage and rebuild caches; atomically switch current.
@@ -86,7 +92,11 @@ Inspect code/schema/writer state before explicitly resuming.
 Secrets: DEPLOY_HOST, DEPLOY_PORT (default 22), DEPLOY_USER, DEPLOY_PATH,
 DEPLOY_SSH_KEY, DEPLOY_HOST_KEY (a full pinned known_hosts entry), DEPLOY_HEALTH_URL.
 Production environment variables: DEPLOY_PAUSE_WRITERS,
-DEPLOY_VERIFY_WRITERS_STOPPED, DEPLOY_RESUME_WRITERS, DEPLOY_VERIFY_BACKUP.
+DEPLOY_VERIFY_WRITERS_STOPPED, DEPLOY_RESUME_WRITERS, DEPLOY_VERIFY_BACKUP,
+DEPLOY_VERIFY_RELEASE. Production needs its own reviewed policy implementation;
+the Oderland staging policy intentionally rejects any other application root.
+Do not substitute a success-only stub. Updating workflow source does not install
+or configure these hooks in production.
 The SSH workflow accepts conventional ASCII host/user and absolute paths without
 spaces; port must be 1..65535. A health base URL must be http(s) without whitespace.
 Use GitHub environment protection for the actual deployment.
@@ -99,12 +109,15 @@ bash deploy/scripts/rollback.sh --app-root /var/www/nordipass \
   --pause-writers /opt/nordipass/pause-writers \
   --verify-writers-stopped /opt/nordipass/verify-writers-stopped \
   --verify-backup /opt/nordipass/verify-backup \
+  --verify-release /opt/nordipass/verify-release \
   --resume-writers /opt/nordipass/resume-writers
 ```
 
 Supply flags and values as separate arguments. The rollback target is explicit,
-its installed tree is verified against the retained archive, and writers/backup
-are checked before switching. Its readonly release:verify-schema must accept the
+its installed tree is verified against the retained archive. The read-only site
+policy runs before pause and again under the deployment lock. An unsafe historical
+integration is rejected before downtime, backup or application execution. Writers
+and backup are checked before switching. Its readonly release:verify-schema must accept the
 current database: the exact migration set, dedicated capacity table and required
 triggers must match. Older releases without this guard are refused. An old code
 release with a different migration set is refused even for additive migrations.

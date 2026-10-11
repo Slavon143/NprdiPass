@@ -1,0 +1,418 @@
+{
+  "kind": "actual_post_drain_staging_backup_and_restore",
+  "pause_id": "1791591916081539084",
+  "started_at": "2026-10-10T00:25:17+00:00",
+  "source_release": "staging-20261010-fab8ee1ea47f",
+  "target_database": "codecraf_np_boundary_20261009",
+  "completed": true,
+  "checks": {
+    "no_database_events": true,
+    "isolated_target_identity": true,
+    "explicit_precreated_target": true,
+    "no_target_events": true,
+    "owned_boundary_fixture": true,
+    "fixture_has_no_unreviewed_changes": true,
+    "prior_fixture_backup_retained": true,
+    "no_unexpected_views": true,
+    "safe_fixture_identifier": true,
+    "target_empty_for_native_restore": true,
+    "native_complete_backup": true,
+    "one_new_backup_set": true,
+    "complete_backup_scope": true,
+    "backup_artifact_integrity": true,
+    "source_unchanged_during_backup": true,
+    "native_complete_isolated_restore": true,
+    "every_row_and_trigger_restored": true,
+    "persistent_store_restored_production_imports": true,
+    "persistent_store_restored_product_documents": true,
+    "persistent_store_restored_catalog_media": true,
+    "persistent_store_restored_passport_assets": true,
+    "main_database_unchanged": true,
+    "restored_native_schema": true,
+    "restored_capacity_without_repair": true,
+    "restore_validation_is_read_only": true,
+    "source_release_unchanged": true
+  },
+  "backup_id": "067000cb-bd08-4b20-8645-8841bc452903",
+  "retained_artifacts": [
+    {
+      "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/backups/sets/067000cb-bd08-4b20-8645-8841bc452903/database.sql.gz",
+      "sha256": "a84344d0a56c8839c7cf61d9809b4df54a5918fb06474ff8ec16eaae55800fad",
+      "bytes": 335905
+    },
+    {
+      "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/backups/sets/067000cb-bd08-4b20-8645-8841bc452903/files.tar.gz",
+      "sha256": "97373b6d027932ced7f22089e920ef7cab68da3e9342166f064352ca031b6f91",
+      "bytes": 6832
+    }
+  ],
+  "restored_tables": {
+    "activity_log": {
+      "rows": 983,
+      "sha256": "d17b61e5578e87a47a44a11adfccc53032fb61222339f9552a5c6a8fb909e515"
+    },
+    "analytics_daily_aggregates": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "analytics_events": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "analytics_monthly_aggregates": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "attribute_definitions": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "attribute_options": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cache": {
+      "rows": 2,
+      "sha256": "d234b581da2e9444a4ba746f2be1e7b70b60f33ba515c7a242083e4e314e8dd3"
+    },
+    "cache_locks": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "catalog_product_capacities": {
+      "rows": 5,
+      "sha256": "44bead4efe08f9d45ffcecd757ec4144e3a79f776d75a37ad4a92c583c2c4601"
+    },
+    "categories": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "category_product": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "category_templates": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "category_template_attributes": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "category_template_dpp_defaults": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commercial_storage_balances": {
+      "rows": 3,
+      "sha256": "86103ff7bf0ddb8a2714bd2caf7002ff92ad4a0722bbb0fc14cc1dc468948bfc"
+    },
+    "commercial_storage_objects": {
+      "rows": 6,
+      "sha256": "23dcd93566b5d73f9ffa0e8db13ca8e5c048602cb7a808ccc51edf35fade46ac"
+    },
+    "commercial_usage_buckets": {
+      "rows": 2,
+      "sha256": "21efc0ef346b106ed1968061bdc2e044db339fa7b5d8144ad59285e3b19465f9"
+    },
+    "commercial_usage_events": {
+      "rows": 6,
+      "sha256": "df24ef615ed4d5762d90652540de6f2583ef9d9e46619fcc6de1111faa13f290"
+    },
+    "companies": {
+      "rows": 5,
+      "sha256": "4b53620ebd8579a71079cc38faf74256c6d4a272c0cafd1a3ad0a2e0e48ba67b"
+    },
+    "company_invitations": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "company_subscriptions": {
+      "rows": 5,
+      "sha256": "e6df82121619abf6407894f517400e2c93b75d5c798dd67fc587093e85b9bd62"
+    },
+    "company_user": {
+      "rows": 5,
+      "sha256": "1d56eb9a53d86b59cfe0e907d529ab59087cd2f0ae7f0ba13a44bc356bf1d506"
+    },
+    "dpp_profiles": {
+      "rows": 2,
+      "sha256": "988725bd7a9bd0faf3de3640277d5c590e998f8334788612debb47bb9a0a054d"
+    },
+    "dpp_registry_preparations": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "dpp_requirements": {
+      "rows": 102,
+      "sha256": "c9cc908a1d710fcec1659723984ee7b0dc38c6a2f627398b631e7072d864bccb"
+    },
+    "entitlement_overrides": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "failed_jobs": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "feedback_replies": {
+      "rows": 3,
+      "sha256": "8add24f83632fcd266bf1b719f71ed82dd050755734180dcf72658efbd8cae5b"
+    },
+    "fortnox_article_mappings": {
+      "rows": 104,
+      "sha256": "5242aafa9d18387ae5ab28ec057767d2ad2be065bd9e2ad3b74d496fbd1ac6ed"
+    },
+    "fortnox_connections": {
+      "rows": 1,
+      "sha256": "e09a5a97978d93dedb96f72e82701e87cb09bffbab20faa55725e456b29b8f30"
+    },
+    "fortnox_field_overrides": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fortnox_oauth_states": {
+      "rows": 3,
+      "sha256": "e56ffd95d0e253c6bf3b3389d80d9caf0eeda71a7e61c18bd4cc7dd7d68dabfe"
+    },
+    "fortnox_sync_conflicts": {
+      "rows": 1,
+      "sha256": "b55b91f872225fc5670ed96dece50e689766168081a12e382714a552c6b38638"
+    },
+    "fortnox_sync_runs": {
+      "rows": 74,
+      "sha256": "f22fb3b664734dbe795880ad28e945e0a780a9d231276a2f30c45ad3193bd7c5"
+    },
+    "import_errors": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "import_jobs": {
+      "rows": 1,
+      "sha256": "cb932696c4aa55edd59189e73e1f0dee7c2106f84685fa0dc5b11a6a7876aba2"
+    },
+    "import_mapping_templates": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "import_records": {
+      "rows": 500,
+      "sha256": "3e6a769994e3bd08683b13cc25e6d31127374034fc1b3fcaa9df1bec1bf57008"
+    },
+    "jobs": {
+      "rows": 1,
+      "sha256": "5a5cd21915d735557977a8136d92ba7239dcc9fae6d9c7e01b8372a21c3ff9d2"
+    },
+    "job_batches": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "job_statuses": {
+      "rows": 1,
+      "sha256": "f98f6a5e60104ef42735aeb897867aa6a959996210312a2a7f277a5b650d5f5d"
+    },
+    "migrations": {
+      "rows": 67,
+      "sha256": "cee66706c6c45f482dc18e9e0dc4859e6c6736d8f556ff4e6e22202aab2e1fc2"
+    },
+    "model_has_permissions": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "model_has_roles": {
+      "rows": 1,
+      "sha256": "b5d03243791d7b8fa36ee26b73d8a3b8c7e27d2778d79d4cc80bd698136c6ba2"
+    },
+    "notifications": {
+      "rows": 4,
+      "sha256": "63d50670216759b4184a8e29d6d1a77ceddc08be696c34f285a0b35423d9bd89"
+    },
+    "notification_preferences": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "passport_publication_approvals": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "passport_validation_results": {
+      "rows": 264,
+      "sha256": "c7b488f67834ec26e1d24e050ef2a65b9d2220917d28e6fefa32eb19442e296d"
+    },
+    "passport_validation_runs": {
+      "rows": 4,
+      "sha256": "9918070072122c2c2fa96ef09e58941f61635f963ffbb791b7eff68d9fe3cb17"
+    },
+    "password_reset_tokens": {
+      "rows": 1,
+      "sha256": "7cbc6a44fea34d4c005429b4dad81e1094e040e324fbb8a377aa4d0822b1862d"
+    },
+    "permissions": {
+      "rows": 9,
+      "sha256": "ea3fe65e07a13aa24c83fec0f5c0a332f092bf00813eab6e4f1d2db8fd4a2ec6"
+    },
+    "personal_access_tokens": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "platform_abuse_events": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "platform_feature_flag_overrides": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "platform_incidents": {
+      "rows": 4,
+      "sha256": "9eacd018487e907e33a49ce839dbe6a96f958aaae92ca4b0454fcaf914acafde"
+    },
+    "platform_support_access_grants": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "products": {
+      "rows": 607,
+      "sha256": "dc89451f922e827322d99eb19791e1a6c32c11d1ee2b1e30664ebf83c9a78e85"
+    },
+    "product_attribute_values": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_attribute_value_options": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_documents": {
+      "rows": 3,
+      "sha256": "57ed61f2ccfa93e2a00cfa43ae9b1f83f9a4a7f780672489d1200e87a643ed38"
+    },
+    "product_document_review_decisions": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_document_variant": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_document_versions": {
+      "rows": 3,
+      "sha256": "bca9202d80df0f1b331301a38a4337a462df1f1944d129c2d634d7c92636a735"
+    },
+    "product_dpp_profiles": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_media": {
+      "rows": 1,
+      "sha256": "28ff6c5785a10f1518ed6f71248d164221b6dadb2ab1a71f26fdd0a91f0fa770"
+    },
+    "product_passports": {
+      "rows": 2,
+      "sha256": "16c12e592ba39664d72b3ab85cf57b3f181d518eadee47fad9bd73f3b7a1dc19"
+    },
+    "product_passport_assets": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "product_passport_versions": {
+      "rows": 2,
+      "sha256": "3eae9b6f91e679fe0ba5d897c953d1de3b9f598b9a9d0339e0983d1284f51022"
+    },
+    "product_variants": {
+      "rows": 607,
+      "sha256": "eea405da03c09e8588427f35e6b05bb271c02ec3dd4aee8c8720c4e58f5e5a05"
+    },
+    "publication_idempotency_records": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "roles": {
+      "rows": 2,
+      "sha256": "95345f6cab15cc0089710edeb62d41e527a6e8ed411547faf4e5fa2af2acfbfc"
+    },
+    "role_has_permissions": {
+      "rows": 12,
+      "sha256": "a59a198118d97e47ea050b730a5b7cfa292d205de470b3ad2e4de2d43540196d"
+    },
+    "sessions": {
+      "rows": 11,
+      "sha256": "96f9cadbb81903583cf6d9f629c278a844b0c425ee956128d4a45aabcc6dc748"
+    },
+    "stripe_webhook_events": {
+      "rows": 9,
+      "sha256": "88e43b78d603d5764934377d23c3aef462a6a84ce7899a84c2d2bb5785abf887"
+    },
+    "users": {
+      "rows": 4,
+      "sha256": "5bb7f8920a023d8320620972b21862222601652dc6393918eaaebc5bb2eb4014"
+    },
+    "variant_attribute_values": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "variant_attribute_value_options": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "webhook_deliveries": {
+      "rows": 3,
+      "sha256": "935064a2f891a24cda2bdc940c211dfa50815c433271eb82728a32f4dfe419ea"
+    },
+    "webhook_delivery_attempts": {
+      "rows": 5,
+      "sha256": "1e6105d0489d6b8d8d1460c2e0d911fd7659e54d08886ee3f833edaba2d9b351"
+    },
+    "webhook_endpoints": {
+      "rows": 1,
+      "sha256": "97a559fe3aaad2be76d53f15ebd4f5436bd2b56bc8a58a08f4c4e852045181e3"
+    }
+  },
+  "restored_triggers": {
+    "count": 30,
+    "sha256": "be564cc9b65ce17a59feb30ca00d9acf11109db51ae0215f6414813ee0e99a24"
+  },
+  "capacity_state": {
+    "valid": true,
+    "companies": 5,
+    "uninitialized_managed": 0,
+    "uninitialized_total": 0,
+    "missing_rows": 0,
+    "drift_rows": 0
+  },
+  "restored_stores": [
+    {
+      "disk": "production_imports",
+      "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/restored/production_imports",
+      "archive_root": "stores/production_imports",
+      "file_count": 2,
+      "total_bytes": 39586,
+      "content_sha256": "71e36e3c3765e1aae599565ac1503bc28b76535376536a31b996d40c242d9ecb"
+    },
+    {
+      "disk": "product_documents",
+      "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/restored/product_documents",
+      "archive_root": "stores/product_documents",
+      "file_count": 3,
+      "total_bytes": 771,
+      "content_sha256": "7afb2e79871cc21012dc7977fd7e60ad7c4affabc35c1637b3eeedc5c4dbd151"
+    },
+    {
+      "disk": "catalog_media",
+      "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/restored/catalog_media",
+      "archive_root": "stores/catalog_media",
+      "file_count": 2,
+      "total_bytes": 2888,
+      "content_sha256": "d1b5ce0a541a90a9542925684bb59b7eac3a856b606c250580183ebeaa5477aa"
+    },
+    {
+      "disk": "passport_assets",
+      "original_root": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791591916081539084-6506d174ea536b79/restored/passport_assets",
+      "archive_root": "stores/passport_assets",
+      "file_count": 1,
+      "total_bytes": 68,
+      "content_sha256": "f15c8297aaaa32f79c00c4aad23110e75599da972bf67a368e74e6327d43a495"
+    }
+  ],
+  "completed_at": "2026-10-10T00:25:23+00:00"
+}

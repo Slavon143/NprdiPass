@@ -1,0 +1,54 @@
+{
+  "recorded_at": "2026-10-11T07:10:13.705592+00:00",
+  "application_commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "application_artifact_sha256": "62e311429dc0d16ac48840b05da181e9a28218d349e76e0cebbe712c765fa7f3",
+  "hook_package_sha256": "c56658fb5a7d2a499802be5b835187a6b0d527d5eb6247ca1d865fdd5ed141c9",
+  "hook_sources_match_installed_lf_bytes": true,
+  "additional_hook_changes_uncommitted": true,
+  "compressed_backup_data_excluded": true,
+  "production_changed": false,
+  "new_oauth_performed": false,
+  "push_performed": false,
+  "files": {
+    "target-acceptance.json": {
+      "sha256": "053c19a2f46f330a505f3292df1eda366be6f7514c5868ee5cd412f5f3211ddb",
+      "bytes": 52282
+    },
+    "cross-engine-derivation.json": {
+      "sha256": "700a5df0916a169d48293622b74da32d7b9dd7755a959356f9e7eaed822168df",
+      "bytes": 736
+    },
+    "archive-roundtrip.json": {
+      "sha256": "c69eed95a88404c416ae6f8de5bc20c5089eba44ee93a9d409823b836e7fe0d5",
+      "bytes": 218
+    },
+    "source-commit.json": {
+      "sha256": "d00582b2a546fbd2e8aec14d3a239d2c57401380f4ca88a9f06cad7bbe2fe033",
+      "bytes": 3320
+    },
+    "backup-164c25ed-095a-4225-b526-bb2541aa99ff.json": {
+      "sha256": "11e3f6d50b034a7f78999764d9c062a4c0ac738d0121c9e5da659b2110dfa666",
+      "bytes": 14670
+    },
+    "offhost-164c25ed-095a-4225-b526-bb2541aa99ff.json": {
+      "sha256": "2d45ee585777372ab1be0a402ae136694adaf0c8d5ff64db4cea4b524bbaf1dc",
+      "bytes": 971
+    },
+    "backup-067000cb-bd08-4b20-8645-8841bc452903.json": {
+      "sha256": "3ddc7dcf596295ed3abb4cce3d04fc05a087f78700f536bba21e2039840fb905",
+      "bytes": 15001
+    },
+    "offhost-067000cb-bd08-4b20-8645-8841bc452903.json": {
+      "sha256": "79043fe2d111674c3f20e326adcbf2e5a6c97e724e51b132fed75f608adabf75",
+      "bytes": 971
+    },
+    "backup-2d008f85-02e1-46ac-bccb-c3bef159ce16.json": {
+      "sha256": "4d391a5b9408acc643d4634fe6a0f5108c6cb6d527420d9b49bdd519882dab7d",
+      "bytes": 15002
+    },
+    "offhost-2d008f85-02e1-46ac-bccb-c3bef159ce16.json": {
+      "sha256": "68af6c67ca0833ad72fc758b7016100b9504f138e0c518d2d7a4d2f8109f9a28",
+      "bytes": 971
+    }
+  }
+}

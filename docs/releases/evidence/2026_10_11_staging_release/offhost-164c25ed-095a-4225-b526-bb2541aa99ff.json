@@ -1,0 +1,19 @@
+{
+  "off_host_verified": true,
+  "pause_id": "1791590927233778397",
+  "backup_id": "164c25ed-095a-4225-b526-bb2541aa99ff",
+  "artifacts": [
+    {
+      "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791590927233778397-82100bb988500bce/backups/sets/164c25ed-095a-4225-b526-bb2541aa99ff/database.sql.gz",
+      "sha256": "4cacc564c9557036c681b0cc5f2ddaf75ab0ccedc3ededefbf17debaa67a707c",
+      "bytes": 336041
+    },
+    {
+      "path": "/home/codecraf/nordipass-staging/shared/acceptance/boundary-backup-20261009-1791590927233778397-82100bb988500bce/backups/sets/164c25ed-095a-4225-b526-bb2541aa99ff/files.tar.gz",
+      "sha256": "4976c20f7b5ada27ab9559bbc366ec8b8a4def8ec92a139ce9d785ce20f34453",
+      "bytes": 6830
+    }
+  ],
+  "checked_at": "2026-10-10T00:17:35.097530+00:00",
+  "retained_local_directory": "D:\\laravel\\nordipass\\storage\\framework\\release-20261010\\offhost-backups\\164c25ed-095a-4225-b526-bb2541aa99ff"
+}

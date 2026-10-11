@@ -28,6 +28,13 @@ shell entry points 0700. Use LF line endings on Linux.
 
 ## Hooks
 
+- `verify-release ROOT RELEASE_DIR`: read-only pre-activation check. Require the
+  reviewed Fortnox source fingerprints and actual staging configuration; reject
+  production/unknown/wrong tenants and enabled new OAuth. It does not perform
+  external requests, token exchange, renewal or connection changes. The generic
+  rollback command invokes it before imposing a pause. Keep `release-policy.json`
+  bound to the reviewed source; a future safety-layer change needs review and new
+  fingerprints. This hook is restricted to staging, not a production policy.
 - `pause-writers ROOT`: validate identity, create an owned generation marker,
   wait for HTTP/scheduler/worker exclusive locks and inspect database writers.
 - `verify-writers-stopped ROOT`: require the same marker, reject pending legacy
@@ -45,6 +52,15 @@ Errors preserve the pause. They do not automatically revert schema, release or
 database. Review the current source/schema and writers before explicitly
 resuming. These hooks are not release acceptance until the real boundary,
 backup/restore, deployment and rollback scenarios have passed.
+
+Backup validation uses the read-only `capacity-state.php` helper and tenant-scoped
+SQL counts. An existing capacity row with a lazy NULL counter is valid unknown
+state; a missing row, malformed count or incorrect numeric count fails validation.
+Do not replace this check with `catalog:capacity-reconcile`: even inspection mode
+can append audit rows for drift. Deployment still reconciles counters under the
+verified drain before activation. Completed restore validation must preserve all
+restored rows and triggers byte-for-byte. Failed attempts retain their workspace;
+new attempts use a separate random suffix.
 
 ## Isolated backup and transport
 
@@ -89,18 +105,21 @@ request admission, plus lifecycle error handling. They have no application
 database or external HTTP access and do not substitute for a real staging
 deployment rehearsal.
 
-## Pending provider clarification (draft only, not sent)
+## Target acceptance and LSAPI classification
 
-For account `codecraf`, the staging site is
-`staging.nordipass.nu.codecrafters.nu`. At 2026-10-09 14:48 UTC an existing
-PHP 8.4 LSAPI process, PID 2924994 with Linux start tick 252578698, had not
-passed through the new staging admission gate. Its visible working-directory,
-arguments and file-descriptor metadata did not establish application ownership.
+The October 10 observations classified the exact PID 2924994 / start tick
+252578698 as an LSAPI prefork parent. Kernel observations showed one listening
+socket, the parent's select-loop signature and actual child processes passing
+the staging gate. The parent never executed a PHP request. Its original baseline
+was retained; only that exact non-request identity was excluded from the legacy
+request barrier. No process was killed, no seen marker fabricated and no shared
+PHP service restarted. Unclassified request processes still block drain.
 
-Ask Oderland to identify which application/pool owns that exact process and
-whether staging has a dedicated LSAPI pool that can be drained or recycled
-without affecting other domains on the account. Request the supported
-application-specific operation and how to verify that no pre-gate request
-remains. This draft does not authorize terminating the process or restarting
-account-wide PHP services. Until ownership/drain is established, preserve the
-admission barrier and leave the live site running normally.
+Twenty-four native Linux/PHP/flock regressions passed with no skips. Actual
+staging deployment, complete isolated restoration and real off-host transport
+passed. On October 11, an intentionally failed health check after activation
+re-paused and verified writers; a fresh backup/transport roundtrip then allowed
+successful return and resume. The recovery target is another extraction of the
+same protected artifact. This proves that mechanism, not rollback to an older
+source version. See the [October 11 acceptance report](../../../docs/releases/2026_10_11_STAGING_RELEASE_ACCEPTANCE.md)
+for evidence, source/package identities and remaining release gates.

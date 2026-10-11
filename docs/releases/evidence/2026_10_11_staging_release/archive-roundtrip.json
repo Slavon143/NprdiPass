@@ -1,0 +1,7 @@
+{
+  "kind": "actual_server_archive_roundtrip",
+  "sha256": "62e311429dc0d16ac48840b05da181e9a28218d349e76e0cebbe712c765fa7f3",
+  "bytes": 9990513,
+  "passed": true,
+  "checked_at": "2026-10-10T00:07:06.530595+00:00"
+}

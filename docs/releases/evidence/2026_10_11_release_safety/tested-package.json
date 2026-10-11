@@ -1,0 +1,28 @@
+{
+  "package_sha256": "054b3ed4cb46dc0ddc891495f5a595fca286ed3cc31a6446ad9bde9062494526",
+  "files": {
+    "deploy/scripts/deploy.sh": "fe0a71bb9c2270e51dfdd369f394b3db0d74dc0ea50530dcbe8dc52d63fce092",
+    "deploy/scripts/release-common.sh": "dc8f9ac92a893675b0d2bd4e1090d05a63062ccb62c5ee3ec62a83669fd3fc44",
+    "deploy/scripts/release_artifact.py": "72f327f78ccecd7e36272030a0d0ea7c6418db31e0461b50fbc2a6a7b8fcd566",
+    "deploy/scripts/rollback.sh": "e4c4fd79c8d3bb5bf2f83f7e219f665afb74a0b075b0973c13d458f09eafe29d",
+    "deploy/site/oderland-staging/boundary-backup.php": "0075e70e41acb85c50c1d5987c1123ad99ca132ba691270caed335a96fe8710d",
+    "deploy/site/oderland-staging/capacity-state.php": "0261cae84ed9bf8d43ca1c62fbd5ef9bec11dcafa60509ab8cbb4c47963f3063",
+    "deploy/site/oderland-staging/heartbeat-state.php": "bb08d195597af2997c083b0fbff039d7e8aac2cf1b71bea34a9ce7eac448e95c",
+    "deploy/site/oderland-staging/http-writer-gate.php": "4abb0baea89286528a17223a8bf86766407d60a073a731ccfc73cc5fdb9b3b66",
+    "deploy/site/oderland-staging/inspect-state.php": "ad8eae39e475b91374e487fdb68106bbb6de3fddbbef3d8c231bafc16dff2981",
+    "deploy/site/oderland-staging/pause-writers": "706ee1fa611cfc48f6da006b378864ffb7057a90df1b79b85e86fd7a09daa1bd",
+    "deploy/site/oderland-staging/release-compatibility.py": "ee3e164db28a8413b1c00ee8632732629f0fdca2d6a7e7d26d4ceb67bc13d0cf",
+    "deploy/site/oderland-staging/release-policy-state.php": "807d46dfb8f560925cbdccc658c45c987e179a5dc3cd2fd2f59f613816398ddb",
+    "deploy/site/oderland-staging/release-policy.json": "ab3bc1df072abce72dc53fdd53d9337a3052fffd651fe48c160a2607395d834d",
+    "deploy/site/oderland-staging/resume-writers": "ef8637a1cd6babfb581a45023fd4d49af24412f88a34b8d040e68f7595ae77ce",
+    "deploy/site/oderland-staging/site-control.py": "7ff01cf1c285fb7ceceed4a0ba23b3fa44c55cd306b7a50cce2cab770a75ee35",
+    "deploy/site/oderland-staging/verify-backup": "be4a31e1218bcead37fc339e5f0df708cfe136ecec70fa9dee9b8fc5159edfa9",
+    "deploy/site/oderland-staging/verify-release": "e16d08453a7e4b1d22f46271094ff7176de16a5043c1a1c4b71e4ec302d4b18b",
+    "deploy/site/oderland-staging/verify-writers-stopped": "45d02a990ada51c504565a0ec354a95d3221f1c72dbca5c45ace8febdd4b1e74",
+    "tests/Release/test_deployment_lifecycle.py": "5b14a620d8f7a05326fbef9500ce2acee97046740bc9315fa3c7d14eebdd56ec",
+    "tests/Release/test_release_artifact.py": "26fb403966f5be3e79bbf010d8a66c4f60de7e5b22bfcb0964d9a4ab17cac715",
+    "tests/Release/test_release_compatibility.py": "497a1d5f1d2c374d72143fc75e8a1bf613528d4c5f42999a7117cb7aa39a900e",
+    "tests/Release/test_staging_writer_hooks.py": "43de6138eca7d64b9f6e48f17bbfea86e64ad34c21dcda729cfa370f4a15308b"
+  },
+  "not_installed_as_live_hooks": true
+}

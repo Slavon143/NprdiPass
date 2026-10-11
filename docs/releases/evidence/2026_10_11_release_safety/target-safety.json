@@ -1,0 +1,148 @@
+{
+  "native_tests": {
+    "checked_at": "2026-10-11T07:24:07.815740+00:00",
+    "package_sha256": "054b3ed4cb46dc0ddc891495f5a595fca286ed3cc31a6446ad9bde9062494526",
+    "exit": 0,
+    "tests": 59,
+    "no_skips": true,
+    "current_unchanged": true,
+    "writers_paused": false,
+    "live_application_mutated": false,
+    "new_oauth_performed": false,
+    "passed": true
+  },
+  "target_policy": {
+    "checked_at": "2026-10-11T07:25:46.056695+00:00",
+    "current_release": "staging-20261010-fab8ee1ea47f",
+    "current_policy": {
+      "exit": 0,
+      "result": {
+        "compatible": true,
+        "release": "staging-20261010-fab8ee1ea47f",
+        "policy": "reviewed_fortnox_nonproduction_source",
+        "runtime": {
+          "environment": "staging",
+          "oauth_enabled": false,
+          "expected_tenant": "1854146",
+          "no_external_requests_performed": true,
+          "tenant_outcomes": {
+            "1853390": "blocked",
+            "1854146": "accepted",
+            "unknown": "blocked",
+            "9999999": "blocked"
+          },
+          "new_authorization": "blocked"
+        }
+      }
+    },
+    "historical_source_commit": "3e6ae56ba20585b9fd17a82e1b94967e39467f02",
+    "historical_policy": {
+      "exit": 1,
+      "result": {
+        "compatible": false,
+        "reason": "Reviewed staging integration safety policy rejected this target"
+      }
+    },
+    "historical_rollback_plan": {
+      "exit": 1,
+      "rejected_by_integration_policy": true,
+      "activation_plan_accepted": false
+    },
+    "protected_rollback_plan": {
+      "exit": 0,
+      "rejected_by_integration_policy": false,
+      "activation_plan_accepted": true
+    },
+    "current_unchanged": true,
+    "writers_paused": false,
+    "health": {
+      "up": 200,
+      "ready": 200
+    },
+    "new_oauth_performed": false,
+    "paid_actions_performed": false,
+    "historical_application_booted": false,
+    "read_only_policy_acceptance": true,
+    "older_unguarded_release_activated": false
+  },
+  "policy_installation": {
+    "kind": "read_only_release_policy_installed_additively",
+    "checked_at": "2026-10-11T07:30:43.222305+00:00",
+    "package_sha256": "054b3ed4cb46dc0ddc891495f5a595fca286ed3cc31a6446ad9bde9062494526",
+    "native_tests": 59,
+    "files": {
+      "verify-release": "e16d08453a7e4b1d22f46271094ff7176de16a5043c1a1c4b71e4ec302d4b18b",
+      "release-compatibility.py": "ee3e164db28a8413b1c00ee8632732629f0fdca2d6a7e7d26d4ceb67bc13d0cf",
+      "release-policy.json": "ab3bc1df072abce72dc53fdd53d9337a3052fffd651fe48c160a2607395d834d",
+      "release-policy-state.php": "807d46dfb8f560925cbdccc658c45c987e179a5dc3cd2fd2f59f613816398ddb"
+    },
+    "old_writer_hooks_replaced": false,
+    "application_or_environment_changed": false,
+    "production_changed": false,
+    "paid_actions_performed": false,
+    "new_oauth_performed": false,
+    "checks": {
+      "staging-20261010-fab8ee1ea47f": {
+        "exit": 0,
+        "compatible": true
+      },
+      "preflight-20261011-3e6ae56ba205": {
+        "exit": 1,
+        "compatible": false
+      }
+    },
+    "current_unchanged": true,
+    "writers_paused": false
+  },
+  "node22_target": {
+    "checked_at": "2026-10-11T07:35:10.839922+00:00",
+    "artifact_sha256": "5fdce6f2d5e2455c5d18dc9d596097d06779908a18e70aea4167da9ec64726f9",
+    "archive_bytes": 10066312,
+    "manifest": {
+      "application": "NordiPass",
+      "application_sha256": "23cbeb089bee74750783a742d8cabf89c4482fad0a80bf346f1df48c8694ab4d",
+      "built_at": "2026-10-11T07:31:44.180598+00:00",
+      "catalog_capacity_schema": "table-v1",
+      "commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+      "dependencies_sha256": "39f8dd9af9dfe698f8a0bae498afd0574fae825b9f3a408425c96c228dc64f5e",
+      "format_version": 2,
+      "node_version": "22.23.3",
+      "php_version": "8.4.21",
+      "ref": "master"
+    },
+    "retained_archive": "/home/codecraf/nordipass-staging/artifacts/5fdce6f2d5e2455c5d18dc9d596097d06779908a18e70aea4167da9ec64726f9/release.tar.gz",
+    "candidate_release": "candidate-20261011-fab8ee1-node22",
+    "full_tree_verified": true,
+    "schema_exit": 0,
+    "policy": {
+      "compatible": true,
+      "release": "candidate-20261011-fab8ee1-node22",
+      "policy": "reviewed_fortnox_nonproduction_source",
+      "runtime": {
+        "environment": "staging",
+        "oauth_enabled": false,
+        "expected_tenant": "1854146",
+        "no_external_requests_performed": true,
+        "tenant_outcomes": {
+          "1853390": "blocked",
+          "1854146": "accepted",
+          "unknown": "blocked",
+          "9999999": "blocked"
+        },
+        "new_authorization": "blocked"
+      }
+    },
+    "active_release": "staging-20261010-fab8ee1ea47f",
+    "current_unchanged": true,
+    "writers_paused": false,
+    "health": {
+      "up": 200,
+      "ready": 200
+    },
+    "candidate_activated": false,
+    "migration_performed": false,
+    "new_oauth_performed": false,
+    "paid_actions_performed": false
+  },
+  "no_raw_log_exported": true
+}

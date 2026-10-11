@@ -50,13 +50,15 @@ def add_bytes(archive, name, data):
     archive.addfile(entry, io.BytesIO(data))
 
 
-def build(source, artifact, commit, ref, php_version, built_at):
+def build(source, artifact, commit, ref, php_version, node_version, built_at):
     source = Path(source).resolve(strict=True)
     artifact = Path(artifact).absolute()
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("A full lowercase Git commit SHA is required")
     if not re.fullmatch(r"8\.4\.\d+", php_version):
         raise ValueError("Build with the supported PHP 8.4 runtime")
+    if not re.fullmatch(r"22\.\d+\.\d+", node_version):
+        raise ValueError("The exact observed Node 22 build version is required")
     for required in ("artisan", "composer.lock", "app", "vendor", "public/build/manifest.json"):
         if not (source / required).exists():
             raise ValueError("Missing executable release input: " + required)
@@ -77,8 +79,8 @@ def build(source, artifact, commit, ref, php_version, built_at):
                     raise ValueError("Only regular files may enter a release")
                 members[key] = digest(path)
     application = {key[4:]: sha for key, sha in members.items() if key.startswith("app/") and key.endswith(".php")}
-    manifest = {"application": "NordiPass", "format_version": 1, "commit": commit, "ref": ref,
-                "built_at": built_at, "php_version": php_version, "node_version": "22.x",
+    manifest = {"application": "NordiPass", "format_version": 2, "commit": commit, "ref": ref,
+                "built_at": built_at, "php_version": php_version, "node_version": node_version,
                 "catalog_capacity_schema": "table-v1",
                 "application_sha256": hashlib.sha256(canonical(application)).hexdigest(),
                 "dependencies_sha256": members["composer.lock"]}
@@ -131,7 +133,9 @@ def verify(artifact, checksum_file):
     manifest = metadata.get("RELEASE.json", {})
     application = {key[4:]: sha for key, sha in actual.items() if key.startswith("app/") and key.endswith(".php")}
     if (metadata.get("FILES.json") != actual or manifest.get("application") != "NordiPass"
-            or manifest.get("format_version") != 1 or manifest.get("catalog_capacity_schema") != "table-v1"
+            or manifest.get("format_version") not in (1, 2) or manifest.get("catalog_capacity_schema") != "table-v1"
+            or (manifest.get("format_version") == 1 and manifest.get("node_version") != "22.x")
+            or (manifest.get("format_version") == 2 and not re.fullmatch(r"22\.\d+\.\d+", str(manifest.get("node_version"))))
             or not re.fullmatch(r"[a-f0-9]{40}", str(manifest.get("commit")))
             or not re.fullmatch(r"8\.4\.\d+", str(manifest.get("php_version")))
             or manifest.get("application_sha256") != hashlib.sha256(canonical(application)).hexdigest()
@@ -213,7 +217,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     create = sub.add_parser("build")
-    for name in ("source", "artifact", "commit", "ref", "php-version", "built-at"):
+    for name in ("source", "artifact", "commit", "ref", "php-version", "node-version", "built-at"):
         create.add_argument("--" + name, required=True)
     for command in ("verify", "retain"):
         child = sub.add_parser(command)

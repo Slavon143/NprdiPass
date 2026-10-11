@@ -30,7 +30,7 @@ class DeploymentLifecycleTest(unittest.TestCase):
         self.environment = os.environ.copy()
         self.environment.update({'PATH': str(self.bin) + os.pathsep + os.environ['PATH'], 'TEST_EVENTS': str(self.log)})
         self.hooks = {}
-        for name in ['pause', 'stopped', 'backup', 'resume']:
+        for name in ['pause', 'stopped', 'backup', 'resume', 'release']:
             path = self.bin / name
             path.write_text('#!/usr/bin/env bash\nset -eu\necho '+name+' >> "$TEST_EVENTS"\n[[ "${TEST_FAIL_HOOK:-}" != '+name+' ]]\n')
             path.chmod(0o755)
@@ -49,7 +49,7 @@ class DeploymentLifecycleTest(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(value)
         self.artifact = self.root / 'release.tar.gz'
-        release.build(self.source, self.artifact, 'a'*40, 'fixture', '8.4.26', '2026-10-04T00:00:00Z')
+        release.build(self.source, self.artifact, 'a'*40, 'fixture', '8.4.26', '22.20.0', '2026-10-04T00:00:00Z')
         self.checksum = Path(str(self.artifact) + '.sha256')
 
     def script(self, name, body):
@@ -64,7 +64,8 @@ class DeploymentLifecycleTest(unittest.TestCase):
         command = ['bash', str(REPO / 'deploy/scripts' / script), '--release-id', release_id,
                    '--app-root', str(self.app), '--health-url', 'http://fixture.invalid',
                    '--pause-writers', str(self.hooks['pause']), '--verify-writers-stopped', str(self.hooks['stopped']),
-                   '--verify-backup', str(self.hooks['backup']), '--resume-writers', str(self.hooks['resume'])]
+                   '--verify-backup', str(self.hooks['backup']), '--resume-writers', str(self.hooks['resume']),
+                   '--verify-release', str(self.hooks['release'])]
         if script == 'deploy.sh':
             command.extend(['--artifact', str(self.artifact), '--checksum-file', str(self.checksum)])
         return subprocess.run(command + list(extra), env=environment or self.environment, capture_output=True, text=True, timeout=60)
@@ -154,6 +155,23 @@ class DeploymentLifecycleTest(unittest.TestCase):
         self.assertNotIn('Rollback completed', result.stdout)
         self.assertEqual(self.events().count('pause'), 2)
         self.assertEqual(self.events().count('stopped'), 2)
+
+
+    def test_unsafe_rollback_target_is_rejected_before_pausing_or_starting_php(self):
+        self.install_pair()
+        result = self.run_script('rollback.sh', 'first', ['--force'], self.environment | {'TEST_FAIL_HOOK': 'release'})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.events(), ['release'])
+        self.assertEqual((self.app / 'current').resolve(), self.app / 'releases/second')
+
+    def test_unsafe_deploy_target_never_migrates_activates_or_resumes(self):
+        result = self.run_script('deploy.sh', 'unsafe', environment=self.environment | {'TEST_FAIL_HOOK': 'release'})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('backup', self.events())
+        self.assertIn('release', self.events())
+        self.assertFalse(any(event.startswith('php:') for event in self.events()))
+        self.assertNotIn('resume', self.events())
+        self.assertFalse((self.app / 'current').exists())
 
 
 if __name__ == '__main__':

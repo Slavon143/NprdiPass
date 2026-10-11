@@ -15,7 +15,7 @@ validate_release_operation() {
     CURRENT_LINK="$APP_ROOT/current"
     RELEASE_DIR="$RELEASES_DIR/$RELEASE_ID"
     [[ ! -L "$RELEASES_DIR" && ! -L "$ARCHIVE_DIR" ]] || fail "Release/archive directories must not be symlinks."
-    for hook in "$PAUSE_WRITERS" "$VERIFY_STOPPED" "$RESUME_WRITERS" "$VERIFY_BACKUP"; do
+    for hook in "$PAUSE_WRITERS" "$VERIFY_STOPPED" "$RESUME_WRITERS" "$VERIFY_BACKUP" "$VERIFY_RELEASE"; do
         [[ "$hook" = /* && -f "$hook" && -x "$hook" ]] || fail "An absolute executable path is required for every lifecycle hook."
     done
     [[ "$HEALTH_URL" =~ ^https?:// ]] || fail "A health URL is required."

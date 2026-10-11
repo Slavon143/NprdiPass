@@ -36,7 +36,44 @@ class ReleaseArtifactTest(unittest.TestCase):
         self.checksum = Path(str(self.artifact) + ".sha256")
 
     def build(self):
-        return release.build(self.source, self.artifact, "a" * 40, "v1", "8.4.26", "2026-10-03T12:00:00Z")
+        return release.build(self.source, self.artifact, "a" * 40, "v1", "8.4.26", "22.20.0", "2026-10-03T12:00:00Z")
+
+    def rewrite_manifest(self, changes):
+        with tarfile.open(self.artifact) as archive:
+            entries = [(entry, archive.extractfile(entry).read() if entry.isfile() else None) for entry in archive]
+        with tarfile.open(self.artifact, 'w:gz') as archive:
+            for entry, content in entries:
+                if entry.name == release.ROOT + '/RELEASE.json':
+                    manifest = json.loads(content)
+                    manifest.update(changes)
+                    content = release.canonical(manifest)
+                    entry.size = len(content)
+                archive.addfile(entry, io.BytesIO(content) if content is not None else None)
+        self.checksum.write_text(release.digest(self.artifact) + '  ' + self.artifact.name + '\n')
+
+    def test_build_records_exact_observed_node_version(self):
+        manifest = release.build(self.source, self.artifact, 'a'*40, 'v1', '8.4.26', '22.21.1', '2026-10-11T00:00:00Z')
+        self.assertEqual(manifest['format_version'], 2)
+        self.assertEqual(release.verify(self.artifact, self.checksum)[0]['node_version'], '22.21.1')
+
+    def test_unknown_or_unsupported_node_version_refuses_build_before_artifact_creation(self):
+        for version in ('22.x', '', 'v22.20.0', '24.15.0', '22.20.0;echo unsafe'):
+            with self.subTest(version=version), self.assertRaisesRegex(ValueError, 'exact observed Node 22'):
+                release.build(self.source, self.artifact, 'a'*40, 'v1', '8.4.26', version, '2026-10-11T00:00:00Z')
+            self.assertFalse(self.artifact.exists())
+
+    def test_legacy_archive_stays_verifiable_without_rewriting_historical_provenance(self):
+        self.build()
+        self.rewrite_manifest({'format_version': 1, 'node_version': '22.x'})
+        manifest, _ = release.verify(self.artifact, self.checksum)
+        self.assertEqual(manifest['format_version'], 1)
+        self.assertEqual(manifest['node_version'], '22.x')
+
+    def test_new_manifest_cannot_claim_wildcard_node_version_with_valid_outer_checksum(self):
+        self.build()
+        self.rewrite_manifest({'node_version': '22.x'})
+        with self.assertRaisesRegex(ValueError, 'inconsistent'):
+            release.verify(self.artifact, self.checksum)
 
     def rewrite(self, name, data, kind=tarfile.REGTYPE, link=""):
         with tarfile.open(self.artifact) as archive:

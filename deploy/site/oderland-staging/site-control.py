@@ -17,6 +17,18 @@ BASE = Path('/home/codecraf/nordipass-staging')
 PHP = '/opt/alt/php84/usr/bin/php'
 HEALTH = 'https://staging.nordipass.nu.codecrafters.nu'
 HERE = Path(__file__).resolve().parent
+CRON_SHA256 = {
+    'scheduler': 'fc2fc01cfdfcd6e8c4f71572ee99820e911e979e7bea16f1bf5fba90d4887023',
+    'worker': '8292dd26e91e592ca9366414bff6f0f2df2ab3514c1241337531cf6123869ed7',
+}
+
+def verify_cron_scripts(directory):
+    for kind, expected in CRON_SHA256.items():
+        if len(expected) != 64 or any(character not in '0123456789abcdef' for character in expected):
+            raise RuntimeError('Invalid pinned cron checksum; writer inventory must be reviewed')
+        actual = hashlib.sha256((directory/f'{kind}.sh').read_bytes()).hexdigest()
+        if actual != expected:
+            raise RuntimeError('Cron entry script changed; writer inventory must be reviewed')
 
 def timestamp():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -67,13 +79,7 @@ def validate(root):
     entry = (current/'public/index.php').read_text()
     if 'storage/framework/maintenance.php' not in entry or 'require $maintenance' not in entry:
         raise RuntimeError('Current front controller does not load the gate')
-    for kind, expected in (
-        ('scheduler', 'fc2fc01cfdfcd6e8c4f71572ee99820e911e979e7bea16f1bf5fba90dd4887023'),
-        ('worker', '8292dd26e91e592ca9366414bff6f0f2df2ab3514c1241337531cf61223869ed7'),
-    ):
-        actual = hashlib.sha256((BASE/'deploy/site'/f'{kind}.sh').read_bytes()).hexdigest()
-        if actual != expected:
-            raise RuntimeError('Cron entry script changed; writer inventory must be reviewed')
+    verify_cron_scripts(BASE/'deploy/site')
     return shared, directory, installation
 
 def paused_http():

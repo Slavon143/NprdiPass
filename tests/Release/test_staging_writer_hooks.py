@@ -1,5 +1,6 @@
 """Run on Linux with real PHP/flock; no application DB or external HTTP calls."""
 import fcntl
+import hashlib
 import importlib.util
 import json
 import os
@@ -119,6 +120,61 @@ class StagingWriterProtocolTest(unittest.TestCase):
     def test_unrelated_root_is_rejected_before_inspecting_state(self):
         with self.assertRaisesRegex(RuntimeError, 'explicit staging root'):
             site.validate('/home/codecraf/production')
+
+    def test_deployment_cron_pins_are_complete_sha256_digests(self):
+        self.assertEqual(set(site.CRON_SHA256), {'scheduler', 'worker'})
+        for digest in site.CRON_SHA256.values():
+            self.assertRegex(digest, r'^[0-9a-f]{64}$')
+
+    def test_changed_cron_writer_is_rejected_after_valid_inventory(self):
+        scripts = self.base/'cron'
+        scripts.mkdir()
+        original = b'#!/bin/bash\nexit 0\n'
+        for kind in ('scheduler', 'worker'):
+            (scripts/f'{kind}.sh').write_bytes(original)
+        pins = {kind: hashlib.sha256(original).hexdigest() for kind in ('scheduler', 'worker')}
+        with patch.object(site, 'CRON_SHA256', pins):
+            site.verify_cron_scripts(scripts)
+            (scripts/'worker.sh').write_bytes(original+b'exec unexpected-writer\n')
+            with self.assertRaisesRegex(RuntimeError, 'Cron entry script changed'):
+                site.verify_cron_scripts(scripts)
+
+    def test_invalid_cron_digest_is_rejected_before_reading_scripts(self):
+        with patch.object(site, 'CRON_SHA256', {'scheduler': 'f'*65}):
+            with self.assertRaisesRegex(RuntimeError, 'Invalid pinned cron checksum'):
+                site.verify_cron_scripts(self.base/'absent')
+
+    def capacity_state(self, rows):
+        helper = json.dumps(str(SITE/'capacity-state.php'))
+        payload = json.dumps(json.dumps(rows))
+        result = subprocess.run([PHP, '-r', '$check=require '+helper+';echo json_encode($check(json_decode('+payload+')));'],
+                                capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_lazy_null_capacity_is_preserved_as_unknown(self):
+        rows = [{'capacity_company_id': 1, 'stored_managed': None, 'stored_total': 7,
+                 'actual_managed': 3, 'actual_total': 7},
+                {'capacity_company_id': 2, 'stored_managed': 0, 'stored_total': None,
+                 'actual_managed': 0, 'actual_total': 9}]
+        result = self.capacity_state(rows)
+        self.assertTrue(result['valid'])
+        self.assertEqual(result['uninitialized_managed'], 1)
+        self.assertEqual(result['uninitialized_total'], 1)
+        self.assertEqual(result['drift_rows'], 0)
+
+    def test_numeric_capacity_drift_and_malformed_values_are_rejected(self):
+        for stored in (2, -1, 'not-a-count'):
+            result = self.capacity_state([{'capacity_company_id': 1, 'stored_managed': stored,
+                                          'stored_total': 7, 'actual_managed': 3, 'actual_total': 7}])
+            self.assertFalse(result['valid'])
+            self.assertEqual(result['drift_rows'], 1)
+
+    def test_missing_capacity_row_is_not_a_lazy_null_counter(self):
+        result = self.capacity_state([{'capacity_company_id': None, 'stored_managed': None,
+                                      'stored_total': None, 'actual_managed': 0, 'actual_total': 0}])
+        self.assertFalse(result['valid'])
+        self.assertEqual(result['missing_rows'], 1)
 
     def test_unknown_legacy_worker_refuses_pause_before_creating_marker(self):
         with patch.object(site, 'legacy_pending', return_value=[123]), patch.object(site, 'state') as inspect:

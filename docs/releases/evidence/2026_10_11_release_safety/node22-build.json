@@ -1,0 +1,51 @@
+{
+  "kind": "exact_committed_application_with_observed_node22_build",
+  "application_commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "node_version": "22.23.3",
+  "manifest": {
+    "application": "NordiPass",
+    "format_version": 2,
+    "commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+    "ref": "master",
+    "built_at": "2026-10-11T07:31:44.180598+00:00",
+    "php_version": "8.4.21",
+    "node_version": "22.23.3",
+    "catalog_capacity_schema": "table-v1",
+    "application_sha256": "23cbeb089bee74750783a742d8cabf89c4482fad0a80bf346f1df48c8694ab4d",
+    "dependencies_sha256": "39f8dd9af9dfe698f8a0bae498afd0574fae825b9f3a408425c96c228dc64f5e"
+  },
+  "artifact": "D:\\laravel\\nordipass\\storage\\framework\\release-20261011\\nordipass-20261011-fab8ee1-node22.tar.gz",
+  "sha256": "5fdce6f2d5e2455c5d18dc9d596097d06779908a18e70aea4167da9ec64726f9",
+  "bytes": 10066312,
+  "packaging_tool_sha256": "72f327f78ccecd7e36272030a0d0ea7c6418db31e0461b50fbc2a6a7b8fcd566",
+  "package_lock_sha256": "0a300ffdc0adb296d70808016c521632689098f3c99547a6cdce71394fab255e",
+  "node_download_url": "https://nodejs.org/dist/v22.23.3/node-v22.23.3-win-x64.zip",
+  "node_download_sha256": "2b0ff57b049cda1bbcea2240eec20467018713c1efe1f7360c2681859b90ed71",
+  "npm_ci_ignore_scripts": true,
+  "frontend_build_exit": 0,
+  "frontend_tests": 12,
+  "frontend_test_failures": 0,
+  "generated_files": {
+    "public/build/manifest.json": "91db1630de97abd40c36ddb7abe77b174a00cdb0a102444ba45cf57c15aebea2",
+    "public/build/assets/app-C7xwK3p5.js": "af55330f1b73e155d4484e4ef72cb6ea93a53641a32bf1153d1064dfd20a6ee5",
+    "public/build/assets/app-CY5BP5Kw.css": "5858487f02678ed39cd30e7b25dae502caf4c1c6cdce74adc9e1862775c593d5"
+  },
+  "frontend_vendor_inputs": {
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/bootstrap-3.blade.php": "2205f52d941e60016202d99ef30b14a2a9a7035ed07540101b95edf912b0161f",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/bootstrap-4.blade.php": "1d23c366f66dc8550df37a12fcdd289fe70d515ea342823c6384dc1c560ef576",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/bootstrap-5.blade.php": "2244fd7e496ee95bc1f77de488aa2175cf41421bfe1b98325cd1104e6fb55463",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/semantic-ui.blade.php": "65c3c25864a35c7cca8db328a26cd63be69d1313e455c2021bbea5dfcc940ce6",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-bootstrap-3.blade.php": "292420c1e358e01e13ec8ac540b2d17f7812d058d46da1f720c5463c7aa55aee",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-bootstrap-4.blade.php": "d3d6c6816c024f603d5273987c22bdccc84dc77e3bb2a3c8b8dc4fa20adc72c0",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-bootstrap-5.blade.php": "d528ba0779bfb7f1b0a89d09c1ca39d733a20ebf0fc421b226f41dfe11c2c8a6",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-tailwind.blade.php": "b3980b073195d6231bb36b51349e17baf1c9d2380e372648119878b6a515bbb4",
+    "vendor/laravel/framework/src/Illuminate/Pagination/resources/views/tailwind.blade.php": "b2479608dfe0277fd8d0da3624fe64d1c4e89d220ef2b02e4a94bdd0b44988f6"
+  },
+  "compiled_runtime_views_excluded": true,
+  "same_frontend_bytes_as_previous_artifact": false,
+  "backend_and_locked_vendor_bytes_unchanged": true,
+  "application_git_blobs_unchanged": true,
+  "active_release_changed": false,
+  "production_changed": false,
+  "paid_actions_performed": false
+}

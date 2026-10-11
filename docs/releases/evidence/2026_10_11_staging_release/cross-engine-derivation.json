@@ -1,0 +1,14 @@
+{
+  "kind": "explicit_cross_engine_test_fixture_derivation",
+  "backup_id": "533a0240-0d38-4a0d-b3ee-085de520c7b4",
+  "database": "codecraf_np_boundary_20261009",
+  "transformed_check_count": 14,
+  "reverse_transformation_byte_identical": true,
+  "business_rows_and_trigger_logic_byte_identical": true,
+  "source_sql_sha256": "15e816ea6c4e3f5f263a53c94c1c2e86718baa68c4c4e2c489829be24a2eb198",
+  "derived_sql_sha256": "1cfeeeb04a5fdcaed68b4c6f0ddf34520d3766e506020332f72e091e0d1d7ce5",
+  "original_backups_retained": true,
+  "packaged_helper_sha256": "4978e6aad47dba1c4a6c327a0c94e57b97a6c911a817008c67dbed6a8934dc5b",
+  "package_sha256": "4f95a9af656ee70d3fcc98ed9a02b0d72c54580ecf80c07de46ff970a298c9dd",
+  "package_bytes": 7642093
+}

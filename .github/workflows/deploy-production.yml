@@ -58,13 +58,14 @@ jobs:
           DEPLOY_VERIFY_WRITERS_STOPPED: ${{ vars.DEPLOY_VERIFY_WRITERS_STOPPED }}
           DEPLOY_RESUME_WRITERS: ${{ vars.DEPLOY_RESUME_WRITERS }}
           DEPLOY_VERIFY_BACKUP: ${{ vars.DEPLOY_VERIFY_BACKUP }}
+          DEPLOY_VERIFY_RELEASE: ${{ vars.DEPLOY_VERIFY_RELEASE }}
         run: |
           set -Eeuo pipefail
           [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$DEPLOY_USER" =~ ^[a-zA-Z0-9._-]+$ ]]
           [[ "${DEPLOY_PORT:-22}" =~ ^[0-9]{1,5}$ ]]
           PORT=$((10#${DEPLOY_PORT:-22}))
           (( PORT >= 1 && PORT <= 65535 ))
-          for path in "$DEPLOY_PATH" "$DEPLOY_PAUSE_WRITERS" "$DEPLOY_VERIFY_WRITERS_STOPPED" "$DEPLOY_RESUME_WRITERS" "$DEPLOY_VERIFY_BACKUP"; do
+          for path in "$DEPLOY_PATH" "$DEPLOY_PAUSE_WRITERS" "$DEPLOY_VERIFY_WRITERS_STOPPED" "$DEPLOY_RESUME_WRITERS" "$DEPLOY_VERIFY_BACKUP" "$DEPLOY_VERIFY_RELEASE"; do
             [[ "$path" =~ ^/[a-zA-Z0-9_./-]+$ && "$path" != / ]]
           done
           [[ "$DEPLOY_HEALTH_URL" =~ ^https?:// && "$DEPLOY_HEALTH_URL" != *[[:space:]]* ]]
@@ -84,7 +85,7 @@ jobs:
             --checksum-file "$DEPLOY_PATH/nordipass-release.tar.gz.sha256" --app-root "$DEPLOY_PATH" \
             --health-url "$DEPLOY_HEALTH_URL" --pause-writers "$DEPLOY_PAUSE_WRITERS" \
             --verify-writers-stopped "$DEPLOY_VERIFY_WRITERS_STOPPED" --resume-writers "$DEPLOY_RESUME_WRITERS" \
-            --verify-backup "$DEPLOY_VERIFY_BACKUP"
+            --verify-backup "$DEPLOY_VERIFY_BACKUP" --verify-release "$DEPLOY_VERIFY_RELEASE"
           ssh -i deploy_key -o StrictHostKeyChecking=yes -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "$REMOTE_COMMAND"
         shell: bash
 

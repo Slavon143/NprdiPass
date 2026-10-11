@@ -66,6 +66,7 @@ jobs:
             --source . --artifact nordipass-release.tar.gz \
             --commit "$RELEASE_COMMIT" --ref "$RELEASE_REF" \
             --php-version "$(php -r 'echo PHP_VERSION;')" \
+            --node-version "$(node -p 'process.versions.node')" \
             --built-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
       - name: Upload artifact
