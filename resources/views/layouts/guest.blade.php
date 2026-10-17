@@ -19,6 +19,7 @@
             </div>
 
             <div class="np-card w-full sm:max-w-md mt-6 px-6 py-6 overflow-hidden">
+                <div class="mb-5 flex justify-end"><x-language-selector /></div>
                 {{ $slot }}
             </div>
         </div>

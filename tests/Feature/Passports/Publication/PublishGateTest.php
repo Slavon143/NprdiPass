@@ -36,6 +36,7 @@ use App\Models\User;
 use App\Services\Passports\DppPayloadNormalizer;
 use App\Services\Passports\Readiness\PassportReadinessEvaluator;
 use App\Services\Passports\Readiness\ReadinessContextBuilder;
+use App\Services\Passports\Readiness\Rules\DppIdentityNamePresent;
 use App\Tenancy\Contracts\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -624,7 +625,7 @@ class PublishGateTest extends TestCase
 
     public function test_changed_regulatory_requirements_block_until_explicit_refresh_without_rewriting_history(): void
     {
-        $profile = DppProfile::query()->where('key', 'generic-espr')->where('version', 1)->sole();
+        $profile = $this->createIdentityOnlyProfile('fixture-changing-profile');
         $this->product->dppProfiles()->attach($profile);
         $this->fillAllSections();
         $passport = $this->draftPassport();
@@ -701,7 +702,7 @@ class PublishGateTest extends TestCase
     public function test_a_frozen_future_requirement_becomes_a_blocker_on_its_application_date(): void
     {
         $this->travelTo(CarbonImmutable::parse('2027-02-17 12:00:00'));
-        $profile = DppProfile::query()->where('key', 'generic-espr')->where('version', 1)->sole();
+        $profile = $this->createIdentityOnlyProfile('fixture-dated-profile');
         $profile->requirements()->create(['key' => 'dated.missing', 'title' => 'Dated evidence',
             'level' => 'required', 'rule_code' => 'dated.missing', 'effective_from' => '2027-02-18']);
         $this->product->dppProfiles()->attach($profile);
@@ -791,6 +792,10 @@ class PublishGateTest extends TestCase
     public function test_public_json_uses_only_published_public_fields_and_distinct_cache_variants(): void
     {
         $this->fillAllSections();
+        $this->fillSection(DppSectionKey::ManufacturerAndOperator, [
+            'manufacturer_address' => 'Manufacturer postal address', 'manufacturer_phone' => '+46 12345',
+            'importer_display_name' => 'Published importer', 'importer_email' => 'importer@example.test',
+        ]);
         $passport = app(UpdateProductPassportSettingsAction::class)->handle(
             $this->actor, $this->company, $this->product, $this->draftPassport(), ['regulatory_context' => [
                 'market' => 'EU', 'product_type' => 'electrical', 'passport_level' => 'model',
@@ -801,10 +806,13 @@ class PublishGateTest extends TestCase
             $passport, $passport->currentDraftVersion->draft_revision, true);
         $url = '/p/'.$result->passport->public_id;
         $html = $this->get($url)->assertOk();
+        $html->assertSee('Manufacturer postal address')->assertSee('Published importer');
         $json = $this->getJson($url)->assertOk()->assertHeader('Content-Type', 'application/json')
             ->assertHeader('Vary', 'Accept, Accept-Encoding')
             ->assertJsonPath('format', 'nordipass-public-passport-v1')
-            ->assertJsonPath('sections.identity.public_name', 'Test Product Name');
+            ->assertJsonPath('sections.identity.public_name', 'Test Product Name')
+            ->assertJsonPath('sections.manufacturer_and_operator.manufacturer_phone', '+46 12345')
+            ->assertJsonPath('sections.manufacturer_and_operator.importer_display_name', 'Published importer');
         $body = $json->getContent();
         foreach (['PRIVATE CLASSIFICATION EVIDENCE', 'regulatory_context', 'readiness_evidence', 'company_id', 'storage_path', 'created_by'] as $private) {
             $this->assertStringNotContainsString($private, $body);
@@ -815,7 +823,58 @@ class PublishGateTest extends TestCase
         $this->flushHeaders();
         $this->revision = $result->newDraftVersion->draft_revision;
         $this->fillSection(DppSectionKey::Identity, ['public_name' => 'PRIVATE NEW DRAFT', 'public_description' => 'Private draft']);
+        $this->fillSection(DppSectionKey::ManufacturerAndOperator, ['importer_display_name' => 'PRIVATE NEW IMPORTER']);
         $this->getJson($url)->assertOk()->assertHeader('ETag', $etag)
-            ->assertJsonPath('sections.identity.public_name', 'Test Product Name');
+            ->assertJsonPath('sections.identity.public_name', 'Test Product Name')
+            ->assertJsonPath('sections.manufacturer_and_operator.importer_display_name', 'Published importer');
+    }
+
+    public function test_regulatory_profile_cannot_publish_using_only_pilot_checks_or_claimed_metadata(): void
+    {
+        $this->fillAllSections();
+        $profile = DppProfile::create(['key' => 'fixture-regulatory', 'name' => 'Regulatory fixture', 'version' => 1,
+            'status' => 'active', 'metadata' => ['publication_mode' => 'regulatory', 'coverage' => 'complete']]);
+        $this->product->dppProfiles()->attach($profile, ['priority' => 0]);
+        $passport = app(UpdateProductPassportSettingsAction::class)->handle($this->actor, $this->company, $this->product,
+            $this->draftPassport(), ['refresh_profile' => true], $this->revision);
+        $this->revision = $passport->currentDraftVersion->draft_revision;
+        $this->get(route('catalog.products.passport.publish-confirm', $this->product->uuid))->assertOk()
+            ->assertSee('data-testid="passport-assurance-statuses"', false);
+        try {
+            $this->publishAction()->handle($this->actor, $this->company, $this->product, $passport, $this->revision, true);
+            $this->fail('A metadata claim cannot enable regulatory publication.');
+        } catch (ValidationException $exception) {
+            $this->assertContains('regulatory.publication.coverage', $exception->errors()['blockers']);
+        }
+        $this->assertNull($passport->fresh()->current_published_version_id);
+        $this->assertSame(0, $passport->versions()->where('status', 'published')->count());
+    }
+
+    public function test_generic_profile_requires_recorded_safety_and_document_evidence_before_publication(): void
+    {
+        $profile = DppProfile::query()->where('key', 'generic-espr')->where('version', 1)->sole();
+        $this->product->dppProfiles()->attach($profile);
+        $this->fillAllSections();
+        $passport = $this->draftPassport();
+        try {
+            $this->publishAction()->handle($this->actor, $this->company, $this->product, $passport, $this->revision, true);
+            $this->fail('Populated text does not replace recorded review and evidence.');
+        } catch (ValidationException $exception) {
+            foreach (['dpp.safety.reviewed', 'documents.references.valid', 'certificates.not_expired'] as $code) {
+                $this->assertContains($code, $exception->errors()['blockers']);
+            }
+        }
+        $this->assertNull($passport->fresh()->current_published_version_id);
+    }
+
+    private function createIdentityOnlyProfile(string $key): DppProfile
+    {
+        // These fixtures isolate refresh/date boundaries. They do not claim
+        // to provide the document evidence required by generic-espr.
+        $profile = DppProfile::create(['key' => $key, 'name' => 'Synthetic identity profile', 'version' => 1, 'status' => 'active']);
+        $profile->requirements()->create(['key' => 'fixture.identity', 'title' => 'Public identity', 'level' => 'required',
+            'rule_code' => 'dpp.identity.name.present', 'rule_class' => DppIdentityNamePresent::class]);
+
+        return $profile;
     }
 }

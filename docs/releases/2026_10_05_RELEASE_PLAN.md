@@ -4,6 +4,13 @@ This is the current checklist. The six-row table in the 2026-10-04 release gates
 
 ## October 9 current status
 
+Subsequent [canonical executable acceptance](2026_10_09_CANONICAL_ARTIFACT_ACCEPTANCE.md)
+fixes source commit `3e6ae56ba20585b9fd17a82e1b94967e39467f02` without push,
+verifies its 9989713-byte executable locally and on the target, and accepts the
+real download-back copy. Target isolated bootstrap/caches pass; active staging
+was not switched. This paragraph is post-build evidence outside the fixed
+executable source revision.
+
 See [current continuation and qualifications](2026_10_09_RELEASE_CONTINUATION.md).
 Earlier counts, quality results and unresolved items below retain their dated
 historical meaning; this section records the latest completed subitems.
@@ -13,7 +20,7 @@ historical meaning; this section records the latest completed subitems.
 | Supplier workload | Native preview/apply/idempotent replay and CSV/XLSX export for all 19134 original Hager/Berker/Elcom first-sheet records, with independently verified derived CSV inputs; all identities and 133938 attribute values compared. Native ETIM classification accepted for 405 Elcom products / 24 categories. Original ELKO PDF retained and incomplete draft publication correctly refused. | Real legal profile/evidence acceptance for the intended sectors; technical classification and an incomplete draft do not establish ESPR or battery compliance. |
 | Representative recovery | Native full local backup/isolated restore of 19135 products; 81.3 MB uncompressed SQL, 38800 audit rows, four import sources and a real document. Every row in 80 tables and 30 trigger definitions compared; native restored schema/counters pass. Larger original package's off-host round trip passes. A separately labelled cross-account trigger-owner derivative also passes full local restore and is checksum-verified on the target. | Prepared scoped database grant awaits action-time approval, then actual target MariaDB restore. Media/passport asset roots were empty, so high-volume asset recovery is not accepted. |
 | Hosting/tooling | Provider confirms Standard's nominal 15-minute PHP policy, no persistent workers and nonpersistent Redis; the bounded idle probe actually completed after 920 seconds, so the nominal limit cannot prove drain. Existing minute cron workers remain database-backed. Existing target Python 3.12.14 discovered; after adding database-snapshot exclusion, all 23 actual-Linux archive/lifecycle fixture tests pass without installing software or buying an upgrade. | Actual HTTP/cron/queue writer stop/drain/resume and backup hooks, canonical application update, failed-health and compatible rollback rehearsals. Fixture hooks are not site acceptance. |
-| Source/quality | Final full PHP suite passes: 2934 tests / 14017 assertions, exit 0. Pint, PHPStan, 12 JS regressions, production build, Composer validation/audit and production npm audit pass. Separate input candidate has 1066 source/build files and 89 locked production packages; source hashes agree. Release-test wrapper's stale Python test-count assertion fixed and focused regression passes. | Explicitly requested commit/fixed source revision, reviewed canonical executable archive, target installation of October 9 DPP migrations and final staging acceptance remain open. |
+| Source/quality | Final full PHP suite passes: 2934 tests / 14017 assertions, exit 0. Pint, PHPStan, 12 JS regressions, production build, Composer validation/audit and production npm audit pass. Explicitly authorised local source commit fixed; canonical executable has 1065 committed/build inputs and 89 locked production packages. Runtime SQLite copy excluded, with focused regressions. Archive, target retention/isolated bootstrap and real off-host download-back verification pass. | Actual canonical application deployment/rollback, target installation of October 9 DPP migrations and final staging acceptance remain open. |
 
 The full gate passed and the user explicitly authorised one local source commit
 without push. No paid change, push or production deployment was performed. Full

@@ -1,6 +1,6 @@
 {
   "kind": "reviewed_fortnox_nonproduction_source",
-  "reviewed_application_commit": "fab8ee1ea47fd8f52b39884a3149b826c0dcb51e",
+  "reviewed_application_commit": "fe85adb955deee7cf18786063a9ecf302df0b99e",
   "files": {
     "app/Actions/Fortnox/CompleteFortnoxCallbackAction.php": "1037efdbae5b4f8828d5b119ed0f9031e15b2be9fe7f4e4fb15f99ac587833ea",
     "app/Actions/Fortnox/ConnectFortnoxAction.php": "571e39f0471d10ce3fd775b1cdd2261f4f14d91886e88591f23f1d0358aa6cd6",
@@ -13,6 +13,6 @@
     "app/Services/Fortnox/FortnoxSyncService.php": "f296fe155aa6b8511ca619a663d1787a9f17aadf10e163500e57653eb48cbc11",
     "app/Services/Fortnox/HttpFortnoxProvider.php": "6b75bfdd5880cf31f715a618a62ee90782c1cb64595744e012bd030d89b56341",
     "config/fortnox.php": "d4e956d1d76e0ab2c7ff3df1387968dd3137c675036ed826886c8c51ae1bb499",
-    "resources/views/integrations/fortnox/index.blade.php": "684ab3bfe7aef14b38cb207f50337ebe264d1cda691af98d56d0478a1ee81399"
+    "resources/views/integrations/fortnox/index.blade.php": "738163ccad1ec043715effa8e5d7bcd1afce1472fa2765a1d90e8ddee0098d28"
   }
 }

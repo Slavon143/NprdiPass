@@ -45,7 +45,7 @@
                                 </a>
                             </td>
                             <td class="px-4 py-3 text-sm text-slate-600">
-                                <x-badge tone="slate">{{ $document->currentVersion?->document_type?->label() ?? '-' }}</x-badge>
+                                <x-badge tone="slate">{{ __($document->currentVersion?->document_type?->label() ?? '-') }}</x-badge>
                             </td>
                             <td class="px-4 py-3 text-sm text-slate-600">{{ strtoupper($document->currentVersion?->language ?? '-') }}</td>
                             <td class="px-4 py-3">

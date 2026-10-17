@@ -34,11 +34,11 @@
         <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-slate-900">{{ __('Current version') }} #{{ $document->currentVersion->version_number }}</h2>
             <dl class="mt-4 grid gap-4 sm:grid-cols-2">
-                <div><dt class="text-sm text-slate-500">{{ __('Type') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->document_type->label() }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Type') }}</dt><dd class="font-semibold text-slate-900">{{ __($document->currentVersion->document_type->label()) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('Language') }}</dt><dd class="font-semibold text-slate-900">{{ strtoupper($document->currentVersion->language) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('Visibility') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->visibility->value }}</dd></div>
-                <div><dt class="text-sm text-slate-500">{{ __('Review') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->review_status->label() }}</dd></div>
-                <div><dt class="text-sm text-slate-500">{{ __('Approval') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->approval_status->label() }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Review') }}</dt><dd class="font-semibold text-slate-900">{{ __($document->currentVersion->review_status->label()) }}</dd></div>
+                <div><dt class="text-sm text-slate-500">{{ __('Approval') }}</dt><dd class="font-semibold text-slate-900">{{ __($document->currentVersion->approval_status->label()) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('Expiry state') }}</dt><dd class="font-semibold text-slate-900">{{ str_replace('_', ' ', $document->currentVersion->expiryState()->value) }}</dd></div>
                 <div><dt class="text-sm text-slate-500">{{ __('File') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->original_filename }} ({{ number_format($document->currentVersion->size_bytes / 1024, 1) }} KB)</dd></div>
                 @if($document->currentVersion->certificate_number)<div><dt class="text-sm text-slate-500">{{ __('Certificate number') }}</dt><dd class="font-semibold text-slate-900">{{ $document->currentVersion->certificate_number }}</dd></div>@endif
@@ -132,7 +132,7 @@
                         <x-input-label for="new_document_type" :value="__('Type')" />
                         <select id="new_document_type" name="document_type" class="mt-1 block w-full rounded-lg border-slate-300" required>
                             @foreach(\App\Enums\Documents\ProductDocumentType::cases() as $type)
-                            <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}">{{ __($type->label()) }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -186,7 +186,7 @@
                             <td class="px-4 py-2 text-sm font-mono text-slate-600">{{ $version->version_number }}</td>
                             <td class="px-4 py-2 text-sm text-slate-900">{{ $version->title }}</td>
                             <td class="px-4 py-2 text-sm text-slate-500">{{ $version->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="px-4 py-2 text-sm text-slate-500">{{ $version->review_status->label() }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-500">{{ __($version->review_status->label()) }}</td>
                             <td class="px-4 py-2 text-right">
                                 <a href="{{ route('catalog.products.documents.versions.download', [$product->uuid, $document->uuid, $version->uuid]) }}" class="text-xs font-semibold text-indigo-700 hover:text-indigo-900">{{ __('Download') }}</a>
                             </td>

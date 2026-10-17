@@ -61,6 +61,7 @@ use App\Http\Controllers\ShowcaseController;
 use App\Http\Controllers\ShowCompanyInvitationController;
 use App\Http\Controllers\StoreCompanyInvitationController;
 use App\Http\Controllers\SuspendedCompanyController;
+use App\Http\Controllers\UiLocaleController;
 use App\Http\Controllers\UpdateCompanyMemberRoleController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
@@ -80,6 +81,8 @@ Route::withoutMiddleware([
 Route::post('/stripe/webhook', StripeWebhookController::class)
     ->middleware(['feature.billing', 'throttle:stripe-webhook'])
     ->name('stripe.webhook');
+
+Route::post('/language', UiLocaleController::class)->name('ui-language.update');
 
 Route::middleware(['invitation.secure', 'throttle:invitations.verify'])->group(function (): void {
     Route::get('/invitations/{invitation:uuid}', ShowCompanyInvitationController::class)
@@ -373,6 +376,8 @@ Route::middleware([
             Route::get('/callback', [FortnoxController::class, 'callback'])->middleware('throttle:fortnox-callback')->name('callback');
             Route::post('/disconnect', [FortnoxController::class, 'disconnect'])->name('disconnect');
             Route::post('/sync', [FortnoxController::class, 'sync'])->middleware('throttle:fortnox-sync')->name('sync');
+            Route::post('/full-preview', [FortnoxController::class, 'previewFull'])->middleware('throttle:fortnox-sync')->name('full-preview');
+            Route::post('/full-import', [FortnoxController::class, 'importFull'])->middleware('throttle:fortnox-sync')->name('full-import');
             Route::post('/conflicts/{conflict}/resolve', [FortnoxController::class, 'resolve'])->whereUuid('conflict')->name('conflicts.resolve');
         });
     });

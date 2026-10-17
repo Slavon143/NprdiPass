@@ -22,7 +22,7 @@
 
 <div id="{{ $fieldId }}" class="scroll-mt-24">
     <label class="block text-sm font-semibold text-slate-900" for="{{ $inputId }}">
-        {{ $field->label() }}
+        {{ __($field->label()) }}
     </label>
     @if ($field->help() !== null)
         <p class="mt-1 text-xs leading-5 text-slate-500">{{ __($field->help()) }}</p>

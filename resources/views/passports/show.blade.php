@@ -11,6 +11,9 @@
         <a href="{{ route('catalog.products.show', $product->uuid) }}" class="text-sm font-semibold text-indigo-700 hover:underline">{{ __('Back to Product') }}</a>
     </div>
 
+    @if ($readiness !== null)
+        @include('passports.partials.assurance-statuses')
+    @endif
     @if($readinessHistorical ?? false)
         <div class="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
             {{ __('Readiness recalculation and passport editing are currently unavailable.') }}

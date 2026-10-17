@@ -333,7 +333,7 @@
                             @else
                                 <svg class="h-4 w-4 shrink-0 text-slate-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
                             @endif
-                            <span class="min-w-0 flex-1 truncate">{{ $sections[$key]->key->label() }}</span>
+                            <span class="min-w-0 flex-1 truncate">{{ __($sections[$key]->key->label()) }}</span>
                             <span class="shrink-0 text-xs text-slate-400" data-section-status="{{ $key }}">
                                 @if (! in_array($key, $enabledSections, true))
                                     {{ __('Optional') }}
@@ -435,7 +435,7 @@
                             </select>
                         @endif
                     </div>
-                    <h2 class="mt-2 text-xl font-bold tracking-tight text-slate-900">{{ $activeDef->key->label() }}</h2>
+                    <h2 class="mt-2 text-xl font-bold tracking-tight text-slate-900">{{ __($activeDef->key->label()) }}</h2>
                     <p class="mt-1 text-sm text-slate-500">{{ $sectionDescriptions[$activeSection] ?? __('Passport information for this area.') }}</p>
                 </div>
                 @if ($canManage && ! $activeDef->core && $activeEnabled)

@@ -53,9 +53,53 @@ Source metadata has an explicit boundary: new products start as `draft`; updates
 
 SKU, GTIN and MPN target the product's default variant. Products are still matched by normalized slug; an identifier does not replace this matching key. SKU uses the ordinary variant normalization and is unique within the company, as is checksum-valid GTIN. GTIN remains text, including leading zeros; MPN is not unique. Preview detects duplicates across batches and existing secondary variants. Apply uses database uniqueness and per-row transactions to roll back the complete row on a later conflict. An unmapped identifier is preserved on update; a mapped blank clears it. Export includes these identifiers: XLSX uses text cells, while CSV retains formula-injection escaping, so values starting with formula characters may gain a protective apostrophe.
 
+## Import formats and localisation
+
+Import previews accept optional `number_format: dot|comma` (default `dot`),
+independent of the interface language. The format applies only to mapped decimal
+attributes, with at most four decimal places and no grouping, units or exponent
+notation. Numeric XLSX cells use a decimal point; source text is interpreted using
+the explicit selection. Original row data is retained. Import resources expose
+`number_format`; preview records expose `normalizations` entries with `field`,
+`source`, and `normalized`. The persisted plan includes the selected format and
+apply uses the previewed value. Templates store it in `defaults.number_format`.
+
+The UI and passport locale registries support `en`, `sv`, and `de`. A UI preference
+does not change passport authoring languages or published snapshots. Public HTML
+and JSON select languages from the published snapshot, expose `Content-Language`,
+and retain locale-specific cache identities without UI session cookies.
+
 ## Fortnox integration
 
 Fortnox endpoints are hidden until `FEATURE_FORTNOX_INTEGRATION=true`. OAuth connect/callback is a web flow at `/settings/integrations/fortnox`; tokens are stored encrypted at rest and never appear in API responses. A manual sync (`fortnox.write`) fetches articles changed after the last sync cursor, applies the ADR-R3-006 source-of-truth matrix, and records conflicts that stay open until explicitly resolved with `fortnox` (apply provider value) or `nordipass` (keep catalog value and record a per-field override). Provider failures return `fortnox_provider_error` with HTTP 502 and a `retryable` flag.
+
+Sync resources additionally expose `sync_mode` (`incremental`, `full`, or `null`
+for historical unrecorded runs), `pages_fetched` (nullable for history),
+`watermark_before`, `pagination_complete`, and `next_page`. Zero fetched articles
+after an incremental filter mean no changes since the watermark, not an empty
+Fortnox catalogue. A capped run is incomplete even when its segment status is
+`completed`; continue the existing attempt rather than advancing the watermark.
+
+The nonproduction web flow adds `POST /settings/integrations/fortnox/full-preview`
+and `POST /settings/integrations/fortnox/full-import`. Preview exhaustively reads
+the visible catalogue within the safety cap, shows mapped/unmapped totals and
+pages, and issues a ten-minute, single-use server-side preview token scoped to
+the actor and current company. Confirmation checks the same connection UUID
+and committed watermark under the sync mutex/row lock. Preview counts are not
+guaranteed mutation totals: provider data may change before or during import.
+
+Full import uses no modified-since filter and preserves mappings, applied values,
+local overrides, conflict checks and the committed watermark until all pages
+complete. Capped attempts resume in their original mode; failed full attempts
+retry a complete scan idempotently. Full preview/import refuse production before
+provider work. The existing nonproduction subscription/client guards remain in
+force; new authorization is not enabled by this feature. The legacy explicitly
+confirmed `fortnox:resync` reset command remains a separate maintenance operation
+and is not used by the new web flow.
+Scans additionally have independent page limits: `FORTNOX_SYNC_MAX_PAGES_PER_RUN`
+for resumable segments and `FORTNOX_RECONCILIATION_MAX_PAGES` for exhaustive
+preview/reconciliation (both default to 1000). Non-advancing cursors are rejected;
+empty pages cannot cause an unbounded scan or reset a recorded resume cursor.
 
 ## Webhooks
 
@@ -196,6 +240,40 @@ unavailable or unfrozen regulatory profile creates the
 `regulatory.profile.current` blocker during direct readiness and publication.
 Operational `nordipass-pilot` history retains its compatibility behavior. Product
 list batches do not perform this live check; direct readiness and publication do.
+
+The pilot `dpp.safety.reviewed` rule is labelled **Safety information present**:
+content alone is not a recorded review. When a selected non-pilot profile explicitly
+requires that rule, a referenced approved safety-review document must identify
+the current passport UUID, draft revision and reviewed `safety` section in its
+metadata (`passport_uuid`, integer `draft_revision`, `reviewed_sections`). Its
+`evidence_type` must be `safety_review`; review/approval actors and timestamps,
+product/tenant ownership, file availability and validity dates are checked.
+Any subsequent draft edit requires new review evidence for the new revision.
+
+Required sector document/certificate checks cannot pass without usable reviewed
+evidence; required sector material checks cannot pass an empty or disabled
+materials section. Seeded `nordipass-pilot` requirements retain operational
+validation; explicit `evaluation_config.evidence` adds evidence checks there too.
+Profile requirements may add `evaluation_config.evidence` with `document_types`
+(a nonempty list of existing document types), `evidence_type`, boolean
+`bind_to_draft`, and `party_role` (`manufacturer`, `importer`, or
+`responsible_operator`). These constraints only add checks; they cannot weaken
+publication integrity. Unsupported keys or types fail closed.
+
+`DppPartyIdentityPresent` / `dpp.party.identity.present` can be assigned as a
+profile requirement with `context_config.required_party_role`. It checks that
+role's name, postal address and contact channel separately. Manufacturer contact
+never falls back to importer/operator contact. The passport schema additionally
+supports manufacturer postal address/phone/registration ID and separate importer
+name, postal address, email, website, phone, country and registration ID. Party
+details do not by themselves verify an organisation.
+
+Profiles declaring `metadata.publication_mode: regulatory` receive
+`regulatory.publication.coverage`, which blocks publication while complete sector
+evidence, access and registry capability remain unimplemented. A metadata claim
+of complete coverage and warning acknowledgement cannot bypass this blocker.
+The API envelope and error codes are unchanged. UI publication, sector and registry
+statuses are separate; the registry status remains pending, without a receipt.
 
 Requirement application dates are inclusive. Readiness rule `safe_context`
 retains `requirement_source_version`, `requirement_effective_from`,

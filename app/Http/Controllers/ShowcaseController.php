@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Passports\Qr\PassportQrRenderer;
+use App\Support\UiLocale;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
@@ -46,7 +47,7 @@ class ShowcaseController extends Controller
     private function locale(Request $request): string
     {
         $locale = $request->query('lang', 'en');
-        abort_unless(is_string($locale) && in_array($locale, ['en', 'sv'], true), 404);
+        abort_unless(UiLocale::supports($locale), 404);
 
         return $locale;
     }

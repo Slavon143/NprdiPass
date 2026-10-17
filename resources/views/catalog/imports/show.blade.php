@@ -24,11 +24,19 @@
             <section class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 class="text-lg font-semibold">{{ __('Column mapping') }}</h2><p class="mt-1 text-sm text-slate-600">{{ __('Name is required. Slug is generated from name when it is not mapped.') }}</p>
                 <form method="POST" action="{{ route('catalog.imports.preview', $job) }}" class="mt-5 space-y-4" data-testid="import-preview-form">@csrf
+                    <div class="max-w-xl">
+                        <x-input-label for="number_format" :value="__('imports.number_format')" />
+                        <select id="number_format" name="number_format" class="mt-1 block w-full rounded-lg border-slate-300">
+                            @foreach(['dot', 'comma'] as $format)<option value="{{ $format }}" @selected(old('number_format', $job->number_format?->value ?? 'dot') === $format)>{{ __('imports.'.$format) }}</option>@endforeach
+                        </select>
+                        <p class="mt-2 text-sm text-slate-600">{{ __('imports.format_help') }}</p>
+                    </div>
                     @if($templates->isNotEmpty())<div class="max-w-md"><x-input-label for="mapping_template" :value="__('Load saved mapping')" /><select id="mapping_template" class="mt-1 block w-full rounded-lg border-slate-300"><option value="">{{ __('Choose a template') }}</option>@foreach($templates as $template)<option value="{{ $template->uuid }}">{{ $template->name }}</option>@endforeach</select></div>@endif
                     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         @foreach($fields as $field)
                             @php $selected = $job->mapping[$field] ?? collect($job->headers)->first(fn($header) => str_replace([' ', '-'], '_', strtolower($header)) === $field); @endphp
                             @php $fieldLabel = str_starts_with($field, 'attribute:') ? 'Attribute: '.substr($field, 10) : ucwords(str_replace('_', ' ', $field)); @endphp
+                            @php $fieldLabel = __($fieldLabel); @endphp
                             <div><x-input-label :for="'mapping_'.$field" :value="$fieldLabel.($field === 'name' ? ' *' : '')" /><select id="mapping_{{ $field }}" name="mapping[{{ $field }}]" class="mt-1 block w-full rounded-lg border-slate-300"><option value="">{{ __('Not mapped') }}</option>@foreach($job->headers ?? [] as $header)<option value="{{ $header }}" @selected($selected === $header)>{{ $header }}</option>@endforeach</select></div>
                         @endforeach
                     </div>
@@ -42,12 +50,21 @@
         @endif
 
         @if($job->mapping && $canWrite)
-            <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><h2 class="font-semibold text-slate-900">{{ __('Reuse this mapping') }}</h2><form class="mt-3 flex flex-wrap gap-3" method="POST" action="{{ route('catalog.imports.templates.store') }}">@csrf<input name="name" required maxlength="255" class="min-w-72 rounded-lg border-slate-300" placeholder="{{ __('Template name') }}">@foreach($job->mapping as $field => $header)<input type="hidden" name="mapping[{{ $field }}]" value="{{ $header }}">@endforeach<x-secondary-button type="submit">{{ __('Save mapping template') }}</x-secondary-button></form></section>
+            <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><h2 class="font-semibold text-slate-900">{{ __('Reuse this mapping') }}</h2><form class="mt-3 flex flex-wrap gap-3" method="POST" action="{{ route('catalog.imports.templates.store') }}">@csrf<input name="name" required maxlength="255" class="min-w-72 rounded-lg border-slate-300" placeholder="{{ __('Template name') }}"><input type="hidden" name="number_format" value="{{ $job->number_format?->value ?? 'dot' }}">@foreach($job->mapping as $field => $header)<input type="hidden" name="mapping[{{ $field }}]" value="{{ $header }}">@endforeach<x-secondary-button type="submit">{{ __('Save mapping template') }}</x-secondary-button></form></section>
         @endif
 
         @if($job->invalid_rows > 0 || $job->skipped_rows > 0)<div class="flex justify-end"><a href="{{ route('catalog.imports.errors', $job) }}" class="text-sm font-semibold text-indigo-700">{{ __('Download row error report (CSV)') }}</a></div>@endif
 
         @if($job->records->isNotEmpty())
+            <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200" data-testid="import-number-normalizations">
+                <h2 class="font-semibold">{{ __('imports.conversions') }}</h2>
+                <p class="mt-2 text-sm text-slate-600">{{ __('imports.preview_format', ['format' => __('imports.'.($job->number_format?->value ?? 'dot'))]) }}</p>
+                @foreach($job->records as $record)
+                    @foreach($record->normalizations ?? [] as $conversion)
+                        <p class="mt-2 text-sm"><span>{{ __('Row') }} {{ $record->row_number }} · {{ $conversion['field'] }}:</span> <code>{{ $conversion['source'] }}</code> → <code>{{ $conversion['normalized'] }}</code></p>
+                    @endforeach
+                @endforeach
+            </section>
             <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200"><div class="border-b border-slate-200 px-6 py-4"><h2 class="font-semibold">{{ __('Preview rows') }}</h2></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50"><tr><th class="px-4 py-3 text-left">{{ __('Row') }}</th><th class="px-4 py-3 text-left">{{ __('Operation') }}</th><th class="px-4 py-3 text-left">{{ __('Name') }}</th><th class="px-4 py-3 text-left">{{ __('Slug') }}</th><th class="px-4 py-3 text-left">{{ __('Result') }}</th></tr></thead><tbody class="divide-y divide-slate-100">@foreach($job->records as $record)<tr><td class="px-4 py-3">{{ $record->row_number }}</td><td class="px-4 py-3">{{ $record->operation }}</td><td class="px-4 py-3">{{ $record->mapped_data['name'] ?? '—' }}</td><td class="px-4 py-3">{{ $record->mapped_data['slug'] ?? '—' }}</td><td class="px-4 py-3"><span class="font-medium {{ $record->errors->isEmpty() ? 'text-emerald-700' : 'text-rose-700' }}">{{ $record->status->value }}</span>@foreach($record->errors as $error)<p class="mt-1 max-w-xl text-xs text-rose-700">{{ $error->field ? $error->field.': ' : '' }}{{ $error->message }}</p>@endforeach</td></tr>@endforeach</tbody></table></div></section>
         @endif
     </div>
@@ -56,10 +73,13 @@
     @push('scripts')
         <script nonce="@cspNonce">
             (() => {
-                const templates = {{ Illuminate\Support\Js::from($templates->mapWithKeys(fn($template) => [$template->uuid => $template->mapping])) }};
+                const templates = {{ Illuminate\Support\Js::from($templates->mapWithKeys(fn($template) => [$template->uuid => ['mapping' => $template->mapping, 'number_format' => $template->defaults['number_format'] ?? 'dot']])) }};
                 document.getElementById('mapping_template')?.addEventListener('change', (event) => {
-                    const mapping = templates[event.target.value] ?? {};
-                    Object.entries(mapping).forEach(([field, header]) => {
+                    const template = templates[event.target.value];
+                    if (!template) return;
+                    document.getElementById('number_format').value = template.number_format;
+                    document.querySelectorAll('select[name^="mapping["]').forEach((select) => { select.value = ''; });
+                    Object.entries(template.mapping).forEach(([field, header]) => {
                         const select = document.getElementById(`mapping_${field}`);
                         if (select && [...select.options].some((option) => option.value === header)) select.value = header;
                     });

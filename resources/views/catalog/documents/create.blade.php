@@ -19,7 +19,7 @@
                     <select id="document_type" name="document_type" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                         <option value="">{{ __('Select type...') }}</option>
                         @foreach(\App\Enums\Documents\ProductDocumentType::cases() as $type)
-                        <option value="{{ $type->value }}" @if(old('document_type') === $type->value) selected @endif>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" @if(old('document_type') === $type->value) selected @endif>{{ __($type->label()) }}</option>
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('document_type')" class="mt-1" />

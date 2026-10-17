@@ -16,7 +16,16 @@ $app = require $root.'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $guard = $app->make(FortnoxSubscriptionGuard::class);
 $report = ['environment' => $app->environment(), 'oauth_enabled' => (bool) config('fortnox.nonproduction_oauth_enabled'),
-    'expected_tenant' => $guard->expectedTenantId(), 'no_external_requests_performed' => true];
+    'expected_tenant' => $guard->expectedTenantId(), 'no_external_requests_performed' => true,
+    'provider' => config('fortnox.provider'),
+    'client_configured' => (string) config('fortnox.client_id') !== '',
+    'secret_configured' => (string) config('fortnox.client_secret') !== '',
+    'test_client_verified' => false];
+try {
+    $guard->assertTestClient((string) config('fortnox.client_id'));
+    $report['test_client_verified'] = true;
+} catch (FortnoxSubscriptionBlocked) {
+}
 foreach (['1853390', '1854146', null, '9999999'] as $tenant) {
     try {
         $guard->assertTenantAllowed($tenant);
@@ -26,7 +35,7 @@ foreach (['1853390', '1854146', null, '9999999'] as $tenant) {
     }
 }
 try {
-    $guard->assertAuthorizationEnabled();
+    $guard->assertAuthorizationEnabled((string) config('fortnox.client_id'));
     $report['new_authorization'] = 'accepted';
 } catch (FortnoxSubscriptionBlocked) {
     $report['new_authorization'] = 'blocked';

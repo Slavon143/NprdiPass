@@ -89,7 +89,7 @@
                             <div class="flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2 text-sm" aria-current="true">
                                 <span class="min-w-0">
                                     <span class="block truncate font-semibold text-indigo-900">{{ $companyName($companyOption) }}</span>
-                                    <span class="block text-xs capitalize text-indigo-600">{{ $companyOption->pivot->role->value }}</span>
+                                    <span class="block text-xs capitalize text-indigo-600">{{ __($companyOption->pivot->role->value) }}</span>
                                 </span>
                                 <span class="ml-2 shrink-0 text-xs font-semibold text-indigo-700">{{ __('Current') }}</span>
                             </div>
@@ -98,7 +98,7 @@
                                 @csrf
                                 <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" role="menuitem">
                                     <span class="block truncate font-semibold text-slate-800">{{ $companyName($companyOption) }}</span>
-                                    <span class="block text-xs capitalize text-slate-500">{{ $companyOption->pivot->role->value }}</span>
+                                    <span class="block text-xs capitalize text-slate-500">{{ __($companyOption->pivot->role->value) }}</span>
                                 </button>
                             </form>
                         @endif
@@ -126,11 +126,12 @@
             </x-slot>
 
             <x-slot name="content">
+                <div class="border-b border-slate-200 px-4 py-3"><x-language-selector /></div>
                 <div class="px-4 py-3">
                     <p class="break-words text-sm font-semibold text-slate-900">{{ $userName }}</p>
                     <p class="mt-0.5 break-all text-xs text-slate-500">{{ Auth::user()->email }}</p>
                     @if ($currentMembership)
-                        <p class="mt-2 text-xs text-slate-500">{{ __('Role') }}: <span class="font-semibold capitalize text-slate-700">{{ $currentMembership->role->value }}</span></p>
+                        <p class="mt-2 text-xs text-slate-500">{{ __('Role') }}: <span class="font-semibold capitalize text-slate-700">{{ __($currentMembership->role->value) }}</span></p>
                     @endif
                 </div>
                 <div class="border-t border-slate-200 py-1">

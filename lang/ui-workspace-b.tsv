@@ -1,0 +1,180 @@
+Advanced · DPP section defaults	Avancerat · standardinställningar för passavsnitt	Erweitert · Standardwerte der Passabschnitte
+Catalog · Attributes	Katalog · Attribut	Katalog · Attribute
+Catalog · Categories	Katalog · Kategorier	Katalog · Kategorien
+Catalog · Product attributes	Katalog · Produktattribut	Katalog · Produktattribute
+Catalog · Product images	Katalog · Produktbilder	Katalog · Produktbilder
+Catalog · Product variants	Katalog · Produktvarianter	Katalog · Produktvarianten
+Catalog · Variant attributes	Katalog · Variantattribut	Katalog · Variantenattribute
+Catalog · Variant images	Katalog · Variantbilder	Katalog · Variantenbilder
+Create category	Skapa kategori	Kategorie erstellen
+Create draft	Skapa utkast	Entwurf erstellen
+Create manually	Skapa manuellt	Manuell erstellen
+Create only	Skapa endast	Nur erstellen
+Create or update	Skapa eller uppdatera	Erstellen oder aktualisieren
+Create organization	Skapa organisation	Organisation erstellen
+Create passport	Skapa pass	Produktpass erstellen
+Create product	Skapa produkt	Produkt erstellen
+Create sample	Skapa exempel	Beispiel erstellen
+Create token	Skapa token	Token erstellen
+Create variant	Skapa variant	Variante erstellen
+Create your NordiPass account	Skapa ditt NordiPass-konto	Ihr NordiPass-Konto erstellen
+Create your organization	Skapa din organisation	Ihr Unternehmen erstellen
+Created	Skapad	Erstellt
+Created by	Skapad av	Erstellt von
+Critical	Kritisk	Kritisch
+Current Password	Nuvarande lösenord	Aktuelles Passwort
+Current default	Nuvarande standard	Aktueller Standard
+Current draft	Aktuellt utkast	Aktueller Entwurf
+Current draft revision	Aktuell utkastrevision	Aktuelle Entwurfsrevision
+Current plan	Aktuell plan	Aktueller Tarif
+Current version	Aktuell version	Aktuelle Version
+Customer	Kund	Kunde
+Customer feedback	Kundåterkoppling	Kundenfeedback
+DPP profile	DPP-profil	DPP-Profil
+DPP sections in this snapshot	DPP-avsnitt i denna ögonblicksbild	DPP-Abschnitte in diesem Stand
+Data point	Datapunkt	Datenpunkt
+Data type	Datatyp	Datentyp
+Date	Datum	Datum
+Decimal	Decimaltal	Dezimalzahl
+Dedicated field mapping needed	Särskild fältmappning krävs	Eigene Feldzuordnung erforderlich
+Default	Standard	Standard
+Default language	Standardspråk	Standardsprache
+Default variant	Standardvariant	Standardvariante
+Default variant is unavailable.	Standardvarianten är inte tillgänglig.	Standardvariante nicht verfügbar.
+Definition	Definition	Definition
+Delete Account	Ta bort konto	Konto löschen
+Delete image	Ta bort bild	Bild löschen
+Deprecate	Fasa ut	Als veraltet markieren
+Deprecate with replacement	Fasa ut med ersättare	Mit Ersatz als veraltet markieren
+Depth	Djup	Tiefe
+Details	Detaljer	Details
+Direction	Riktning	Richtung
+Disable section	Inaktivera avsnitt	Abschnitt deaktivieren
+Disabled	Inaktiverad	Deaktiviert
+Disconnect	Koppla från	Verbindung trennen
+Dismiss	Avfärda	Ausblenden
+Display language: :language	Visningsspråk: :language	Anzeigesprache: :language
+Document	Dokument	Dokument
+Document type	Dokumenttyp	Dokumenttyp
+Documents and evidence	Dokument och underlag	Dokumente und Nachweise
+Documents captured in this snapshot	Dokument i denna ögonblicksbild	Dokumente in diesem Stand
+Does not block publication.	Blockerar inte publicering.	Blockiert die Veröffentlichung nicht.
+Download	Ladda ner	Herunterladen
+Draft Version UUID	Utkastversionens UUID	UUID der Entwurfsversion
+Draft name	Utkastnamn	Entwurfsname
+Draft revision	Utkastrevision	Entwurfsrevision
+Draft revision #:revision	Utkastrevision #:revision	Entwurfsrevision #:revision
+Draft revision :revision	Utkastrevision :revision	Entwurfsrevision :revision
+Draft revision used	Använd utkastrevision	Verwendete Entwurfsrevision
+Draft v:version	Utkast v:version	Entwurf v:version
+EU registration identifier	EU-registreringsidentifierare	EU-Registrierungskennung
+EU registry and battery fields	EU-register och batterifält	EU-Register und Batteriefelder
+EU registry preparation	Förberedelse för EU-register	EU-Registervorbereitung
+Edit :name	Redigera :name	:name bearbeiten
+Edit Passport	Redigera pass	Produktpass bearbeiten
+Edit attributes	Redigera attribut	Attribute bearbeiten
+Edit category	Redigera kategori	Kategorie bearbeiten
+Edit draft	Redigera utkast	Entwurf bearbeiten
+Edit passport	Redigera pass	Produktpass bearbeiten
+Edit product	Redigera produkt	Produkt bearbeiten
+Edit variant	Redigera variant	Variante bearbeiten
+Effective readiness profile	Gällande beredskapsprofil	Wirksames Bereitschaftsprofil
+Email Password Reset Link	Skicka länk för lösenordsåterställning	Link zum Zurücksetzen senden
+Enable section	Aktivera avsnitt	Abschnitt aktivieren
+Enabled	Aktiverad	Aktiviert
+English	Engelska	Englisch
+Enroll in DPP	Anslut till DPP	Für DPP anmelden
+Environment	Miljö	Umgebung
+Environmental metrics and claims.	Miljömätvärden och påståenden.	Umweltkennzahlen und Aussagen.
+Evaluated :time	Utvärderad :time	Bewertet :time
+Evaluated at	Utvärderad vid	Bewertet am
+Event	Händelse	Ereignis
+Event name or request ID	Händelsenamn eller begärans-ID	Ereignisname oder Anfragekennung
+Expiration	Utgång	Ablauf
+Expired	Utgången	Abgelaufen
+Expires	Går ut	Läuft ab
+Expires :date	Går ut :date	Läuft am :date ab
+Expiring soon	Går snart ut	Läuft bald ab
+Expiry date	Utgångsdatum	Ablaufdatum
+Expiry state	Utgångsstatus	Ablaufstatus
+Export CSV	Exportera CSV	CSV exportieren
+Export XLSX	Exportera XLSX	XLSX exportieren
+Failure	Fel	Fehler
+Feature flag override	Överstyrning av funktionsflagga	Überschriebene Funktionsfreigabe
+Feedback	Återkoppling	Feedback
+Feedback marked as resolved.	Återkopplingen markerad som löst.	Feedback als erledigt markiert.
+Fetched	Hämtade	Abgerufen
+Field	Fält	Feld
+Filter audit events	Filtrera granskningshändelser	Auditereignisse filtern
+Filter catalog audit events	Filtrera katalogens granskningshändelser	Katalog-Auditereignisse filtern
+Filters	Filter	Filter
+Fix readiness blockers	Åtgärda blockerande beredskapsproblem	Blockierende Bereitschaftsprobleme beheben
+Fix required attributes	Åtgärda obligatoriska attribut	Erforderliche Attribute korrigieren
+Fix:	Åtgärd:	Korrektur:
+Former member	Tidigare medlem	Ehemaliges Mitglied
+Former user	Tidigare användare	Ehemaliger Benutzer
+Fortnox account	Fortnox-konto	Fortnox-Konto
+Fortnox value	Fortnox-värde	Fortnox-Wert
+Frequently asked questions	Vanliga frågor	Häufige Fragen
+From	Från	Von
+Go to sign in	Gå till inloggning	Zur Anmeldung
+Grant access	Ge åtkomst	Zugang gewähren
+Guidance applicability	Vägledningens tillämplighet	Anwendbarkeit des Leitfadens
+Hazardous	Farligt	Gefährlich
+Health	Driftstatus	Betriebszustand
+Help center	Hjälpcenter	Hilfezentrum
+Hierarchy	Hierarki	Hierarchie
+Hosted passport URL	Adress till det lagrade passet	URL des gehosteten Produktpasses
+How can we help?	Hur kan vi hjälpa dig?	Wie können wir helfen?
+How do I report a problem?	Hur rapporterar jag ett problem?	Wie melde ich ein Problem?
+I have saved the token	Jag har sparat token	Ich habe das Token gespeichert
+IP Address	IP-adress	IP-Adresse
+Idempotency key (optional)	Idempotensnyckel (valfri)	Idempotenzschlüssel (optional)
+Identifiers	Identifierare	Kennungen
+If available	Om tillgängligt	Falls verfügbar
+Image	Bild	Bild
+Images	Bilder	Bilder
+Import and Fortnox	Import och Fortnox	Import und Fortnox
+Import existing articles	Importera befintliga artiklar	Vorhandene Artikel importieren
+Import file	Importfil	Importdatei
+Imports per quota period	Importer per kvotperiod	Importe je Kontingentzeitraum
+In progress	Pågår	In Bearbeitung
+In review	Under granskning	In Prüfung
+In-app	I appen	In der Anwendung
+Inbox	Inkorg	Posteingang
+Incidents	Incidenter	Vorfälle
+Include descendants	Inkludera underkategorier	Unterkategorien einbeziehen
+Info	Information	Information
+Integration is not enabled	Integrationen är inte aktiverad	Integration nicht aktiviert
+Internal only	Endast internt	Nur intern
+Invitation registration	Registrering via inbjudan	Registrierung per Einladung
+Invitations	Inbjudningar	Einladungen
+Invite a company member	Bjud in en företagsmedlem	Unternehmensmitglied einladen
+Invited by	Inbjuden av	Eingeladen von
+Issue date	Utfärdandedatum	Ausstellungsdatum
+Issuer name	Utfärdarens namn	Name des Ausstellers
+Job	Jobb	Auftrag
+Job center	Jobbcenter	Auftragsübersicht
+Job center retry	Nytt försök från jobbcentret	Erneuter Versuch aus der Auftragsübersicht
+Jobs	Jobb	Aufträge
+Join :company	Gå med i :company	:company beitreten
+Joined	Gick med	Beigetreten
+Jurisdiction	Jurisdiktion	Rechtsraum
+Keep NordiPass	Behåll NordiPass	NordiPass beibehalten
+Label	Etikett	Bezeichnung
+Last modified	Senast ändrad	Zuletzt geändert
+Last synced	Senast synkroniserad	Zuletzt synchronisiert
+Last updated :date by :user	Senast uppdaterad :date av :user	Zuletzt am :date von :user aktualisiert
+Last used	Senast använd	Zuletzt verwendet
+Launch path	Startväg	Startweg
+Legal name	Juridiskt namn	Rechtlicher Name
+Lifecycle	Livscykel	Lebenszyklus
+Lifecycle governance	Livscykelstyrning	Lebenszyklusverwaltung
+Local record only	Endast lokal post	Nur lokaler Eintrag
+Log Out	Logga ut	Abmelden
+MPN	MPN	MPN
+Make primary	Välj som huvudbild	Als Hauptbild wählen
+Manage	Hantera	Verwalten
+Manage access to :company.	Hantera åtkomst till :company.	Zugang zu :company verwalten.
+Manage connection	Hantera anslutning	Verbindung verwalten
+Manage documents	Hantera dokument	Dokumente verwalten

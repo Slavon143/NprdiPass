@@ -150,6 +150,9 @@
                 </div>
 
                 @if ($passport instanceof \App\Models\Passports\ProductPassport)
+                    @if ($passportReadiness)
+                        <div class="mt-4">@include('passports.partials.assurance-statuses', ['readiness' => $passportReadiness])</div>
+                    @endif
                     <dl class="mt-4 grid gap-4 sm:grid-cols-3">
                         <div>
                             <dt class="text-xs text-slate-500">{{ __('Default language') }}</dt>
@@ -224,7 +227,7 @@
                                 <a href="{{ route('catalog.products.documents.show', [$product->uuid, $document->uuid]) }}" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50">
                                     <span class="min-w-0">
                                         <span class="block truncate font-semibold text-slate-900">{{ $document->currentVersion?->title ?? __('Untitled') }}</span>
-                                        <span class="text-xs text-slate-500">{{ $document->currentVersion?->document_type?->label() ?? '—' }}</span>
+                                        <span class="text-xs text-slate-500">{{ __($document->currentVersion?->document_type?->label() ?? '—') }}</span>
                                     </span>
                                     <span class="flex shrink-0 gap-2">
                                         @if ($document->currentVersion?->isApproved())

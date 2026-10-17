@@ -124,6 +124,18 @@ class PassportReadinessEvaluator
                 safeContext: $scope,
             );
         }
+        $regulatoryPublication = ($profile->metadata['publication_mode'] ?? null) === 'regulatory'
+            || array_any($context->dppProfiles, fn (DppProfile $selected): bool => ($selected->metadata['publication_mode'] ?? null) === 'regulatory');
+        if ($regulatoryPublication) {
+            // No current profile implements complete sector evidence, access
+            // and registry transport. Metadata cannot certify that capability.
+            $ruleResults[] = new ReadinessRuleResult(
+                'regulatory.publication.coverage', ReadinessRuleGroup::Technical, ReadinessSeverity::Blocker,
+                ReadinessRuleStatus::Failed, 'readiness.regulatory.publication.title',
+                'readiness.regulatory.publication.incomplete',
+                safeContext: ['scope_status' => $scope['status'], 'coverage_verified' => false],
+            );
+        }
 
         $counts = $this->buildSummary($ruleResults);
         $breakdown = $this->scoreCalculator->breakdown($ruleResults, $profile->weights);

@@ -167,6 +167,9 @@ class PassportReadinessWebTest extends TestCase
         $document = new \DOMDocument;
         @$document->loadHTML($response->getContent());
         $xpath = new \DOMXPath($document);
+        $this->assertSame('not_ready', $xpath->evaluate('string(//*[@data-testid="assurance-publication"]/@data-status)'));
+        $this->assertSame('not_assessed', $xpath->evaluate('string(//*[@data-testid="assurance-requirements"]/@data-status)'));
+        $this->assertSame('connection_pending', $xpath->evaluate('string(//*[@data-testid="assurance-registry"]/@data-status)'));
         $this->assertSame((string) $result->score, $xpath->evaluate('string(//*[@role="progressbar"]/@aria-valuenow)'));
         $this->assertSame((string) $result->counts->blockers, trim($xpath->evaluate('string(//*[@data-testid="count-blockers"]/strong)')));
         $this->assertSame(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " readiness-grid ")]/aside[@data-testid="readiness-status-card"]')->length);

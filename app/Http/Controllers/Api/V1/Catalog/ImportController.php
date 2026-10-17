@@ -9,6 +9,7 @@ use App\Actions\Imports\SaveApiImportMappingTemplate;
 use App\Actions\Imports\StartImportJobAction;
 use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -37,7 +38,7 @@ class ImportController extends Controller
 
     public function storeTemplate(Request $request, TokenCurrentCompany $currentCompany, ApiResponse $response, SaveApiImportMappingTemplate $action): JsonResponse
     {
-        $validated = $request->validate(['name' => ['required', 'string', 'max:255'], 'mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255']]);
+        $validated = $request->validate(['name' => ['required', 'string', 'max:255'], 'mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255'], 'number_format' => ['sometimes', 'required', 'in:dot,comma']]);
         $company = $currentCompany->require();
         $actor = $this->actor($request);
         $template = $action->execute($actor, $company, $validated);
@@ -72,9 +73,9 @@ class ImportController extends Controller
 
     public function preview(Request $request, TokenCurrentCompany $currentCompany, PreviewImportJobAction $action, ApiResponse $response, string $importJob): JsonResponse
     {
-        $validated = $request->validate(['mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255']]);
+        $validated = $request->validate(['mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255'], 'number_format' => ['sometimes', 'required', 'in:dot,comma']]);
         $mapping = array_filter($validated['mapping'], fn (mixed $value): bool => is_string($value) && $value !== '');
-        $job = $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), $mapping);
+        $job = $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), $mapping, ImportNumberFormat::from($validated['number_format'] ?? 'dot'));
 
         return $response->success($this->resource($job, true));
     }
@@ -141,13 +142,14 @@ class ImportController extends Controller
         $data = [
             'uuid' => $job->uuid, 'status' => $job->status->value, 'mode' => $job->mode->value,
             'source_filename' => $job->source_filename, 'headers' => $job->headers, 'mapping' => $job->mapping,
+            'number_format' => $job->number_format->value,
             'total_rows' => $job->total_rows, 'valid_rows' => $job->valid_rows, 'invalid_rows' => $job->invalid_rows,
             'processed_rows' => $job->processed_rows, 'created_rows' => $job->created_rows, 'updated_rows' => $job->updated_rows,
             'skipped_rows' => $job->skipped_rows, 'next_row' => $job->next_row,
             'created_at' => $job->created_at?->toIso8601String(), 'completed_at' => $job->completed_at?->toIso8601String(),
         ];
         if ($includeRows && $job->relationLoaded('records')) {
-            $data['records'] = $job->records->map(fn (ImportRecord $record): array => ['row_number' => $record->row_number, 'status' => $record->status->value, 'operation' => $record->operation, 'mapped_data' => $record->mapped_data, 'errors' => $record->errors->map->only(['field', 'code', 'message'])->all()])->all();
+            $data['records'] = $job->records->map(fn (ImportRecord $record): array => ['row_number' => $record->row_number, 'status' => $record->status->value, 'operation' => $record->operation, 'mapped_data' => $record->mapped_data, 'normalizations' => $record->normalizations ?? [], 'errors' => $record->errors->map->only(['field', 'code', 'message'])->all()])->all();
         }
 
         return $data;

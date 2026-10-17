@@ -2,8 +2,17 @@
 
 return [
     'label' => 'Readiness',
+    'dpp.party.identity' => [
+        'title' => 'Required party details',
+        'passed' => 'The required party has a name, postal address and contact channel. Organisation verification is a separate requirement.',
+        'failed' => 'Add the name, postal address and contact channel for the role selected by this profile. Another party cannot substitute for it.',
+    ],
     'dpp.requirement' => [
         'title' => 'Profile requirement', 'deferred' => 'This requirement is outside its application dates.',
+        'evidence_missing' => 'Add the evidence required by this profile. It must cover this product, have a recorded approval and be valid on the evaluation date.',
+        'materials_missing' => 'This profile requires material composition. Enable Materials and add the required material rows.',
+        'safety_review_title' => 'Safety review evidence',
+        'safety_review_passed' => 'Approved safety review evidence covers this passport draft revision.',
     ],
     'regulatory.profile' => [
         'title' => 'Current regulatory requirements',
@@ -12,6 +21,10 @@ return [
     'regulatory.battery' => [
         'title' => 'Battery passport coverage',
         'incomplete' => 'Article 77 applies. Full Annex XIII coverage, restricted access and EU registry registration have not been verified in this implementation.',
+    ],
+    'regulatory.publication' => [
+        'title' => 'Regulatory publication coverage',
+        'incomplete' => 'This profile requests regulatory publication. Complete sector evidence, access and registry integration are not implemented; pilot publication cannot satisfy this requirement.',
     ],
     'regulatory.context' => [
         'invalid' => 'Correct the invalid product classification before publication.',
@@ -156,9 +169,9 @@ return [
         'failed' => 'Add at least one manufacturer contact channel, such as email, phone, or website.',
     ],
     'dpp.safety.reviewed' => [
-        'title' => 'Safety section reviewed',
+        'title' => 'Safety information present',
         'message' => 'The safety section contains information.',
-        'passed' => 'The safety section contains information.',
+        'passed' => 'The safety section contains information. A recorded review is a separate check.',
         'failed' => 'Add at least one relevant safety detail: a warning, hazard, storage instruction, emergency instruction, or age restriction.',
     ],
     'dpp.recycling.instructions.present' => [

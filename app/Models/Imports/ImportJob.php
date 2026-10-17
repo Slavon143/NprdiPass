@@ -4,6 +4,7 @@ namespace App\Models\Imports;
 
 use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Models\Catalog\Concerns\HasCompanyScope;
 use App\Models\Company;
 use App\Models\Concerns\HasUuid;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $source_size
  * @property array<int, string>|null $headers
  * @property array<string, string>|null $mapping
+ * @property ImportNumberFormat $number_format
  * @property int $chunk_size
  * @property int $next_row
  * @property int $total_rows
@@ -56,6 +58,7 @@ class ImportJob extends Model
             'mode' => ImportMode::class,
             'headers' => 'array',
             'mapping' => 'array',
+            'number_format' => ImportNumberFormat::class,
             'previewed_at' => 'immutable_datetime',
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',

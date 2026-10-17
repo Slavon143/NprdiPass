@@ -173,7 +173,7 @@
                         @if(in_array($sectionKey, $enabledSections, true) && $mergedData !== [])
                             <div class="rounded-lg border border-slate-200 p-4">
                                 <h3 class="font-semibold text-slate-900">
-                                    {{ $sectionDefinition?->key->label() ?? \Illuminate\Support\Str::headline(str_replace('_', ' ', $sectionKey)) }}
+                                    {{ __($sectionDefinition?->key->label() ?? \Illuminate\Support\Str::headline(str_replace('_', ' ', $sectionKey))) }}
                                 </h3>
 
                                 @if($sectionKey === 'materials_and_composition' && isset($mergedData['materials']) && is_array($mergedData['materials']))

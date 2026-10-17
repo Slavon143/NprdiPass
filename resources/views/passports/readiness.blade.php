@@ -61,6 +61,7 @@
                 {{ __('Stored readiness evaluation from :date. This result may be out of date. An active subscription and a managed product are required to recalculate or publish.', ['date' => $readiness->evaluatedAt->toDateTimeString()]) }}
             </div>
         @endif
+        @include('passports.partials.assurance-statuses')
         <div class="readiness-grid">
             <aside class="panel readiness-overview" data-testid="readiness-status-card">
                 <p class="eyebrow">{{ __('READINESS OVERVIEW') }}</p>

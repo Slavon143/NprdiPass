@@ -47,6 +47,7 @@ return [
     'sync_page_size' => (int) env('FORTNOX_SYNC_PAGE_SIZE', 100),
     'sync_chunk_size' => (int) env('FORTNOX_SYNC_CHUNK_SIZE', 100),
     'sync_max_articles_per_run' => (int) env('FORTNOX_SYNC_MAX_ARTICLES_PER_RUN', 5000),
+    'sync_max_pages_per_run' => (int) env('FORTNOX_SYNC_MAX_PAGES_PER_RUN', 1000),
 
     // A sync run that stays "running" longer than this is treated as an
     // abandoned run (crashed process) and is resumed from its saved cursor
@@ -57,6 +58,7 @@ return [
         // Safety cap for the exhaustive article fetch. When exceeded, the
         // report is marked incomplete and no mutations are applied.
         'max_articles' => (int) env('FORTNOX_RECONCILIATION_MAX_ARTICLES', 100000),
+        'max_pages' => (int) env('FORTNOX_RECONCILIATION_MAX_PAGES', 1000),
         // Default handling for Fortnox articles that disappeared: 'report' only.
         'deletion_policy' => env('FORTNOX_RECONCILIATION_DELETION_POLICY', 'report'),
     ],

@@ -30,7 +30,9 @@ shell entry points 0700. Use LF line endings on Linux.
 
 - `verify-release ROOT RELEASE_DIR`: read-only pre-activation check. Require the
   reviewed Fortnox source fingerprints and actual staging configuration; reject
-  production/unknown/wrong tenants and enabled new OAuth. It does not perform
+  production/unknown/wrong tenants. Enabled new OAuth additionally requires the
+  real HTTP provider, configured credentials and a matching explicitly approved
+  test client; disabled OAuth remains supported. It does not perform
   external requests, token exchange, renewal or connection changes. The generic
   rollback command invokes it before imposing a pause. Keep `release-policy.json`
   bound to the reviewed source; a future safety-layer change needs review and new

@@ -4,6 +4,7 @@ namespace Tests\Feature\Passports\Localization;
 
 use App\Actions\Passports\CreateProductPassportDraftAction;
 use App\Actions\Passports\PublishProductPassport;
+use App\Actions\Passports\UpdatePassportLanguagesAction;
 use App\Actions\Passports\UpdateProductPassportSectionAction;
 use App\Data\Passports\PublicationResult;
 use App\Enums\Catalog\CategoryStatus;
@@ -293,6 +294,28 @@ class PassportMultilingualPublicationTest extends TestCase
         $this->assertNotNull($result->publishedVersion);
         $this->assertNotNull($this->passport->first_published_at);
         $this->assertNotEmpty($this->passport->public_id);
+    }
+
+    public function test_german_publication_uses_snapshot_language_without_ui_session(): void
+    {
+        app(UpdatePassportLanguagesAction::class)->handle(
+            $this->actor, $this->company, $this->product, $this->passport, 'sv', ['sv', 'en', 'de'],
+        );
+        $this->passport->refresh();
+        $this->revision = $this->passport->currentDraftVersion->draft_revision;
+        $this->fillAllTranslations('sv', 'Svensk Produkt');
+        $this->fillAllTranslations('en', 'English Product');
+        $this->fillAllTranslations('de', 'Deutsches Produkt');
+        $this->injectManufacturerContact();
+        $result = $this->publish();
+        $checksum = $result->publishedVersion->content_checksum;
+        $this->withSession(['ui_locale' => 'en'])->get("/p/{$this->passport->public_id}?lang=de")
+            ->assertOk()->assertHeader('Content-Language', 'de')->assertSee('Deutsches Produkt')
+            ->assertSee('Hersteller')->assertSee('Deutsch')->assertSee('html lang="de"', false)
+            ->assertHeaderMissing('Set-Cookie');
+        $this->withSession(['ui_locale' => 'de'])->get("/p/{$this->passport->public_id}?lang=en")
+            ->assertOk()->assertHeader('Content-Language', 'en')->assertSee('English Product');
+        $this->assertSame($checksum, $result->publishedVersion->fresh()->content_checksum);
     }
 
     public function test_snapshot_contains_both_locales(): void

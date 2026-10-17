@@ -34,13 +34,10 @@ class DppManufacturerContactPresent implements PassportReadinessRule
 
         $manufacturerEmail = $data['manufacturer_email'] ?? null;
         $manufacturerWebsite = $data['manufacturer_website'] ?? null;
-        $operatorEmail = $data['responsible_operator_email'] ?? null;
-        $operatorWebsite = $data['responsible_operator_website'] ?? null;
+        $manufacturerPhone = $data['manufacturer_phone'] ?? null;
 
-        $passed = ! empty($manufacturerEmail)
-            || ! empty($manufacturerWebsite)
-            || ! empty($operatorEmail)
-            || ! empty($operatorWebsite);
+        $passed = array_any([$manufacturerEmail, $manufacturerWebsite, $manufacturerPhone],
+            fn ($value) => is_string($value) && trim($value) !== '');
 
         return new ReadinessRuleResult(
             code: $this->code(),
@@ -61,8 +58,7 @@ class DppManufacturerContactPresent implements PassportReadinessRule
             safeContext: [
                 'has_manufacturer_email' => ! empty($manufacturerEmail),
                 'has_manufacturer_website' => ! empty($manufacturerWebsite),
-                'has_operator_email' => ! empty($operatorEmail),
-                'has_operator_website' => ! empty($operatorWebsite),
+                'has_manufacturer_phone' => is_string($manufacturerPhone) && trim($manufacturerPhone) !== '',
             ],
         );
     }

@@ -33,6 +33,10 @@ class PassportLocaleRegistry
                 dateLocale: 'sv_SE',
                 direction: 'ltr',
             ),
+            'de' => new PassportLocale(
+                code: 'de', label: 'German', nativeLabel: 'Deutsch',
+                htmlLang: 'de', dateLocale: 'de_DE', direction: 'ltr',
+            ),
         ];
 
         return $this->locales;

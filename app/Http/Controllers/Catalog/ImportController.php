@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Catalog;
 use App\Actions\Imports\ApplyImportJobAction;
 use App\Actions\Imports\CreateImportJobAction;
 use App\Actions\Imports\PreviewImportJobAction;
+use App\Actions\Imports\SaveImportMappingTemplateAction;
 use App\Actions\Imports\StartImportJobAction;
 use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyPermission;
 use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Http\Controllers\Controller;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Company;
@@ -26,7 +28,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -57,7 +58,7 @@ class ImportController extends Controller
         abort_unless($file instanceof UploadedFile, 422);
         $job = $action->execute($this->actor($request), $currentCompany->require(), $file, ImportMode::from($validated['mode']), $validated['idempotency_key'] ?? null, $validated['chunk_size'] ?? null);
 
-        return redirect()->route('catalog.imports.show', $job)->with('success', 'Import uploaded. Map columns and run preview before applying changes.');
+        return redirect()->route('catalog.imports.show', $job)->with('success', __('Import uploaded. Map columns and run preview before applying changes.'));
     }
 
     public function show(Request $request, CurrentCompany $currentCompany, string $importJob): View
@@ -77,11 +78,11 @@ class ImportController extends Controller
 
     public function preview(Request $request, CurrentCompany $currentCompany, PreviewImportJobAction $action, string $importJob): RedirectResponse
     {
-        $validated = $request->validate(['mapping' => ['required', 'array'], 'mapping.*' => ['nullable', 'string', 'max:255']]);
+        $validated = $request->validate(['mapping' => ['required', 'array'], 'mapping.*' => ['nullable', 'string', 'max:255'], 'number_format' => ['sometimes', 'required', 'in:dot,comma']]);
         $mapping = array_filter($validated['mapping'], fn (mixed $value): bool => is_string($value) && $value !== '');
-        $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), $mapping);
+        $action->execute($this->actor($request), $currentCompany->require(), $this->job($currentCompany->require(), $importJob), $mapping, ImportNumberFormat::from($validated['number_format'] ?? 'dot'));
 
-        return back()->with('success', 'Preview generated. Review row errors before applying the import.');
+        return back()->with('success', __('Preview generated. Review row errors before applying the import.'));
     }
 
     public function apply(Request $request, CurrentCompany $currentCompany, ApplyImportJobAction $action, StartImportJobAction $start, JobStatusTracker $tracker, string $importJob): RedirectResponse
@@ -92,7 +93,7 @@ class ImportController extends Controller
         [$job, $jobStatus, $queued] = $start->execute($actor, $company, $job);
         if ($queued) {
 
-            return back()->with('success', 'Large import queued. Progress will update on this page.');
+            return back()->with('success', __('Large import queued. Progress will update on this page.'));
         }
 
         $tracker->markRunning($jobStatus);
@@ -107,7 +108,7 @@ class ImportController extends Controller
             throw $exception;
         }
 
-        return back()->with('success', $job->completed_at !== null ? 'Import completed.' : 'Import stopped with errors. Review the recovery details.');
+        return back()->with('success', $job->completed_at !== null ? __('Import completed.') : __('Import stopped with errors. Review the recovery details.'));
     }
 
     public function cancel(Request $request, CurrentCompany $currentCompany, StartImportJobAction $start, string $importJob): RedirectResponse
@@ -115,7 +116,7 @@ class ImportController extends Controller
         $job = $this->job($currentCompany->require(), $importJob);
         $start->cancel($this->actor($request), $currentCompany->require(), $job);
 
-        return back()->with('success', 'Import cancellation requested.');
+        return back()->with('success', __('Import cancellation requested.'));
     }
 
     public function errors(CurrentCompany $currentCompany, string $importJob): StreamedResponse
@@ -139,17 +140,14 @@ class ImportController extends Controller
         }, "import-{$job->uuid}-errors.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function storeTemplate(Request $request, CurrentCompany $currentCompany): RedirectResponse
+    public function storeTemplate(Request $request, CurrentCompany $currentCompany, SaveImportMappingTemplateAction $action): RedirectResponse
     {
         $company = $currentCompany->require();
         $this->authorize(CompanyPermission::CatalogUpdate->value, $company);
-        $validated = $request->validate(['name' => ['required', 'string', 'max:255'], 'mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255']]);
-        ImportMappingTemplate::query()->updateOrCreate(
-            ['company_id' => $company->getKey(), 'name_normalized' => Str::lower(trim($validated['name']))],
-            ['name' => trim($validated['name']), 'entity_type' => 'product', 'mapping' => array_filter($validated['mapping']), 'created_by' => $this->actor($request)->getKey(), 'updated_by' => $this->actor($request)->getKey()],
-        );
+        $validated = $request->validate(['name' => ['required', 'string', 'max:255'], 'mapping' => ['required', 'array'], 'mapping.name' => ['required', 'string'], 'mapping.*' => ['nullable', 'string', 'max:255'], 'number_format' => ['sometimes', 'required', 'in:dot,comma']]);
+        $action->execute($this->actor($request), $company, $validated['name'], $validated['mapping'], ImportNumberFormat::from($validated['number_format'] ?? 'dot'));
 
-        return back()->with('success', 'Mapping template saved.');
+        return back()->with('success', __('Mapping template saved.'));
     }
 
     public function export(Request $request, CurrentCompany $currentCompany, ProductExportService $exporter, string $format): StreamedResponse

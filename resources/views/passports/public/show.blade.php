@@ -16,7 +16,7 @@
                      width="{{ $primaryMedia->width ?? 800 }}"
                      height="{{ $primaryMedia->height ?? 800 }}">
             @else
-                <div class="w-full rounded-lg aspect-square bg-slate-100 flex items-center justify-center text-slate-400 text-sm">No image available</div>
+                <div class="w-full rounded-lg aspect-square bg-slate-100 flex items-center justify-center text-slate-400 text-sm">{{ __('No image available') }}</div>
             @endif
         </div>
         <div class="md:col-span-2">
@@ -28,7 +28,7 @@
                 <p class="text-slate-600 leading-relaxed">{{ $passport->sectionData['identity']['public_description'] }}</p>
             @endif
             @if($passport->manufacturerDisplayName !== null)
-                <p class="mt-4 text-sm text-slate-700"><span class="font-semibold">Manufactured by</span> {{ $passport->manufacturerDisplayName }}</p>
+                <p class="mt-4 text-sm text-slate-700"><span class="font-semibold">{{ __('Manufactured by') }}</span> {{ $passport->manufacturerDisplayName }}</p>
             @endif
             @if($passport->countryOfOrigin !== null)
                 <p class="mt-1 text-sm text-slate-500">{{ $passport->countryOfOrigin }}</p>
@@ -37,10 +37,10 @@
     </div>
 </section>
 
-<nav class="mb-10 rounded-xl border border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6" aria-label="Passport sections">
+<nav class="mb-10 rounded-xl border border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6" aria-label="{{ __('Passport sections') }}">
     <div class="mb-3 flex items-center justify-between gap-3">
-        <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Sections</h2>
-        <span class="text-xs text-slate-400">Digital Product Passport</span>
+        <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{{ __('Sections') }}</h2>
+        <span class="text-xs text-slate-400">{{ __('Digital Product Passport') }}</span>
     </div>
     @php
         $navigationLabels = [
@@ -87,14 +87,14 @@
         }
     @endphp
     <ul class="grid grid-cols-1 gap-x-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
-        <li><a href="#overview" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>Overview</a></li>
-        <li><a href="#quick-facts" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>Quick facts</a></li>
+        <li><a href="#overview" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>{{ __('Overview') }}</a></li>
+        <li><a href="#quick-facts" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>{{ __('Quick facts') }}</a></li>
         @foreach($publicSectionKeys as $sectionKey)
             @if(isset($navigationLabels[$sectionKey]))
                 <li><a href="#{{ $sectionKey === 'certifications_and_documents' ? 'documents' : 'section-'.$sectionKey }}" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>{{ $navigationLabels[$sectionKey] }}</a></li>
             @endif
         @endforeach
-        <li><a href="#publication-details" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>Publication</a></li>
+        <li><a href="#publication-details" class="flex items-center gap-2 border-b border-slate-200/80 py-2 text-sm font-medium text-slate-700 transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"><span class="text-slate-300" aria-hidden="true">&rarr;</span>{{ __('Publication') }}</a></li>
     </ul>
 </nav>
 
@@ -102,7 +102,7 @@
 @if(isset($passport->enabledLocales) && count($passport->enabledLocales) > 1)
 <section class="mb-6" aria-labelledby="language-selector-title">
     <div class="flex flex-wrap items-center gap-3 text-sm">
-        <h2 id="language-selector-title" class="text-sm text-slate-500 font-medium">Language</h2>
+        <h2 id="language-selector-title" class="text-sm text-slate-500 font-medium">{{ __('Language') }}</h2>
         @foreach($passport->enabledLocales as $locale)
             @php
                 $isActive = ($passport->requestedLocale ?? $passport->defaultLanguage) === $locale;
@@ -117,7 +117,7 @@
                    'bg-slate-100 text-slate-600 hover:bg-slate-200' => !$isActive,
                ])
                hreflang="{{ $locale }}">
-                {{ $locale === 'en' ? 'English' : ($locale === 'sv' ? 'Svenska' : strtoupper($locale)) }}
+                {{ \App\Support\UiLocale::LABELS[$locale] ?? strtoupper($locale) }}
             </a>
         @endforeach
     </div>
@@ -153,29 +153,29 @@
 
 {{-- Quick Facts --}}
 <section id="quick-facts" class="mb-8" aria-labelledby="quick-facts-title">
-    <h2 id="quick-facts-title" class="text-lg font-semibold mb-3">Quick Facts</h2>
+    <h2 id="quick-facts-title" class="text-lg font-semibold mb-3">{{ __('Quick Facts') }}</h2>
     <dl class="bg-slate-50 rounded-lg p-4">
         @if($passport->defaultVariantGtin !== null)
-            <div class="quick-fact"><dt>GTIN</dt><dd>{{ $passport->defaultVariantGtin }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('GTIN') }}</dt><dd>{{ $passport->defaultVariantGtin }}</dd></div>
         @endif
         @if($passport->defaultVariantSku !== null || $passport->defaultVariantMpn !== null)
-            <div class="quick-fact"><dt>Model / SKU</dt><dd>{{ $passport->defaultVariantSku ?? $passport->defaultVariantMpn }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('Model / SKU') }}</dt><dd>{{ $passport->defaultVariantSku ?? $passport->defaultVariantMpn }}</dd></div>
         @endif
         @if($passport->countryOfOrigin !== null)
-            <div class="quick-fact"><dt>Country of Origin</dt><dd>{{ $passport->countryOfOrigin }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('Country of Origin') }}</dt><dd>{{ $passport->countryOfOrigin }}</dd></div>
         @endif
         @if($passport->productCategory !== null)
-            <div class="quick-fact"><dt>Product Category</dt><dd>{{ $passport->productCategory }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('Product Category') }}</dt><dd>{{ $passport->productCategory }}</dd></div>
         @endif
         @if($passport->productManufacturer !== null)
-            <div class="quick-fact"><dt>Manufacturer</dt><dd>{{ $passport->productManufacturer }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('Manufacturer') }}</dt><dd>{{ $passport->productManufacturer }}</dd></div>
         @endif
-        <div class="quick-fact"><dt>Passport Version</dt><dd>{{ ($isPreview ?? false) ? 'Draft preview' : 'Version '.$passport->versionNumber }}</dd></div>
+        <div class="quick-fact"><dt>{{ __('Passport Version') }}</dt><dd>{{ ($isPreview ?? false) ? __('Draft preview') : __('Version :version', ['version' => $passport->versionNumber]) }}</dd></div>
         @if($passport->publishedAt !== '')
             @php
                 $pubDate = \Carbon\CarbonImmutable::parse($passport->publishedAt);
             @endphp
-            <div class="quick-fact"><dt>Published</dt><dd>{{ $pubDate->format('d F Y') }}</dd></div>
+            <div class="quick-fact"><dt>{{ __('Published') }}</dt><dd>{{ \App\Support\LocalizedDisplay::date($pubDate) }}</dd></div>
         @endif
     </dl>
 </section>
@@ -184,17 +184,17 @@
 @if(in_array('identity', $passport->enabledSections))
     @php $s = $passport->sectionData['identity'] ?? []; @endphp
     <section class="passport-section" aria-labelledby="section-identity">
-        <h2 id="section-identity">Product Identity</h2>
+        <h2 id="section-identity">{{ __('Product Identity') }}</h2>
         <dl class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <div><dt class="font-semibold text-slate-700">Product name</dt><dd class="text-slate-600">{{ $passport->productName }}</dd></div>
+            <div><dt class="font-semibold text-slate-700">{{ __('Product name') }}</dt><dd class="text-slate-600">{{ $passport->productName }}</dd></div>
             @if(!empty($s['public_name']) && $s['public_name'] !== $passport->productName)
-                <div><dt class="font-semibold text-slate-700">Display name</dt><dd class="text-slate-600">{{ $s['public_name'] }}</dd></div>
+                <div><dt class="font-semibold text-slate-700">{{ __('Display name') }}</dt><dd class="text-slate-600">{{ $s['public_name'] }}</dd></div>
             @endif
-            @if($passport->defaultVariantGtin !== null)<div><dt class="font-semibold text-slate-700">GTIN</dt><dd class="text-slate-600">{{ $passport->defaultVariantGtin }}</dd></div>@endif
-            @if($passport->defaultVariantSku !== null)<div><dt class="font-semibold text-slate-700">SKU</dt><dd class="text-slate-600">{{ $passport->defaultVariantSku }}</dd></div>@endif
-            @if($passport->defaultVariantMpn !== null)<div><dt class="font-semibold text-slate-700">Model</dt><dd class="text-slate-600">{{ $passport->defaultVariantMpn }}</dd></div>@endif
-            @if($passport->productBrand !== null)<div><dt class="font-semibold text-slate-700">Brand</dt><dd class="text-slate-600">{{ $passport->productBrand }}</dd></div>@endif
-            @if($passport->productCategory !== null)<div><dt class="font-semibold text-slate-700">Product category</dt><dd class="text-slate-600">{{ $passport->productCategory }}</dd></div>@endif
+            @if($passport->defaultVariantGtin !== null)<div><dt class="font-semibold text-slate-700">{{ __('GTIN') }}</dt><dd class="text-slate-600">{{ $passport->defaultVariantGtin }}</dd></div>@endif
+            @if($passport->defaultVariantSku !== null)<div><dt class="font-semibold text-slate-700">{{ __('SKU') }}</dt><dd class="text-slate-600">{{ $passport->defaultVariantSku }}</dd></div>@endif
+            @if($passport->defaultVariantMpn !== null)<div><dt class="font-semibold text-slate-700">{{ __('Model') }}</dt><dd class="text-slate-600">{{ $passport->defaultVariantMpn }}</dd></div>@endif
+            @if($passport->productBrand !== null)<div><dt class="font-semibold text-slate-700">{{ __('Brand') }}</dt><dd class="text-slate-600">{{ $passport->productBrand }}</dd></div>@endif
+            @if($passport->productCategory !== null)<div><dt class="font-semibold text-slate-700">{{ __('Product category') }}</dt><dd class="text-slate-600">{{ $passport->productCategory }}</dd></div>@endif
         </dl>
         @if(!empty($s['public_description'])) <p class="text-slate-600 text-sm mt-4">{!! nl2br(e($s['public_description'])) !!}</p> @endif
     </section>
@@ -224,7 +224,7 @@
     @endif
 
     <section @class(['passport-section']) @if($sectionKey === 'certifications_and_documents') id="documents" @endif aria-labelledby="section-{{ $sectionKey }}">
-        <h2 id="section-{{ $sectionKey }}">{{ $sectionLabel }}</h2>
+        <h2 id="section-{{ $sectionKey }}">{{ __($sectionLabel) }}</h2>
 
         @switch($sectionKey)
             @case('manufacturer_and_operator')
@@ -276,16 +276,16 @@
 {{-- Publication Details --}}
 <section id="publication-details" class="mt-10 pt-6 border-t border-slate-200" aria-label="Publication details">
     <div class="text-xs text-slate-400 space-y-1">
-        <div><span class="font-semibold text-slate-600">Passport ID</span> {{ $passport->passportPublicId }}</div>
-        <div><span class="font-semibold text-slate-600">Version</span> {{ $passport->versionNumber }}
+        <div><span class="font-semibold text-slate-600">{{ __('Passport ID') }}</span> {{ $passport->passportPublicId }}</div>
+        <div><span class="font-semibold text-slate-600">{{ __('Version') }}</span> {{ $passport->versionNumber }}
             @if($passport->publishedAt !== '')
-                &middot; Published {{ \Carbon\CarbonImmutable::parse($passport->publishedAt)->format('d F Y') }}
+                &middot; {{ __('Published') }} {{ \App\Support\LocalizedDisplay::date(\Carbon\CarbonImmutable::parse($passport->publishedAt)) }}
             @endif
         </div>
-        <div><span class="font-semibold text-slate-600">Passport level</span> Model &middot; <span class="font-semibold text-slate-600">Status</span> {{ ($isPreview ?? false) ? 'Draft preview' : 'Published' }}</div>
-        <div>Language: {{ strtoupper($passport->defaultLanguage) }}</div>
+        <div><span class="font-semibold text-slate-600">{{ __('Passport level') }}</span> {{ __('Model ·') }} <span class="font-semibold text-slate-600">{{ __('Status') }}</span> {{ ($isPreview ?? false) ? __('Draft preview') : __('Published') }}</div>
+        <div>{{ __('Language') }}: {{ strtoupper($passport->requestedLocale ?? $passport->defaultLanguage) }}</div>
         @if(!empty($passport->sectionData['manufacturer_and_operator']['responsible_operator_display_name']))
-            <div>Responsible operator: {{ $passport->sectionData['manufacturer_and_operator']['responsible_operator_display_name'] }}</div>
+            <div>{{ __('Responsible Operator') }}: {{ $passport->sectionData['manufacturer_and_operator']['responsible_operator_display_name'] }}</div>
         @endif
     </div>
 </section>

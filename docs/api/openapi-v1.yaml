@@ -1928,6 +1928,11 @@ paths:
       description: |
         Returns readiness evaluation for the current product passport draft.
         Readiness is operational validation and not legal certification.
+        Manufacturer contact cannot be substituted by operator contact.
+        Selected required document, certificate and material checks require actual evidence.
+        A profile safety-review requirement needs approved evidence bound to the current draft revision.
+        Regulatory publication profiles remain blocked by regulatory.publication.coverage
+        while complete sector evidence, access and registry integration are unimplemented.
       tags: [Passports]
       security:
         - bearerAuth: [passports.read]
@@ -2095,6 +2100,7 @@ paths:
     post:
       operationId: previewImport
       summary: Validate and persist the deterministic import plan
+      description: Import resources include number_format. Preview records include normalizations with field, source and normalized values. Applying uses the persisted preview rather than reparsing source numbers.
       tags: [Imports]
       security:
         - bearerAuth: [imports.write]
@@ -2115,6 +2121,11 @@ paths:
                   type: object
                   description: Target-to-source mapping. Targets are name, slug, short_description, description, brand, manufacturer, sku, gtin, mpn, primary_category, or attribute:<code> for active product-compatible tenant attributes. Identifiers apply to the default variant; products match by normalized slug. SKU and checksum-valid GTIN are tenant-unique. Unmapped identifiers are preserved on update; mapped blanks clear them. Unsupported or unavailable targets return 422 before replacing the preview. Status, timestamps and document references are not targets. New products start as drafts; updates preserve status. Source updated_at is neither a persistence timestamp nor a freshness watermark. Document references do not trigger downloads or attachments. Unconsumed source columns remain internal source data; derive their headers from headers minus mapping values.
                   additionalProperties: { type: string }
+                number_format:
+                  type: string
+                  enum: [dot, comma]
+                  default: dot
+                  description: Explicit source decimal separator for decimal attributes. No thousands separators, units or scientific notation; at most four decimal places. Numeric XLSX cells use dot. Independent of interface language.
       responses:
         "200": { $ref: "#/components/responses/Success" }
         "422": { $ref: "#/components/responses/ValidationError" }
@@ -2167,6 +2178,7 @@ paths:
     post:
       operationId: saveImportMappingTemplate
       summary: Create or update a tenant mapping template by normalized name
+      description: Stores the explicit decimal format in defaults.number_format, alongside the reusable column mapping.
       tags: [Imports]
       security:
         - bearerAuth: [imports.write]
@@ -2179,6 +2191,7 @@ paths:
               required: [name, mapping]
               properties:
                 name: { type: string, maxLength: 255 }
+                number_format: { type: string, enum: [dot, comma], default: dot }
                 mapping:
                   type: object
                   additionalProperties: { type: string }
@@ -2225,6 +2238,10 @@ paths:
     get:
       operationId: listFortnoxSyncs
       summary: Fortnox sync history
+      description: |
+        Sync resources include sync_mode (incremental, full, or null for historical runs),
+        pages_fetched (nullable for history), watermark_before, pagination_complete and next_page.
+        A completed segment with pagination_complete false must be resumed before the data watermark advances.
       tags: [Fortnox]
       security:
         - bearerAuth: [fortnox.read]
@@ -2234,6 +2251,10 @@ paths:
     post:
       operationId: startFortnoxSync
       summary: Run a manual Fortnox article sync
+      description: |
+        Fetches changes after the committed watermark, or performs the initial full scan when none exists.
+        An unfinished full scan resumes in its stored mode. Zero incremental results do not mean an empty catalogue.
+        Explicit full-catalogue preview and confirmation are available only through the nonproduction web flow.
       tags: [Fortnox]
       security:
         - bearerAuth: [fortnox.write]
@@ -2253,6 +2274,7 @@ paths:
     get:
       operationId: getFortnoxSync
       summary: Single Fortnox sync run with conflicts
+      description: Includes sync_mode, pages_fetched, watermark_before, pagination_complete and next_page as in sync history.
       tags: [Fortnox]
       security:
         - bearerAuth: [fortnox.read]

@@ -12,7 +12,12 @@ test('executable release pipeline validates real archives excludes runtime data 
     $process->run();
     preg_match('/Ran (\d+) tests/', $process->getErrorOutput(), $summary);
     expect($process->isSuccessful())->toBeTrue($process->getErrorOutput().$process->getOutput())
-        ->and((int) ($summary[1] ?? 0))->toBeGreaterThanOrEqual(12)
-        ->and($process->getErrorOutput())->toContain('OK')
-        ->not->toContain('skipped');
+        ->and((int) ($summary[1] ?? 0))->toBeGreaterThanOrEqual(23)
+        ->and($process->getErrorOutput())->toContain('OK');
+    if (PHP_OS_FAMILY === 'Windows') {
+        // Four POSIX chmod contracts run on native Linux during target acceptance.
+        expect($process->getErrorOutput())->toContain('OK (skipped=4)');
+    } else {
+        expect($process->getErrorOutput())->not->toContain('skipped');
+    }
 });

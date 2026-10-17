@@ -66,18 +66,25 @@ class ProductPassportController extends Controller
         $payload = $snapshotBuilder->build($draft->payload, $product);
         $viewModel = $resolver->resolvePreview($passport, $payload, $request->query('lang'));
 
+        $previousLocale = app()->getLocale();
+        app()->setLocale($viewModel->requestedLocale);
+        try {
+            $html = view('passports.public.show', [
+                'passport' => $viewModel, 'isPreview' => true, 'previewProductUuid' => $product->uuid,
+            ])->render();
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+
         return response(
-            view('passports.public.show', [
-                'passport' => $viewModel,
-                'isPreview' => true,
-                'previewProductUuid' => $product->uuid,
-            ])->render(),
+            $html,
             200,
             [
                 'Cache-Control' => 'private, no-store, max-age=0',
                 'Pragma' => 'no-cache',
                 'X-Content-Type-Options' => 'nosniff',
                 'X-Robots-Tag' => 'noindex, nofollow',
+                'Content-Language' => $viewModel->requestedLocale,
             ],
         );
     }

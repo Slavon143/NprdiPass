@@ -107,11 +107,16 @@ class DppSchemaRegistryTest extends TestCase
         $this->assertSame(5000, $descField->maxLength);
     }
 
-    public function test_manufacturer_and_operator_has_14_fields(): void
+    public function test_manufacturer_importer_and_operator_have_separate_fields(): void
     {
         $section = $this->registry->sections()['manufacturer_and_operator'];
 
-        $this->assertCount(14, $section->fields);
+        $keys = array_map(fn (DppFieldDefinition $field) => $field->key, $section->fields);
+        foreach (['manufacturer_address', 'manufacturer_phone', 'manufacturer_registration_id',
+            'importer_display_name', 'importer_address', 'importer_email', 'importer_country',
+            'responsible_operator_display_name', 'responsible_operator_address'] as $key) {
+            $this->assertContains($key, $keys);
+        }
     }
 
     public function test_manufacturer_and_operator_translatable_split(): void
@@ -121,8 +126,8 @@ class DppSchemaRegistryTest extends TestCase
         $translatable = array_filter($section->fields, fn (DppFieldDefinition $f) => $f->translatable);
         $nonTranslatable = array_filter($section->fields, fn (DppFieldDefinition $f) => ! $f->translatable);
 
-        $this->assertCount(4, $translatable);
-        $this->assertCount(10, $nonTranslatable);
+        $this->assertCount(7, $translatable);
+        $this->assertCount(17, $nonTranslatable);
 
         $translatableKeys = array_map(fn (DppFieldDefinition $f) => $f->key, $translatable);
         $this->assertContains('manufacturer_display_name', $translatableKeys);

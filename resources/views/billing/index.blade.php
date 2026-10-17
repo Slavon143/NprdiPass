@@ -91,11 +91,11 @@
                         return __('Not available yet');
                     }
                     if (! $bytes) {
-                        return number_format($amount);
+                        return \App\Support\LocalizedDisplay::integer($amount);
                     }
                     foreach ([1000000000 => 'GB', 1000000 => 'MB', 1000 => 'kB'] as $scale => $unit) {
                         if ($amount >= $scale) {
-                            return rtrim(rtrim(number_format($amount / $scale, 2, '.', ''), '0'), '.').' '.$unit;
+                            return \App\Support\LocalizedDisplay::decimal(number_format($amount / $scale, 2, '.', '')).' '.$unit;
                         }
                     }
                     return $amount.' B';

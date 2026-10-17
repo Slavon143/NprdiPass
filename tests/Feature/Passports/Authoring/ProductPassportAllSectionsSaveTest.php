@@ -769,6 +769,7 @@ class ProductPassportAllSectionsSaveTest extends TestCase
             'support_email' => 'v2-support@test.com',
         ]);
         $this->saveSection(DppSectionKey::ManufacturerAndOperator, [
+            'manufacturer_email' => 'v2-manufacturer@test.com',
             'responsible_operator_display_name' => 'Version Two Operator',
             'responsible_operator_email' => 'v2-operator@test.com',
         ]);
@@ -784,5 +785,6 @@ class ProductPassportAllSectionsSaveTest extends TestCase
         $this->assertSame('Recycled Polyester', $versionTwo->payload['data'][DppSectionKey::MaterialsAndComposition->value]['materials'][0]['name']);
         $this->assertSame('Test Op', $versionOneAfter->payload['translations'][$this->locale][DppSectionKey::ManufacturerAndOperator->value]['responsible_operator_display_name']);
         $this->assertSame('Version Two Operator', $versionTwo->payload['translations'][$this->locale][DppSectionKey::ManufacturerAndOperator->value]['responsible_operator_display_name']);
+        $this->assertSame('v2-manufacturer@test.com', $versionTwo->payload['data'][DppSectionKey::ManufacturerAndOperator->value]['manufacturer_email']);
     }
 }

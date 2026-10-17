@@ -27,6 +27,7 @@ class PublicPassportController extends Controller
         $json = $request->wantsJson();
         $etag = '"'.$viewModel->snapshotChecksum.':'.$viewModel->requestedLocale.($json ? ':json-v1' : '').'"';
         $headers = $this->publicHeaders($etag, $viewModel->publishedAt);
+        $headers['Content-Language'] = $viewModel->requestedLocale;
 
         if ($request->headers->get('If-None-Match') === $etag) {
             return response('', 304, $headers)
@@ -52,13 +53,14 @@ class PublicPassportController extends Controller
             );
         }
 
-        return response(
-            view('passports.public.show', [
-                'passport' => $viewModel,
-            ])->render(),
-            200,
-            $headers,
-        )->withoutCookie((string) config('session.cookie'));
+        $previousLocale = app()->getLocale();
+        app()->setLocale($headers['Content-Language']);
+        try {
+            return response(view('passports.public.show', ['passport' => $viewModel])->render(), 200, $headers)
+                ->withoutCookie((string) config('session.cookie'));
+        } finally {
+            app()->setLocale($previousLocale);
+        }
     }
 
     /**

@@ -53,7 +53,11 @@ test('manual sync runs through the fortnox write ability and is readable', funct
         ->postJson(fortnoxApiUrl('syncs'))
         ->assertOk()
         ->assertJsonPath('data.status', 'completed')
-        ->assertJsonPath('data.articles_created', 1);
+        ->assertJsonPath('data.articles_created', 1)
+        ->assertJsonPath('data.sync_mode', 'full')
+        ->assertJsonPath('data.pages_fetched', 1)
+        ->assertJsonPath('data.pagination_complete', true)
+        ->assertJsonPath('data.next_page', null);
 
     app('auth')->forgetGuards();
     test()->withToken(issueCompanyApiToken($user, $company, [ApiTokenAbility::FortnoxRead->value])->plainTextToken)

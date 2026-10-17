@@ -8,6 +8,7 @@
         </div>
     </div>
 
+    @include('passports.partials.assurance-statuses')
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Draft Summary --}}
         <div class="bg-white shadow rounded-lg p-6">

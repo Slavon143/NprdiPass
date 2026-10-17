@@ -87,7 +87,8 @@ test('mapping templates are tenant scoped through API abilities', function () {
     $token = apiToken($user, $company, [ApiTokenAbility::ImportsWrite->value, ApiTokenAbility::ImportsRead->value]);
     test()->withToken($token)->postJson(apiUrl('import-templates'), [
         'name' => 'Supplier A', 'mapping' => ['name' => 'Product name', 'slug' => 'Handle'],
-    ])->assertCreated()->assertJsonPath('data.name', 'Supplier A');
+        'number_format' => 'comma',
+    ])->assertCreated()->assertJsonPath('data.name', 'Supplier A')->assertJsonPath('data.defaults.number_format', 'comma');
     test()->withToken($token)->getJson(apiUrl('import-templates'))
         ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.mapping.name', 'Product name');
 

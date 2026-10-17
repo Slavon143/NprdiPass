@@ -3,18 +3,18 @@
         <div class="document-card">
             <h3 class="text-base font-semibold text-slate-800 mb-2">{{ $document->title }}</h3>
             <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 mb-3">
-                <div><dt>Type</dt><dd>{{ ucfirst(str_replace('_', ' ', $document->documentType)) }}</dd></div>
-                <div><dt>Language</dt><dd>{{ strtoupper($document->language) }}</dd></div>
+                <div><dt>{{ __('Type') }}</dt><dd>{{ ucfirst(str_replace('_', ' ', $document->documentType)) }}</dd></div>
+                <div><dt>{{ __('Language') }}</dt><dd>{{ strtoupper($document->language) }}</dd></div>
                 @if($document->issuerName !== null)
-                    <div><dt>Issuer</dt><dd>{{ $document->issuerName }}</dd></div>
+                    <div><dt>{{ __('Issuer') }}</dt><dd>{{ $document->issuerName }}</dd></div>
                 @endif
                 @if($document->issueDate !== null)
-                    <div><dt>Issue Date</dt><dd>{{ $document->issueDate }}</dd></div>
+                    <div><dt>{{ __('Issue Date') }}</dt><dd>{{ $document->issueDate }}</dd></div>
                 @endif
                 @if($document->expiresAt !== null)
-                    <div><dt>Expiry</dt><dd>{{ $document->expiresAt }}</dd></div>
+                    <div><dt>{{ __('Expiry') }}</dt><dd>{{ $document->expiresAt }}</dd></div>
                 @endif
-                <div><dt>File</dt><dd>{{ strtoupper($document->fileExtension) }} &middot; {{ $document->formattedSize }}</dd></div>
+                <div><dt>{{ __('File') }}</dt><dd>{{ strtoupper($document->fileExtension) }} &middot; {{ $document->formattedSize }}</dd></div>
             </dl>
             <a href="{{ ($isPreview ?? false) ? route('catalog.products.documents.versions.download', ['product' => $previewProductUuid, 'document' => $document->documentUuid, 'version' => $document->assetUuid]) : route('public.passports.documents.download', ['publicId' => $passport->passportPublicId, 'asset' => $document->assetUuid]) }}"
                class="download-link"
@@ -26,26 +26,26 @@
     @endforeach
 
     @if(count($passport->documents) === 0)
-        <p class="text-slate-500 text-sm">No downloadable public documents are attached.</p>
+        <p class="text-slate-500 text-sm">{{ __('No downloadable public documents are attached.') }}</p>
     @endif
 
     @if(!empty($fields['certification_notes']))
         <div class="mt-3">
-            <h3 class="text-sm font-semibold text-slate-700 mb-1">Certification Notes</h3>
+            <h3 class="text-sm font-semibold text-slate-700 mb-1">{{ __('Certification Notes') }}</h3>
             <p class="text-slate-600 text-sm">{!! nl2br(e($fields['certification_notes'])) !!}</p>
         </div>
     @endif
 
     @if(!empty($fields['compliance_summary']))
         <div class="mt-3">
-            <h3 class="text-sm font-semibold text-slate-700 mb-1">Compliance Summary</h3>
+            <h3 class="text-sm font-semibold text-slate-700 mb-1">{{ __('Compliance Summary') }}</h3>
             <p class="text-slate-600 text-sm">{!! nl2br(e($fields['compliance_summary'])) !!}</p>
         </div>
     @endif
 
     @if(!empty($fields['compliance_metadata']) && is_array($fields['compliance_metadata']))
         <div class="mt-3">
-            <h3 class="text-sm font-semibold text-slate-700 mb-1">Compliance Metadata</h3>
+            <h3 class="text-sm font-semibold text-slate-700 mb-1">{{ __('Compliance Metadata') }}</h3>
             <ul class="text-sm text-slate-600 space-y-1">
                 @foreach($fields['compliance_metadata'] as $item)
                     <li>

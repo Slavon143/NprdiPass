@@ -7,6 +7,7 @@ use App\Data\Fortnox\FortnoxArticle;
 use App\Data\Fortnox\FortnoxArticlePage;
 use App\Enums\CompanyPermission;
 use App\Enums\Fortnox\FortnoxConnectionStatus;
+use App\Enums\Fortnox\FortnoxSyncMode;
 use App\Enums\Fortnox\FortnoxSyncRunStatus;
 use App\Exceptions\Fortnox\FortnoxProviderException;
 use App\Exceptions\Fortnox\FortnoxSubscriptionBlocked;
@@ -32,14 +33,17 @@ class FortnoxSyncService
         try {
             $accessToken = $this->freshAccessToken($company, $connection, $actor);
             $watermark = $run->watermark_before ?? $connection->last_synced_at;
-            $modifiedAfter = $watermark?->toIso8601String();
+            $modifiedAfter = $run->sync_mode === FortnoxSyncMode::Full ? null : $watermark?->toIso8601String();
+            $pagesFetched = $run->pages_fetched;
             $maximum = max(1, (int) config('fortnox.sync_max_articles_per_run'));
+            $maximumPages = max(1, (int) config('fortnox.sync_max_pages_per_run', 1000));
+            $segmentPages = 0;
             $fetched = (int) $run->articles_fetched;
             $segmentFetched = 0;
             $maxModified = $run->watermark_observed ?? $watermark;
             $page = $run->cursor_page;
             // Pre-upgrade attempts did not checkpoint their high watermark.
-            if ($page !== null && $run->watermark_observed === null) {
+            if ($page !== null && $run->watermark_observed === null && $run->pages_fetched === null) {
                 $page = null;
                 $fetched = 0;
             }
@@ -53,7 +57,10 @@ class FortnoxSyncService
 
                 $nextPage = $result->nextPage === null ? null : (int) $result->nextPage;
                 $paginationComplete = $nextPage === null;
-                DB::transaction(function () use ($assertLock, $result, $actor, $company, $connection, $run, &$fetched, &$segmentFetched, &$maxModified, $nextPage, $paginationComplete): void {
+                if ($nextPage !== null && $nextPage <= ($page ?? 1)) {
+                    throw new FortnoxProviderException('Fortnox returned a non-advancing page cursor.', false);
+                }
+                DB::transaction(function () use ($assertLock, $result, $actor, $company, $connection, $run, &$fetched, &$segmentFetched, &$maxModified, &$pagesFetched, $nextPage, $paginationComplete): void {
                     $assertLock?->__invoke();
                     $this->authorizer->authorize($actor, $company, CompanyPermission::FortnoxManage);
                     foreach ($result->articles as $article) {
@@ -67,15 +74,20 @@ class FortnoxSyncService
 
                     // Persist the resumable cursor after every page so a crashed
                     // process can continue from the last completed page.
+                    if ($pagesFetched !== null) {
+                        $pagesFetched++;
+                    }
                     $run->forceFill([
                         'articles_fetched' => $fetched,
                         'watermark_observed' => $maxModified,
                         'cursor_page' => $paginationComplete ? null : $nextPage,
                         'pagination_complete' => $paginationComplete,
+                        'pages_fetched' => $pagesFetched,
                     ])->save();
                 });
+                $segmentPages++;
 
-                if ($paginationComplete || $segmentFetched >= $maximum) {
+                if ($paginationComplete || $segmentFetched >= $maximum || $segmentPages >= $maximumPages) {
                     break;
                 }
 
@@ -128,12 +140,14 @@ class FortnoxSyncService
      *
      * @return list<FortnoxArticle>
      */
-    public function listAllArticles(User $actor, Company $company, FortnoxConnection $connection, ?string $modifiedAfter = null, ?int $maximum = null): array
+    public function listAllArticles(User $actor, Company $company, FortnoxConnection $connection, ?string $modifiedAfter = null, ?int $maximum = null, ?Closure $onPage = null): array
     {
         $maximum = max(1, $maximum ?? (int) config('fortnox.reconciliation.max_articles'));
         $accessToken = $this->freshAccessToken($company, $connection, $actor);
         $articles = [];
         $page = null;
+        $pages = 0;
+        $maximumPages = max(1, (int) config('fortnox.reconciliation.max_pages', 1000));
 
         while (true) {
             $result = $this->fetchWithRetries(null, fn (): FortnoxArticlePage => $this->provider->listArticles(
@@ -145,10 +159,22 @@ class FortnoxSyncService
             foreach ($result->articles as $article) {
                 $articles[] = $article;
             }
+            $onPage?->__invoke();
+            $pages++;
+
+            if (count($articles) > $maximum) {
+                throw new FortnoxProviderException("Fortnox reconciliation safety cap exceeded ({$maximum} articles).", false);
+            }
 
             $nextPage = $result->nextPage === null ? null : (int) $result->nextPage;
+            if ($nextPage !== null && $nextPage <= ($page ?? 1)) {
+                throw new FortnoxProviderException('Fortnox returned a non-advancing page cursor.', false);
+            }
             if ($nextPage === null) {
                 return $articles;
+            }
+            if ($pages >= $maximumPages) {
+                throw new FortnoxProviderException("Fortnox reconciliation safety cap exceeded ({$maximumPages} pages).", false);
             }
 
             if (count($articles) >= $maximum) {

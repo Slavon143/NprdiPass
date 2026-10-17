@@ -68,6 +68,19 @@ class ReleaseCompatibilityTest(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, 'unsafe'):
                 policy.verify_runtime({**report, **changes})
 
+    def test_explicitly_configured_test_oauth_is_accepted(self):
+        report = {'environment': 'staging', 'oauth_enabled': True, 'expected_tenant': '1854146',
+                  'tenant_outcomes': {'1853390': 'blocked', '1854146': 'accepted', 'unknown': 'blocked', '9999999': 'blocked'},
+                  'new_authorization': 'accepted', 'no_external_requests_performed': True,
+                  'provider': 'http', 'test_client_verified': True, 'client_configured': True, 'secret_configured': True}
+        self.assertEqual(policy.verify_runtime(report), report)
+        for changes in ({'provider': 'fake'}, {'test_client_verified': False}, {'client_configured': False},
+                        {'secret_configured': False}, {'new_authorization': 'blocked'}, {'oauth_enabled': 'true'},
+                        {'environment': 'production'}, {'expected_tenant': '1853390'},
+                        {'tenant_outcomes': {**report['tenant_outcomes'], '9999999': 'accepted'}}):
+            with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, 'unsafe'):
+                policy.verify_runtime({**report, **changes})
+
 
 if __name__ == '__main__':
     unittest.main()

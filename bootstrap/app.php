@@ -23,6 +23,7 @@ use App\Http\Middleware\RecordRequestTelemetry;
 use App\Http\Middleware\ResolveApiCompany;
 use App\Http\Middleware\ResolveCurrentCompany;
 use App\Http\Middleware\StripPublicPassportCookies;
+use App\Http\Middleware\UseUiLocale;
 use App\Tenancy\Exceptions\CurrentCompanyNotSet;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(RecordRequestTelemetry::class);
 
         $middleware->api(append: [ApiSecurityHeaders::class]);
+        $middleware->web(append: [UseUiLocale::class]);
 
         $middleware->prependToPriorityList(ThrottleRequests::class, EnsureApiTokenIsValid::class);
         $middleware->prependToPriorityList(ThrottleRequests::class, ResolveApiCompany::class);

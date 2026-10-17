@@ -27,7 +27,9 @@ test('sv locale is supported', function (): void {
 test('unsupported locale is rejected', function (): void {
     $registry = $this->app->make(PassportLocaleRegistry::class);
 
-    expect($registry->supports('de'))->toBeFalse();
+    expect($registry->supports('de'))->toBeTrue();
+    expect($registry->get('de')->nativeLabel)->toBe('Deutsch');
+    expect($registry->get('de')->dateLocale)->toBe('de_DE');
     expect($registry->supports('fr'))->toBeFalse();
     expect($registry->supports('xx'))->toBeFalse();
 });
@@ -38,6 +40,7 @@ test('codes returns all supported codes', function (): void {
     $codes = $registry->codes();
     expect($codes)->toContain('en');
     expect($codes)->toContain('sv');
+    expect($codes)->toContain('de');
 });
 
 test('default code comes from config', function (): void {

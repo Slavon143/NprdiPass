@@ -43,6 +43,7 @@ class DppSafetyReviewed implements PassportReadinessRule
         $fields = [
             'warnings' => $allFields['warnings'] ?? null,
             'hazards' => $allFields['hazards'] ?? null,
+            'personal_protective_equipment' => $allFields['personal_protective_equipment'] ?? null,
             'storage_instructions' => $allFields['storage_instructions'] ?? null,
             'emergency_instructions' => $allFields['emergency_instructions'] ?? null,
             'age_restrictions' => $allFields['age_restrictions'] ?? null,
@@ -51,7 +52,7 @@ class DppSafetyReviewed implements PassportReadinessRule
         $hasContent = false;
 
         foreach ($fields as $value) {
-            if (is_array($value) && count($value) > 0) {
+            if (is_array($value) && array_any($value, fn ($item) => is_string($item) && trim($item) !== '')) {
                 $hasContent = true;
                 break;
             }

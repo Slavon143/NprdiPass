@@ -19,12 +19,12 @@ class ReadinessRulePresenter
 
     public function title(ReadinessRuleResult $rule): string
     {
-        $translated = $this->translation("readiness.{$rule->code}.title");
+        $translated = $this->translation($rule->titleKey);
         if ($translated !== null) {
             return $translated;
         }
 
-        $translated = $this->translation($rule->titleKey);
+        $translated = $this->translation("readiness.{$rule->code}.title");
         if ($translated !== null) {
             return $translated;
         }

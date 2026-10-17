@@ -67,20 +67,20 @@
 </head>
 <body class="np-prototype np-public-passport bg-white antialiased" data-public-passport-v2="true">
 <div class="np-site">
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">Skip to main content</a>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">{{ __('Skip to main content') }}</a>
 
     <header class="border-b border-slate-200 bg-slate-50" role="banner">
         <div class="mx-auto max-w-4xl px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            <a href="{{ route('home') }}" class="np-brand"><x-application-logo class="h-9 w-9 text-emerald-800" aria-hidden="true" /><span>NordiPass<span class="text-emerald-800">.</span></span></a>
-            <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">Digital Product Passport</div>
+            <a href="{{ route('home') }}" class="np-brand"><x-application-logo class="h-9 w-9 text-emerald-800" aria-hidden="true" /><span>{{ __('NordiPass') }}<span class="text-emerald-800">.</span></span></a>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-600">{{ __('Digital Product Passport') }}</div>
         </div>
     </header>
 
     <main id="main-content" class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 pb-16" tabindex="-1">
         @if($isPreview ?? false)
             <div class="mb-6 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
-                <div class="font-semibold">Draft preview — not public</div>
-                <div>This is generated from the current mutable draft. Publishing will create an immutable version after a fresh readiness check.</div>
+                <div class="font-semibold">{{ __('Draft preview — not public') }}</div>
+                <div>{{ __('This is generated from the current mutable draft. Publishing will create an immutable version after a fresh readiness check.') }}</div>
             </div>
         @endif
         @yield('content')
@@ -88,9 +88,9 @@
 
     <footer class="border-t border-slate-200 bg-slate-50 mt-8" role="contentinfo">
         <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 text-xs text-slate-500 space-y-2">
-            <p>This Digital Product Passport is based on information published by the responsible company. NordiPass provides the technical platform and does not independently certify the product or its legal compliance.</p>
+            <p>{{ __('This Digital Product Passport is based on information published by the responsible company. NordiPass provides the technical platform and does not independently certify the product or its legal compliance.') }}</p>
             @unless($isPreview ?? false)
-                <p id="privacy-notice">Privacy: this public page does not require sign-in and does not set tracking cookies. Anonymous, aggregate view analytics may be recorded without raw IP addresses, full user-agent strings, or full referrer URLs.</p>
+                <p id="privacy-notice">{{ __('Privacy: this public page does not require sign-in and does not set tracking cookies. Anonymous, aggregate view analytics may be recorded without raw IP addresses, full user-agent strings, or full referrer URLs.') }}</p>
             @endunless
         </div>
     </footer>

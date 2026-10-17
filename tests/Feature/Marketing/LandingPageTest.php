@@ -28,7 +28,7 @@ test('new visitors can reach registration from the header and mobile menu', func
     $xpath = new DOMXPath($document);
 
     foreach (['//header', '//nav[@data-public-menu]'] as $location) {
-        $links = $xpath->query($location.'//a[@href="'.route('register').'"]');
+        $links = $xpath->query($location.'//a[@href="'.route('register', $locale === 'en' ? [] : ['lang' => $locale]).'"]');
         expect($links->length)->toBe(1)
             ->and(trim($links->item(0)->textContent))->toBe($label);
     }

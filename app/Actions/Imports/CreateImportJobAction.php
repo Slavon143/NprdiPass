@@ -8,6 +8,7 @@ use App\Enums\AuditEvent;
 use App\Enums\CompanyPermission;
 use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Models\Company;
 use App\Models\Imports\ImportJob;
 use App\Models\User;
@@ -114,6 +115,7 @@ class CreateImportJobAction
                     'source_size' => $file->getSize(),
                     'source_sha256' => $sha,
                     'headers' => $headers,
+                    'number_format' => ImportNumberFormat::Dot,
                     'idempotency_key' => $idempotencyKey === null || $idempotencyKey === '' ? null : mb_substr($idempotencyKey, 0, 191),
                     'chunk_size' => max(1, min(1000, $chunkSize ?? (int) config('imports.default_chunk_size'))),
                 ]);

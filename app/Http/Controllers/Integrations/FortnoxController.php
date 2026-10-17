@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Integrations;
 use App\Actions\Fortnox\CompleteFortnoxCallbackAction;
 use App\Actions\Fortnox\ConnectFortnoxAction;
 use App\Actions\Fortnox\DisconnectFortnoxAction;
+use App\Actions\Fortnox\PreviewFortnoxFullSyncAction;
 use App\Actions\Fortnox\ResolveFortnoxConflictAction;
 use App\Actions\Fortnox\SyncFortnoxArticlesAction;
 use App\Enums\CompanyPermission;
 use App\Enums\Fortnox\FortnoxConflictStatus;
+use App\Enums\Fortnox\FortnoxSyncMode;
+use App\Enums\Fortnox\FortnoxSyncTrigger;
 use App\Exceptions\Fortnox\FortnoxProviderException;
 use App\Http\Controllers\Controller;
 use App\Models\Fortnox\FortnoxArticleMapping;
@@ -18,7 +21,9 @@ use App\Models\Fortnox\FortnoxSyncRun;
 use App\Models\User;
 use App\Services\Fortnox\FortnoxOAuthService;
 use App\Services\Fortnox\FortnoxSubscriptionGuard;
+use App\Support\Fortnox\FortnoxSyncPresenter;
 use App\Tenancy\Contracts\CurrentCompany;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -108,16 +113,36 @@ class FortnoxController extends Controller
         try {
             $run = $action->execute($this->actor($request), $currentCompany->require());
 
-            return back()->with('success', sprintf(
-                'Fortnox sync completed: %d fetched, %d created, %d updated, %d skipped, %d conflicts.',
-                $run->articles_fetched,
-                $run->articles_created,
-                $run->articles_updated,
-                $run->articles_skipped,
-                $run->conflicts_raised,
-            ));
+            return back()->with('success', app(FortnoxSyncPresenter::class)->message($run));
         } catch (ValidationException|FortnoxProviderException $exception) {
             return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function previewFull(Request $request, CurrentCompany $currentCompany, PreviewFortnoxFullSyncAction $action): View|RedirectResponse
+    {
+        try {
+            $preview = $action->execute($this->actor($request), $currentCompany->require());
+
+            return view('integrations.fortnox.full-preview', ['preview' => $preview]);
+        } catch (ValidationException|FortnoxProviderException $exception) {
+            return redirect()->route('settings.integrations.fortnox.index')->with('error', $exception->getMessage());
+        }
+    }
+
+    public function importFull(Request $request, CurrentCompany $currentCompany, PreviewFortnoxFullSyncAction $previewAction, SyncFortnoxArticlesAction $syncAction): RedirectResponse
+    {
+        $validated = $request->validate(['preview_token' => ['required', 'string', 'size:64', 'regex:/^[0-9a-f]+$/D']]);
+        $company = $currentCompany->require();
+        $actor = $this->actor($request);
+        try {
+            $preview = $previewAction->consume($actor, $company, $validated['preview_token']);
+            $run = $syncAction->execute($actor, $company, FortnoxSyncTrigger::Manual, FortnoxSyncMode::Full,
+                $preview['connection_uuid'], $preview['watermark'] === null ? null : CarbonImmutable::parse($preview['watermark']));
+
+            return redirect()->route('settings.integrations.fortnox.index')->with('success', app(FortnoxSyncPresenter::class)->message($run));
+        } catch (ValidationException|FortnoxProviderException $exception) {
+            return redirect()->route('settings.integrations.fortnox.index')->with('error', $exception->getMessage());
         }
     }
 

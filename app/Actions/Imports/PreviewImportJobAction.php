@@ -10,6 +10,7 @@ use App\Enums\Catalog\AttributeScope;
 use App\Enums\CompanyPermission;
 use App\Enums\Imports\ImportJobStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Models\Catalog\AttributeDefinition;
 use App\Models\Company;
 use App\Models\Imports\ImportError;
@@ -34,7 +35,7 @@ class PreviewImportJobAction
     ) {}
 
     /** @param array<string, string> $mapping */
-    public function execute(User $actor, Company $company, ImportJob $job, array $mapping): ImportJob
+    public function execute(User $actor, Company $company, ImportJob $job, array $mapping, ImportNumberFormat $numberFormat = ImportNumberFormat::Dot): ImportJob
     {
         $this->assertJob($company, $job);
         $this->authorizer->authorize($actor, $company, $job->mode === ImportMode::Update ? CompanyPermission::CatalogUpdate : CompanyPermission::CatalogCreate);
@@ -57,7 +58,7 @@ class PreviewImportJobAction
         $valid = 0;
         $invalid = 0;
 
-        DB::transaction(function () use ($actor, $job, $company, $path, $headers, $mapping, $maximum, &$seenSlugs, &$seenIdentifiers, $hash, &$total, &$valid, &$invalid): void {
+        DB::transaction(function () use ($actor, $job, $company, $path, $headers, $mapping, $numberFormat, $maximum, &$seenSlugs, &$seenIdentifiers, $hash, &$total, &$valid, &$invalid): void {
             $this->authorizer->authorize($actor, $company, $job->mode === ImportMode::Update ? CompanyPermission::CatalogUpdate : CompanyPermission::CatalogCreate);
             $job = ImportJob::query()->forCompany($company)->whereKey($job->getKey())->lockForUpdate()->firstOrFail();
             if (! in_array($job->status, [ImportJobStatus::Uploaded, ImportJobStatus::Previewed], true)) {
@@ -69,7 +70,7 @@ class PreviewImportJobAction
             $rows = LazyCollection::make(fn () => $this->reader->rows($path, $job->source_format));
             foreach ($rows->chunk(500) as $batch) {
                 $sources = $batch->all();
-                $plans = $this->planner->planBatch($company, $sources, $mapping, $job->mode);
+                $plans = $this->planner->planBatch($company, $sources, $mapping, $job->mode, $numberFormat);
                 $records = [];
                 $batchErrors = [];
                 $timestamp = now();
@@ -116,6 +117,7 @@ class PreviewImportJobAction
                         'row_fingerprint' => $fingerprint,
                         'source_data' => $source,
                         'mapped_data' => $plan->mapped,
+                        'normalizations' => $plan->normalizations,
                         'status' => $errors === [] ? 'valid' : 'invalid',
                         'operation' => $plan->operation,
                         'target_product_id' => $plan->targetProductId,
@@ -158,10 +160,11 @@ class PreviewImportJobAction
                 }
             }
 
-            $planFingerprint = hash('sha256', $job->source_sha256.'|'.json_encode($mapping, JSON_THROW_ON_ERROR).'|'.hash_final($hash));
+            $planFingerprint = hash('sha256', $job->source_sha256.'|'.json_encode([$mapping, $numberFormat->value], JSON_THROW_ON_ERROR).'|'.hash_final($hash));
             $job->forceFill([
                 'headers' => $headers,
                 'mapping' => $mapping,
+                'number_format' => $numberFormat,
                 'plan_fingerprint' => $planFingerprint,
                 'status' => ImportJobStatus::Previewed,
                 'total_rows' => $total,

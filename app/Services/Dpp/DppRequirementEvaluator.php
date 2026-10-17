@@ -4,6 +4,7 @@ namespace App\Services\Dpp;
 
 use App\Contracts\Passports\PassportReadinessRule;
 use App\Data\Passports\Readiness\ReadinessEvaluationContext;
+use App\Data\Passports\Readiness\ReadinessNavigationTarget;
 use App\Data\Passports\Readiness\ReadinessRuleResult;
 use App\Enums\DppRequirementLevel;
 use App\Enums\Passports\DppSectionKey;
@@ -31,9 +32,10 @@ class DppRequirementEvaluator
         $dateReason = $requirement->effective_from?->greaterThan($context->evaluationDate->startOfDay())
             ? 'requirement_not_yet_effective'
             : ($requirement->effective_to?->lessThan($context->evaluationDate->startOfDay()) ? 'requirement_no_longer_effective' : null);
-        if (($integrity && ($config !== [] || $requirement->effective_from !== null || $requirement->effective_to !== null
+        if (($integrity && (array_diff(array_keys($config), ['evidence']) !== [] || $requirement->effective_from !== null || $requirement->effective_to !== null
                 || ($canonical !== null && $rule::class !== $canonical::class)))
-            || array_diff(array_keys($config), ['when_section_enabled', 'context_config']) !== []
+            || array_diff(array_keys($config), ['when_section_enabled', 'context_config', 'evidence']) !== []
+            || (array_key_exists('evidence', $config) && ! app(DppRequirementEvidence::class)->configurationValid($config['evidence']))
             || (isset($config['context_config']) && ! is_array($config['context_config']))
             || (array_key_exists('when_section_enabled', $config) && (! is_string($config['when_section_enabled'])
                 || DppSectionKey::tryFrom($config['when_section_enabled']) === null))) {
@@ -73,6 +75,52 @@ class DppRequirementEvaluator
                 $context = new ReadinessEvaluationContext(...$attributes);
             }
             $result = $rule->evaluate($context);
+            $evidence = app(DppRequirementEvidence::class);
+            $policy = $evidence->policy($requirement, $rule->group());
+            $matchedDocument = $policy === null ? null : $evidence->matchingDocument($policy, $context,
+                $code === 'dpp.safety.reviewed' ? 'safety' : $requirement->section);
+            if ($matchedDocument !== null) {
+                $attributes = get_object_vars($result);
+                $attributes['safeContext']['required_evidence_satisfied'] = true;
+                $attributes['safeContext']['matched_evidence'] = [
+                    'document_uuid' => $matchedDocument->uuid,
+                    'version_uuid' => $matchedDocument->currentVersion->uuid,
+                    'checksum_sha256' => $matchedDocument->currentVersion->checksum_sha256,
+                    'reviewed_at' => $matchedDocument->currentVersion->reviewed_at?->toIso8601String(),
+                    'approved_at' => $matchedDocument->currentVersion->approved_at?->toIso8601String(),
+                ];
+                $result = new ReadinessRuleResult(...$attributes);
+            }
+            $materialsMissing = $requirement->level === DppRequirementLevel::Required
+                && $requirement->getRelation('profile')->key !== 'nordipass-pilot'
+                && str_starts_with($code, 'dpp.materials.')
+                && (! in_array('materials_and_composition', $context->normalizedPayload['enabled_sections'] ?? [], true)
+                    || empty($context->normalizedPayload['data']['materials_and_composition']['materials']));
+            if ($materialsMissing || ($policy !== null && $matchedDocument === null)) {
+                $attributes = get_object_vars($result);
+                $attributes['status'] = ReadinessRuleStatus::Failed;
+                $attributes['messageKey'] = $materialsMissing ? 'readiness.dpp.requirement.materials_missing' : 'readiness.dpp.requirement.evidence_missing';
+                $attributes['safeContext']['required_evidence_satisfied'] = false;
+                unset($attributes['safeContext']['not_applicable_reason']);
+                $attributes['navigationTarget'] = $materialsMissing
+                    ? new ReadinessNavigationTarget('passport_section', 'materials_and_composition',
+                        'catalog.products.passport.edit', ['product' => $context->product->uuid ?? ''], 'Edit Materials')
+                    : new ReadinessNavigationTarget('product_document', null,
+                        'catalog.products.documents.index', ['product' => $context->product->uuid ?? ''], 'Product documents');
+                if ($materialsMissing) {
+                    $attributes['section'] = DppSectionKey::MaterialsAndComposition;
+                    $attributes['field'] = 'materials';
+                }
+                $result = new ReadinessRuleResult(...$attributes);
+            }
+            if ($code === 'dpp.safety.reviewed' && $policy !== null) {
+                $attributes = get_object_vars($result);
+                $attributes['titleKey'] = 'readiness.dpp.requirement.safety_review_title';
+                if ($result->status === ReadinessRuleStatus::Passed) {
+                    $attributes['messageKey'] = 'readiness.dpp.requirement.safety_review_passed';
+                }
+                $result = new ReadinessRuleResult(...$attributes);
+            }
         }
 
         $severity = $error !== null || $integrity ? ReadinessSeverity::Blocker : match ($requirement->level) {

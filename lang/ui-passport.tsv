@@ -1,0 +1,93 @@
+Identity	Identitet	Identität
+Public name	Offentligt namn	Öffentlicher Name
+Public description	Offentlig beskrivning	Öffentliche Beschreibung
+Manufacturer display name	Tillverkarens visningsnamn	Anzeigename des Herstellers
+Responsible operator display name	Ansvarig aktörs visningsnamn	Anzeigename des verantwortlichen Wirtschaftsakteurs
+Contact notes	Kontaktanteckningar	Kontakthinweise
+Manufacturer email	Tillverkarens e-post	E-Mail des Herstellers
+Manufacturer website	Tillverkarens webbplats	Website des Herstellers
+Responsible operator email	Ansvarig aktörs e-post	E-Mail des verantwortlichen Wirtschaftsakteurs
+Responsible operator website	Ansvarig aktörs webbplats	Website des verantwortlichen Wirtschaftsakteurs
+Manufacturer country	Tillverkarens land	Herstellerland
+Importer display name	Importörens visningsnamn	Anzeigename des Importeurs
+Responsible operator country	Ansvarig aktörs land	Land des verantwortlichen Wirtschaftsakteurs
+Responsible operator role	Ansvarig aktörs roll	Rolle des verantwortlichen Wirtschaftsakteurs
+Responsible operator address	Ansvarig aktörs adress	Anschrift des verantwortlichen Wirtschaftsakteurs
+Responsible operator phone	Ansvarig aktörs telefon	Telefon des verantwortlichen Wirtschaftsakteurs
+Responsible operator registration ID	Ansvarig aktörs registrerings-ID	Registrierungskennung des verantwortlichen Wirtschaftsakteurs
+Responsible operator source	Källa för ansvarig aktör	Quelle zum verantwortlichen Wirtschaftsakteur
+Manufacturing countries	Tillverkningsländer	Herstellungsländer
+Production date	Produktionsdatum	Produktionsdatum
+Traceability notes	Spårbarhetsanteckningar	Rückverfolgbarkeitshinweise
+Batch identification instructions	Instruktioner för partiidentifiering	Anweisungen zur Chargenkennzeichnung
+Composition notes	Sammansättningsanteckningar	Zusammensetzungshinweise
+Personal protective equipment	Personlig skyddsutrustning	Persönliche Schutzausrüstung
+Storage instructions	Lagringsinstruktioner	Lagerungsanweisungen
+Emergency instructions	Nödinstruktioner	Notfallanweisungen
+Age restrictions	Åldersbegränsningar	Altersbeschränkungen
+Usage instructions	Användningsinstruktioner	Gebrauchsanweisungen
+Usage steps	Användningssteg	Anwendungsschritte
+Usage warnings	Användningsvarningar	Warnungen zur Nutzung
+Care instructions	Skötselinstruktioner	Pflegeanweisungen
+Care steps	Skötselsteg	Pflegeschritte
+Care warnings	Skötselvarningar	Warnungen zur Pflege
+Maintenance instructions	Underhållsinstruktioner	Wartungsanweisungen
+Storage recommendations	Lagringsrekommendationer	Lagerungsempfehlungen
+Repairable	Reparerbar	Reparierbar
+Repairability declaration	Reparerbarhetsförklaring	Erklärung zur Reparierbarkeit
+Repair skill level	Kunskapsnivå för reparation	Qualifikationsniveau für Reparaturen
+Required tools	Nödvändiga verktyg	Erforderliche Werkzeuge
+Estimated repair time (minutes)	Beräknad reparationstid (minuter)	Geschätzte Reparaturzeit (Minuten)
+Spare parts available	Reservdelar tillgängliga	Ersatzteile verfügbar
+Spare parts URL	Reservdelsadress	Ersatzteil-URL
+Spare parts	Reservdelar	Ersatzteile
+Repair instructions	Reparationsinstruktioner	Reparaturanweisungen
+Disassembly instructions	Demonteringsinstruktioner	Demontageanweisungen
+Spare parts notes	Reservdelsanteckningar	Ersatzteilhinweise
+Service information	Serviceinformation	Serviceinformationen
+Recycling instructions	Återvinningsinstruktioner	Recyclinghinweise
+Disposal instructions	Avfallsinstruktioner	Entsorgungshinweise
+Take-back program	Återtagningsprogram	Rücknahmeprogramm
+Take-back program available	Återtagningsprogram finns	Rücknahmeprogramm verfügbar
+Take-back program URL	Återtagningsprogrammets adress	URL des Rücknahmeprogramms
+Take-back program scope	Återtagningsprogrammets omfattning	Geltungsbereich des Rücknahmeprogramms
+Disassembly guidance	Demonteringsvägledning	Demontagehinweise
+Sorting guidance	Sorteringsvägledning	Sortierhinweise
+Hazard notes	Riskanteckningar	Gefahrenhinweise
+Waste/material codes	Avfalls-/materialkoder	Abfall-/Materialcodes
+Recycling codes	Återvinningskoder	Recyclingcodes
+Carbon footprint (kg CO₂e)	Klimatavtryck (kg CO₂e)	CO₂-Fußabdruck (kg CO₂e)
+Recycled content calculation method	Beräkningsmetod för återvunnet innehåll	Berechnungsmethode des Rezyklatanteils
+Recycled content source	Källa för återvunnet innehåll	Quelle des Rezyklatanteils
+Expected lifetime (years)	Förväntad livslängd (år)	Erwartete Lebensdauer (Jahre)
+Energy consumption (kWh)	Energianvändning (kWh)	Energieverbrauch (kWh)
+Environmental metrics	Miljömätvärden	Umweltkennzahlen
+Environmental claims	Miljöpåståenden	Umweltaussagen
+Environmental claim records	Registrerade miljöpåståenden	Erfasste Umweltaussagen
+Environmental notes	Miljöanteckningar	Umwelthinweise
+Certification notes	Certifieringsanteckningar	Zertifizierungshinweise
+Compliance summary	Sammanfattning av överensstämmelse	Konformitätszusammenfassung
+Compliance metadata	Metadata för överensstämmelse	Konformitätsmetadaten
+Support email	Supportens e-post	Support-E-Mail
+Support phone	Supportens telefon	Supporttelefon
+Support URL	Supportadress	Support-URL
+Support channels	Supportkanaler	Supportkanäle
+Warranty available	Garanti finns	Garantie verfügbar
+Warranty duration	Garantitid	Garantiedauer
+Warranty duration unit	Garantitidens enhet	Einheit der Garantiedauer
+Warranty URL	Garantiadress	Garantie-URL
+Warranty summary	Garantisammanfattning	Garantiezusammenfassung
+Warranty conditions	Garantivillkor	Garantiebedingungen
+Warranty exclusions	Garantiundantag	Garantieausschlüsse
+Warranty claim instructions	Instruktioner för garantianspråk	Anweisungen für Garantieansprüche
+Support notes	Supportanteckningar	Supporthinweise
+Add one row per material. Product share (%) describes how much of the product is made from that material; recycled content (%) describes how much of that material is recycled. Use 0 when the value is known to be none.	Lägg till en rad per material. Produktandel (%) anger hur mycket av produkten som består av materialet; återvunnet innehåll (%) anger hur mycket av materialet som är återvunnet. Använd 0 när värdet är känt att vara noll.	Ergänzen Sie eine Zeile je Material. Produktanteil (%) beschreibt den Anteil am Produkt; Rezyklatanteil (%) beschreibt den wiederverwerteten Anteil dieses Materials. Verwenden Sie 0 bei bekanntem Nullwert.
+Choose Yes only when the manufacturer, seller, or another named organization accepts the product back after use.	Välj Ja endast när tillverkaren, säljaren eller en annan namngiven organisation tar tillbaka produkten efter användning.	Wählen Sie Ja nur, wenn Hersteller, Verkäufer oder eine andere benannte Organisation das Produkt nach Gebrauch zurücknimmt.
+Explain who accepts returns, where customers should go, and any conditions. General recycling or disposal instructions belong in the fields above.	Förklara vem som tar emot returer, vart kunder ska vända sig och vilka villkor som gäller. Allmänna återvinnings- och avfallsinstruktioner hör hemma i fälten ovan.	Beschreiben Sie Annahmestelle, Rückgabeweg und Bedingungen. Allgemeine Recycling- oder Entsorgungshinweise gehören in die Felder oben.
+Add measured product data such as carbon footprint, energy use, expected lifetime, or another clearly named metric with a value and unit.	Ange uppmätta produktdata som klimatavtryck, energianvändning, förväntad livslängd eller ett annat tydligt namngivet mätvärde med värde och enhet.	Ergänzen Sie gemessene Produktdaten wie CO₂-Fußabdruck, Energieverbrauch, erwartete Lebensdauer oder eine klar benannte Kennzahl mit Wert und Einheit.
+Use structured claims when you make statements such as “recycled”, “low carbon”, or “repairable”. Add a source and set Review state to Reviewed only after verification.	Använd strukturerade påståenden för uppgifter som ”återvunnet”, ”lågt klimatavtryck” eller ”reparerbart”. Lägg till en källa och sätt granskningsstatus till Granskad först efter verifiering.	Erfassen Sie Aussagen wie „recycelt“, „CO₂-arm“ oder „reparierbar“ strukturiert. Ergänzen Sie eine Quelle und setzen Sie den Prüfstatus erst nach Überprüfung auf Geprüft.
+Add recognized recycling or material identification codes that apply to this product or its packaging, one code per line.	Ange erkända återvinnings- eller materialkoder som gäller produkten eller förpackningen, en kod per rad.	Ergänzen Sie anerkannte Recycling- oder Materialcodes für dieses Produkt oder seine Verpackung, einen Code je Zeile.
+Choose Yes or No. Selecting No is a valid declaration and hides repair-only fields.	Välj Ja eller Nej. Nej är en giltig deklaration och döljer fält som enbart gäller reparation.	Wählen Sie Ja oder Nein. Nein ist eine gültige Erklärung und blendet reine Reparaturfelder aus.
+Choose Yes only when customers or service partners can obtain spare parts.	Välj Ja endast när kunder eller servicepartner kan få reservdelar.	Wählen Sie Ja nur, wenn Kunden oder Servicepartner Ersatzteile beziehen können.
+Add at least one public way for customers to request help, such as an email address, phone number, website, or service center.	Ange minst en offentlig kontaktväg där kunder kan få hjälp, exempelvis e-postadress, telefonnummer, webbplats eller servicecenter.	Ergänzen Sie mindestens einen öffentlichen Hilfekontakt für Kunden, etwa E-Mail-Adresse, Telefonnummer, Website oder Servicezentrum.
+Choose Yes or No. If Yes, provide a warranty summary or public warranty URL.	Välj Ja eller Nej. Vid Ja anger du en garantisammanfattning eller offentlig garantiadress.	Wählen Sie Ja oder Nein. Ergänzen Sie bei Ja eine Garantiezusammenfassung oder öffentliche Garantie-URL.

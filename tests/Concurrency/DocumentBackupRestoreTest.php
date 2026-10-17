@@ -1,12 +1,17 @@
 <?php
 
 use App\Actions\Catalog\Documents\CreateProductDocumentAction;
+use App\Actions\Catalog\Media\UploadProductMediaAction;
 use App\Actions\Catalog\Products\CreateProductAction;
+use App\Actions\Imports\CreateImportJobAction;
 use App\Enums\Documents\ProductDocumentType;
 use App\Enums\Documents\ProductDocumentVisibility;
+use App\Enums\Imports\ImportMode;
 use App\Models\Company;
 use App\Models\CompanyMembership;
+use App\Models\Passports\ProductPassport;
 use App\Models\User;
+use App\Services\Passports\Publication\PublicationAssetStager;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
@@ -73,6 +78,30 @@ test('full backup restores the document, current version, and exact PDF into iso
 
         expect($version)->not->toBeNull()
             ->and(Storage::disk('product_documents')->get($version->storage_key))->toBe($pdf);
+
+        $media = app(UploadProductMediaAction::class)->execute(
+            $actor, $company, $product, UploadedFile::fake()->image('recovery.png', 320, 240), makePrimary: true,
+        );
+        $imageBytes = Storage::disk('catalog_media')->get($media->storage_path);
+        $import = app(CreateImportJobAction::class)->execute($actor, $company,
+            UploadedFile::fake()->createWithContent('recovery.csv', "name;weight\n".str_repeat("Recovery fixture;0.0040\n", 20000)), ImportMode::Create);
+        $importBytes = Storage::disk('production_imports')->get($import->source_path);
+        $passport = ProductPassport::query()->forceCreate([
+            'company_id' => $company->getKey(), 'product_id' => $product->getKey(),
+            'default_language' => 'en', 'enabled_languages' => ['en'], 'status' => 'draft', 'created_by' => $actor->getKey(),
+        ]);
+        $stager = app(PublicationAssetStager::class);
+        $snapshotUuid = (string) Str::uuid();
+        $assets = $stager->promoteAssets($stager->stageAssets($passport, $snapshotUuid, [
+            ['asset_uuid' => $media->uuid, 'source_disk' => 'catalog_media', 'source_storage_key' => $media->storage_path, 'file_extension' => 'png'],
+            ['asset_uuid' => $version->uuid, 'source_disk' => 'product_documents', 'source_storage_key' => $version->storage_key, 'file_extension' => 'pdf'],
+        ]), $snapshotUuid);
+        $expectedFiles = [
+            'production_imports' => [$import->source_path => $importBytes],
+            'catalog_media' => [$media->storage_path => $imageBytes],
+            'product_documents' => [$version->storage_key => $pdf],
+            'passport_assets' => [$assets[$media->uuid]['path'] => $imageBytes, $assets[$version->uuid]['path'] => $pdf],
+        ];
         expect(Artisan::call('nordipass:backup'))->toBe(0, Artisan::output());
 
         $backupDisk = Storage::disk('backup_document_test');
@@ -121,6 +150,17 @@ test('full backup restores the document, current version, and exact PDF into iso
             ->and($restored->size_bytes)->toBe(strlen($pdf))
             ->and($restored->checksum_sha256)->toBe(hash('sha256', $pdf))
             ->and(Storage::disk('product_documents')->get($restored->storage_key))->toBe($pdf);
+        foreach ($expectedFiles as $disk => $files) {
+            expect(Storage::disk($disk)->allFiles())->toEqualCanonicalizing(array_keys($files));
+            foreach ($files as $path => $bytes) {
+                expect(Storage::disk($disk)->get($path))->toBe($bytes)
+                    ->and(hash('sha256', Storage::disk($disk)->get($path)))->toBe(hash('sha256', $bytes));
+            }
+        }
+        $restoredMedia = DB::connection('mysql_document_restore')->table('product_media')->where('uuid', $media->uuid)->first();
+        expect($restoredMedia)->not->toBeNull()->and($restoredMedia->checksum_sha256)->toBe(hash('sha256', $imageBytes));
+        $restoredImport = DB::connection('mysql_document_restore')->table('import_jobs')->where('uuid', $import->uuid)->first();
+        expect($restoredImport)->not->toBeNull()->and($restoredImport->source_sha256)->toBe(hash('sha256', $importBytes));
     } finally {
         DB::disconnect('mysql_document_restore');
         DB::connection('mysql')->statement("DROP DATABASE IF EXISTS `{$database}`");

@@ -2,6 +2,7 @@
 
 namespace App\Models\Fortnox;
 
+use App\Enums\Fortnox\FortnoxSyncMode;
 use App\Enums\Fortnox\FortnoxSyncRunStatus;
 use App\Enums\Fortnox\FortnoxSyncTrigger;
 use App\Models\Catalog\Concerns\HasCompanyScope;
@@ -29,6 +30,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $cursor_page
  * @property bool $pagination_complete
  * @property int $attempts
+ * @property FortnoxSyncMode|null $sync_mode
+ * @property int|null $pages_fetched
  * @property int $articles_fetched
  * @property int $articles_created
  * @property int $articles_updated
@@ -55,6 +58,8 @@ class FortnoxSyncRun extends Model
     {
         return [
             'trigger_type' => FortnoxSyncTrigger::class,
+            'sync_mode' => FortnoxSyncMode::class,
+            'pages_fetched' => 'integer',
             'status' => FortnoxSyncRunStatus::class,
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',

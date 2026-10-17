@@ -35,9 +35,14 @@ def verify_source(root, target, policy):
 
 def verify_runtime(report):
     expected = {'1853390': 'blocked', '1854146': 'accepted', 'unknown': 'blocked', '9999999': 'blocked'}
-    if (report.get('environment') != 'staging' or report.get('oauth_enabled') is not False
+    oauth_enabled = report.get('oauth_enabled')
+    authorization = 'accepted' if oauth_enabled is True else 'blocked'
+    if (report.get('environment') != 'staging' or type(oauth_enabled) is not bool
             or report.get('expected_tenant') != '1854146' or report.get('tenant_outcomes') != expected
-            or report.get('new_authorization') != 'blocked' or report.get('no_external_requests_performed') is not True):
+            or report.get('new_authorization') != authorization or report.get('no_external_requests_performed') is not True
+            or (oauth_enabled and (report.get('provider') != 'http'
+                or report.get('test_client_verified') is not True
+                or report.get('client_configured') is not True or report.get('secret_configured') is not True))):
         raise ValueError('Target staging integration configuration is unsafe')
     return report
 

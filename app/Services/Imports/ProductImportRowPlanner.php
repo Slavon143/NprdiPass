@@ -8,6 +8,7 @@ use App\Enums\Catalog\AttributeDefinitionStatus;
 use App\Enums\Catalog\AttributeScope;
 use App\Enums\Catalog\CategoryStatus;
 use App\Enums\Imports\ImportMode;
+use App\Enums\Imports\ImportNumberFormat;
 use App\Exceptions\Catalog\AttributeOperationException;
 use App\Exceptions\Catalog\VariantOperationException;
 use App\Models\Catalog\AttributeDefinition;
@@ -31,13 +32,13 @@ class ProductImportRowPlanner
     ) {}
 
     /** @param array<string, string|null> $source @param array<string, string> $mapping */
-    public function plan(Company $company, array $source, array $mapping, ImportMode $mode): PlannedImportRow
+    public function plan(Company $company, array $source, array $mapping, ImportMode $mode, ImportNumberFormat $numberFormat = ImportNumberFormat::Dot): PlannedImportRow
     {
-        return $this->planWithLookups($company, $source, $mapping, $mode);
+        return $this->planWithLookups($company, $source, $mapping, $mode, numberFormat: $numberFormat);
     }
 
     /** @param array<int, array<string, string|null>> $sources @param array<string, string> $mapping @return array<int, PlannedImportRow> */
-    public function planBatch(Company $company, array $sources, array $mapping, ImportMode $mode): array
+    public function planBatch(Company $company, array $sources, array $mapping, ImportMode $mode, ImportNumberFormat $numberFormat = ImportNumberFormat::Dot): array
     {
         $slugs = [];
         $categoryValues = [];
@@ -91,7 +92,7 @@ class ProductImportRowPlanner
             ? $this->definitionsFor($company) : collect();
         $plans = [];
         foreach ($sources as $number => $source) {
-            $plans[$number] = $this->planWithLookups($company, $source, $mapping, $mode, $products, $categories, $definitions, $owners);
+            $plans[$number] = $this->planWithLookups($company, $source, $mapping, $mode, $products, $categories, $definitions, $owners, $numberFormat);
         }
 
         return $plans;
@@ -102,7 +103,7 @@ class ProductImportRowPlanner
      * @param  Collection<string, AttributeDefinition>|null  $definitions
      */
     private function planWithLookups(Company $company, array $source, array $mapping, ImportMode $mode,
-        ?Collection $products = null, ?Collection $categories = null, ?Collection $definitions = null, ?Collection $owners = null): PlannedImportRow
+        ?Collection $products = null, ?Collection $categories = null, ?Collection $definitions = null, ?Collection $owners = null, ImportNumberFormat $numberFormat = ImportNumberFormat::Dot): PlannedImportRow
     {
         $mapped = [];
         foreach (self::FIELDS as $field) {
@@ -113,6 +114,7 @@ class ProductImportRowPlanner
         }
 
         $errors = [];
+        $normalizations = [];
         $name = $mapped['name'] ?? '';
         if ($name === '') {
             $errors[] = $this->error('name', 'required', 'Product name is required.');
@@ -173,6 +175,13 @@ class ProductImportRowPlanner
                 }
                 try {
                     $raw = $this->attributeRawValue($definition, $source[$header] ?? null);
+                    if ($definition->type === AttributeDataType::Decimal && is_string($raw)) {
+                        $original = $raw;
+                        $raw = app(ImportDecimalNormalizer::class)->normalize($raw, $numberFormat);
+                        if ($original !== $raw) {
+                            $normalizations[] = ['field' => $field, 'source' => $original, 'normalized' => $raw];
+                        }
+                    }
                     $this->attributeValidator->normalize($company, $definition, AttributeScope::Product, $raw, $definition->options->all());
                     $mapped['attributes'][$definition->uuid] = $raw;
                 } catch (AttributeOperationException $exception) {
@@ -219,7 +228,7 @@ class ProductImportRowPlanner
             $errors[] = $this->error('slug', 'not_found', 'No product with this slug exists for update.');
         }
 
-        return new PlannedImportRow($mapped, $operation, $product?->getKey(), $errors);
+        return new PlannedImportRow($mapped, $operation, $product?->getKey(), $errors, $normalizations);
     }
 
     private function productSlug(string $value): ?string

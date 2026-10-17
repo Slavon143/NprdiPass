@@ -20,7 +20,7 @@
                     <select id="event" name="event" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">{{ __('All events') }}</option>
                         @foreach ($events as $eventOption)
-                            <option value="{{ $eventOption->value }}" @selected(request('event') === $eventOption->value)>{{ $eventOption->label() }}</option>
+                            <option value="{{ $eventOption->value }}" @selected(request('event') === $eventOption->value)>{{ __($eventOption->label()) }}</option>
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('event')" class="mt-2" />

@@ -60,7 +60,7 @@
                                 @csrf
                                 <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                                     <span class="block truncate">{{ $companyName($companyOption) }}</span>
-                                    <span class="block text-xs capitalize text-slate-500">{{ $companyOption->pivot->role->value }}</span>
+                                    <span class="block text-xs capitalize text-slate-500">{{ __($companyOption->pivot->role->value) }}</span>
                                 </button>
                             </form>
                         @endif
@@ -76,7 +76,7 @@
             <p class="break-words font-semibold text-slate-900">{{ $text(Auth::user()->name, Auth::user()->email) }}</p>
             <p class="break-all text-sm text-slate-500">{{ Auth::user()->email }}</p>
             @if ($currentMembership)
-                <p class="mt-2 text-xs text-slate-500">{{ __('Role') }}: <span class="font-semibold capitalize text-slate-700">{{ $currentMembership->role->value }}</span></p>
+                <p class="mt-2 text-xs text-slate-500">{{ __('Role') }}: <span class="font-semibold capitalize text-slate-700">{{ __($currentMembership->role->value) }}</span></p>
             @endif
             <div class="mt-3 flex items-center gap-4 text-sm">
                 <a href="{{ route('profile.edit') }}" class="font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ __('Profile') }}</a>

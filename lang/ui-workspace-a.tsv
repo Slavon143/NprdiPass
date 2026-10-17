@@ -1,0 +1,200 @@
+1 year	1 år	1 Jahr
+30 days	30 dagar	30 Tage
+90 days	90 dagar	90 Tage
+:approved approved	:approved godkända	:approved freigegeben
+:count blockers	:count blockerande problem	:count blockierende Probleme
+:count characters maximum	Högst :count tecken	Höchstens :count Zeichen
+:count open requests	:count öppna ärenden	:count offene Anfragen
+:count passed	:count godkända kontroller	:count bestandene Prüfungen
+:count recommendations	:count rekommendationer	:count Empfehlungen
+:count warnings	:count varningar	:count Warnungen
+:failed failed, :pending pending	:failed misslyckade, :pending väntande	:failed fehlgeschlagen, :pending ausstehend
+:review awaiting review	:review väntar på granskning	:review warten auf Prüfung
+A valid HTTPS URL is required	En giltig HTTPS-adress krävs	Eine gültige HTTPS-URL ist erforderlich
+API access	API-åtkomst	API-Zugang
+API requests per quota period	API-anrop per kvotperiod	API-Anfragen je Kontingentzeitraum
+API token created	API-token skapad	API-Token erstellt
+API tokens	API-token	API-Tokens
+Abilities	Behörigheter	Berechtigungen
+Accept invitation	Acceptera inbjudan	Einladung annehmen
+Accepted: PDF. Max size: :size KB.	Godkänt format: PDF. Högst :size KB.	Akzeptiert: PDF. Maximale Größe: :size KB.
+Acknowledge review	Bekräfta granskning	Prüfung bestätigen
+Actions for :product	Åtgärder för :product	Aktionen für :product
+Activate product	Aktivera produkt	Produkt aktivieren
+Activate selected	Aktivera valda	Auswahl aktivieren
+Activate v:version	Aktivera v:version	v:version aktivieren
+Active	Aktiv	Aktiv
+Active template	Aktiv mall	Aktive Vorlage
+Active until expiry	Aktiv till utgångsdatum	Bis zum Ablauf aktiv
+Activity	Aktivitet	Aktivität
+Actor	Aktör	Akteur
+Actual values	Faktiska värden	Tatsächliche Werte
+Add	Lägg till	Hinzufügen
+Add a category to :company.	Lägg till en kategori i :company.	Eine Kategorie für :company hinzufügen.
+Add channel	Lägg till kanal	Kanal hinzufügen
+Add claim	Lägg till påstående	Aussage hinzufügen
+Add document	Lägg till dokument	Dokument hinzufügen
+Add entry	Lägg till post	Eintrag hinzufügen
+Add material	Lägg till material	Material hinzufügen
+Add metric	Lägg till mätvärde	Kennzahl hinzufügen
+Add new version	Lägg till ny version	Neue Version hinzufügen
+Add product	Lägg till produkt	Produkt hinzufügen
+Add spare part	Lägg till reservdel	Ersatzteil hinzufügen
+Add subcategory	Lägg till underkategori	Unterkategorie hinzufügen
+Add variant	Lägg till variant	Variante hinzufügen
+Add your first document	Lägg till ditt första dokument	Erstes Dokument hinzufügen
+Add your first product	Lägg till din första produkt	Erstes Produkt hinzufügen
+Additional categories	Ytterligare kategorier	Zusätzliche Kategorien
+Advanced filters	Avancerade filter	Erweiterte Filter
+Advanced — DPP section defaults	Avancerat — standardinställningar för passavsnitt	Erweitert — Standardwerte der Passabschnitte
+All	Alla	Alle
+All actors	Alla aktörer	Alle Akteure
+All attributes	Alla attribut	Alle Attribute
+All catalog events	Alla kataloghändelser	Alle Katalogereignisse
+All checks passed.	Alla kontroller godkända.	Alle Prüfungen bestanden.
+All events	Alla händelser	Alle Ereignisse
+All notifications marked as read.	Alla aviseringar markerade som lästa.	Alle Benachrichtigungen als gelesen markiert.
+All scopes	Alla omfattningar	Alle Geltungsbereiche
+All statuses	Alla statusar	Alle Status
+All types	Alla typer	Alle Typen
+All variants	Alla varianter	Alle Varianten
+Alt text	Alternativtext	Alternativtext
+Annual	Årsvis	Jährlich
+Any assigned category	Valfri tilldelad kategori	Beliebige zugeordnete Kategorie
+Any brand	Valfritt varumärke	Beliebige Marke
+Any manufacturer	Valfri tillverkare	Beliebiger Hersteller
+Any value	Valfritt värde	Beliebiger Wert
+Applicability	Tillämplighet	Anwendbarkeit
+Applies because	Tillämpligt eftersom	Anwendbar, weil
+Approval	Godkännande	Freigabe
+Approval comment	Godkännandekommentar	Freigabekommentar
+Approve	Godkänn	Freigeben
+Approved	Godkänd	Freigegeben
+Archive	Arkivera	Archivieren
+Archive attribute	Arkivera attribut	Attribut archivieren
+Archive is currently blocked.	Arkivering är blockerad just nu.	Archivierung ist derzeit blockiert.
+Archive product	Arkivera produkt	Produkt archivieren
+Archive selected	Arkivera valda	Auswahl archivieren
+Archive selected products	Arkivera valda produkter	Ausgewählte Produkte archivieren
+Archive this document?	Arkivera dokumentet?	Dieses Dokument archivieren?
+Archive variant	Arkivera variant	Variante archivieren
+Archived	Arkiverad	Archiviert
+Archived option	Arkiverat alternativ	Archivierte Option
+Archived values	Arkiverade värden	Archivierte Werte
+Are you sure?	Är du säker?	Sind Sie sicher?
+Article	Artikel	Artikel
+Article mappings	Artikelkopplingar	Artikelzuordnungen
+Article number	Artikelnummer	Artikelnummer
+Ask a question	Ställ en fråga	Frage stellen
+Assessed version	Bedömd version	Bewertete Version
+At least one owner is required.	Minst en ägare krävs.	Mindestens ein Eigentümer ist erforderlich.
+Attempts	Försök	Versuche
+Attribute	Attribut	Attribut
+Attribute details	Attributuppgifter	Attributdetails
+Audit	Granskningslogg	Audit
+Audit history	Granskningshistorik	Auditverlauf
+Authorities and notified bodies	Myndigheter och anmälda organ	Behörden und notifizierte Stellen
+Availability	Tillgänglighet	Verfügbarkeit
+Availability period	Tillgänglighetsperiod	Verfügbarkeitszeitraum
+Back to Product	Tillbaka till produkt	Zurück zum Produkt
+Back to category	Tillbaka till kategori	Zurück zur Kategorie
+Back to messages	Tillbaka till meddelanden	Zurück zu Nachrichten
+Back to onboarding	Tillbaka till introduktion	Zurück zur Einführung
+Back to operations	Tillbaka till drift	Zurück zum Betrieb
+Back to passport	Tillbaka till passet	Zurück zum Produktpass
+Back to products	Tillbaka till produkter	Zurück zu Produkten
+Battery data mapping	Mappning av batteridata	Zuordnung der Batteriedaten
+Billing and entitlements	Fakturering och tillgångar	Abrechnung und Leistungen
+Billing email	Faktureringsadress för e-post	Abrechnungs-E-Mail
+Billing period	Faktureringsperiod	Abrechnungszeitraum
+Billing period unavailable	Faktureringsperioden är inte tillgänglig	Abrechnungszeitraum nicht verfügbar
+Billing recovery	Återställning av fakturering	Wiederherstellung der Abrechnung
+Blocked — no submission	Blockerad — ingen inlämning	Blockiert — keine Einreichung
+Boolean	Ja/nej	Boolescher Wert
+Breadcrumb	Navigeringsstig	Navigationspfad
+CSV or Excel catalogue	CSV- eller Excel-katalog	CSV- oder Excel-Katalog
+Cancel pending checkout	Avbryt väntande beställning	Ausstehende Bestellung abbrechen
+Cancel review	Avbryt granskning	Prüfung abbrechen
+Cancel review comment	Kommentar vid avbruten granskning	Kommentar zum Prüfungsabbruch
+Cancel the invitation for :email?	Avbryt inbjudan för :email?	Einladung für :email widerrufen?
+Candidate data present; unverified	Möjliga uppgifter finns; ej verifierade	Mögliche Angaben vorhanden; ungeprüft
+Candidate fields; review needed	Möjliga fält; granskning krävs	Mögliche Felder; Prüfung erforderlich
+Caption	Bildtext	Bildunterschrift
+Catalog	Katalog	Katalog
+Catalog Audit Detail	Detaljer i katalogens granskningslogg	Katalog-Auditdetails
+Catalog Audit History	Katalogens granskningshistorik	Katalog-Auditverlauf
+Catalog and passport slots	Katalog och passplatser	Katalog und Passplätze
+Catalog audit events	Katalogens granskningshändelser	Katalog-Auditereignisse
+Catalog baseline	Katalogbaslinje	Katalogausgangsstand
+Catalog readiness	Katalogberedskap	Katalogbereitschaft
+Catalog snapshot at publication	Katalogbild vid publicering	Katalogstand bei Veröffentlichung
+Catalog — Attributes	Katalog — Attribut	Katalog — Attribute
+Catalog — Categories	Katalog — Kategorier	Katalog — Kategorien
+Catalog — Product attributes	Katalog — Produktattribut	Katalog — Produktattribute
+Catalog — Product images	Katalog — Produktbilder	Katalog — Produktbilder
+Catalog — Product variants	Katalog — Produktvarianter	Katalog — Produktvarianten
+Catalog — Variant attributes	Katalog — Variantattribut	Katalog — Variantenattribute
+Catalog — Variant images	Katalog — Variantbilder	Katalog — Variantenbilder
+Catalogue pool limit	Gräns för katalogpoolen	Katalogpool-Limit
+Category	Kategori	Kategorie
+Category actions	Kategoriåtgärder	Kategorieaktionen
+Category attributes	Kategoriattribut	Kategorieattribute
+Category mode	Kategoriläge	Kategoriemodus
+Category standard v:version	Kategoristandard v:version	Kategoriestandard v:version
+Category taxonomy	Kategoritaxonomi	Kategorietaxonomie
+Certificate number	Certifikatnummer	Zertifikatsnummer
+Change status	Ändra status	Status ändern
+Change status…	Ändra status…	Status ändern…
+Changed fields	Ändrade fält	Geänderte Felder
+Checkout confirmation required	Beställningen behöver bekräftas	Bestellbestätigung erforderlich
+Checksum	Kontrollsumma	Prüfsumme
+Choose	Välj	Auswählen
+Choose replacement	Välj ersättare	Ersatz auswählen
+Chunk size	Antal rader per del	Zeilen je Abschnitt
+Claim	Påstående	Aussage
+Clear	Rensa	Leeren
+Clear all	Rensa alla	Alles leeren
+Clear filters	Rensa filter	Filter zurücksetzen
+Clear selection	Rensa markering	Auswahl aufheben
+Close navigation	Stäng navigering	Navigation schließen
+Code	Kod	Code
+Commerce	Handel	Handel
+Company	Företag	Unternehmen
+Company details	Företagsuppgifter	Unternehmensdaten
+Company invitation	Företagsinbjudan	Unternehmenseinladung
+Company members	Företagsmedlemmar	Unternehmensmitglieder
+Company name	Företagsnamn	Unternehmensname
+Company plan details	Företagets planuppgifter	Tarifdetails des Unternehmens
+Company settings	Företagsinställningar	Unternehmenseinstellungen
+Company support email	Företagets supportadress	Support-E-Mail des Unternehmens
+Company suspended	Företaget är avstängt	Unternehmen gesperrt
+Company tokens	Företagets token	Unternehmenstokens
+Complete attributes	Komplettera attribut	Attribute vervollständigen
+Complete product data	Komplettera produktdata	Produktdaten vervollständigen
+Conditional applicability	Villkorlig tillämplighet	Bedingte Anwendbarkeit
+Confirm	Bekräfta	Bestätigen
+Confirm action	Bekräfta åtgärd	Aktion bestätigen
+Confirm password	Bekräfta lösenord	Passwort bestätigen
+Confirming subscription…	Bekräftar prenumeration…	Abonnement wird bestätigt…
+Conflicts	Konflikter	Konflikte
+Connect Fortnox	Anslut Fortnox	Fortnox verbinden
+Connected	Ansluten	Verbunden
+Connection	Anslutning	Verbindung
+Content checksum	Innehållets kontrollsumma	Inhaltsprüfsumme
+Continue	Fortsätt	Weiter
+Controlled vocabulary	Kontrollerad vokabulär	Kontrolliertes Vokabular
+Copied	Kopierat	Kopiert
+Copy this token now	Kopiera denna token nu	Dieses Token jetzt kopieren
+Copy token	Kopiera token	Token kopieren
+Country	Land	Land
+Country code	Landskod	Ländercode
+Country of origin	Ursprungsland	Ursprungsland
+Create Passport Draft	Skapa passutkast	Passentwurf erstellen
+Create Product Passport	Skapa produktpass	Produktpass erstellen
+Create a draft product for :company.	Skapa en utkastprodukt för :company.	Einen Produktentwurf für :company erstellen.
+Create account and accept	Skapa konto och acceptera	Konto erstellen und annehmen
+Create account and continue	Skapa konto och fortsätt	Konto erstellen und fortfahren
+Create an API token	Skapa en API-token	API-Token erstellen
+Create an account	Skapa ett konto	Konto erstellen
+Create an organization	Skapa en organisation	Organisation erstellen
+Create attribute	Skapa attribut	Attribut erstellen

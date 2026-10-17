@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $row_number
  * @property array<string, string|null> $source_data
  * @property array<string, mixed> $mapped_data
+ * @property list<array{field: string, source: string, normalized: string}>|null $normalizations
  * @property ImportRecordStatus $status
  * @property string|null $operation
  * @property int|null $target_product_id
@@ -32,7 +33,7 @@ class ImportRecord extends Model
 
     protected function casts(): array
     {
-        return ['status' => ImportRecordStatus::class, 'source_data' => 'array', 'mapped_data' => 'array', 'applied_at' => 'immutable_datetime'];
+        return ['status' => ImportRecordStatus::class, 'source_data' => 'array', 'mapped_data' => 'array', 'normalizations' => 'array', 'applied_at' => 'immutable_datetime'];
     }
 
     public function job(): BelongsTo

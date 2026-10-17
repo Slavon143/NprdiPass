@@ -10,5 +10,7 @@ final readonly class PlannedImportRow
         public string $operation,
         public ?int $targetProductId,
         public array $errors,
+        /** @var list<array{field: string, source: string, normalized: string}> */
+        public array $normalizations = [],
     ) {}
 }

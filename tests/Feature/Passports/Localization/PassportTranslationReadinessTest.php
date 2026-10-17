@@ -152,7 +152,7 @@ class PassportTranslationReadinessTest extends TestCase
     public function test_unsupported_language_detected(): void
     {
         $registry = app(PassportLocaleRegistry::class);
-        $this->assertFalse($registry->supports('de'));
+        $this->assertFalse($registry->supports('fr'));
         $this->assertFalse($registry->supports('fr'));
         $this->assertTrue($registry->supports('en'));
         $this->assertTrue($registry->supports('sv'));

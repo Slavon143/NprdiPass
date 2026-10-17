@@ -274,6 +274,9 @@ class PublicPassportResolver
             'identity' => ['public_name', 'public_description'],
             'manufacturer_and_operator' => [
                 'manufacturer_display_name', 'manufacturer_country', 'manufacturer_email',
+                'manufacturer_address', 'manufacturer_phone', 'manufacturer_registration_id',
+                'importer_display_name', 'importer_address', 'importer_email', 'importer_website',
+                'importer_phone', 'importer_country', 'importer_registration_id',
                 'manufacturer_website', 'responsible_operator_display_name',
                 'responsible_operator_country', 'responsible_operator_email',
                 'responsible_operator_website', 'responsible_operator_role',

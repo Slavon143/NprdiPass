@@ -17,8 +17,8 @@
             <a href="{{ route('home', ['lang' => $showcaseLocale]) }}#integrations">{{ $copy['integrations'] }}</a>
             <a href="{{ route('home', ['lang' => $showcaseLocale]) }}#pricing">{{ $copy['reference']['Pricing'] }}</a>
             <a href="{{ route('demo', ['lang' => $showcaseLocale, 'view' => 'passport']) }}">{{ $copy['example'] }}</a>
-            <a href="{{ route('login') }}">{{ $copy['reference']['Sign in'] }}</a>
-            <a href="{{ route('register') }}">{{ $copy['reference']['Sign up'] }}</a>
+            <a href="{{ route('login', $showcaseLocale === 'en' ? [] : ['lang' => $showcaseLocale]) }}">{{ $copy['reference']['Sign in'] }}</a>
+            <a href="{{ route('register', $showcaseLocale === 'en' ? [] : ['lang' => $showcaseLocale]) }}">{{ $copy['reference']['Sign up'] }}</a>
         </nav>
     <div id="main">@yield('content')</div>
     <footer class="site-footer" data-demo-shell="public" @if(isset($demoView) && $demoView !== 'passport') hidden @endif>
@@ -34,7 +34,7 @@
         <button type="button" class="dialog-close" data-dialog-close aria-label="{{ $copy['reference']['Close'] }}">×</button>
         <h2 id="showcase-language-title">{{ $copy['language'] }}</h2>
         <nav class="language-options" aria-label="{{ $copy['language'] }}">
-            @foreach(['en' => 'English', 'sv' => 'Svenska'] as $locale => $name)
+            @foreach(\App\Support\UiLocale::LABELS as $locale => $name)
                 <a href="{{ route(isset($demoView) ? 'demo' : 'home', array_filter(['lang' => $locale, 'view' => $demoView ?? null])) }}" data-demo-locale="{{ $locale }}" lang="{{ $locale }}" hreflang="{{ $locale }}" @if($locale === $showcaseLocale) aria-current="true" @endif>
                     <span class="company-avatar">{{ strtoupper($locale) }}</span><strong>{{ $name }}</strong>
                 </a>
@@ -46,8 +46,8 @@
         <h2 id="showcase-info-title">{{ $copy['demo'] }}</h2>
         <p>{{ $copy['reference']['This section belongs to a real workspace. The demo covers products, readiness, sample imports and passport previews.'] }}</p>
         <p>{{ $copy['demo_detail'] }}</p>
-        <a class="btn btn-primary" href="{{ route('register') }}">{{ $copy['reference']['Create a workspace'] }}</a>
-        <a class="text-button" href="{{ route('login') }}">{{ $copy['signin'] }}</a>
+        <a class="btn btn-primary" href="{{ route('register', $showcaseLocale === 'en' ? [] : ['lang' => $showcaseLocale]) }}">{{ $copy['reference']['Create a workspace'] }}</a>
+        <a class="text-button" href="{{ route('login', $showcaseLocale === 'en' ? [] : ['lang' => $showcaseLocale]) }}">{{ $copy['signin'] }}</a>
     </dialog>
     <script type="application/json" id="showcase-copy" nonce="@cspNonce">@json($copy)</script>
 </div>
