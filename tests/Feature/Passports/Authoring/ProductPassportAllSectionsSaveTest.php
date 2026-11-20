@@ -25,6 +25,7 @@ use App\Services\Passports\CanonicalJsonEncoder;
 use App\Services\Passports\DppPayloadValidator;
 use App\Tenancy\Contracts\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -534,12 +535,12 @@ class ProductPassportAllSectionsSaveTest extends TestCase
         $this->assertSame('2 year warranty.', $snapshotTranslations[DppSectionKey::SupportAndContact->value]['warranty_summary'] ?? null);
         $this->assertSame('Support notes.', $snapshotTranslations[DppSectionKey::SupportAndContact->value]['support_notes'] ?? null);
 
-        $publicResponse = $this->get(route('public.passports.show', $this->freshPassport()->public_id));
+        $publicResponse = $this->get(route('public.passports.show', ['publicId' => $this->freshPassport()->public_id, 'lang' => $this->locale]));
         $publicResponse->assertOk();
-        $publicResponse->assertSee('Environmental Metrics');
+        $publicResponse->assertSee(Lang::get('Environmental Metrics', [], $this->locale));
         $publicResponse->assertSee('Reflector kit');
-        $publicResponse->assertSee('Warranty Duration');
-        $publicResponse->assertSee('Compliance Metadata');
+        $publicResponse->assertSee(Lang::get('Warranty Duration', [], $this->locale));
+        $publicResponse->assertSee(Lang::get('Compliance Metadata', [], $this->locale));
 
         $token = issueCompanyApiToken($this->actor, $this->company, [ApiTokenAbility::PassportsRead->value])->plainTextToken;
         $apiResponse = $this->withToken($token)
