@@ -55,7 +55,9 @@ jobs:
           tools: composer:v2
 
       - name: Verify release tooling and lifecycle failures
-        run: python3 -m unittest discover -s tests/Release -v
+        run: |
+          export SITE_TEST_PHP="$(command -v php)"
+          python3 -m unittest discover -s tests/Release -v
 
       - name: Validate composer
         run: composer validate --strict
