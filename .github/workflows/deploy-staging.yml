@@ -1,0 +1,135 @@
+name: Deploy Staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  CI: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'master'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_mysql, fileinfo, zip, xmlreader, xmlwriter
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install production dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --classmap-authoritative
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Verify release tooling
+        run: python3 -m unittest discover -s tests/Release -v
+
+      - name: Create release artifact
+        env:
+          RELEASE_COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 deploy/scripts/release_artifact.py build \
+            --source . --artifact nordipass-release.tar.gz \
+            --commit "$RELEASE_COMMIT" --ref master \
+            --php-version "$(php -r 'echo PHP_VERSION;')" \
+            --node-version "$(node -p 'process.versions.node')" \
+            --built-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Verify executable release
+        run: python3 deploy/scripts/release_artifact.py verify --artifact nordipass-release.tar.gz --checksum-file nordipass-release.tar.gz.sha256
+
+      - name: Verify SSH host
+        env:
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PAUSE_WRITERS: ${{ vars.DEPLOY_PAUSE_WRITERS }}
+          DEPLOY_VERIFY_WRITERS_STOPPED: ${{ vars.DEPLOY_VERIFY_WRITERS_STOPPED }}
+          DEPLOY_RESUME_WRITERS: ${{ vars.DEPLOY_RESUME_WRITERS }}
+          DEPLOY_VERIFY_BACKUP: ${{ vars.DEPLOY_VERIFY_BACKUP }}
+          DEPLOY_VERIFY_RELEASE: ${{ vars.DEPLOY_VERIFY_RELEASE }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ && "$DEPLOY_HOST" != *..* && "$DEPLOY_USER" =~ ^[A-Za-z0-9._][A-Za-z0-9._-]*$ ]]
+          [[ "${DEPLOY_PORT:-22}" =~ ^[0-9]{1,5}$ ]]
+          PORT=$((10#${DEPLOY_PORT:-22}))
+          (( PORT >= 1 && PORT <= 65535 ))
+          for path in "$DEPLOY_PATH" "$DEPLOY_PAUSE_WRITERS" "$DEPLOY_VERIFY_WRITERS_STOPPED" "$DEPLOY_RESUME_WRITERS" "$DEPLOY_VERIFY_BACKUP" "$DEPLOY_VERIFY_RELEASE"; do
+            [[ "$path" =~ ^/[A-Za-z0-9_./-]+$ && "$path" != / && "$path" != *..* && "$path" != *//* ]]
+          done
+          [[ "$DEPLOY_HEALTH_URL" =~ ^https?://[^/?#[:space:]@]+(:[0-9]{1,5})?(/[^[:space:]]*)?$ ]]
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > deploy_key
+          trap 'rm -f deploy_key' EXIT
+          RELEASE_COMMIT=$(python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["commit"])' < <(python3 deploy/scripts/release_artifact.py verify --artifact nordipass-release.tar.gz --checksum-file nordipass-release.tar.gz.sha256))
+          RELEASE_ID="staging-$(date -u +%Y%m%d-%H%M%S)-$RELEASE_COMMIT"
+          ssh -i deploy_key -o StrictHostKeyChecking=yes -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/deploy/scripts'"
+          scp -i deploy_key -o StrictHostKeyChecking=yes -P "${DEPLOY_PORT:-22}" \
+            nordipass-release.tar.gz nordipass-release.tar.gz.sha256 "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+          scp -i deploy_key -o StrictHostKeyChecking=yes -P "${DEPLOY_PORT:-22}" \
+            deploy/scripts/deploy.sh deploy/scripts/rollback.sh deploy/scripts/release-common.sh deploy/scripts/release_artifact.py \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/deploy/scripts/"
+          printf -v REMOTE_COMMAND '%q ' bash "$DEPLOY_PATH/deploy/scripts/deploy.sh" \
+            --release-id "$RELEASE_ID" --artifact "$DEPLOY_PATH/nordipass-release.tar.gz" \
+            --checksum-file "$DEPLOY_PATH/nordipass-release.tar.gz.sha256" --app-root "$DEPLOY_PATH" \
+            --health-url "$DEPLOY_HEALTH_URL" --pause-writers "$DEPLOY_PAUSE_WRITERS" \
+            --verify-writers-stopped "$DEPLOY_VERIFY_WRITERS_STOPPED" --resume-writers "$DEPLOY_RESUME_WRITERS" \
+            --verify-backup "$DEPLOY_VERIFY_BACKUP" --verify-release "$DEPLOY_VERIFY_RELEASE"
+          ssh -i deploy_key -o StrictHostKeyChecking=yes -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "$REMOTE_COMMAND"
+        shell: bash
+
+      - name: Cleanup deploy key
+        if: always()
+        run: rm -f deploy_key

@@ -87,19 +87,42 @@ Writers are held stopped; a failure after resume attempts another drain. There i
 no automatic database rollback, previous-code switch, cleanup or silent success.
 Inspect code/schema/writer state before explicitly resuming.
 
+## Staging auto-deployment
+
+`Deploy Staging` runs after a successful `CI` workflow run for a push to
+`master`. Pull requests, failed or cancelled CI, tags and manual Release Build
+runs do not trigger it. The workflow checks out the exact CI `head_sha`, rebuilds
+the executable release with production dependencies and frontend assets, verifies
+the archive, and deploys through the `staging` GitHub environment. It does not
+upload a transfer artifact or change `Deploy Production`, which remains manual.
+
+Before pushing this workflow to `master`, configure the `staging` environment
+with its own `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER`, `DEPLOY_PATH`,
+`DEPLOY_HEALTH_URL`, `DEPLOY_SSH_KEY` and `DEPLOY_HOST_KEY` secrets and the same
+five hook variables listed below. Their values must point to staging and its
+reviewed site policy, never to production. Changes to files consulted by the
+staging `verify-release` policy must be reviewed and the hook rehearsed before
+they reach `master`; otherwise a legitimate automatic deploy can fail after
+writers are paused and require the documented manual recovery. Configure
+environment protection and restrict the deployment branch as required by the
+site owner; if reviewers are enabled, the deployment pauses for approval.
+
 ## Deployment configuration
 
 Secrets: DEPLOY_HOST, DEPLOY_PORT (default 22), DEPLOY_USER, DEPLOY_PATH,
 DEPLOY_SSH_KEY, DEPLOY_HOST_KEY (a full pinned known_hosts entry), DEPLOY_HEALTH_URL.
-Production environment variables: DEPLOY_PAUSE_WRITERS,
+Staging and production environment variables: DEPLOY_PAUSE_WRITERS,
 DEPLOY_VERIFY_WRITERS_STOPPED, DEPLOY_RESUME_WRITERS, DEPLOY_VERIFY_BACKUP,
-DEPLOY_VERIFY_RELEASE. Production needs its own reviewed policy implementation;
+DEPLOY_VERIFY_RELEASE. Keep separate values in the two GitHub environments.
+Production needs its own reviewed policy implementation;
 the Oderland staging policy intentionally rejects any other application root.
 Do not substitute a success-only stub. Updating workflow source does not install
 or configure these hooks in production.
 The SSH workflow accepts conventional ASCII host/user and absolute paths without
-spaces; port must be 1..65535. A health base URL must be http(s) without whitespace.
-Use GitHub environment protection for the actual deployment.
+spaces; host cannot start or end with a dot/hyphen or contain `..`, user cannot
+start with a hyphen, and paths cannot contain `..` or `//`. Port must be 1..65535.
+A health base URL must be http(s) without whitespace or userinfo. Use GitHub
+environment protection for the actual deployment.
 
 ## Explicit rollback and recovery
 
