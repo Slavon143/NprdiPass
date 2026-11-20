@@ -20,7 +20,6 @@ env:
   DB_DATABASE: nordipass_testing
   DB_USERNAME: root
   DB_PASSWORD: root
-  CATALOG_MEDIA_ROOT: ${{ runner.temp }}/catalog-media-testing
 
 jobs:
   backend:
@@ -37,6 +36,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set isolated catalogue media directory
+        run: echo "CATALOG_MEDIA_ROOT=$RUNNER_TEMP/catalog-media-testing" >> "$GITHUB_ENV"
 
       - name: Scan for leaked secrets
         uses: gitleaks/gitleaks-action@v2
