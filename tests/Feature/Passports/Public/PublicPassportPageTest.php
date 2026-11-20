@@ -42,6 +42,8 @@ class PublicPassportPageTest extends TestCase
     {
         parent::setUp();
 
+        config()->set('passports.default_language', 'en');
+
         $this->company = Company::factory()->create(['status' => CompanyStatus::Active]);
         $this->actor = User::factory()->create(['email_verified_at' => now()]);
 
