@@ -36,6 +36,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set isolated catalogue media directory
         run: echo "CATALOG_MEDIA_ROOT=$RUNNER_TEMP/catalog-media-testing" >> "$GITHUB_ENV"
